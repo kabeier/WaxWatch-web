@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Verify Next.js + SWC setup
+        run: |
+          node -e "const pkgs=['next','react','react-dom']; for (const pkg of pkgs){const path=require.resolve(pkg + '/package.json'); const version=require(path).version; console.log(pkg + '@' + version)}"
+          test ! -f .babelrc
+
+      - name: Lockfile reproducibility check
+        run: git diff --exit-code package-lock.json
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:run
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: E2E tests
+        run: npm run e2e:ci

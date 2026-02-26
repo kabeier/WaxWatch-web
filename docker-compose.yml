@@ -1,0 +1,6 @@
+services:
+  web:
+    image: projectsparks-web
+    build: .
+    ports:
+      - "4173:4173"

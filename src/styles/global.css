@@ -1,0 +1,37 @@
+:root {
+  /* background + surfaces */
+  --bg: #0b0614;
+  --surface: #140b24;
+
+  /* text */
+  --text: #f2eefc;
+  --muted: #b9b0d6;
+
+  /* accents */
+  --accent: #7c3aed; /* purple */
+  --accent2: #2dd4bf; /* teal */
+
+  /* borders */
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--accent2);
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+}

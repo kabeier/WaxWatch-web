@@ -1,0 +1,16 @@
+services:
+  e2e:
+    image: mcr.microsoft.com/playwright:v1.58.2-jammy
+    working_dir: /work
+    volumes:
+      - .:/work
+    ipc: host
+    environment:
+      CI: "true"
+    command:
+      - bash
+      - -lc
+      - |
+          node -v
+          npm ci
+          npm run e2e:ci
