@@ -1,25 +1,67 @@
-import { execSync } from 'node:child_process';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { relative, resolve } from 'node:path';
 
 const forbiddenTemplateNames = ['ProjectRainbows', 'projectsparks'];
+const repoRoot = process.cwd();
+const ignoredDirs = new Set(['.git', 'node_modules', '.next']);
+const ignoredFiles = new Set([resolve(repoRoot, 'scripts/release-checklist.mjs')]);
+
+function listFiles(dir) {
+  const files = [];
+
+  for (const entry of readdirSync(dir)) {
+    const fullPath = resolve(dir, entry);
+
+    if (ignoredFiles.has(fullPath)) {
+      continue;
+    }
+
+    const stats = statSync(fullPath);
+    if (stats.isDirectory()) {
+      if (ignoredDirs.has(entry)) {
+        continue;
+      }
+      files.push(...listFiles(fullPath));
+      continue;
+    }
+
+    files.push(fullPath);
+  }
+
+  return files;
+}
 
 function findMatches(token) {
-  try {
-    return execSync(`rg -n --hidden --glob '!.git' --glob '!scripts/release-checklist.mjs' "${token}"`, {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-  } catch (error) {
-    if (error.status === 1) {
-      return '';
+  const matches = [];
+
+  for (const filePath of listFiles(repoRoot)) {
+    let content = '';
+
+    try {
+      content = readFileSync(filePath, 'utf8');
+    } catch {
+      continue;
     }
-    throw error;
+
+    if (!content.includes(token)) {
+      continue;
+    }
+
+    const lines = content.split('\n');
+    lines.forEach((line, index) => {
+      if (line.includes(token)) {
+        matches.push(`${relative(repoRoot, filePath)}:${index + 1}:${line}`);
+      }
+    });
   }
+
+  return matches;
 }
 
 for (const name of forbiddenTemplateNames) {
   const result = findMatches(name);
-  if (result.trim().length > 0) {
-    throw new Error(`Template copy cleanup failed. Found leftover token: ${name}\n${result}`);
+  if (result.length > 0) {
+    throw new Error(`Template copy cleanup failed. Found leftover token: ${name}\n${result.join('\n')}`);
   }
 }
 
