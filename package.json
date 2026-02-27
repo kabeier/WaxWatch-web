@@ -1,5 +1,5 @@
 {
-  "name": "projectsparks",
+  "name": "waxwatch-web",
   "version": "1.0.0",
   "type": "module",
   "description": "React Default Application",
@@ -13,11 +13,18 @@
     "format": "prettier . --write",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
     "prepare": "husky",
-    "start": "node ./node_modules/next/dist/bin/next start -p 4173",
+    "start": "node scripts/start-standalone.mjs",
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prebuild": "node scripts/env-contract.mjs",
+    "test:coverage": "vitest run --coverage",
+    "a11y:smoke": "playwright test e2e/a11y.spec.ts",
+    "bundle:check": "node scripts/check-bundle-budget.mjs",
+    "verify:deployment": "node scripts/verify-deployment.mjs",
+    "ci:prod-gates": "npm run test:coverage && npm run build && npm run bundle:check && npm run a11y:smoke && npm run verify:deployment && npm run release:checklist",
+    "release:checklist": "node scripts/release-checklist.mjs"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md,yml,yaml,css}": [

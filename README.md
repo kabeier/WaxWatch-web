@@ -1,167 +1,69 @@
-# ProjectRainbows
+# WaxWatch Web Template
 
-TypeScript + React application built with **Next.js (SWC compiler)**.
+TypeScript + React application built with Next.js (Pages Router), hardened for EC2 production rollouts.
 
-## Tech Stack
+## Production Topology (AWS EC2)
 
-- Next.js 15 (Pages Router)
-- React 18
-- TypeScript
-- SWC (Next.js built-in compiler/minifier; no Babel pipeline)
-- ESLint + Prettier
-- Vitest + Testing Library
-- Playwright + start-server-and-test
-- Docker + Docker Compose
-- Husky + lint-staged
-- GitHub Actions CI
+`ALB/ELB (TLS termination) -> EC2 instances (ASG) -> Next.js standalone runtime`
 
-## Getting Started
+- TLS terminates on the ALB.
+- ALB forwards traffic to containerized Next.js on port `4173`.
+- Security headers are applied by Next.js (`next.config.mjs`) in the live serving path.
+- Health endpoints exposed for target-group checks:
+  - `/health` (liveness)
+  - `/ready` (readiness)
 
-### Requirements
+See full deployment guide: [`docs/deploy/aws-ec2.md`](docs/deploy/aws-ec2.md).
 
-- Node.js 20+
-- npm
+## Environment Contract
 
-### Install
+Copy `.env.example` to `.env` and fill all values.
 
 ```bash
-npm ci
-```
-
-### Run the Development Server
-
-```bash
-npm run dev
-```
-
-Open:
-
-- [http://localhost:3000](http://localhost:3000)
-
-### Typecheck
-
-```bash
-npm run typecheck
-```
-
-### Lint & Format
-
-```bash
-npm run lint
-npm run format
-```
-
-### Unit Tests
-
-```bash
-npm run test
-```
-
-### E2E Tests
-
-```bash
-npm run build
-npm run e2e:ci
-```
-
-### Production Build
-
-```bash
+cp .env.example .env
 npm run build
 ```
 
-Next.js build output is written to `.next/`.
+Validation runs before build/start and fails fast if env values are missing/malformed.
 
-### Run Production Server Locally
+## Core Scripts
 
-```bash
-npm run start
-```
+- `npm run dev` - local development
+- `npm run build` - production build (with env validation)
+- `npm run start` - starts standalone server wrapper with graceful shutdown
+- `npm run test:coverage` - unit tests + coverage thresholds
+- `npm run a11y:smoke` - accessibility smoke checks
+- `npm run bundle:check` - bundle-size budget enforcement
+- `npm run verify:deployment` - checks required response headers and health endpoints
 
-Open:
+## Container Runtime Hardening
 
-- [http://localhost:4173](http://localhost:4173)
+- Next.js standalone output (`output: 'standalone'`)
+- Non-root runtime user in Docker image
+- Docker `HEALTHCHECK` against `/health`
+- Restart policy (`unless-stopped`) in compose
+- Graceful shutdown handling for `SIGTERM`/`SIGINT`
 
-## Docker
+## Observability
 
-### Development (Docker Compose)
+- Structured JSON logs for CloudWatch ingestion
+- `x-request-id` propagation via middleware
+- Client/server error capture hooks for centralized tracking pipeline
 
-Runs `next dev` in a container with your local source mounted for live edits.
+## CI/CD Production Gates
 
-```bash
-docker compose up --build
-```
+CI enforces:
+- typecheck + lint
+- coverage thresholds
+- a11y smoke test
+- build + bundle budget
+- deployment verification (`headers + /health + /ready`)
 
-Open:
+## Release Checklist (Template Cleanup)
 
-- [http://localhost:4173](http://localhost:4173)
-
-### Production (Docker Compose)
-
-Builds and runs `next start` on port `4173`.
-
-```bash
-docker compose -f docker-compose.yml up --build
-```
-
-Open:
-
-- [http://localhost:4173](http://localhost:4173)
-
-### Production-style Container
-
-Build the image:
-
-```bash
-docker build -t projectsparks-web .
-```
-
-Run it:
-
-```bash
-docker run --rm -p 4173:4173 projectsparks-web
-```
-
-Open:
-
-- [http://localhost:4173](http://localhost:4173)
-
-## CI
-
-GitHub Actions runs:
-
-- `npm ci`
-- `npm run typecheck`
-- `npm run lint`
-- `npm run test:run`
-- `npm run build`
-- `npm run e2e:ci`
-
-CI also verifies there is no project Babel configuration so Next.js compiles with SWC.
-
-## Project Layout
-
-- `pages/` — Next.js Pages Router routes
-- `src/` — shared React/TypeScript components, styles, and test setup
-- `.next/` — Next.js build output (generated)
-- `e2e/` — Playwright end-to-end tests
-
-- `.github/workflows/ci.yml` — CI pipeline
-- `Dockerfile` — production Next.js container build
-- `docker-compose.yml` — production container config
-- `docker-compose.override.yml` — development container overrides
-- `docker-compose.e2e.yml` — Playwright tests inside Docker
-
-- `tsconfig.json` — TypeScript compiler settings
-- `vitest.config.ts` — Vitest configuration
-- `playwright.config.ts` — Playwright configuration
-- `commitlint.config.cjs` — commit message lint rules
-- `CHANGELOG.md` — release notes / project history
-- `package.json` / `package-lock.json` — dependencies + scripts
-- `Makefile` — convenience shortcuts for common tasks
-
-### Notes
-
-- `.next/` is generated output and should not be committed.
-- This repo intentionally does **not** include a Babel config file, so Next.js uses SWC end-to-end.
-- `package-lock.json` must be generated by npm commands (`npm install` / `npm ci`) and never hand-edited.
+Before each release:
+1. Confirm **WaxWatch** naming consistency (repo/docs/UI).
+2. Remove leftover template placeholders and references.
+3. Verify `.env.example` matches runtime contract.
+4. Run `npm run ci:prod-gates`.
+5. Confirm deployment runbook updates if architecture changed.

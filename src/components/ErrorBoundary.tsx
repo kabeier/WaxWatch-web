@@ -1,4 +1,5 @@
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
+import { captureClientError } from "@/lib/error-tracking";
 
 function Fallback() {
   return (
@@ -11,7 +12,7 @@ function Fallback() {
 
 export function ErrorBoundary({ children }: { children: React.ReactNode }) {
   return (
-    <ReactErrorBoundary FallbackComponent={Fallback} onError={(err) => console.error(err)}>
+    <ReactErrorBoundary FallbackComponent={Fallback} onError={(err) => captureClientError(err)}>
       {children}
     </ReactErrorBoundary>
   );
