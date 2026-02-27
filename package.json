@@ -19,7 +19,7 @@
     "test:ui": "vitest --ui",
     "typecheck": "tsc --noEmit",
     "prebuild": "node scripts/env-contract.mjs",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run",
     "a11y:smoke": "playwright test e2e/a11y.spec.ts",
     "bundle:check": "node scripts/check-bundle-budget.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs",
