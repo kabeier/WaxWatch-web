@@ -9,7 +9,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     env:
-      NODE_ENV: production
       APP_BASE_URL: https://waxwatch.example.com
       NEXT_PUBLIC_APP_NAME: WaxWatch
       NEXT_PUBLIC_RELEASE_VERSION: ci
@@ -49,9 +48,13 @@ jobs:
         run: npm run lint
 
       - name: Unit tests + coverage gates
+        env:
+          NODE_ENV: test
         run: npm run test:coverage
 
       - name: Build
+        env:
+          NODE_ENV: production
         run: npm run build
 
       - name: Bundle-size budget
