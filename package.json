@@ -20,11 +20,12 @@
     "typecheck": "tsc --noEmit",
     "prebuild": "node scripts/env-contract.mjs",
     "test:coverage": "vitest run",
-    "a11y:smoke": "playwright test e2e/a11y.spec.ts",
+    "a11y:smoke": "NODE_ENV=production start-server-and-test start http://127.0.0.1:4173 a11y:smoke:run",
     "bundle:check": "node scripts/check-bundle-budget.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs",
     "ci:prod-gates": "npm run test:coverage && npm run build && npm run bundle:check && npm run a11y:smoke && npm run verify:deployment && npm run release:checklist",
-    "release:checklist": "node scripts/release-checklist.mjs"
+    "release:checklist": "node scripts/release-checklist.mjs",
+    "a11y:smoke:run": "playwright test e2e/a11y.spec.ts"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md,yml,yaml,css}": [
