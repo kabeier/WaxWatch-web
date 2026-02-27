@@ -1,4 +1,4 @@
-import { log } from '@/lib/logger';
+import { error as logError } from '@/lib/logger';
 
 function buildErrorEvent(error: unknown, scope: 'client' | 'server', requestId?: string) {
   const err = error instanceof Error ? error : new Error(String(error));
@@ -11,12 +11,12 @@ function buildErrorEvent(error: unknown, scope: 'client' | 'server', requestId?:
   };
 }
 
-export function captureClientError(error: unknown): void {
-  const event = buildErrorEvent(error, 'client');
-  log({ level: 'error', message: 'client_error_event', ...event });
+export function captureClientError(capturedError: unknown): void {
+  const event = buildErrorEvent(capturedError, 'client');
+  logError({ message: 'client_error_event', ...event });
 }
 
-export function captureServerError(error: unknown, requestId?: string): void {
-  const event = buildErrorEvent(error, 'server', requestId);
-  log({ level: 'error', message: 'server_error_event', ...event });
+export function captureServerError(capturedError: unknown, requestId?: string): void {
+  const event = buildErrorEvent(capturedError, 'server', requestId);
+  logError({ message: 'server_error_event', ...event });
 }
