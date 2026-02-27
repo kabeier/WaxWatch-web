@@ -12,6 +12,7 @@ export default defineConfig({
     alias: {
       "next/link": path.resolve(__dirname, "src/test/mocks/next-link.tsx"),
       "next/app": path.resolve(__dirname, "src/test/mocks/next-app.ts"),
+      "next/router": path.resolve(__dirname, "src/test/mocks/next-router.ts"),
     },
   },
   test: {
