@@ -41,7 +41,8 @@
     "next": "^15.5.12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-error-boundary": "^6.1.1"
+    "react-error-boundary": "^6.1.1",
+    "client-only": "file:vendor/client-only"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.1",
