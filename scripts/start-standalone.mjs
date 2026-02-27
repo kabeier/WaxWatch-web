@@ -1,15 +1,15 @@
 import { spawn } from 'node:child_process';
 import { validateEnv } from './env-contract.mjs';
 
+process.env.NODE_ENV ??= 'production';
+process.env.PORT ??= '4173';
+process.env.HOSTNAME ??= '0.0.0.0';
+
 validateEnv();
 
 const child = spawn('node', ['.next/standalone/server.js'], {
   stdio: 'inherit',
-  env: {
-    ...process.env,
-    PORT: process.env.PORT ?? '4173',
-    HOSTNAME: process.env.HOSTNAME ?? '0.0.0.0',
-  },
+  env: process.env,
 });
 
 let shuttingDown = false;

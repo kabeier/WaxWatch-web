@@ -9,7 +9,7 @@
     "dev": "node ./node_modules/next/dist/bin/next dev",
     "e2e": "playwright test",
     "e2e:docker": "docker compose -f docker-compose.e2e.yml run --rm e2e",
-    "e2e:ci": "start-server-and-test start http://127.0.0.1:4173 e2e",
+    "e2e:ci": "NODE_ENV=production start-server-and-test start http://127.0.0.1:4173 e2e",
     "format": "prettier . --write",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
     "prepare": "husky",
