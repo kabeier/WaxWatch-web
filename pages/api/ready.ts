@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { env } from '@/config/env';
-import { log } from '@/lib/logger';
+import { info } from '@/lib/logger';
 import { shouldUseSecureCookies } from '@/lib/request-context';
 
 function getReadinessThresholdSeconds(): number {
@@ -17,8 +17,7 @@ export default function ready(req: NextApiRequest, res: NextApiResponse) {
   const isReady = process.uptime() >= readinessThresholdSeconds;
   const requestId = req.headers['x-request-id'];
 
-  log({
-    level: 'info',
+  info({
     message: 'readiness_check',
     path: req.url,
     requestId: typeof requestId === 'string' ? requestId : undefined,
