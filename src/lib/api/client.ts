@@ -17,8 +17,10 @@ export type RequestOptions<TBody> = {
 };
 
 function buildUrl(baseUrl: string, path: string, query?: URLSearchParams): string {
-  const normalized = path.startsWith('/') ? path : `/${path}`;
-  const url = new URL(normalized, baseUrl);
+  const normalizedPath = path.replace(/^\/+/, '');
+  const base = new URL(baseUrl);
+  base.pathname = base.pathname.endsWith('/') ? base.pathname : `${base.pathname}/`;
+  const url = new URL(normalizedPath, base);
   if (query) {
     url.search = query.toString();
   }

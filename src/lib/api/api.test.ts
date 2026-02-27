@@ -28,6 +28,26 @@ describe('api client', () => {
     const headers = new Headers(requestInit.headers);
     expect(headers.get('Authorization')).toBe('Bearer abc123');
   });
+
+  it('preserves base path when building request urls', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json'
+        }
+      })
+    );
+
+    const client = createApiClient({
+      baseUrl: 'https://api.example.com/v1',
+      fetchImpl: fetchMock
+    });
+
+    await client.request('/markets');
+
+    expect(fetchMock.mock.calls[0][0]).toBe('https://api.example.com/v1/markets');
+  });
 });
 
 describe('error mapping', () => {
