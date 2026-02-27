@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test("home page loads", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /projectsparks/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /waxwatch/i })).toBeVisible();
 });
 
 test("nav links work", async ({ page }) => {
@@ -15,7 +15,7 @@ test("nav links work", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /projects/i })).toBeVisible();
 
   await page.getByRole("link", { name: /home/i }).click();
-  await expect(page.getByRole("heading", { name: /projectsparks/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /waxwatch/i })).toBeVisible();
 });
 
 test("unknown route shows 404", async ({ page }) => {

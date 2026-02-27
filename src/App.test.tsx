@@ -13,7 +13,7 @@ test("renders the home page content", () => {
     </Layout>
   );
 
-  expect(screen.getByRole("heading", { name: /projectsparks/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /waxwatch/i })).toBeInTheDocument();
 });
 
 test("renders the nav links", () => {

@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  ignorePatterns: ["dist/", "node_modules/", "*.config.js"],
+  ignorePatterns: ["dist/", "node_modules/", "*.config.js", "next-env.d.ts", ".next/"],
 
   env: {
     browser: true,

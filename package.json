@@ -1,5 +1,5 @@
 {
-  "name": "projectsparks",
+  "name": "waxwatch-web",
   "version": "1.0.0",
   "type": "module",
   "description": "React Default Application",
@@ -9,15 +9,23 @@
     "dev": "node ./node_modules/next/dist/bin/next dev",
     "e2e": "playwright test",
     "e2e:docker": "docker compose -f docker-compose.e2e.yml run --rm e2e",
-    "e2e:ci": "start-server-and-test start http://127.0.0.1:4173 e2e",
+    "e2e:ci": "NODE_ENV=production start-server-and-test start http://127.0.0.1:4173 e2e",
     "format": "prettier . --write",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
     "prepare": "husky",
-    "start": "node ./node_modules/next/dist/bin/next start -p 4173",
+    "start": "node scripts/start-standalone.mjs",
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prebuild": "node scripts/env-contract.mjs",
+    "test:coverage": "vitest run",
+    "a11y:smoke": "NODE_ENV=production start-server-and-test start http://127.0.0.1:4173 a11y:smoke:run",
+    "bundle:check": "node scripts/check-bundle-budget.mjs",
+    "verify:deployment": "node scripts/verify-deployment.mjs",
+    "ci:prod-gates": "npm run test:coverage && npm run build && npm run bundle:check && npm run a11y:smoke && npm run verify:deployment && npm run release:checklist",
+    "release:checklist": "node scripts/release-checklist.mjs",
+    "a11y:smoke:run": "playwright test e2e/a11y.spec.ts"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md,yml,yaml,css}": [
@@ -34,7 +42,8 @@
     "next": "^15.5.12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-error-boundary": "^6.1.1"
+    "react-error-boundary": "^6.1.1",
+    "client-only": "file:vendor/client-only"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.1",

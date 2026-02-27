@@ -8,6 +8,17 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      APP_BASE_URL: https://waxwatch.example.com
+      NEXT_PUBLIC_APP_NAME: WaxWatch
+      NEXT_PUBLIC_RELEASE_VERSION: ci
+      NEXT_PUBLIC_SENTRY_DSN: https://examplePublicKey@o0.ingest.sentry.io/0
+      SENTRY_DSN: https://exampleSecretKey@o0.ingest.sentry.io/0
+      AWS_REGION: us-east-1
+      AWS_SECRETS_PREFIX: /waxwatch/prod/web
+      SESSION_COOKIE_NAME: waxwatch_session
+      TRUSTED_PROXY_CIDRS: 10.0.0.0/16
+      LOG_LEVEL: info
 
     steps:
       - name: Checkout
@@ -36,14 +47,30 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Unit tests
-        run: npm run test:run
+      - name: Unit tests + coverage gates
+        env:
+          NODE_ENV: test
+        run: npm run test:coverage
 
       - name: Build
+        env:
+          NODE_ENV: production
         run: npm run build
+
+      - name: Bundle-size budget
+        run: npm run bundle:check
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
       - name: E2E tests
         run: npm run e2e:ci
+
+      - name: Accessibility smoke
+        run: npm run a11y:smoke
+
+      - name: Deployment verification
+        run: npx start-server-and-test start http://127.0.0.1:4173 verify:deployment
+
+      - name: Release checklist
+        run: npm run release:checklist

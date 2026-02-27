@@ -6,22 +6,25 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-# Next.js compiles with SWC by default when no Babel config is present
 RUN npm run build
 
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=4173
+ENV HOSTNAME=0.0.0.0
 
-COPY package*.json ./
-RUN npm ci --omit=dev
+RUN addgroup -S nextjs && adduser -S nextjs -G nextjs
 
-COPY --from=build /app/.next ./.next
-COPY --from=build /app/pages ./pages
-COPY --from=build /app/src ./src
-COPY --from=build /app/next-env.d.ts ./next-env.d.ts
-COPY --from=build /app/tsconfig.json ./tsconfig.json
+COPY --from=build --chown=nextjs:nextjs /app/.next/standalone ./
+COPY --from=build --chown=nextjs:nextjs /app/.next/static ./.next/static
+COPY --from=build --chown=nextjs:nextjs /app/public ./public
+
+USER nextjs
 
 EXPOSE 4173
-CMD ["npm", "run", "start"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:4173/health').then((r)=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+
+CMD ["node", "server.js"]
