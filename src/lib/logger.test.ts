@@ -84,6 +84,11 @@ describe('logger', () => {
         requestId: 'req-123',
         accountName: 'safe-value',
       },
+      metrics: {
+        tokenCount: 3,
+        cookieConsent: true,
+        nonSecret: 'visible',
+      },
     });
 
     const output = consoleSpy.mock.calls[0][0] as string;
@@ -103,5 +108,10 @@ describe('logger', () => {
     const context = payload.context as Record<string, unknown>;
     expect(context.requestId).toBe('req-123');
     expect(context.accountName).toBe('safe-value');
+
+    const metrics = payload.metrics as Record<string, unknown>;
+    expect(metrics.tokenCount).toBe(3);
+    expect(metrics.cookieConsent).toBe(true);
+    expect(metrics.nonSecret).toBe('visible');
   });
 });

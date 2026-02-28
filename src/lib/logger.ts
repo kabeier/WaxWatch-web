@@ -48,7 +48,8 @@ type LogInput = Omit<LogPayload, 'level'>;
 
 const REDACTED_VALUE = '[REDACTED]';
 const SENSITIVE_KEYS = new Set(['authorization', 'cookie', 'token', 'password', 'secret', 'set-cookie']);
-const SENSITIVE_KEY_PATTERNS = ['token', 'secret', 'password', 'authorization', 'cookie', 'apikey'];
+const SENSITIVE_SUFFIX_PATTERNS = ['token', 'secret', 'password', 'apikey'];
+const SENSITIVE_EXACT_NORMALIZED_KEYS = new Set(['authorization', 'cookie', 'setcookie']);
 
 function normalizeKeyForRedaction(key: string): string {
   return key.toLowerCase().replace(/[\s_-]/g, '');
@@ -61,7 +62,19 @@ function shouldRedactKey(key: string): boolean {
   }
 
   const normalizedKey = normalizeKeyForRedaction(key);
-  return SENSITIVE_KEY_PATTERNS.some((pattern) => normalizedKey.includes(pattern));
+  if (SENSITIVE_EXACT_NORMALIZED_KEYS.has(normalizedKey)) {
+    return true;
+  }
+
+  if (normalizedKey.startsWith('authorization')) {
+    return true;
+  }
+
+  if (normalizedKey.startsWith('non')) {
+    return false;
+  }
+
+  return SENSITIVE_SUFFIX_PATTERNS.some((pattern) => normalizedKey.endsWith(pattern));
 }
 
 function sanitizeForSerialization(value: unknown, seen = new WeakSet<object>()): unknown {
