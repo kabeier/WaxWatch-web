@@ -11,6 +11,7 @@
     "e2e:docker": "docker compose -f docker-compose.e2e.yml run --rm e2e",
     "e2e:ci": "NODE_ENV=production start-server-and-test start http://127.0.0.1:4173 e2e",
     "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0",
     "prepare": "husky",
     "start": "node scripts/start-standalone.mjs",
@@ -25,7 +26,9 @@
     "verify:deployment": "node scripts/verify-deployment.mjs",
     "ci:prod-gates": "npm run test:coverage && npm run build && npm run bundle:check && npm run a11y:smoke && npm run verify:deployment && npm run release:checklist",
     "release:checklist": "node scripts/release-checklist.mjs",
-    "a11y:smoke:run": "playwright test e2e/a11y.spec.ts"
+    "a11y:smoke:run": "playwright test e2e/a11y.spec.ts",
+    "test:contract": "node scripts/require-test-updates.mjs",
+    "format:check:changed": "node scripts/check-formatting-changed.mjs"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md,yml,yaml,css}": [
