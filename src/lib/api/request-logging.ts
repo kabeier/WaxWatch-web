@@ -2,12 +2,21 @@ import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { info } from '@/lib/logger';
 import { logServerError } from '@/lib/server-error';
 
-function getRequestId(req: NextApiRequest): string | undefined {
+function generateRequestId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function getRequestId(req: NextApiRequest): string {
   const requestId = req.headers['x-request-id'];
   if (Array.isArray(requestId)) {
-    return requestId[0];
+    return requestId[0] ?? generateRequestId();
   }
-  return requestId;
+
+  return requestId ?? generateRequestId();
 }
 
 function getPathname(req: NextApiRequest): string {
@@ -21,6 +30,9 @@ function getPathname(req: NextApiRequest): string {
 export function withApiRequestLogging(handler: NextApiHandler): NextApiHandler {
   return async function requestLoggingHandler(req: NextApiRequest, res: NextApiResponse) {
     const requestId = getRequestId(req);
+    req.headers['x-request-id'] = requestId;
+    res.setHeader('x-request-id', requestId);
+
     const pathname = getPathname(req);
     const startTime = Date.now();
 
@@ -47,7 +59,7 @@ export function withApiRequestLogging(handler: NextApiHandler): NextApiHandler {
     try {
       return await handler(req, res);
     } catch (error) {
-      const requestIdFromErrorLog = logServerError(error, req, 'api_handler_exception');
+      const requestIdFromErrorLog = logServerError(error, req, 'api_handler_exception', { requestId });
 
       if (res.headersSent) {
         throw error;
