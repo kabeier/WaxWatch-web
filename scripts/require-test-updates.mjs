@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 
 const baseRef = process.env.GITHUB_BASE_REF;
 
@@ -7,10 +7,13 @@ if (!baseRef) {
   process.exit(0);
 }
 
-execSync(`git fetch --no-tags --depth=1 origin ${baseRef}`, { stdio: "inherit" });
+execFileSync("git", ["fetch", "--no-tags", "--depth=1", "origin", baseRef], {
+  stdio: "inherit",
+});
 
-const changedFilesOutput = execSync(
-  `git diff --name-only --diff-filter=AMR origin/${baseRef}...HEAD`,
+const changedFilesOutput = execFileSync(
+  "git",
+  ["diff", "--name-only", "--diff-filter=AMR", `origin/${baseRef}...HEAD`],
   { encoding: "utf8" },
 );
 
