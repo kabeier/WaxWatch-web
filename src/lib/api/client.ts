@@ -141,21 +141,45 @@ export function createApiClient(options: ApiClientOptions) {
       throw apiError;
     }
 
-    info({
-      message: 'api_request_success',
-      scope: 'api',
-      requestId,
-      method,
-      path: normalizedPath,
-      status: response.status,
-      durationMs
-    });
-
     if (response.status === 204) {
+      info({
+        message: 'api_request_success',
+        scope: 'api',
+        requestId,
+        method,
+        path: normalizedPath,
+        status: response.status,
+        durationMs
+      });
       return undefined as TResponse;
     }
 
-    return (await response.json()) as TResponse;
+    try {
+      const parsedResponse = (await response.json()) as TResponse;
+      info({
+        message: 'api_request_success',
+        scope: 'api',
+        requestId,
+        method,
+        path: normalizedPath,
+        status: response.status,
+        durationMs
+      });
+      return parsedResponse;
+    } catch (parseError) {
+      logError({
+        message: 'api_request_failure',
+        scope: 'api',
+        requestId,
+        method,
+        path: normalizedPath,
+        status: response.status,
+        durationMs,
+        failureKind: 'response_parse_error',
+        errorMessage: parseError instanceof Error ? parseError.message : String(parseError)
+      });
+      throw parseError;
+    }
   }
 
   return {
