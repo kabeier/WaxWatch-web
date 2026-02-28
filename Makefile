@@ -37,7 +37,7 @@ docker-down:
 	docker compose down
 
 docker-e2e:
-	docker compose -f docker-compose.e2e.yml run --rm e2e
+	npm run e2e:docker
 
 ci:
 	npm ci
