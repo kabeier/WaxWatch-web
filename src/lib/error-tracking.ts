@@ -4,6 +4,8 @@ type ServerErrorContext = {
   message?: string;
   path?: string;
   method?: string;
+  status?: number;
+  durationMs?: number;
   [key: string]: unknown;
 };
 
@@ -23,7 +25,18 @@ export function captureClientError(capturedError: unknown): void {
   logError({ message: 'client_error_event', ...event });
 }
 
-export function captureServerError(capturedError: unknown, requestId?: string, context: ServerErrorContext = {}): void {
+export function captureServerError(
+  capturedError: unknown,
+  requestId?: string,
+  context: ServerErrorContext = {}
+): void {
   const event = buildErrorEvent(capturedError, 'server', requestId);
-  logError({ message: context.message ?? 'server_error_event', ...event, ...context });
+  logError({
+    message: context.message ?? 'server_error_event',
+    ...event,
+    path: context.path,
+    method: context.method,
+    status: context.status,
+    durationMs: context.durationMs,
+  });
 }

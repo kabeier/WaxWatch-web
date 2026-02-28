@@ -1,3 +1,5 @@
+import { info, warn } from './logger';
+
 const AUTH_TOKEN_KEY = "waxwatch.auth.jwt";
 const AUTH_SESSION_KEY = "waxwatch.auth.session";
 
@@ -42,6 +44,11 @@ export function clearAuthSession() {
 
   window.localStorage.removeItem(AUTH_TOKEN_KEY);
   window.localStorage.removeItem(AUTH_SESSION_KEY);
+
+  info({
+    message: 'auth_session_cleared',
+    scope: 'auth',
+  });
 }
 
 function isApiRequest(input: RequestInfo | URL): boolean {
@@ -118,12 +125,24 @@ export function installAuthSessionController(): AuthController {
     const response = await originalFetch(input, requestInit);
 
     if (isApiRequest(input) && (response.status === 401 || response.status === 403)) {
+      warn({
+        message: 'auth_reauth_required',
+        scope: 'auth',
+        path: pathname,
+        status: response.status,
+      });
       clearAuthSession();
       redirectWithEvent("reauth-required");
       return response;
     }
 
     if (response.ok && pathname === "/api/me/logout" && method === "POST") {
+      info({
+        message: 'auth_signed_out',
+        scope: 'auth',
+        path: pathname,
+        status: response.status,
+      });
       clearAuthSession();
       redirectWithEvent("signed-out");
     }
@@ -133,6 +152,12 @@ export function installAuthSessionController(): AuthController {
       method === "DELETE" &&
       (pathname === "/api/me" || pathname === "/api/me/hard-delete")
     ) {
+      info({
+        message: 'auth_account_removed',
+        scope: 'auth',
+        path: pathname,
+        status: response.status,
+      });
       clearAuthSession();
       redirectWithEvent("account-removed");
     }
