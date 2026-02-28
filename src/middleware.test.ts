@@ -12,7 +12,8 @@ vi.mock('next/server', () => ({
   },
 }));
 
-import { middleware } from '../middleware';
+let middleware: typeof import('../middleware').middleware;
+const originalLogLevel = process.env.LOG_LEVEL;
 
 type RequestLike = {
   method: string;
@@ -29,7 +30,11 @@ function createRequest(headers: Record<string, string> = {}): RequestLike {
 }
 
 describe('middleware', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
+    process.env.LOG_LEVEL = 'info';
+    ({ middleware } = await import('../middleware'));
+
     nextMock.mockReset();
     jsonMock.mockReset();
 
@@ -46,6 +51,7 @@ describe('middleware', () => {
   });
 
   afterEach(() => {
+    process.env.LOG_LEVEL = originalLogLevel;
     vi.restoreAllMocks();
   });
 

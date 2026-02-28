@@ -1,7 +1,8 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { withApiRequestLogging } from './request-logging';
+let withApiRequestLogging: typeof import('./request-logging').withApiRequestLogging;
+const originalLogLevel = process.env.LOG_LEVEL;
 
 type MockResponse = {
   headersSent: boolean;
@@ -54,12 +55,17 @@ function createMockRequest(headers: Record<string, string | string[] | undefined
 }
 
 describe('withApiRequestLogging', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
+    process.env.LOG_LEVEL = 'info';
+    ({ withApiRequestLogging } = await import('./request-logging'));
+
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
   });
 
   afterEach(() => {
+    process.env.LOG_LEVEL = originalLogLevel;
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
