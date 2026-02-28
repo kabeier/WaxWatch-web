@@ -42,4 +42,28 @@ describe('captureServerError', () => {
     expect(requestMeta.apiToken).toBe('[REDACTED]');
     expect(requestMeta.retries).toBe(2);
   });
+
+  it('does not allow additional context to override reserved server error event fields', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    captureServerError(new Error('database unavailable'), 'req-canonical', {
+      requestId: 'req-overridden',
+      scope: 'middleware',
+      name: 'CustomName',
+      errorMessage: 'context message',
+      stack: 'faked stack',
+      tenantId: 'tenant-9',
+    });
+
+    const output = errorSpy.mock.calls[0][0] as string;
+    const payload = JSON.parse(output) as Record<string, unknown>;
+
+    expect(payload.requestId).toBe('req-canonical');
+    expect(payload.scope).toBe('server');
+    expect(payload.name).toBe('Error');
+    expect(payload.errorMessage).toBe('database unavailable');
+    expect(typeof payload.stack).toBe('string');
+
+    expect(payload.tenantId).toBe('tenant-9');
+  });
 });
