@@ -13,6 +13,9 @@ lint:
 format:
 	npm run format
 
+format-check:
+	npm run format:check
+
 typecheck:
 	npm run typecheck
 
@@ -22,7 +25,7 @@ test:
 e2e:
 	npm run e2e:ci
 
-check: format lint typecheck test build e2e
+check: format-check lint typecheck test build e2e
 
 docker-dev:
 	docker compose up --build
@@ -38,6 +41,7 @@ docker-e2e:
 
 ci:
 	npm ci
+	npm run format:check
 	npm run typecheck
 	npm run lint
 	npm run test:run
