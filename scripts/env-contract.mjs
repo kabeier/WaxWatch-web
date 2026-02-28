@@ -46,6 +46,15 @@ export function validateEnv(source = process.env) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  validateEnv();
-  console.log('Environment contract validation passed.');
+  try {
+    validateEnv();
+    console.log('Environment contract validation passed.');
+  } catch (error) {
+    const context = error instanceof Error
+      ? { errorName: error.name, errorMessage: error.message, stack: error.stack }
+      : { errorMessage: String(error) };
+
+    console.error(JSON.stringify({ level: 'error', message: 'env_contract_failure', ...context }));
+    process.exit(1);
+  }
 }

@@ -14,6 +14,18 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function serializeError(error) {
+  if (error instanceof Error) {
+    return {
+      errorName: error.name,
+      errorMessage: error.message,
+      stack: error.stack,
+    };
+  }
+
+  return { errorMessage: String(error) };
+}
+
 async function assertOk(pathname) {
   const response = await fetch(`${baseUrl}${pathname}`);
   if (!response.ok) {
@@ -44,14 +56,21 @@ async function waitForReady() {
   throw new Error(`/ready did not become healthy within ${readyTimeoutMs}ms (last status ${lastStatus})`);
 }
 
-const home = await assertOk('/');
-for (const header of requiredHeaders) {
-  if (!home.headers.get(header)) {
-    throw new Error(`Missing required header: ${header}`);
+async function main() {
+  const home = await assertOk('/');
+  for (const header of requiredHeaders) {
+    if (!home.headers.get(header)) {
+      throw new Error(`Missing required header: ${header}`);
+    }
   }
+
+  await assertOk('/health');
+  await waitForReady();
+
+  console.log(`Deployment verification passed for ${baseUrl}`);
 }
 
-await assertOk('/health');
-await waitForReady();
-
-console.log(`Deployment verification passed for ${baseUrl}`);
+main().catch((error) => {
+  console.error(JSON.stringify({ level: 'error', message: 'verify_deployment_failure', ...serializeError(error) }));
+  process.exit(1);
+});

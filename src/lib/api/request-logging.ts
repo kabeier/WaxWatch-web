@@ -1,5 +1,6 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { info } from '@/lib/logger';
+import { logServerError } from '@/lib/server-error';
 
 function getRequestId(req: NextApiRequest): string | undefined {
   const requestId = req.headers['x-request-id'];
@@ -43,6 +44,19 @@ export function withApiRequestLogging(handler: NextApiHandler): NextApiHandler {
       });
     });
 
-    return handler(req, res);
+    try {
+      return await handler(req, res);
+    } catch (error) {
+      const requestIdFromErrorLog = logServerError(error, req, 'api_handler_exception');
+
+      if (res.headersSent) {
+        throw error;
+      }
+
+      res.status(500).json({
+        error: 'Internal Server Error',
+        requestId: requestIdFromErrorLog ?? requestId,
+      });
+    }
   };
 }
