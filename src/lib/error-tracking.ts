@@ -3,8 +3,10 @@ import { error as logError } from '@/lib/logger';
 type ServerErrorContext = {
   message?: string;
   path?: string;
+  method?: string;
   status?: number;
   durationMs?: number;
+  [key: string]: unknown;
 };
 
 function buildErrorEvent(error: unknown, scope: 'client' | 'server', requestId?: string) {
@@ -33,6 +35,7 @@ export function captureServerError(
     message: context.message ?? 'server_error_event',
     ...event,
     path: context.path,
+    method: context.method,
     status: context.status,
     durationMs: context.durationMs,
   });
