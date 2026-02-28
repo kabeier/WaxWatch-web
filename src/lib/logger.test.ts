@@ -35,7 +35,7 @@ describe('logger', () => {
         password: 'p@ssword',
         profile: {
           token: 'nested-token',
-          nonSecret: 'safe',
+          displayName: 'safe',
         },
       },
       setCookie: {
@@ -57,8 +57,61 @@ describe('logger', () => {
     const body = payload.body as Record<string, unknown>;
     expect(body.password).toBe('[REDACTED]');
     expect((body.profile as Record<string, unknown>).token).toBe('[REDACTED]');
-    expect((body.profile as Record<string, unknown>).nonSecret).toBe('safe');
+    expect((body.profile as Record<string, unknown>).displayName).toBe('safe');
 
-    expect((payload.setCookie as Record<string, unknown>)['set-cookie']).toBe('[REDACTED]');
+    expect(payload.setCookie).toBe('[REDACTED]');
+  });
+
+  it('redacts sensitive key variants based on normalized pattern matching', () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const logger = createLogger('debug');
+
+    logger.info({
+      message: 'variant_redaction',
+      access_token: 'first',
+      'refresh-token': 'second',
+      accessToken: 'third',
+      api_key: 'fourth',
+      apikey: 'fifth',
+      nested: {
+        sessionSecret: 'hidden',
+        userPassword: 'hidden',
+        headers: {
+          AuthorizationHeader: 'hidden',
+        },
+      },
+      context: {
+        requestId: 'req-123',
+        accountName: 'safe-value',
+      },
+      metrics: {
+        tokenCount: 3,
+        cookieConsent: true,
+        nonSecret: 'visible',
+      },
+    });
+
+    const output = consoleSpy.mock.calls[0][0] as string;
+    const payload = JSON.parse(output) as Record<string, unknown>;
+
+    expect(payload.access_token).toBe('[REDACTED]');
+    expect(payload['refresh-token']).toBe('[REDACTED]');
+    expect(payload.accessToken).toBe('[REDACTED]');
+    expect(payload.api_key).toBe('[REDACTED]');
+    expect(payload.apikey).toBe('[REDACTED]');
+
+    const nested = payload.nested as Record<string, unknown>;
+    expect(nested.sessionSecret).toBe('[REDACTED]');
+    expect(nested.userPassword).toBe('[REDACTED]');
+    expect((nested.headers as Record<string, unknown>).AuthorizationHeader).toBe('[REDACTED]');
+
+    const context = payload.context as Record<string, unknown>;
+    expect(context.requestId).toBe('req-123');
+    expect(context.accountName).toBe('safe-value');
+
+    const metrics = payload.metrics as Record<string, unknown>;
+    expect(metrics.tokenCount).toBe(3);
+    expect(metrics.cookieConsent).toBe(true);
+    expect(metrics.nonSecret).toBe('visible');
   });
 });
