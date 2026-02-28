@@ -32,6 +32,9 @@ Validation runs before build/start and fails fast if env values are missing/malf
 - `npm run build` - production build (with env validation)
 - `npm run start` - starts standalone server wrapper with graceful shutdown
 - `npm run test:coverage` - unit tests + coverage thresholds
+- `npm run format:check` - verifies Prettier formatting
+- `npm run format:check:changed` - checks formatting for changed files in PR CI
+- `npm run test:contract` - enforces test updates when production code changes in PRs
 - `npm run a11y:smoke` - accessibility smoke checks
 - `npm run bundle:check` - bundle-size budget enforcement
 - `npm run verify:deployment` - checks required response headers and health endpoints
@@ -53,7 +56,9 @@ Validation runs before build/start and fails fast if env values are missing/malf
 ## CI/CD Production Gates
 
 CI enforces:
-- typecheck + lint
+
+- typecheck + lint + format checks
+- PR test-update contract for production code changes
 - coverage thresholds
 - a11y smoke test
 - build + bundle budget
@@ -62,6 +67,7 @@ CI enforces:
 ## Release Checklist (Template Cleanup)
 
 Before each release:
+
 1. Confirm **WaxWatch** naming consistency (repo/docs/UI).
 2. Remove leftover template placeholders and references.
 3. Verify `.env.example` matches runtime contract.

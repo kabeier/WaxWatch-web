@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Use Node
         uses: actions/setup-node@v4
@@ -44,8 +46,16 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Format check (PR changed files)
+        if: github.event_name == 'pull_request'
+        run: npm run format:check:changed
+
       - name: Lint
         run: npm run lint
+
+      - name: Test change contract (PR only)
+        if: github.event_name == 'pull_request'
+        run: npm run test:contract
 
       - name: Unit tests + coverage gates
         env:
