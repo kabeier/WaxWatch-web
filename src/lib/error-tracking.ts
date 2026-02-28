@@ -9,6 +9,8 @@ type ServerErrorContext = {
   [key: string]: unknown;
 };
 
+const SERVER_ERROR_EVENT_KEYS = new Set(['scope', 'requestId', 'name', 'errorMessage', 'stack']);
+
 function buildErrorEvent(error: unknown, scope: 'client' | 'server', requestId?: string) {
   const err = error instanceof Error ? error : new Error(String(error));
   return {
@@ -18,6 +20,12 @@ function buildErrorEvent(error: unknown, scope: 'client' | 'server', requestId?:
     errorMessage: err.message,
     stack: err.stack,
   };
+}
+
+function stripReservedEventKeys(context: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(context).filter(([key]) => !SERVER_ERROR_EVENT_KEYS.has(key))
+  );
 }
 
 export function captureClientError(capturedError: unknown): void {
@@ -30,13 +38,25 @@ export function captureServerError(
   requestId?: string,
   context: ServerErrorContext = {}
 ): void {
+  const {
+    message,
+    path,
+    method,
+    status,
+    durationMs,
+    ...additionalContext
+  } = context;
+
   const event = buildErrorEvent(capturedError, 'server', requestId);
+  const safeAdditionalContext = stripReservedEventKeys(additionalContext);
+
   logError({
-    message: context.message ?? 'server_error_event',
+    message: message ?? 'server_error_event',
     ...event,
-    path: context.path,
-    method: context.method,
-    status: context.status,
-    durationMs: context.durationMs,
+    path,
+    method,
+    status,
+    durationMs,
+    ...safeAdditionalContext,
   });
 }
