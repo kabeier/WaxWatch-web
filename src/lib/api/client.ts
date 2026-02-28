@@ -1,5 +1,6 @@
-import { toApiError, tryParseErrorEnvelope } from './errors';
-import { error as logError, warn } from '../logger';
+import { isApiError, toApiError, tryParseErrorEnvelope } from './errors';
+import { parseRateLimitMeta } from './rateLimit';
+import { error as logError, info, warn } from '../logger';
 
 export type JwtProvider = () => string | null | undefined | Promise<string | null | undefined>;
 
@@ -8,6 +9,7 @@ export type ApiClientOptions = {
   getJwt?: JwtProvider;
   fetchImpl?: typeof fetch;
   defaultHeaders?: HeadersInit;
+  requestId?: string;
 };
 
 export type RequestOptions<TBody> = {
@@ -28,6 +30,18 @@ function buildUrl(baseUrl: string, path: string, query?: URLSearchParams): strin
   return url.toString();
 }
 
+function normalizePath(path: string): string {
+  const strippedPath = path.split('?')[0] ?? path;
+  const withLeadingSlash = strippedPath.startsWith('/') ? strippedPath : `/${strippedPath}`;
+  return withLeadingSlash.replace(/\/+/g, '/');
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException
+    ? error.name === 'AbortError'
+    : error instanceof Error && error.name === 'AbortError';
+}
+
 export function createApiClient(options: ApiClientOptions) {
   const fetchImpl = options.fetchImpl ?? fetch;
 
@@ -37,9 +51,14 @@ export function createApiClient(options: ApiClientOptions) {
     query?: URLSearchParams
   ): Promise<TResponse> {
     const startedAt = Date.now();
+    const normalizedPath = normalizePath(path);
     const url = buildUrl(options.baseUrl, path, query);
     const jwt = await options.getJwt?.();
     const headers = new Headers(options.defaultHeaders);
+
+    if (options.requestId) {
+      headers.set('x-request-id', options.requestId);
+    }
 
     if (requestOptions.body !== undefined) {
       headers.set('Content-Type', 'application/json');
@@ -54,6 +73,15 @@ export function createApiClient(options: ApiClientOptions) {
     }
 
     const method = requestOptions.method ?? 'GET';
+    const outboundRequestId = headers.get('x-request-id') ?? undefined;
+
+    info({
+      message: 'api_request_start',
+      scope: 'api',
+      method,
+      path: normalizedPath,
+      requestId: outboundRequestId
+    });
 
     let response: Response;
     try {
@@ -64,31 +92,64 @@ export function createApiClient(options: ApiClientOptions) {
         signal: requestOptions.signal
       });
     } catch (requestError) {
-      logError({
-        message: 'api_client_transport_error',
+      const transportFailure = {
+        message: 'api_request_failure',
         scope: 'api',
-        path,
+        method,
+        path: normalizedPath,
+        requestId: outboundRequestId,
         durationMs: Date.now() - startedAt,
         errorMessage: requestError instanceof Error ? requestError.message : String(requestError)
-      });
+      };
+      if (isAbortError(requestError) || requestOptions.signal?.aborted) {
+        warn({
+          ...transportFailure,
+          failureKind: 'aborted'
+        });
+      } else {
+        logError(transportFailure);
+      }
       throw requestError;
     }
 
-    const requestId = response.headers.get('x-request-id') ?? undefined;
+    const requestId = response.headers.get('x-request-id') ?? outboundRequestId;
+    const durationMs = Date.now() - startedAt;
 
     if (!response.ok) {
-      warn({
-        message: 'api_client_request_failed',
+      const envelope = await tryParseErrorEnvelope(response);
+      const apiError = toApiError(response, envelope);
+      const rateLimitMeta = parseRateLimitMeta(response.headers, envelope?.error?.details);
+
+      const failureLog = {
+        message: 'api_request_failure',
         scope: 'api',
         requestId,
-        path,
+        method,
+        path: normalizedPath,
         status: response.status,
-        durationMs: Date.now() - startedAt,
-        method
-      });
-      const envelope = await tryParseErrorEnvelope(response);
-      throw toApiError(response, envelope);
+        durationMs,
+        kind: apiError.kind,
+        retryAfterSeconds: rateLimitMeta.retryAfterSeconds
+      };
+
+      if (isApiError(apiError) && apiError.status < 500) {
+        warn(failureLog);
+      } else {
+        logError(failureLog);
+      }
+
+      throw apiError;
     }
+
+    info({
+      message: 'api_request_success',
+      scope: 'api',
+      requestId,
+      method,
+      path: normalizedPath,
+      status: response.status,
+      durationMs
+    });
 
     if (response.status === 204) {
       return undefined as TResponse;
