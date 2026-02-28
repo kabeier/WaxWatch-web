@@ -51,7 +51,7 @@ export function middleware(request: NextRequest) {
     response.headers.set('x-request-id', requestId);
     return response;
   } catch (error) {
-    logServerError(error, request, 'middleware_failure');
+    logServerError(error, request, 'middleware_failure', { requestId });
 
     const response = NextResponse.json({ error: 'Internal Server Error', requestId }, { status: 500 });
     response.headers.set('x-request-id', requestId);

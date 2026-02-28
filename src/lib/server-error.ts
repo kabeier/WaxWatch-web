@@ -29,8 +29,12 @@ function getPath(req: RequestLike): string {
   return req.url.split('?')[0] ?? '/';
 }
 
-export function logServerError(error: unknown, req: RequestLike, message: string): string | undefined {
-  const requestId = getRequestId(req);
+type ServerErrorOptions = {
+  requestId?: string;
+};
+
+export function logServerError(error: unknown, req: RequestLike, message: string, options: ServerErrorOptions = {}): string | undefined {
+  const requestId = options.requestId ?? getRequestId(req);
 
   captureServerError(error, requestId, {
     message,

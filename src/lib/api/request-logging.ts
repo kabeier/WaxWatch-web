@@ -49,12 +49,14 @@ export function withApiRequestLogging(handler: NextApiHandler): NextApiHandler {
     } catch (error) {
       const requestIdFromErrorLog = logServerError(error, req, 'api_handler_exception');
 
-      if (!res.headersSent) {
-        res.status(500).json({
-          error: 'Internal Server Error',
-          requestId: requestIdFromErrorLog ?? requestId,
-        });
+      if (res.headersSent) {
+        throw error;
       }
+
+      res.status(500).json({
+        error: 'Internal Server Error',
+        requestId: requestIdFromErrorLog ?? requestId,
+      });
     }
   };
 }

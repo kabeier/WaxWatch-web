@@ -40,6 +40,7 @@ const child = spawn('node', ['.next/standalone/server.js'], {
 });
 
 let shuttingDown = false;
+let hasFatalRuntimeFailure = false;
 
 function shutdown(signal) {
   if (shuttingDown) return;
@@ -58,11 +59,15 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 process.on('uncaughtException', (error) => {
+  hasFatalRuntimeFailure = true;
+  process.exitCode = 1;
   log('error', 'startup_runtime_failure', serializeError(error));
   shutdown('SIGTERM');
 });
 
 process.on('unhandledRejection', (reason) => {
+  hasFatalRuntimeFailure = true;
+  process.exitCode = 1;
   log('error', 'startup_runtime_failure', serializeError(reason));
   shutdown('SIGTERM');
 });
@@ -73,9 +78,15 @@ child.on('error', (error) => {
 });
 
 child.on('exit', (code, signal) => {
-  if (signal) {
-    process.kill(process.pid, signal);
+  if (hasFatalRuntimeFailure) {
+    process.exit(process.exitCode ?? 1);
     return;
   }
+
+  if (signal) {
+    process.exit(0);
+    return;
+  }
+
   process.exit(code ?? 0);
 });
