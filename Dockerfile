@@ -17,7 +17,7 @@ ENV HOSTNAME=0.0.0.0
 
 RUN addgroup -S nextjs && adduser -S nextjs -G nextjs
 
-COPY --from=build --chown=nextjs:nextjs /app/.next/standalone ./
+COPY --from=build --chown=nextjs:nextjs /app/.next/standalone ./.next/standalone
 COPY --from=build --chown=nextjs:nextjs /app/.next/static ./.next/static
 COPY --from=build --chown=nextjs:nextjs /app/public ./public
 COPY --from=build --chown=nextjs:nextjs /app/scripts/start-standalone.mjs ./scripts/start-standalone.mjs
