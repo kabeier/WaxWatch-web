@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { info } from '@/lib/logger';
+import { logServerError } from '@/lib/server-error';
 
 const SAFE_FORWARDING_HEADERS = ['x-forwarded-host', 'x-forwarded-port', 'x-forwarded-proto'] as const;
 
@@ -23,30 +24,39 @@ function getSafeForwardingHeaders(request: NextRequest): Record<string, string> 
 }
 
 export function middleware(request: NextRequest) {
-  const requestHeaders = new Headers(request.headers);
-  const requestId = requestHeaders.get('x-request-id') ?? createRequestId();
-  const userAgent = request.headers.get('user-agent') ?? undefined;
+  const requestId = request.headers.get('x-request-id') ?? createRequestId();
 
-  requestHeaders.set('x-request-id', requestId);
+  try {
+    const requestHeaders = new Headers(request.headers);
+    const userAgent = request.headers.get('user-agent') ?? undefined;
 
-  info({
-    message: 'request_start',
-    requestId,
-    method: request.method,
-    pathname: request.nextUrl.pathname,
-    source: 'ingress',
-    userAgent,
-    forwarding: getSafeForwardingHeaders(request),
-  });
+    requestHeaders.set('x-request-id', requestId);
 
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+    info({
+      message: 'request_start',
+      requestId,
+      method: request.method,
+      pathname: request.nextUrl.pathname,
+      source: 'ingress',
+      userAgent,
+      forwarding: getSafeForwardingHeaders(request),
+    });
 
-  response.headers.set('x-request-id', requestId);
-  return response;
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+
+    response.headers.set('x-request-id', requestId);
+    return response;
+  } catch (error) {
+    logServerError(error, request, 'middleware_failure');
+
+    const response = NextResponse.json({ error: 'Internal Server Error', requestId }, { status: 500 });
+    response.headers.set('x-request-id', requestId);
+    return response;
+  }
 }
 
 export const config = {
