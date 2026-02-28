@@ -30,13 +30,23 @@ export function captureServerError(
   requestId?: string,
   context: ServerErrorContext = {}
 ): void {
+  const {
+    message,
+    path,
+    method,
+    status,
+    durationMs,
+    ...additionalContext
+  } = context;
+
   const event = buildErrorEvent(capturedError, 'server', requestId);
   logError({
-    message: context.message ?? 'server_error_event',
+    message: message ?? 'server_error_event',
     ...event,
-    path: context.path,
-    method: context.method,
-    status: context.status,
-    durationMs: context.durationMs,
+    path,
+    method,
+    status,
+    durationMs,
+    ...additionalContext,
   });
 }
