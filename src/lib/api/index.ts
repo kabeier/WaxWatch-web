@@ -13,3 +13,5 @@ export * from './errors';
 export * from './pagination';
 export * from './rateLimit';
 export * from './domains/types';
+
+export * from './request-logging';
