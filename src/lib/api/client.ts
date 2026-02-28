@@ -1,4 +1,5 @@
 import { toApiError, tryParseErrorEnvelope } from './errors';
+import { error as logError, warn } from '../logger';
 
 export type JwtProvider = () => string | null | undefined | Promise<string | null | undefined>;
 
@@ -35,6 +36,8 @@ export function createApiClient(options: ApiClientOptions) {
     requestOptions: RequestOptions<TBody> = {},
     query?: URLSearchParams
   ): Promise<TResponse> {
+    const startedAt = Date.now();
+    const url = buildUrl(options.baseUrl, path, query);
     const jwt = await options.getJwt?.();
     const headers = new Headers(options.defaultHeaders);
 
@@ -50,14 +53,39 @@ export function createApiClient(options: ApiClientOptions) {
       new Headers(requestOptions.headers).forEach((value, key) => headers.set(key, value));
     }
 
-    const response = await fetchImpl(buildUrl(options.baseUrl, path, query), {
-      method: requestOptions.method ?? 'GET',
-      body: requestOptions.body !== undefined ? JSON.stringify(requestOptions.body) : undefined,
-      headers,
-      signal: requestOptions.signal
-    });
+    const method = requestOptions.method ?? 'GET';
+
+    let response: Response;
+    try {
+      response = await fetchImpl(url, {
+        method,
+        body: requestOptions.body !== undefined ? JSON.stringify(requestOptions.body) : undefined,
+        headers,
+        signal: requestOptions.signal
+      });
+    } catch (requestError) {
+      logError({
+        message: 'api_client_transport_error',
+        scope: 'api',
+        path,
+        durationMs: Date.now() - startedAt,
+        errorMessage: requestError instanceof Error ? requestError.message : String(requestError)
+      });
+      throw requestError;
+    }
+
+    const requestId = response.headers.get('x-request-id') ?? undefined;
 
     if (!response.ok) {
+      warn({
+        message: 'api_client_request_failed',
+        scope: 'api',
+        requestId,
+        path,
+        status: response.status,
+        durationMs: Date.now() - startedAt,
+        method
+      });
       const envelope = await tryParseErrorEnvelope(response);
       throw toApiError(response, envelope);
     }
