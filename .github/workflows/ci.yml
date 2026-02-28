@@ -52,6 +52,8 @@ jobs:
 
       - name: Lint
         run: npm run lint
+      - name: Env template contract check
+        run: npm run env:check:template
 
       - name: Test change contract (PR only)
         if: github.event_name == 'pull_request'
