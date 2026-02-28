@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createApiClient } from './client';
 import { toApiError } from './errors';
@@ -6,6 +6,10 @@ import { appendCursorPagination, appendLimitOffset } from './pagination';
 import { parseRetryAfter, parseRetryAfterFromErrorDetails } from './rateLimit';
 
 describe('api client', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('adds bearer auth header when jwt is provided', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
@@ -47,6 +51,36 @@ describe('api client', () => {
     await client.request('/markets');
 
     expect(fetchMock.mock.calls[0][0]).toBe('https://api.example.com/v1/markets');
+  });
+
+  it('logs parse failures as request failures and skips success logs', async () => {
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response('not-json', {
+        status: 200,
+        headers: {
+          'content-type': 'application/json'
+        }
+      })
+    );
+
+    const client = createApiClient({
+      baseUrl: 'https://api.example.com',
+      fetchImpl: fetchMock
+    });
+
+    await expect(client.request('/markets')).rejects.toBeInstanceOf(Error);
+
+    const infoEvents = consoleLogSpy.mock.calls
+      .map(([entry]) => JSON.parse(String(entry)) as { message?: string })
+      .filter((entry) => entry.message === 'api_request_success');
+    expect(infoEvents).toHaveLength(0);
+
+    const parseFailureEvents = consoleErrorSpy.mock.calls
+      .map(([entry]) => JSON.parse(String(entry)) as { message?: string; failureKind?: string })
+      .filter((entry) => entry.message === 'api_request_failure' && entry.failureKind === 'response_parse_error');
+    expect(parseFailureEvents).toHaveLength(1);
   });
 });
 
