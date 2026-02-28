@@ -20,6 +20,8 @@ RUN addgroup -S nextjs && adduser -S nextjs -G nextjs
 COPY --from=build --chown=nextjs:nextjs /app/.next/standalone ./
 COPY --from=build --chown=nextjs:nextjs /app/.next/static ./.next/static
 COPY --from=build --chown=nextjs:nextjs /app/public ./public
+COPY --from=build --chown=nextjs:nextjs /app/scripts/start-standalone.mjs ./scripts/start-standalone.mjs
+COPY --from=build --chown=nextjs:nextjs /app/scripts/env-contract.mjs ./scripts/env-contract.mjs
 
 USER nextjs
 
@@ -27,4 +29,4 @@ EXPOSE 4173
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:4173/health').then((r)=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 
-CMD ["node", "server.js"]
+CMD ["node", "scripts/start-standalone.mjs"]
