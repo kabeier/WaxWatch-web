@@ -1,20 +1,8 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { withApiRequestLogging } from './request-logging';
-
-const { infoMock, logServerErrorMock } = vi.hoisted(() => ({
-  infoMock: vi.fn(),
-  logServerErrorMock: vi.fn(),
-}));
-
-vi.mock('@/lib/logger', () => ({
-  info: infoMock,
-}));
-
-vi.mock('@/lib/server-error', () => ({
-  logServerError: logServerErrorMock,
-}));
+let withApiRequestLogging: typeof import('./request-logging').withApiRequestLogging;
+const originalLogLevel = process.env.LOG_LEVEL;
 
 type MockResponse = {
   headersSent: boolean;
@@ -67,50 +55,97 @@ function createMockRequest(headers: Record<string, string | string[] | undefined
 }
 
 describe('withApiRequestLogging', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  beforeEach(async () => {
+    vi.resetModules();
+    process.env.LOG_LEVEL = 'info';
+    ({ withApiRequestLogging } = await import('./request-logging'));
+
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'));
   });
 
-  it('uses existing x-request-id for response header and request logs', async () => {
-    const requestId = 'existing-request-id';
-    const req = createMockRequest({ 'x-request-id': requestId });
+  afterEach(() => {
+    process.env.LOG_LEVEL = originalLogLevel;
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('emits request_start and request_end events with canonical schema fields', async () => {
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const req = createMockRequest({ 'x-request-id': 'req-start-end' });
     const res = createMockResponse();
 
     const handler: NextApiHandler = vi.fn(async () => {
-      // no-op
+      vi.advanceTimersByTime(37);
+      res.status(204);
     });
 
     await withApiRequestLogging(handler)(req, res as unknown as NextApiResponse);
     res.emitFinish();
 
-    expect(res.getHeader('x-request-id')).toBe(requestId);
-    expect(infoMock).toHaveBeenCalledWith(expect.objectContaining({ message: 'request_start', requestId }));
-    expect(infoMock).toHaveBeenCalledWith(expect.objectContaining({ message: 'request_end', requestId }));
+    const infoEvents = consoleLogSpy.mock.calls.map(([line]) => JSON.parse(String(line)) as Record<string, unknown>);
+    const requestStart = infoEvents.find((entry) => entry.message === 'request_start');
+    const requestEnd = infoEvents.find((entry) => entry.message === 'request_end');
+
+    expect(requestStart).toEqual(
+      expect.objectContaining({
+        requestId: 'req-start-end',
+        method: 'GET',
+        path: '/api/markets',
+      })
+    );
+
+    expect(requestEnd).toEqual(
+      expect.objectContaining({
+        requestId: 'req-start-end',
+        method: 'GET',
+        path: '/api/markets',
+        status: 204,
+        durationMs: 37,
+      })
+    );
   });
 
-  it('generates x-request-id when missing and reuses it in error response body', async () => {
-    const req = createMockRequest({});
+  it('emits a single server error event and returns 500 with requestId when handler throws', async () => {
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const req = createMockRequest({ 'x-request-id': 'req-error-path' });
     const res = createMockResponse();
-    const handlerError = new Error('boom');
 
     const handler: NextApiHandler = vi.fn(async () => {
-      throw handlerError;
+      throw new Error('boom');
     });
 
-    logServerErrorMock.mockImplementation((_error, _req, _message, options) => options.requestId);
-
     await withApiRequestLogging(handler)(req, res as unknown as NextApiResponse);
+    vi.advanceTimersByTime(12);
     res.emitFinish();
 
-    const requestId = res.getHeader('x-request-id');
+    const errorEvents = consoleErrorSpy.mock.calls.map(([line]) => JSON.parse(String(line)) as Record<string, unknown>);
+    const serverErrorEvents = errorEvents.filter((entry) => entry.message === 'api_handler_exception');
 
-    expect(requestId).toEqual(expect.any(String));
-    expect(infoMock).toHaveBeenCalledWith(expect.objectContaining({ message: 'request_start', requestId }));
-    expect(infoMock).toHaveBeenCalledWith(expect.objectContaining({ message: 'request_end', requestId }));
-    expect(logServerErrorMock).toHaveBeenCalledWith(handlerError, req, 'api_handler_exception', { requestId });
+    expect(serverErrorEvents).toHaveLength(1);
+    expect(serverErrorEvents[0]).toEqual(
+      expect.objectContaining({
+        scope: 'server',
+        requestId: 'req-error-path',
+        method: 'GET',
+        path: '/api/markets',
+      })
+    );
+
+    expect(res.statusCode).toBe(500);
     expect(res.jsonPayload).toEqual({
       error: 'Internal Server Error',
-      requestId,
+      requestId: 'req-error-path',
     });
+
+    const infoEvents = consoleLogSpy.mock.calls.map(([line]) => JSON.parse(String(line)) as Record<string, unknown>);
+    const requestEnd = infoEvents.find((entry) => entry.message === 'request_end');
+    expect(requestEnd).toEqual(
+      expect.objectContaining({
+        requestId: 'req-error-path',
+        status: 500,
+      })
+    );
   });
 });
