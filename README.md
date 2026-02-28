@@ -24,7 +24,7 @@ cp .env.example .env
 npm run build
 ```
 
-Validation runs before build/start and fails fast if env values are missing/malformed.
+Validation runs before build/start and fails fast if env values are missing/malformed. Template parity is enforced by `npm run env:check:template`, which keeps `.env.example` aligned with the runtime contract in `src/config/env.ts`.
 
 ## Core Scripts
 
@@ -61,6 +61,7 @@ CI enforces:
 - PR test-update contract for production code changes
 - coverage thresholds
 - a11y smoke test
+- env template parity check (`.env.example` vs runtime contract)
 - build + bundle budget
 - deployment verification (`headers + /health + /ready`)
 
@@ -70,6 +71,6 @@ Before each release:
 
 1. Confirm **WaxWatch** naming consistency (repo/docs/UI).
 2. Remove leftover template placeholders and references.
-3. Verify `.env.example` matches runtime contract.
+3. Run `npm run env:check:template` to verify `.env.example` matches runtime contract.
 4. Run `npm run ci:prod-gates`.
 5. Confirm deployment runbook updates if architecture changed.

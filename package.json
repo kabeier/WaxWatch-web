@@ -28,7 +28,8 @@
     "release:checklist": "node scripts/release-checklist.mjs",
     "a11y:smoke:run": "playwright test e2e/a11y.spec.ts",
     "test:contract": "node scripts/require-test-updates.mjs",
-    "format:check:changed": "node scripts/check-formatting-changed.mjs"
+    "format:check:changed": "node scripts/check-formatting-changed.mjs",
+    "env:check:template": "node scripts/check-env-template-sync.mjs"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md,yml,yaml,css}": [
