@@ -54,7 +54,7 @@ describe("SseController", () => {
 
   it("connects with bearer auth and processes notification events", async () => {
     fetchMock.mockResolvedValueOnce(
-      createSseResponse("event: notification\ndata: {\"ok\":true}\n\n"),
+      createSseResponse('event: notification\ndata: {"ok":true}\n\n'),
     );
 
     const queryClient = new QueryClient();
