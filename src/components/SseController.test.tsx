@@ -120,4 +120,22 @@ describe("SseController", () => {
     await vi.advanceTimersByTimeAsync(35_000);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it("stops reconnecting when auth expires after disconnect", async () => {
+    vi.useFakeTimers();
+    fetchMock.mockResolvedValueOnce(createSseResponse("event: heartbeat\n\n"));
+
+    const tokenMock = vi.mocked(getSupabaseAccessToken);
+    tokenMock.mockReturnValueOnce("jwt-token").mockReturnValueOnce(null);
+
+    const queryClient = new QueryClient();
+    renderWithClient(queryClient);
+
+    await vi.runAllTicks();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(35_000);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(handleApiAuthorizationFailure).not.toHaveBeenCalled();
+  });
 });
