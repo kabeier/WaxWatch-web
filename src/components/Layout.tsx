@@ -38,7 +38,7 @@ const authNoticeMessages: Record<string, string> = {
 
 export default function Layout({ children }: LayoutProps) {
   const searchParams = useSearchParams();
-  const reason = searchParams.get("reason") ?? "";
+  const reason = searchParams?.get("reason") ?? "";
   const notice = authNoticeMessages[reason];
 
   return (
