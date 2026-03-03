@@ -2,6 +2,7 @@
 
 import AuthSessionProvider from "@/components/AuthSessionProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import QueryProvider from "@/components/query/QueryProvider";
 
 type AppProvidersProps = {
   children: React.ReactNode;
@@ -10,7 +11,9 @@ type AppProvidersProps = {
 export default function AppProviders({ children }: AppProvidersProps) {
   return (
     <ErrorBoundary>
-      <AuthSessionProvider>{children}</AuthSessionProvider>
+      <AuthSessionProvider>
+        <QueryProvider>{children}</QueryProvider>
+      </AuthSessionProvider>
     </ErrorBoundary>
   );
 }

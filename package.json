@@ -48,7 +48,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^6.1.1",
-    "client-only": "file:vendor/client-only"
+    "client-only": "file:vendor/client-only",
+    "@tanstack/react-query": "file:vendor/tanstack-react-query"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.4.1",
