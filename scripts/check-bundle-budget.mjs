@@ -42,6 +42,10 @@ function sumManifestFiles(files) {
   return total;
 }
 
+function isBudgetRoute(route) {
+  return route.startsWith("/") && !route.startsWith("/_") && !route.startsWith("/api");
+}
+
 if (!existsSync(staticDir)) {
   throw new Error(
     `Missing build output at ${staticDir}. Run \`npm run build\` before \`npm run bundle:check\`.`,
@@ -58,10 +62,16 @@ const sharedFiles = new Set([
 
 const routeCandidates = [];
 for (const [route, files] of Object.entries(appBuildManifest?.pages ?? {})) {
+  if (!isBudgetRoute(route)) {
+    continue;
+  }
   routeCandidates.push({ route, files: [...sharedFiles, ...files] });
 }
 
 for (const [route, files] of Object.entries(buildManifest?.pages ?? {})) {
+  if (!isBudgetRoute(route)) {
+    continue;
+  }
   routeCandidates.push({ route, files: [...sharedFiles, ...files] });
 }
 
