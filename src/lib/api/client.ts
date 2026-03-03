@@ -1,6 +1,12 @@
 import { isApiError, toApiError, tryParseErrorEnvelope } from './errors';
 import { parseRateLimitMeta } from './rateLimit';
 import { error as logError, info, warn } from '../logger';
+import {
+  clearAuthSession,
+  completeAuthEvent,
+  getSupabaseAccessToken,
+  handleApiAuthorizationFailure
+} from '../auth-session';
 
 export type JwtProvider = () => string | null | undefined | Promise<string | null | undefined>;
 
@@ -44,6 +50,7 @@ function isAbortError(error: unknown): boolean {
 
 export function createApiClient(options: ApiClientOptions) {
   const fetchImpl = options.fetchImpl ?? fetch;
+  const jwtProvider = options.getJwt ?? getSupabaseAccessToken;
 
   async function request<TResponse, TBody = unknown>(
     path: string,
@@ -53,7 +60,7 @@ export function createApiClient(options: ApiClientOptions) {
     const startedAt = Date.now();
     const normalizedPath = normalizePath(path);
     const url = buildUrl(options.baseUrl, path, query);
-    const jwt = await options.getJwt?.();
+    const jwt = await jwtProvider?.();
     const headers = new Headers(options.defaultHeaders);
 
     if (options.requestId) {
@@ -116,6 +123,13 @@ export function createApiClient(options: ApiClientOptions) {
     const durationMs = Date.now() - startedAt;
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        handleApiAuthorizationFailure({
+          path: normalizedPath,
+          status: response.status
+        });
+      }
+
       const envelope = await tryParseErrorEnvelope(response);
       const apiError = toApiError(response, envelope);
       const rateLimitMeta = parseRateLimitMeta(response.headers, envelope?.error?.details);
@@ -139,6 +153,31 @@ export function createApiClient(options: ApiClientOptions) {
       }
 
       throw apiError;
+    }
+
+    if (normalizedPath === '/me/logout' && method === 'POST') {
+      info({
+        message: 'auth_signed_out',
+        scope: 'auth',
+        path: normalizedPath,
+        status: response.status
+      });
+      clearAuthSession();
+      completeAuthEvent('signed-out');
+    }
+
+    if (
+      method === 'DELETE' &&
+      (normalizedPath === '/me' || normalizedPath === '/me/hard-delete')
+    ) {
+      info({
+        message: 'auth_account_removed',
+        scope: 'auth',
+        path: normalizedPath,
+        status: response.status
+      });
+      clearAuthSession();
+      completeAuthEvent('account-removed');
     }
 
     if (response.status === 204) {

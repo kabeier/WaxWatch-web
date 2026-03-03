@@ -3,14 +3,18 @@ import {
   ACCOUNT_REMOVED_ROUTE,
   SIGNED_OUT_ROUTE,
   clearAuthSession,
-  installAuthSessionController,
+  completeAuthEvent,
+  getSupabaseAccessToken,
+  handleApiAuthorizationFailure,
   resetAuthRedirectHandler,
+  resetAuthSessionState,
   setAuthRedirectHandler,
 } from "./auth-session";
 
-describe("auth session controller", () => {
+describe("auth session helpers", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    resetAuthSessionState();
   });
 
   afterEach(() => {
@@ -18,80 +22,57 @@ describe("auth session controller", () => {
     vi.restoreAllMocks();
   });
 
-  test("injects bearer token on /api/** requests", async () => {
-    window.localStorage.setItem("waxwatch.auth.jwt", "abc123");
-    const fetchSpy = vi
-      .spyOn(window, "fetch")
-      .mockResolvedValue(new Response(null, { status: 200 }));
+  test("reads supabase access token from persisted session", () => {
+    window.localStorage.setItem(
+      "waxwatch.auth.session",
+      JSON.stringify({ currentSession: { access_token: "abc123" } }),
+    );
 
-    const controller = installAuthSessionController();
-
-    await window.fetch("/api/projects");
-
-    const [, init] = fetchSpy.mock.calls[0];
-    const headers = new Headers(init?.headers);
-
-    expect(headers.get("Authorization")).toBe("Bearer abc123");
-    controller.teardown();
+    expect(getSupabaseAccessToken()).toBe("abc123");
   });
 
-  test("clears local auth and redirects on logout", async () => {
-    const redirectSpy = vi.fn();
-    setAuthRedirectHandler(redirectSpy);
-    window.localStorage.setItem("waxwatch.auth.jwt", "abc123");
-    window.localStorage.setItem("waxwatch.auth.session", "session");
-    vi.spyOn(window, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
+  test("returns null for invalid persisted session", () => {
+    window.localStorage.setItem("waxwatch.auth.session", "not-json");
 
-    const controller = installAuthSessionController();
-
-    await window.fetch("/api/me/logout", { method: "POST" });
-
-    expect(window.localStorage.getItem("waxwatch.auth.jwt")).toBeNull();
-    expect(window.localStorage.getItem("waxwatch.auth.session")).toBeNull();
-    expect(redirectSpy).toHaveBeenCalledWith(`${SIGNED_OUT_ROUTE}?reason=signed-out`);
-
-    controller.teardown();
+    expect(getSupabaseAccessToken()).toBeNull();
   });
 
-  test("redirects to account removed route after account delete", async () => {
-    const redirectSpy = vi.fn();
-    setAuthRedirectHandler(redirectSpy);
-    window.localStorage.setItem("waxwatch.auth.jwt", "abc123");
-    vi.spyOn(window, "fetch").mockResolvedValue(new Response(null, { status: 200 }));
-
-    const controller = installAuthSessionController();
-
-    await window.fetch("/api/me/hard-delete", { method: "DELETE" });
-
-    expect(window.localStorage.getItem("waxwatch.auth.jwt")).toBeNull();
-    expect(redirectSpy).toHaveBeenCalledWith(ACCOUNT_REMOVED_ROUTE);
-
-    controller.teardown();
-  });
-
-  test("401 responses force re-auth flow", async () => {
-    const redirectSpy = vi.fn();
-    setAuthRedirectHandler(redirectSpy);
-    window.localStorage.setItem("waxwatch.auth.jwt", "abc123");
-    vi.spyOn(window, "fetch").mockResolvedValue(new Response(null, { status: 401 }));
-
-    const controller = installAuthSessionController();
-
-    await window.fetch("/api/me");
-
-    expect(window.localStorage.getItem("waxwatch.auth.jwt")).toBeNull();
-    expect(redirectSpy).toHaveBeenCalledWith(`${SIGNED_OUT_ROUTE}?reason=reauth-required`);
-
-    controller.teardown();
-  });
-
-  test("clearAuthSession removes persisted keys", () => {
-    window.localStorage.setItem("waxwatch.auth.jwt", "abc123");
-    window.localStorage.setItem("waxwatch.auth.session", "session");
+  test("clearAuthSession removes persisted auth keys", () => {
+    window.localStorage.setItem("waxwatch.auth.jwt", "legacy-token");
+    window.localStorage.setItem("waxwatch.auth.session", JSON.stringify({ access_token: "abc123" }));
 
     clearAuthSession();
 
     expect(window.localStorage.getItem("waxwatch.auth.jwt")).toBeNull();
     expect(window.localStorage.getItem("waxwatch.auth.session")).toBeNull();
+  });
+
+  test("redirects signed-out events", () => {
+    const redirectSpy = vi.fn();
+    setAuthRedirectHandler(redirectSpy);
+
+    completeAuthEvent("signed-out");
+
+    expect(redirectSpy).toHaveBeenCalledWith(`${SIGNED_OUT_ROUTE}?reason=signed-out`);
+  });
+
+  test("redirects account-removed events", () => {
+    const redirectSpy = vi.fn();
+    setAuthRedirectHandler(redirectSpy);
+
+    completeAuthEvent("account-removed");
+
+    expect(redirectSpy).toHaveBeenCalledWith(ACCOUNT_REMOVED_ROUTE);
+  });
+
+  test("401/403 handler clears session and redirects to reauth flow", () => {
+    const redirectSpy = vi.fn();
+    setAuthRedirectHandler(redirectSpy);
+    window.localStorage.setItem("waxwatch.auth.session", JSON.stringify({ access_token: "abc123" }));
+
+    handleApiAuthorizationFailure({ path: "/me", status: 401 });
+
+    expect(window.localStorage.getItem("waxwatch.auth.session")).toBeNull();
+    expect(redirectSpy).toHaveBeenCalledWith(`${SIGNED_OUT_ROUTE}?reason=reauth-required`);
   });
 });

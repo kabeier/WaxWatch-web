@@ -1,25 +1,52 @@
 import { info, warn } from './logger';
 
-const AUTH_TOKEN_KEY = "waxwatch.auth.jwt";
-const AUTH_SESSION_KEY = "waxwatch.auth.session";
+const AUTH_SESSION_KEY = 'waxwatch.auth.session';
+const LEGACY_AUTH_TOKEN_KEY = 'waxwatch.auth.jwt';
 
-export const SIGNED_OUT_ROUTE = "/signed-out";
-export const ACCOUNT_REMOVED_ROUTE = "/account-removed";
+export const SIGNED_OUT_ROUTE = '/signed-out';
+export const ACCOUNT_REMOVED_ROUTE = '/account-removed';
 
-export type AuthEvent = "signed-out" | "account-removed" | "reauth-required";
-
-type AuthController = {
-  teardown: () => void;
-};
+export type AuthEvent = 'signed-out' | 'account-removed' | 'reauth-required';
 
 type RedirectHandler = (to: string) => void;
 
 let redirectInProgress = false;
 let redirectHandler: RedirectHandler = (to) => {
-  if (typeof window !== "undefined") {
+  if (typeof window !== 'undefined') {
     window.location.assign(to);
   }
 };
+
+type SessionLike = {
+  access_token?: unknown;
+  session?: {
+    access_token?: unknown;
+  };
+  currentSession?: {
+    access_token?: unknown;
+  };
+};
+
+function readPersistedSession(): SessionLike | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const rawSession = window.localStorage.getItem(AUTH_SESSION_KEY);
+  if (!rawSession) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawSession) as SessionLike;
+  } catch {
+    warn({
+      message: 'auth_session_parse_failed',
+      scope: 'auth'
+    });
+    return null;
+  }
+}
 
 export function setAuthRedirectHandler(handler: RedirectHandler) {
   redirectHandler = handler;
@@ -27,71 +54,45 @@ export function setAuthRedirectHandler(handler: RedirectHandler) {
 
 export function resetAuthRedirectHandler() {
   redirectHandler = (to) => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       window.location.assign(to);
     }
   };
 }
 
-export function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
+export function getSupabaseAccessToken(): string | null {
+  const session = readPersistedSession();
+  if (!session) {
+    return null;
+  }
 
-  return window.localStorage.getItem(AUTH_TOKEN_KEY);
+  const token =
+    session.access_token ??
+    session.session?.access_token ??
+    session.currentSession?.access_token;
+
+  return typeof token === 'string' && token.length > 0 ? token : null;
 }
 
 export function clearAuthSession() {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
 
-  window.localStorage.removeItem(AUTH_TOKEN_KEY);
   window.localStorage.removeItem(AUTH_SESSION_KEY);
+  window.localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY);
 
   info({
     message: 'auth_session_cleared',
-    scope: 'auth',
+    scope: 'auth'
   });
 }
 
-function isApiRequest(input: RequestInfo | URL): boolean {
-  if (typeof window === "undefined") return false;
-
-  const requestUrl =
-    typeof input === "string" || input instanceof URL
-      ? new URL(input.toString(), window.location.origin)
-      : new URL(input.url, window.location.origin);
-
-  return requestUrl.pathname.startsWith("/api/");
-}
-
-function getRequestPathname(input: RequestInfo | URL): string {
-  if (typeof window === "undefined") return "";
-
-  const requestUrl =
-    typeof input === "string" || input instanceof URL
-      ? new URL(input.toString(), window.location.origin)
-      : new URL(input.url, window.location.origin);
-
-  return requestUrl.pathname;
-}
-
-function getRequestMethod(input: RequestInfo | URL, init?: RequestInit): string {
-  if (init?.method) {
-    return init.method.toUpperCase();
-  }
-
-  if (typeof input !== "string" && !(input instanceof URL) && input.method) {
-    return input.method.toUpperCase();
-  }
-
-  return "GET";
-}
-
-function redirectWithEvent(event: AuthEvent) {
-  if (typeof window === "undefined" || redirectInProgress) return;
+export function completeAuthEvent(event: AuthEvent) {
+  if (typeof window === 'undefined' || redirectInProgress) return;
 
   redirectInProgress = true;
-  window.dispatchEvent(new CustomEvent("waxwatch:auth", { detail: event }));
+  window.dispatchEvent(new CustomEvent('waxwatch:auth', { detail: event }));
 
-  if (event === "account-removed") {
+  if (event === 'account-removed') {
     redirectHandler(ACCOUNT_REMOVED_ROUTE);
     return;
   }
@@ -99,76 +100,21 @@ function redirectWithEvent(event: AuthEvent) {
   redirectHandler(`${SIGNED_OUT_ROUTE}?reason=${event}`);
 }
 
-export function installAuthSessionController(): AuthController {
-  if (typeof window === "undefined") {
-    return { teardown: () => undefined };
-  }
+export function handleApiAuthorizationFailure(context: {
+  path: string;
+  status: number;
+}) {
+  warn({
+    message: 'auth_reauth_required',
+    scope: 'auth',
+    path: context.path,
+    status: context.status
+  });
 
-  const originalFetch = window.fetch.bind(window);
+  clearAuthSession();
+  completeAuthEvent('reauth-required');
+}
 
-  window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-    const requestInit: RequestInit = { ...(init ?? {}) };
-    const pathname = getRequestPathname(input);
-    const method = getRequestMethod(input, requestInit);
-
-    if (isApiRequest(input)) {
-      const headers = new Headers(requestInit.headers);
-      const token = getAuthToken();
-
-      if (token && !headers.has("Authorization")) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-
-      requestInit.headers = headers;
-    }
-
-    const response = await originalFetch(input, requestInit);
-
-    if (isApiRequest(input) && (response.status === 401 || response.status === 403)) {
-      warn({
-        message: 'auth_reauth_required',
-        scope: 'auth',
-        path: pathname,
-        status: response.status,
-      });
-      clearAuthSession();
-      redirectWithEvent("reauth-required");
-      return response;
-    }
-
-    if (response.ok && pathname === "/api/me/logout" && method === "POST") {
-      info({
-        message: 'auth_signed_out',
-        scope: 'auth',
-        path: pathname,
-        status: response.status,
-      });
-      clearAuthSession();
-      redirectWithEvent("signed-out");
-    }
-
-    if (
-      response.ok &&
-      method === "DELETE" &&
-      (pathname === "/api/me" || pathname === "/api/me/hard-delete")
-    ) {
-      info({
-        message: 'auth_account_removed',
-        scope: 'auth',
-        path: pathname,
-        status: response.status,
-      });
-      clearAuthSession();
-      redirectWithEvent("account-removed");
-    }
-
-    return response;
-  };
-
-  return {
-    teardown: () => {
-      window.fetch = originalFetch;
-      redirectInProgress = false;
-    },
-  };
+export function resetAuthSessionState() {
+  redirectInProgress = false;
 }

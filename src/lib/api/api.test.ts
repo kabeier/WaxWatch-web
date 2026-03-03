@@ -1,16 +1,28 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { resetAuthRedirectHandler, resetAuthSessionState, setAuthRedirectHandler } from '../auth-session';
 import { createApiClient } from './client';
 import { toApiError } from './errors';
 import { appendCursorPagination, appendLimitOffset } from './pagination';
 import { parseRetryAfter, parseRetryAfterFromErrorDetails } from './rateLimit';
 
 describe('api client', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    resetAuthSessionState();
+  });
+
   afterEach(() => {
+    resetAuthRedirectHandler();
     vi.restoreAllMocks();
   });
 
-  it('adds bearer auth header when jwt is provided', async () => {
+  it('adds bearer auth header from persisted supabase session by default', async () => {
+    window.localStorage.setItem(
+      'waxwatch.auth.session',
+      JSON.stringify({ session: { access_token: 'abc123' } })
+    );
+
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
         status: 200,
@@ -22,8 +34,7 @@ describe('api client', () => {
 
     const client = createApiClient({
       baseUrl: 'https://api.example.com',
-      fetchImpl: fetchMock,
-      getJwt: () => 'abc123'
+      fetchImpl: fetchMock
     });
 
     await client.request('/me');
@@ -31,6 +42,30 @@ describe('api client', () => {
     const requestInit = fetchMock.mock.calls[0][1] as RequestInit;
     const headers = new Headers(requestInit.headers);
     expect(headers.get('Authorization')).toBe('Bearer abc123');
+  });
+
+  it('clears auth state and redirects on 401/403 responses', async () => {
+    const redirectSpy = vi.fn();
+    setAuthRedirectHandler(redirectSpy);
+    window.localStorage.setItem('waxwatch.auth.session', JSON.stringify({ access_token: 'abc123' }));
+
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ error: { type: 'unauthorized', message: 'expired' } }), {
+        status: 401,
+        headers: {
+          'content-type': 'application/json'
+        }
+      })
+    );
+
+    const client = createApiClient({
+      baseUrl: 'https://api.example.com',
+      fetchImpl: fetchMock
+    });
+
+    await expect(client.request('/me')).rejects.toMatchObject({ status: 401 });
+    expect(window.localStorage.getItem('waxwatch.auth.session')).toBeNull();
+    expect(redirectSpy).toHaveBeenCalledWith('/signed-out?reason=reauth-required');
   });
 
   it('preserves base path when building request urls', async () => {
