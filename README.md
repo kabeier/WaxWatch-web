@@ -37,10 +37,24 @@ Validate these paths in CI (or locally) with:
 ```bash
 cp .env.example .env
 npm install
+npm run env:check:template
 npm run dev
 ```
 
 Open: http://localhost:3000
+
+### Environment notes
+
+- `src/config/env.ts` requires all keys present in `.env` at runtime, so start from `.env.example` and keep key names unchanged.
+- Minimal local values you should set to real local values:
+  - `NODE_ENV=development`
+  - `APP_BASE_URL=http://localhost:3000`
+  - `NEXT_PUBLIC_APP_NAME` and `NEXT_PUBLIC_RELEASE_VERSION` (any local-friendly strings)
+  - `SESSION_COOKIE_NAME`, `TRUSTED_PROXY_CIDRS`, and `LOG_LEVEL`
+- Production-only integrations can stay placeholder locally, then be replaced for deployed environments:
+  - `NEXT_PUBLIC_SENTRY_DSN` and `SENTRY_DSN`
+  - `AWS_REGION` and `AWS_SECRETS_PREFIX`
+- Run `npm run env:check:template` as a pre-flight check before opening a PR when environment keys change.
 
 ## Dev commands (expected)
 
