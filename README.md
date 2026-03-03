@@ -28,6 +28,10 @@ This repo is contract-driven. These are authoritative:
 - `contracts/openapi.snapshot.json` (pinned schema snapshot)
 - `docs/FRONTEND_API_CONTRACT.md` (behavior notes + screen mapping)
 
+Validate these paths in CI (or locally) with:
+
+- `npm run contracts:check`
+
 ## Quick start
 
 ```bash
