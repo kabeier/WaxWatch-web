@@ -1,131 +1,176 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createApiClient } from './client';
-import { toApiError } from './errors';
-import { appendCursorPagination, appendLimitOffset } from './pagination';
-import { parseRetryAfter, parseRetryAfterFromErrorDetails } from './rateLimit';
+import {
+  resetAuthRedirectHandler,
+  resetAuthSessionState,
+  setAuthRedirectHandler,
+} from "../auth-session";
+import { createApiClient } from "./client";
+import { toApiError } from "./errors";
+import { appendCursorPagination, appendLimitOffset } from "./pagination";
+import { parseRetryAfter, parseRetryAfterFromErrorDetails } from "./rateLimit";
 
-describe('api client', () => {
+describe("api client", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    resetAuthSessionState();
+  });
+
   afterEach(() => {
+    resetAuthRedirectHandler();
     vi.restoreAllMocks();
   });
 
-  it('adds bearer auth header when jwt is provided', async () => {
+  it("adds bearer auth header from persisted supabase session by default", async () => {
+    window.localStorage.setItem(
+      "waxwatch.auth.session",
+      JSON.stringify({ session: { access_token: "abc123" } }),
+    );
+
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
         status: 200,
         headers: {
-          'content-type': 'application/json'
-        }
-      })
+          "content-type": "application/json",
+        },
+      }),
     );
 
     const client = createApiClient({
-      baseUrl: 'https://api.example.com',
+      baseUrl: "https://api.example.com",
       fetchImpl: fetchMock,
-      getJwt: () => 'abc123'
     });
 
-    await client.request('/me');
+    await client.request("/me");
 
     const requestInit = fetchMock.mock.calls[0][1] as RequestInit;
     const headers = new Headers(requestInit.headers);
-    expect(headers.get('Authorization')).toBe('Bearer abc123');
+    expect(headers.get("Authorization")).toBe("Bearer abc123");
   });
 
-  it('preserves base path when building request urls', async () => {
+  it("clears auth state and redirects on 401/403 responses", async () => {
+    const redirectSpy = vi.fn();
+    setAuthRedirectHandler(redirectSpy);
+    window.localStorage.setItem(
+      "waxwatch.auth.session",
+      JSON.stringify({ access_token: "abc123" }),
+    );
+
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ error: { type: "unauthorized", message: "expired" } }), {
+        status: 401,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.request("/me")).rejects.toMatchObject({ status: 401 });
+    expect(window.localStorage.getItem("waxwatch.auth.session")).toBeNull();
+    expect(redirectSpy).toHaveBeenCalledWith("/signed-out?reason=reauth-required");
+  });
+
+  it("preserves base path when building request urls", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
         status: 200,
         headers: {
-          'content-type': 'application/json'
-        }
-      })
+          "content-type": "application/json",
+        },
+      }),
     );
 
     const client = createApiClient({
-      baseUrl: 'https://api.example.com/v1',
-      fetchImpl: fetchMock
+      baseUrl: "https://api.example.com/v1",
+      fetchImpl: fetchMock,
     });
 
-    await client.request('/markets');
+    await client.request("/markets");
 
-    expect(fetchMock.mock.calls[0][0]).toBe('https://api.example.com/v1/markets');
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api.example.com/v1/markets");
   });
 
-  it('logs parse failures as request failures and skips success logs', async () => {
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  it("logs parse failures as request failures and skips success logs", async () => {
+    const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response('not-json', {
+      new Response("not-json", {
         status: 200,
         headers: {
-          'content-type': 'application/json'
-        }
-      })
+          "content-type": "application/json",
+        },
+      }),
     );
 
     const client = createApiClient({
-      baseUrl: 'https://api.example.com',
-      fetchImpl: fetchMock
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
     });
 
-    await expect(client.request('/markets')).rejects.toBeInstanceOf(Error);
+    await expect(client.request("/markets")).rejects.toBeInstanceOf(Error);
 
     const infoEvents = consoleLogSpy.mock.calls
       .map(([entry]) => JSON.parse(String(entry)) as { message?: string })
-      .filter((entry) => entry.message === 'api_request_success');
+      .filter((entry) => entry.message === "api_request_success");
     expect(infoEvents).toHaveLength(0);
 
     const parseFailureEvents = consoleErrorSpy.mock.calls
       .map(([entry]) => JSON.parse(String(entry)) as { message?: string; failureKind?: string })
-      .filter((entry) => entry.message === 'api_request_failure' && entry.failureKind === 'response_parse_error');
+      .filter(
+        (entry) =>
+          entry.message === "api_request_failure" && entry.failureKind === "response_parse_error",
+      );
     expect(parseFailureEvents).toHaveLength(1);
   });
 });
 
-describe('error mapping', () => {
-  it('maps 429 responses to rate_limited errors', () => {
+describe("error mapping", () => {
+  it("maps 429 responses to rate_limited errors", () => {
     const response = new Response(null, {
       status: 429,
-      statusText: 'Too many requests',
+      statusText: "Too many requests",
       headers: {
-        'Retry-After': '12'
-      }
+        "Retry-After": "12",
+      },
     });
 
     const parsed = toApiError(response, {
       error: {
-        type: 'rate_limited',
-        message: 'Slow down'
-      }
+        type: "rate_limited",
+        message: "Slow down",
+      },
     });
 
-    expect(parsed.kind).toBe('rate_limited');
-    if (parsed.kind === 'rate_limited') {
+    expect(parsed.kind).toBe("rate_limited");
+    if (parsed.kind === "rate_limited") {
       expect(parsed.retryAfterSeconds).toBe(12);
     }
   });
 });
 
-describe('pagination helpers', () => {
-  it('builds limit/offset query params', () => {
+describe("pagination helpers", () => {
+  it("builds limit/offset query params", () => {
     const query = appendLimitOffset(new URLSearchParams(), { limit: 25, offset: 10 });
-    expect(query.toString()).toBe('limit=25&offset=10');
+    expect(query.toString()).toBe("limit=25&offset=10");
   });
 
-  it('builds cursor query params', () => {
-    const query = appendCursorPagination(new URLSearchParams(), { cursor: 'abc', limit: 5 });
-    expect(query.toString()).toBe('cursor=abc&limit=5');
+  it("builds cursor query params", () => {
+    const query = appendCursorPagination(new URLSearchParams(), { cursor: "abc", limit: 5 });
+    expect(query.toString()).toBe("cursor=abc&limit=5");
   });
 });
 
-describe('rate limit parsing', () => {
-  it('parses numeric retry-after values', () => {
-    expect(parseRetryAfter('5')).toBe(5);
+describe("rate limit parsing", () => {
+  it("parses numeric retry-after values", () => {
+    expect(parseRetryAfter("5")).toBe(5);
   });
 
-  it('parses retry_after_seconds details values', () => {
-    expect(parseRetryAfterFromErrorDetails({ retry_after_seconds: '7' })).toBe(7);
+  it("parses retry_after_seconds details values", () => {
+    expect(parseRetryAfterFromErrorDetails({ retry_after_seconds: "7" })).toBe(7);
   });
 });

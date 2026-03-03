@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { installAuthSessionController } from "@/lib/auth-session";
+import { resetAuthSessionState } from "@/lib/auth-session";
 
 type AuthSessionProviderProps = {
   children: React.ReactNode;
@@ -9,10 +9,15 @@ type AuthSessionProviderProps = {
 
 export default function AuthSessionProvider({ children }: AuthSessionProviderProps) {
   useEffect(() => {
-    const controller = installAuthSessionController();
+    const onAuthEvent = () => {
+      // Auth lifecycle hook for global events emitted by the API client.
+    };
+
+    window.addEventListener("waxwatch:auth", onAuthEvent as EventListener);
 
     return () => {
-      controller.teardown();
+      window.removeEventListener("waxwatch:auth", onAuthEvent as EventListener);
+      resetAuthSessionState();
     };
   }, []);
 
