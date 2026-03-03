@@ -12,7 +12,9 @@ export default function WatchlistPage() {
       <h1>{viewModel.heading}</h1>
       <p>{viewModel.summary}</p>
       {watchReleasesQuery.isLoading ? <p>Loading watchlist…</p> : null}
-      {watchReleasesQuery.data ? <p>Total releases: {watchReleasesQuery.data.items.length}</p> : null}
+      {watchReleasesQuery.data ? (
+        <p>Total releases: {watchReleasesQuery.data.items.length}</p>
+      ) : null}
       <button type="button">Refresh watchlist</button>
     </section>
   );

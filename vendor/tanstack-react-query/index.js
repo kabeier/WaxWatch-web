@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 const QueryClientContext = createContext(undefined);
 
@@ -29,7 +29,14 @@ export class QueryClient {
     const cacheKey = serializeKey(queryKey);
     const existing = this.cache.get(cacheKey);
     if (existing) return existing;
-    const entry = { queryKey, data: undefined, error: null, promise: null, stale: true, updatedAt: 0 };
+    const entry = {
+      queryKey,
+      data: undefined,
+      error: null,
+      promise: null,
+      stale: true,
+      updatedAt: 0,
+    };
     this.cache.set(cacheKey, entry);
     return entry;
   }
@@ -68,6 +75,8 @@ export class QueryClient {
       .catch((error) => {
         entry.error = error;
         entry.promise = null;
+        entry.stale = false;
+        entry.updatedAt = Date.now();
         this._notify(queryKey);
         throw error;
       });
@@ -117,6 +126,12 @@ export function useQueryClient() {
 export function useQuery(options) {
   const { queryKey, queryFn, enabled = true } = options;
   const client = useQueryClient();
+  const queryFnRef = useRef(queryFn);
+
+  useEffect(() => {
+    queryFnRef.current = queryFn;
+  }, [queryFn]);
+
   const [state, setState] = useState(() => {
     const data = client.getQueryData(queryKey);
     return {
@@ -142,7 +157,7 @@ export function useQuery(options) {
       if (enabled && entry.stale) {
         setState((prev) => ({ ...prev, isFetching: true, isLoading: entry.data === undefined }));
         client
-          .fetchQuery({ queryKey, queryFn })
+          .fetchQuery({ queryKey, queryFn: () => queryFnRef.current() })
           .then(() => {
             if (!active) return;
             setState((prev) => ({ ...prev, isFetching: false, isLoading: false }));
@@ -167,7 +182,7 @@ export function useQuery(options) {
       active = false;
       unsubscribe();
     };
-  }, [client, enabled, queryFn, queryKey]);
+  }, [client, enabled, queryKey]);
 
   return state;
 }

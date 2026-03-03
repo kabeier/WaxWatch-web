@@ -19,7 +19,9 @@ export default function AlertsPage() {
 
       <h2>Watch Releases</h2>
       {watchReleasesQuery.isLoading ? <p>Loading release matches…</p> : null}
-      {watchReleasesQuery.data ? <p>Loaded {watchReleasesQuery.data.items.length} releases.</p> : null}
+      {watchReleasesQuery.data ? (
+        <p>Loaded {watchReleasesQuery.data.items.length} releases.</p>
+      ) : null}
 
       <button type="button">Retry watch rules load</button>
       <button type="button">Create watch rule</button>
