@@ -16,7 +16,6 @@ export default function NotificationsPage() {
       </ul>
       <button type="button">Retry notifications feed</button>
       <button type="button">Mark selected as read</button>
-      <button type="button">Mark selected as unread</button>
     </section>
   );
 }

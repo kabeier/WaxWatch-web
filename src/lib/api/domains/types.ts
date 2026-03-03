@@ -28,6 +28,16 @@ export type DiscogsRelease = {
   artists: string[];
 };
 
+export type SearchQuery = {
+  keywords?: string[];
+  max_price?: number | null;
+  min_condition?: string | null;
+  min_price?: number | null;
+  page?: number;
+  page_size?: number;
+  providers?: string[] | null;
+};
+
 export type SearchResult = {
   id: string;
   provider: string;
@@ -37,14 +47,22 @@ export type SearchResult = {
   listedAt: string;
 };
 
-export type SearchRequest = {
-  query: string;
-  providerKeys?: string[];
-};
+export type SearchRequest = SearchQuery;
 
 export type SaveSearchAlertRequest = {
-  query: string;
-  providerKeys?: string[];
+  name: string;
+  query: SearchQuery;
+  poll_interval_seconds?: number;
+};
+
+export type DiscogsConnectInput = {
+  external_user_id: string;
+  access_token?: string | null;
+  token_metadata?: Record<string, unknown> | null;
+};
+
+export type DiscogsImportInput = {
+  source?: "wantlist" | "collection" | "both";
 };
 
 export type WatchRule = {

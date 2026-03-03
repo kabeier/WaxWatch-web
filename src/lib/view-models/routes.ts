@@ -88,7 +88,7 @@ export const routeViewModels = {
   },
   notifications: {
     heading: "Notifications",
-    summary: "Review notification feed and manage read/unread state.",
+    summary: "Review notification feed, unread count, and mark items as read.",
     operations: [
       {
         id: "notifications-list",
@@ -104,11 +104,6 @@ export const routeViewModels = {
         id: "notifications-mark-read",
         label: "Mark as read",
         serviceMethod: "notifications.markRead",
-      },
-      {
-        id: "notifications-mark-unread",
-        label: "Mark as unread",
-        serviceMethod: "notifications.markUnread",
       },
     ],
   },
@@ -131,7 +126,7 @@ export const routeViewModels = {
       },
       {
         id: "discogs-connect",
-        label: "Start Discogs connect flow",
+        label: "Start Discogs connect flow (requires external user id)",
         serviceMethod: "integrations.discogs.connect",
       },
       {

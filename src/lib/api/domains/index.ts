@@ -1,6 +1,8 @@
 import type { createApiClient } from "../client";
 import { appendCursorPagination, appendLimitOffset } from "../pagination";
 import type {
+  DiscogsConnectInput,
+  DiscogsImportInput,
   DiscogsImportJob,
   DiscogsRelease,
   DiscogsSearchParams,
@@ -110,18 +112,21 @@ export function createDomainServices(client: ApiClient) {
       client.request<void>(`/notifications/${encodeURIComponent(notificationId)}/read`, {
         method: "POST",
       }),
-    markUnread: (notificationId: string) =>
-      client.request<void>(`/notifications/${encodeURIComponent(notificationId)}/unread`, {
-        method: "POST",
-      }),
   };
 
   const integrations = {
     discogs: {
       getStatus: () => client.request<DiscogsStatus>("/integrations/discogs/status"),
-      connect: () => client.request<void>("/integrations/discogs/connect", { method: "POST" }),
-      importCollection: () =>
-        client.request<DiscogsImportJob>("/integrations/discogs/import", { method: "POST" }),
+      connect: (input: DiscogsConnectInput) =>
+        client.request<void, DiscogsConnectInput>("/integrations/discogs/connect", {
+          method: "POST",
+          body: input,
+        }),
+      importCollection: (input: DiscogsImportInput = {}) =>
+        client.request<DiscogsImportJob, DiscogsImportInput>("/integrations/discogs/import", {
+          method: "POST",
+          body: input,
+        }),
       getImportJob: (jobId: string) =>
         client.request<DiscogsImportJob>(
           `/integrations/discogs/import/${encodeURIComponent(jobId)}`,
