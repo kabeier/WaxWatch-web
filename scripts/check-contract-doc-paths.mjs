@@ -2,7 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 
 const repoRoot = process.cwd();
-const docsToScan = ["README.md", "docs/AGENT_GUIDE.md", "contracts/README.md"];
+const docsToScan = [
+  "README.md",
+  "docs/AGENT_GUIDE.md",
+  "contracts/README.md",
+  "docs/FRONTEND_API_CONTRACT.md",
+];
 const contractPathPattern = /`((?:contracts|docs)\/[A-Za-z0-9._/-]+)`/g;
 
 const documentedPaths = new Set();

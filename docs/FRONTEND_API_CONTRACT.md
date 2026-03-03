@@ -680,12 +680,14 @@ the PR **must** also update this contract file (`docs/FRONTEND_API_CONTRACT.md`)
 - any necessary contract/body examples,
 - and deprecation notes for breaking behavior.
 
-Enforcement:
+Enforcement in this frontend repository:
 
-- CI runs `python scripts/check_frontend_contract_sync.py`.
-- The check fails when API-facing files changed but `docs/FRONTEND_API_CONTRACT.md` was not updated in the same diff.
-- Local equivalents: `make check-contract-sync` and `make check-openapi-snapshot` (or full `make ci-local`).
-- Snapshot gate: CI runs `python -m scripts.openapi_snapshot --check` and compares `app/main.py` generated schema output to the committed `docs/openapi.snapshot.json` baseline. Update the baseline with `make openapi-snapshot` whenever intentional API schema changes are introduced.
+- CI runs `npm run contracts:check` to verify documented contract artifact paths exist.
+- The check scans `README.md`, `docs/AGENT_GUIDE.md`, `contracts/README.md`, and this file for documented contract paths and fails if referenced artifacts are missing.
+- Canonical artifacts in this repo are:
+  - `contracts/openapi.snapshot.json`
+  - `docs/FRONTEND_API_CONTRACT.md`
+- When contract files move or are renamed, update the referenced docs and `scripts/check-contract-doc-paths.mjs` in the same pull request.
 
 ---
 
