@@ -19,6 +19,9 @@ This document is the “rules of engagement” for human contributors and code a
    - Don’t mirror server state into global stores (except small UI-only state).
 6. **SSE is a singleton**
    - One connection per authenticated session at the app shell level.
+7. **Formatting is mandatory for every PR**
+   - Run `npm run format` (or targeted `npx prettier --write ...`) before committing.
+   - Verify with `npm run format:check` (and `npm run format:check:changed` in CI contexts).
 
 ## Project approach (Option A)
 

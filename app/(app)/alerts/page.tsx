@@ -1,7 +1,12 @@
 "use client";
 
-import { routeViewModels } from "@/lib/view-models/routes";
+import { StateEmpty } from "@/components/StateEmpty";
+import { StateError } from "@/components/StateError";
+import { StateLoading } from "@/components/StateLoading";
+import { StateRateLimited } from "@/components/StateRateLimited";
 import { useWatchReleasesQuery, useWatchRulesQuery } from "@/lib/query/hooks";
+import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
+import { routeViewModels } from "@/lib/view-models/routes";
 
 export default function AlertsPage() {
   const viewModel = routeViewModels.alerts;
@@ -14,12 +19,44 @@ export default function AlertsPage() {
       <p>{viewModel.summary}</p>
 
       <h2>Watch Rules</h2>
-      {watchRulesQuery.isLoading ? <p>Loading watch rules…</p> : null}
-      {watchRulesQuery.data ? <p>Loaded {watchRulesQuery.data.items.length} rules.</p> : null}
+      {watchRulesQuery.isLoading ? <StateLoading message="Loading watch rules…" /> : null}
+      {watchRulesQuery.isError && isRateLimitedError(watchRulesQuery.error) ? (
+        <StateRateLimited
+          message={watchRulesQuery.error.message}
+          retryAfterSeconds={getRetryAfterSeconds(watchRulesQuery.error)}
+        />
+      ) : null}
+      {watchRulesQuery.isError && !isRateLimitedError(watchRulesQuery.error) ? (
+        <StateError
+          message="Could not load watch rules."
+          detail={getErrorMessage(watchRulesQuery.error, "Request failed")}
+        />
+      ) : null}
+      {watchRulesQuery.data && watchRulesQuery.data.items.length === 0 ? (
+        <StateEmpty message="No watch rules yet." />
+      ) : null}
+      {watchRulesQuery.data && watchRulesQuery.data.items.length > 0 ? (
+        <p>Loaded {watchRulesQuery.data.items.length} rules.</p>
+      ) : null}
 
       <h2>Watch Releases</h2>
-      {watchReleasesQuery.isLoading ? <p>Loading release matches…</p> : null}
-      {watchReleasesQuery.data ? (
+      {watchReleasesQuery.isLoading ? <StateLoading message="Loading release matches…" /> : null}
+      {watchReleasesQuery.isError && isRateLimitedError(watchReleasesQuery.error) ? (
+        <StateRateLimited
+          message={watchReleasesQuery.error.message}
+          retryAfterSeconds={getRetryAfterSeconds(watchReleasesQuery.error)}
+        />
+      ) : null}
+      {watchReleasesQuery.isError && !isRateLimitedError(watchReleasesQuery.error) ? (
+        <StateError
+          message="Could not load release matches."
+          detail={getErrorMessage(watchReleasesQuery.error, "Request failed")}
+        />
+      ) : null}
+      {watchReleasesQuery.data && watchReleasesQuery.data.items.length === 0 ? (
+        <StateEmpty message="No matched releases yet." />
+      ) : null}
+      {watchReleasesQuery.data && watchReleasesQuery.data.items.length > 0 ? (
         <p>Loaded {watchReleasesQuery.data.items.length} releases.</p>
       ) : null}
 

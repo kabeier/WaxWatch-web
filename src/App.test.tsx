@@ -1,5 +1,5 @@
 import type React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { __setSearchParams } from "./test/mocks/next-navigation";
 import Layout from "./components/Layout";
 import AppProviders from "./components/AppProviders";
@@ -15,16 +15,24 @@ function renderWithProviders(page: React.ReactElement) {
   );
 }
 
-test("renders the search page content", () => {
+async function renderSearchPage(searchParams?: { state?: string; retryAfter?: string }) {
+  const page = await SearchPage({
+    searchParams: Promise.resolve(searchParams ?? {}),
+  });
+
+  return renderWithProviders(page);
+}
+
+test("renders the search page content", async () => {
   __setSearchParams({});
-  renderWithProviders(<SearchPage />);
+  await renderSearchPage();
 
   expect(screen.getByRole("heading", { name: /^search$/i })).toBeInTheDocument();
 });
 
-test("renders the app nav links", () => {
+test("renders the app nav links", async () => {
   __setSearchParams({});
-  renderWithProviders(<SearchPage />);
+  await renderSearchPage();
 
   expect(screen.getByRole("link", { name: /search/i })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /alerts/i })).toBeInTheDocument();
@@ -33,19 +41,22 @@ test("renders the app nav links", () => {
   expect(screen.getByRole("link", { name: /settings/i })).toBeInTheDocument();
 });
 
-test("shows a consistent session-expired notice", () => {
+test("shows a consistent session-expired notice", async () => {
   __setSearchParams({ reason: "reauth-required" });
 
-  renderWithProviders(<SearchPage />);
+  await renderSearchPage();
 
   expect(screen.getByRole("status")).toHaveTextContent(/session expired or became invalid/i);
 });
 
-test("alerts page renders", () => {
+test("alerts page renders", async () => {
   __setSearchParams({});
   renderWithProviders(<AlertsPage />);
 
   expect(screen.getByRole("heading", { name: /^alerts$/i })).toBeInTheDocument();
+  await waitFor(() => {
+    expect(screen.getByRole("button", { name: /create watch rule/i })).toBeInTheDocument();
+  });
 });
 
 test("404 page shows fallback link", () => {
