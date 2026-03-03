@@ -14,12 +14,13 @@ export default defineConfig({
       "next/link": path.resolve(__dirname, "src/test/mocks/next-link.tsx"),
       "next/app": path.resolve(__dirname, "src/test/mocks/next-app.ts"),
       "next/router": path.resolve(__dirname, "src/test/mocks/next-router.ts"),
+      "next/navigation": path.resolve(__dirname, "src/test/mocks/next-navigation.ts"),
     },
   },
   test: {
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'lcov'],
+      provider: "v8",
+      reporter: ["text", "lcov"],
       thresholds: {
         lines: 60,
         functions: 60,

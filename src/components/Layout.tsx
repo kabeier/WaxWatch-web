@@ -1,5 +1,8 @@
+"use client";
+
+import { Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useSearchParams } from "next/navigation";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -34,33 +37,49 @@ const authNoticeMessages: Record<string, string> = {
   "signed-out": "You have been signed out.",
 };
 
-export default function Layout({ children }: LayoutProps) {
-  const router = useRouter();
-  const reason = typeof router.query.reason === "string" ? router.query.reason : "";
+function AuthNotice() {
+  const searchParams = useSearchParams();
+  const reason = searchParams?.get("reason") ?? "";
   const notice = authNoticeMessages[reason];
 
+  if (!notice) {
+    return null;
+  }
+
+  return (
+    <div role="status" aria-live="polite" style={authNoticeStyles[reason]}>
+      {notice}
+    </div>
+  );
+}
+
+export default function Layout({ children }: LayoutProps) {
   return (
     <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
       <header style={{ marginBottom: 16 }}>
         <nav>
-          <Link href="/" style={linkStyle}>
-            Home
+          <Link href="/search" style={linkStyle}>
+            Search
           </Link>
-          <Link href="/projects" style={linkStyle}>
-            Projects
+          <Link href="/alerts" style={linkStyle}>
+            Alerts
           </Link>
-          <Link href="/about" style={linkStyle}>
-            About
+          <Link href="/watchlist" style={linkStyle}>
+            Watchlist
+          </Link>
+          <Link href="/notifications" style={linkStyle}>
+            Notifications
+          </Link>
+          <Link href="/settings/profile" style={linkStyle}>
+            Settings
           </Link>
         </nav>
         <hr style={{ marginTop: 12 }} />
       </header>
 
-      {notice ? (
-        <div role="status" aria-live="polite" style={authNoticeStyles[reason]}>
-          {notice}
-        </div>
-      ) : null}
+      <Suspense fallback={null}>
+        <AuthNotice />
+      </Suspense>
 
       <main>{children}</main>
     </div>

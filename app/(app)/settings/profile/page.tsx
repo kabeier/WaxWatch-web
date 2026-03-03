@@ -8,7 +8,8 @@ export default function ProfileSettingsPage() {
     <section>
       <h1>Profile Settings Scaffold</h1>
       <p>
-        Capability mapping: <code>{PROFILE_ENDPOINTS.getMe}</code> and <code>{PROFILE_ENDPOINTS.patchMe}</code>
+        Capability mapping: <code>{PROFILE_ENDPOINTS.getMe}</code> and{" "}
+        <code>{PROFILE_ENDPOINTS.patchMe}</code>
       </p>
 
       <h2>{PROFILE_ENDPOINTS.getMe}</h2>

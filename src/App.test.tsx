@@ -1,80 +1,68 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { __setRouterQuery } from "./test/mocks/next-router";
+import { __setSearchParams } from "./test/mocks/next-navigation";
 import Layout from "./components/Layout";
-import HomePage from "../pages/index";
-import AboutPage from "../pages/about";
-import ProjectsPage from "../pages/projects";
-import NotFoundPage from "../pages/404";
+import SearchPage from "../app/(app)/search/page";
+import AlertsPage from "../app/(app)/alerts/page";
+import NotFoundPage from "../app/not-found";
 
-test("renders the home page content", () => {
-  __setRouterQuery({});
+test("renders the search page content", () => {
+  __setSearchParams({});
   render(
     <Layout>
-      <HomePage />
-    </Layout>
+      <SearchPage />
+    </Layout>,
   );
 
-  expect(screen.getByRole("heading", { name: /waxwatch/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /search scaffold/i })).toBeInTheDocument();
 });
 
-test("renders the nav links", () => {
-  __setRouterQuery({});
+test("renders the app nav links", () => {
+  __setSearchParams({});
   render(
     <Layout>
-      <HomePage />
-    </Layout>
+      <SearchPage />
+    </Layout>,
   );
 
-  expect(screen.getByRole("link", { name: /home/i })).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /projects/i })).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /about/i })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /search/i })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /alerts/i })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /watchlist/i })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /notifications/i })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /settings/i })).toBeInTheDocument();
 });
 
 test("shows a consistent session-expired notice", () => {
-  __setRouterQuery({ reason: "reauth-required" });
+  __setSearchParams({ reason: "reauth-required" });
 
   render(
     <Layout>
-      <HomePage />
-    </Layout>
+      <SearchPage />
+    </Layout>,
   );
 
   expect(screen.getByRole("status")).toHaveTextContent(/session expired or became invalid/i);
 });
 
-test("about page renders", () => {
-  __setRouterQuery({});
+test("alerts page renders", () => {
+  __setSearchParams({});
   render(
     <Layout>
-      <AboutPage />
-    </Layout>
+      <AlertsPage />
+    </Layout>,
   );
 
-  expect(screen.getByRole("heading", { name: /about/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /alerts scaffold/i })).toBeInTheDocument();
 });
 
-test("projects page renders", () => {
-  __setRouterQuery({});
-  render(
-    <Layout>
-      <ProjectsPage />
-    </Layout>
-  );
-
-  expect(screen.getByRole("heading", { name: /projects/i })).toBeInTheDocument();
-});
-
-test("404 page shows go home link", async () => {
-  __setRouterQuery({});
-  const user = userEvent.setup();
+test("404 page shows fallback link", () => {
+  __setSearchParams({});
 
   render(
     <Layout>
       <NotFoundPage />
-    </Layout>
+    </Layout>,
   );
 
   expect(screen.getByRole("heading", { name: /404/i })).toBeInTheDocument();
-  await user.click(screen.getByRole("link", { name: /go home/i }));
+  expect(screen.getByRole("link", { name: /go to search/i })).toBeInTheDocument();
 });

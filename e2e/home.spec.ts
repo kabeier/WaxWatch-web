@@ -1,21 +1,22 @@
 import { test, expect } from "@playwright/test";
 
-test("home page loads", async ({ page }) => {
+test("root redirects to search", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /waxwatch/i })).toBeVisible();
+  await expect(page).toHaveURL(/\/search$/);
+  await expect(page.getByRole("heading", { name: /search scaffold/i })).toBeVisible();
 });
 
-test("nav links work", async ({ page }) => {
-  await page.goto("/");
+test("app nav links work", async ({ page }) => {
+  await page.goto("/search");
 
-  await page.getByRole("link", { name: /about/i }).click();
-  await expect(page.getByRole("heading", { name: /about/i })).toBeVisible();
+  await page.getByRole("link", { name: /alerts/i }).click();
+  await expect(page.getByRole("heading", { name: /alerts scaffold/i })).toBeVisible();
 
-  await page.getByRole("link", { name: /projects/i }).click();
-  await expect(page.getByRole("heading", { name: /projects/i })).toBeVisible();
+  await page.getByRole("link", { name: /notifications/i }).click();
+  await expect(page.getByRole("heading", { name: /notifications scaffold/i })).toBeVisible();
 
-  await page.getByRole("link", { name: /home/i }).click();
-  await expect(page.getByRole("heading", { name: /waxwatch/i })).toBeVisible();
+  await page.getByRole("link", { name: /search/i }).click();
+  await expect(page.getByRole("heading", { name: /search scaffold/i })).toBeVisible();
 });
 
 test("unknown route shows 404", async ({ page }) => {

@@ -2,9 +2,14 @@
 
 This app uses Next.js **App Router**.
 
+## Project decision
+
+- ✅ Decision: migrate to **Next.js App Router now** and treat `app/` as the canonical route tree.
+- Keep `pages/api/*` for API routes only during this phase.
+
 ## Layout groups
 
-Suggested structure:
+Implemented structure:
 
 - `app/(auth)/...` signed-out routes (login)
 - `app/(app)/...` authenticated shell routes
@@ -13,9 +18,11 @@ Suggested structure:
 ## Route map (MVP)
 
 ### Auth
+
 - `/login` (or `/auth/login`) — Supabase auth UI / sign in flow
 
 ### Primary
+
 - `/search` — search listings + save search as alert
 - `/alerts` — list alerts (watch rules)
 - `/alerts/new` — create alert
@@ -28,4 +35,5 @@ Suggested structure:
 - `/settings/danger` — deactivate + hard delete
 
 ## Optional admin (disabled by default)
+
 - `/admin/provider-requests` — requires admin claim + feature flag

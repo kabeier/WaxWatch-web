@@ -1,5 +1,3 @@
-import { useRouter } from "next/router";
-
 const ALERT_DETAIL_ENDPOINTS = {
   watchRuleById: "GET /api/alerts/watch-rules/:id",
   updateWatchRule: "PATCH /api/alerts/watch-rules/:id",
@@ -7,19 +5,20 @@ const ALERT_DETAIL_ENDPOINTS = {
   watchReleases: "GET /api/alerts/watch-releases?ruleId=:id",
 } as const;
 
-export default function AlertDetailPage() {
-  const router = useRouter();
-  const alertId = typeof router.query.id === "string" ? router.query.id : ":id";
+export default async function AlertDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   return (
     <section>
       <h1>Alert Detail Scaffold</h1>
       <p>
-        Dynamic route id: <code>{alertId}</code>
+        Dynamic route id: <code>{id}</code>
       </p>
       <p>
-        Endpoint capability mapping: <code>{ALERT_DETAIL_ENDPOINTS.watchRuleById}</code>, <code>{ALERT_DETAIL_ENDPOINTS.updateWatchRule}</code>,
-        <code> {ALERT_DETAIL_ENDPOINTS.deleteWatchRule}</code>, and <code>{ALERT_DETAIL_ENDPOINTS.watchReleases}</code>.
+        Endpoint capability mapping: <code>{ALERT_DETAIL_ENDPOINTS.watchRuleById}</code>,{" "}
+        <code>{ALERT_DETAIL_ENDPOINTS.updateWatchRule}</code>,
+        <code> {ALERT_DETAIL_ENDPOINTS.deleteWatchRule}</code>, and{" "}
+        <code>{ALERT_DETAIL_ENDPOINTS.watchReleases}</code>.
       </p>
 
       <h2>Tab: Watch Rule</h2>
