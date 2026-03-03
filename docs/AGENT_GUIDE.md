@@ -8,6 +8,7 @@ This document is the “rules of engagement” for human contributors and code a
    - The source of truth is:
      - `contracts/openapi.snapshot.json`
      - `docs/FRONTEND_API_CONTRACT.md`
+   - If either file is moved, update docs and `scripts/check-contract-doc-paths.mjs` in the same PR.
 2. **All user-facing API calls require bearer auth**
    - `Authorization: Bearer <supabase_jwt>`
 3. **Every screen implements 4 states**
