@@ -7,7 +7,13 @@ import {
 } from "../auth-session";
 import { createApiClient } from "./client";
 import { createDomainServices } from "./domains";
-import type { DiscogsImportJob, DiscogsStatus, Notification, SearchResponse, WatchRule } from "./domains/types";
+import type {
+  DiscogsImportJob,
+  DiscogsStatus,
+  Notification,
+  SearchResponse,
+  WatchRule,
+} from "./domains/types";
 import { toApiError } from "./errors";
 import { appendCursorPagination, appendLimitOffset } from "./pagination";
 import { parseRetryAfter, parseRetryAfterFromErrorDetails } from "./rateLimit";
@@ -177,7 +183,6 @@ describe("rate limit parsing", () => {
   });
 });
 
-
 describe("domain response fixtures", () => {
   it("accepts SearchResponse transport shape", async () => {
     const fixture: SearchResponse = {
@@ -217,7 +222,9 @@ describe("domain response fixtures", () => {
       }),
     );
 
-    const domains = createDomainServices(createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }));
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
     await expect(domains.search.run({ keywords: ["techno"] })).resolves.toEqual(fixture);
   });
 
@@ -238,10 +245,15 @@ describe("domain response fixtures", () => {
     ];
 
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(JSON.stringify(fixture), { status: 200, headers: { "content-type": "application/json" } }),
+      new Response(JSON.stringify(fixture), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
     );
 
-    const domains = createDomainServices(createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }));
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
     await expect(domains.watchRules.list({ limit: 25, offset: 0 })).resolves.toEqual(fixture);
   });
 
@@ -267,14 +279,24 @@ describe("domain response fixtures", () => {
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
-        new Response(JSON.stringify(notificationsFixture), { status: 200, headers: { "content-type": "application/json" } }),
+        new Response(JSON.stringify(notificationsFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify(unreadFixture), { status: 200, headers: { "content-type": "application/json" } }),
+        new Response(JSON.stringify(unreadFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
       );
 
-    const domains = createDomainServices(createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }));
-    await expect(domains.notifications.list({ limit: 20, offset: 0 })).resolves.toEqual(notificationsFixture);
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+    await expect(domains.notifications.list({ limit: 20, offset: 0 })).resolves.toEqual(
+      notificationsFixture,
+    );
     await expect(domains.notifications.getUnreadCount()).resolves.toEqual(unreadFixture);
   });
 
@@ -310,14 +332,24 @@ describe("domain response fixtures", () => {
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
-        new Response(JSON.stringify(statusFixture), { status: 200, headers: { "content-type": "application/json" } }),
+        new Response(JSON.stringify(statusFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify(importFixture), { status: 200, headers: { "content-type": "application/json" } }),
+        new Response(JSON.stringify(importFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
       );
 
-    const domains = createDomainServices(createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }));
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
     await expect(domains.integrations.discogs.getStatus()).resolves.toEqual(statusFixture);
-    await expect(domains.integrations.discogs.importCollection({ source: "both" })).resolves.toEqual(importFixture);
+    await expect(
+      domains.integrations.discogs.importCollection({ source: "both" }),
+    ).resolves.toEqual(importFixture);
   });
 });
