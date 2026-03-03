@@ -37,13 +37,19 @@ Validate these paths in CI (or locally) with:
 ```bash
 cp .env.example .env
 npm install
+npm run env:check:template
 npm run dev
 ```
+
+Minimum local values are already provided in `.env.example` (for example: `NODE_ENV=development`, `APP_BASE_URL=http://localhost:3000`, and local-safe placeholders for Sentry/AWS keys). Keep these keys present because `src/config/env.ts` requires all of them at runtime.
+
+For production deployments, replace placeholder/template values with environment-specific secrets and infrastructure values (especially `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_SECRETS_PREFIX`, and `TRUSTED_PROXY_CIDRS`).
 
 Open: http://localhost:3000
 
 ## Dev commands (expected)
 
+- `npm run env:check:template` (pre-flight: verifies `.env.example` stays aligned with `src/config/env.ts`)
 - `npm run dev`
 - `npm run build`
 - `npm run start`
