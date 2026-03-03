@@ -15,6 +15,7 @@ export default defineConfig({
       "next/app": path.resolve(__dirname, "src/test/mocks/next-app.ts"),
       "next/router": path.resolve(__dirname, "src/test/mocks/next-router.ts"),
       "next/navigation": path.resolve(__dirname, "src/test/mocks/next-navigation.ts"),
+      "@tanstack/react-query": path.resolve(__dirname, "vendor/tanstack-react-query/index.js"),
     },
   },
   test: {

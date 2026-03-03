@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSupabaseAccessToken } from "@/lib/auth-session";
+import { getSupabaseAccessToken, handleApiAuthorizationFailure } from "@/lib/auth-session";
 import { queryKeys } from "@/lib/query/keys";
 
 const BASE_BACKOFF_MS = 1_000;
@@ -18,8 +18,8 @@ export default function SseController() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    let eventSource: EventSource | null = null;
     let reconnectTimer: number | undefined;
+    let streamAbortController: AbortController | null = null;
     let reconnectAttempt = 0;
     let active = true;
 
@@ -28,10 +28,55 @@ export default function SseController() {
         window.clearTimeout(reconnectTimer);
       }
       reconnectTimer = undefined;
-      if (eventSource) {
-        eventSource.close();
+      streamAbortController?.abort();
+      streamAbortController = null;
+    };
+
+    const processStream = async (response: Response) => {
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error("sse_missing_response_body");
       }
-      eventSource = null;
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let currentEventName = "message";
+
+      const flushLine = (rawLine: string) => {
+        const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
+        if (line.length === 0) {
+          if (currentEventName === "notification") {
+            queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
+            queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list });
+          }
+          currentEventName = "message";
+          return;
+        }
+
+        if (line.startsWith("event:")) {
+          currentEventName = line.slice(6).trim() || "message";
+        }
+      };
+
+      while (active) {
+        const { done, value } = await reader.read();
+        if (done) {
+          if (buffer.length > 0) {
+            flushLine(buffer);
+          }
+          return;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+
+        let lineBreakIndex = buffer.indexOf("\n");
+        while (lineBreakIndex !== -1) {
+          const line = buffer.slice(0, lineBreakIndex);
+          flushLine(line);
+          buffer = buffer.slice(lineBreakIndex + 1);
+          lineBreakIndex = buffer.indexOf("\n");
+        }
+      }
     };
 
     const scheduleReconnect = () => {
@@ -54,31 +99,60 @@ export default function SseController() {
       }, delayMs);
     };
 
-    const connect = () => {
+    const connect = async () => {
       const token = getSupabaseAccessToken();
       if (!token || !active) {
         stop();
         return;
       }
 
-      eventSource = new EventSource("/api/stream/events");
+      streamAbortController = new AbortController();
 
-      eventSource.onopen = () => {
-        reconnectAttempt = 0;
-      };
+      try {
+        const response = await fetch("/api/stream/events", {
+          method: "GET",
+          headers: {
+            Accept: "text/event-stream",
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+          signal: streamAbortController.signal,
+        });
 
-      eventSource.addEventListener("notification", () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
-        queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list });
-      });
-
-      eventSource.onerror = () => {
         if (!active) {
           return;
         }
 
-        eventSource?.close();
-        eventSource = null;
+        if (response.status === 401 || response.status === 403) {
+          handleApiAuthorizationFailure({
+            path: "/api/stream/events",
+            status: response.status,
+          });
+          stop();
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`sse_connect_failed_${response.status}`);
+        }
+
+        reconnectAttempt = 0;
+        await processStream(response);
+
+        if (!active) {
+          return;
+        }
+        const hasToken = getSupabaseAccessToken();
+        if (!hasToken) {
+          stop();
+          return;
+        }
+
+        scheduleReconnect();
+      } catch {
+        if (!active || streamAbortController?.signal.aborted) {
+          return;
+        }
 
         const hasToken = getSupabaseAccessToken();
         if (!hasToken) {
@@ -87,7 +161,7 @@ export default function SseController() {
         }
 
         scheduleReconnect();
-      };
+      }
     };
 
     const handleAuthEvent = (event: Event) => {
