@@ -1,4 +1,4 @@
-import type { CursorParams, LimitOffsetParams } from '../pagination';
+import type { CursorParams, LimitOffsetParams } from "../pagination";
 
 export type PaginatedResult<TItem> = {
   items: TItem[];
@@ -12,11 +12,57 @@ export type MeProfile = {
   username: string;
 };
 
+export type MeProfileUpdate = {
+  username?: string;
+  avatarUrl?: string;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  notificationTimezone?: string;
+  deliveryFrequency?: "instant" | "hourly" | "daily";
+};
+
 export type DiscogsRelease = {
   id: string;
   title: string;
   year?: number;
   artists: string[];
+};
+
+export type SearchQuery = {
+  keywords?: string[];
+  max_price?: number | null;
+  min_condition?: string | null;
+  min_price?: number | null;
+  page?: number;
+  page_size?: number;
+  providers?: string[] | null;
+};
+
+export type SearchResult = {
+  id: string;
+  provider: string;
+  title: string;
+  price: number;
+  currency: string;
+  listedAt: string;
+};
+
+export type SearchRequest = SearchQuery;
+
+export type SaveSearchAlertRequest = {
+  name: string;
+  query: SearchQuery;
+  poll_interval_seconds?: number;
+};
+
+export type DiscogsConnectInput = {
+  external_user_id: string;
+  access_token?: string | null;
+  token_metadata?: Record<string, unknown> | null;
+};
+
+export type DiscogsImportInput = {
+  source?: "wantlist" | "collection" | "both";
 };
 
 export type WatchRule = {
@@ -45,7 +91,7 @@ export type Notification = {
 export type ProviderRequest = {
   id: string;
   provider: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   createdAt: string;
 };
 
@@ -53,20 +99,40 @@ export type OutboundDelivery = {
   id: string;
   channel: string;
   destination: string;
-  status: 'queued' | 'sent' | 'failed';
+  status: "queued" | "sent" | "failed";
   createdAt: string;
 };
 
 export type DiscogsSearchParams = {
   q: string;
-  type?: 'release' | 'master' | 'artist' | 'label';
+  type?: "release" | "master" | "artist" | "label";
 } & LimitOffsetParams;
 
 export type WatchRulesListParams = LimitOffsetParams;
 
+export type WatchRuleUpdate = {
+  query?: string;
+  enabled?: boolean;
+};
+
 export type WatchReleasesListParams = CursorParams;
 
 export type NotificationsListParams = CursorParams;
+
+export type NotificationUnreadCount = {
+  unreadCount: number;
+};
+
+export type DiscogsStatus = {
+  connected: boolean;
+  username?: string;
+};
+
+export type DiscogsImportJob = {
+  id: string;
+  status: "queued" | "running" | "completed" | "failed";
+  createdAt: string;
+};
 
 export type ProviderRequestsListParams = LimitOffsetParams;
 

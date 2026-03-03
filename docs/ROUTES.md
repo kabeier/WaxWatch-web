@@ -11,29 +11,32 @@ This app uses Next.js **App Router**.
 
 Implemented structure:
 
-- `app/(auth)/...` signed-out routes (login)
+- `app/(auth)/...` signed-out routes (login and account/session states)
 - `app/(app)/...` authenticated shell routes
 - `app/(app)/admin/...` optional admin routes (feature-flag + admin-claim gated)
 
-## Route map (MVP)
+## Route map
 
-### Auth
+### MVP routes
 
-- `/login` (or `/auth/login`) — Supabase auth UI / sign in flow
-
-### Primary
-
+- `/login` — Supabase auth UI / sign in flow
 - `/search` — search listings + save search as alert
 - `/alerts` — list alerts (watch rules)
 - `/alerts/new` — create alert
 - `/alerts/[id]` — alert detail/edit
 - `/watchlist` — list/manage release watches
-- `/notifications` — inbox + mark read
+- `/notifications` — inbox + mark read/unread
 - `/settings/profile` — profile + preferences
 - `/settings/alerts` — alert delivery settings (quiet hours, frequency)
 - `/settings/integrations` — Discogs connect/import/status
 - `/settings/danger` — deactivate + hard delete
 
-## Optional admin (disabled by default)
+### Implemented but non-MVP support routes
+
+- `/` — redirect to `/search`
+- `/signed-out` — post-logout informational state
+- `/account-removed` — post-account-removal informational state
+
+### Planned
 
 - `/admin/provider-requests` — requires admin claim + feature flag

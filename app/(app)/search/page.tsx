@@ -1,14 +1,18 @@
+import { routeViewModels } from "@/lib/view-models/routes";
+
 export default function SearchPage() {
+  const viewModel = routeViewModels.search;
+
   return (
     <section>
-      <h1>Search Scaffold</h1>
-      <p>Search listings and save a query as an alert.</p>
+      <h1>{viewModel.heading}</h1>
+      <p>{viewModel.summary}</p>
       <p>
-        Endpoint mapping: <code>POST /api/search</code> and <code>POST /api/search/save-alert</code>
-        .
+        API operations:{" "}
+        {viewModel.operations.map((operation) => operation.serviceMethod).join(", ")}.
       </p>
-      <button type="button">Placeholder: Run search</button>
-      <button type="button">Placeholder: Save as alert</button>
+      <button type="button">Run search</button>
+      <button type="button">Save as alert</button>
     </section>
   );
 }
