@@ -13,16 +13,17 @@ import type {
   NotificationUnreadCount,
   NotificationsListParams,
   OutboundDelivery,
-  OutboundListParams,
   PaginatedResult,
+  OutboundListParams,
   ProviderRequest,
   ProviderRequestsListParams,
   SaveSearchAlertRequest,
   SearchRequest,
-  SearchResult,
+  SearchResponse,
   WatchRelease,
   WatchReleasesListParams,
   WatchRule,
+  WatchRuleCreate,
   WatchRuleUpdate,
   WatchRulesListParams,
 } from "./types";
@@ -41,7 +42,7 @@ export function createDomainServices(client: ApiClient) {
 
   const search = {
     run: (input: SearchRequest) =>
-      client.request<PaginatedResult<SearchResult>, SearchRequest>("/search", {
+      client.request<SearchResponse, SearchRequest>("/search", {
         method: "POST",
         body: input,
       }),
@@ -67,12 +68,12 @@ export function createDomainServices(client: ApiClient) {
   const watchRules = {
     list: (params: WatchRulesListParams = {}) => {
       const query = appendLimitOffset(new URLSearchParams(), params);
-      return client.request<PaginatedResult<WatchRule>>("/watch-rules", {}, query);
+      return client.request<WatchRule[]>("/watch-rules", {}, query);
     },
     getById: (watchRuleId: string) =>
       client.request<WatchRule>(`/watch-rules/${encodeURIComponent(watchRuleId)}`),
-    create: (input: Pick<WatchRule, "query" | "enabled">) =>
-      client.request<WatchRule, Pick<WatchRule, "query" | "enabled">>("/watch-rules", {
+    create: (input: WatchRuleCreate) =>
+      client.request<WatchRule, WatchRuleCreate>("/watch-rules", {
         method: "POST",
         body: input,
       }),
@@ -104,8 +105,8 @@ export function createDomainServices(client: ApiClient) {
 
   const notifications = {
     list: (params: NotificationsListParams = {}) => {
-      const query = appendCursorPagination(new URLSearchParams(), params);
-      return client.request<PaginatedResult<Notification>>("/notifications", {}, query);
+      const query = appendLimitOffset(new URLSearchParams(), params);
+      return client.request<Notification[]>("/notifications", {}, query);
     },
     getUnreadCount: () => client.request<NotificationUnreadCount>("/notifications/unread-count"),
     markRead: (notificationId: string) =>
