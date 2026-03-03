@@ -10,7 +10,8 @@ export default async function DangerSettingsPage({
 }: {
   searchParams?: Promise<{ state?: string; retryAfter?: string }>;
 }) {
-  const { state: stateParam, retryAfter } = await (searchParams ?? Promise.resolve({} as { state?: string; retryAfter?: string }));
+  const { state: stateParam, retryAfter } = await (searchParams ??
+    Promise.resolve({} as { state?: string; retryAfter?: string }));
   const state = (stateParam as RouteState | undefined) ?? "ready";
 
   return (

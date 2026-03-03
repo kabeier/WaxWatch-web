@@ -27,7 +27,10 @@ export default function AlertsPage() {
         />
       ) : null}
       {watchRulesQuery.isError && !isRateLimitedError(watchRulesQuery.error) ? (
-        <StateError message="Could not load watch rules." detail={getErrorMessage(watchRulesQuery.error, "Request failed")} />
+        <StateError
+          message="Could not load watch rules."
+          detail={getErrorMessage(watchRulesQuery.error, "Request failed")}
+        />
       ) : null}
       {watchRulesQuery.data && watchRulesQuery.data.items.length === 0 ? (
         <StateEmpty message="No watch rules yet." />

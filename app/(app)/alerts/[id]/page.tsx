@@ -14,7 +14,8 @@ export default async function AlertDetailPage({
   searchParams?: Promise<{ state?: string; retryAfter?: string }>;
 }) {
   const { id } = await params;
-  const { state: stateParam, retryAfter } = await (searchParams ?? Promise.resolve({} as { state?: string; retryAfter?: string }));
+  const { state: stateParam, retryAfter } = await (searchParams ??
+    Promise.resolve({} as { state?: string; retryAfter?: string }));
   const state = (stateParam as RouteState | undefined) ?? "ready";
   const viewModel = routeViewModels.alertDetail;
 

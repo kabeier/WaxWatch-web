@@ -61,23 +61,23 @@ Open: http://localhost:3000
 
 ## Route matrix
 
-| Route                      | Status      | Notes                                                                                |
-| -------------------------- | ----------- | ------------------------------------------------------------------------------------ |
-| `/`                        | implemented | Redirects to `/search`.                                                              |
-| `/login`                   | scaffold    | Sign-in shell placeholder for Supabase auth UI.                                      |
-| `/search`                  | implemented | Search route now includes explicit loading/empty/error/rate-limited render states.   |
-| `/alerts`                  | implemented | Watch rules/releases route now renders loading/empty/error/rate-limited states.      |
-| `/alerts/new`              | implemented | Create-alert route now includes explicit loading/empty/error/rate-limited branches.   |
-| `/alerts/[id]`             | implemented | Alert detail route now includes explicit loading/empty/error/rate-limited branches.   |
-| `/watchlist`               | implemented | Watchlist route now renders loading/empty/error/rate-limited states.                  |
-| `/notifications`           | implemented | Notifications route now renders loading/empty/error/rate-limited states.              |
-| `/settings/profile`        | implemented | Profile settings now render loading/empty/error/rate-limited states.                  |
-| `/settings/alerts`         | implemented | Alert settings route now includes loading/empty/error/rate-limited branches.          |
-| `/settings/integrations`   | implemented | Integrations route now renders loading/empty/error/rate-limited states.               |
-| `/settings/danger`         | implemented | Danger-zone route now includes loading/empty/error/rate-limited branches.             |
-| `/signed-out`              | implemented | Signed-out confirmation support route.                                               |
-| `/account-removed`         | implemented | Account removal confirmation support route.                                          |
-| `/admin/provider-requests` | planned     | Admin-only route; not yet present in `app/`.                                         |
+| Route                      | Status      | Notes                                                                               |
+| -------------------------- | ----------- | ----------------------------------------------------------------------------------- |
+| `/`                        | implemented | Redirects to `/search`.                                                             |
+| `/login`                   | scaffold    | Sign-in shell placeholder for Supabase auth UI.                                     |
+| `/search`                  | implemented | Search route now includes explicit loading/empty/error/rate-limited render states.  |
+| `/alerts`                  | implemented | Watch rules/releases route now renders loading/empty/error/rate-limited states.     |
+| `/alerts/new`              | implemented | Create-alert route now includes explicit loading/empty/error/rate-limited branches. |
+| `/alerts/[id]`             | implemented | Alert detail route now includes explicit loading/empty/error/rate-limited branches. |
+| `/watchlist`               | implemented | Watchlist route now renders loading/empty/error/rate-limited states.                |
+| `/notifications`           | implemented | Notifications route now renders loading/empty/error/rate-limited states.            |
+| `/settings/profile`        | implemented | Profile settings now render loading/empty/error/rate-limited states.                |
+| `/settings/alerts`         | implemented | Alert settings route now includes loading/empty/error/rate-limited branches.        |
+| `/settings/integrations`   | implemented | Integrations route now renders loading/empty/error/rate-limited states.             |
+| `/settings/danger`         | implemented | Danger-zone route now includes loading/empty/error/rate-limited branches.           |
+| `/signed-out`              | implemented | Signed-out confirmation support route.                                              |
+| `/account-removed`         | implemented | Account removal confirmation support route.                                         |
+| `/admin/provider-requests` | planned     | Admin-only route; not yet present in `app/`.                                        |
 
 See `docs/ROUTES.md` and `docs/IA_MAP.md`.
 

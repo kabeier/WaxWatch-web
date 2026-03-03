@@ -10,7 +10,8 @@ export default async function AlertSettingsPage({
 }: {
   searchParams?: Promise<{ state?: string; retryAfter?: string }>;
 }) {
-  const { state: stateParam, retryAfter } = await (searchParams ?? Promise.resolve({} as { state?: string; retryAfter?: string }));
+  const { state: stateParam, retryAfter } = await (searchParams ??
+    Promise.resolve({} as { state?: string; retryAfter?: string }));
   const state = (stateParam as RouteState | undefined) ?? "ready";
 
   return (
@@ -26,9 +27,7 @@ export default async function AlertSettingsPage({
           retryAfterSeconds={retryAfter ? Number(retryAfter) : undefined}
         />
       ) : null}
-      {state === "ready" ? (
-        <button type="button">Save alert delivery preferences</button>
-      ) : null}
+      {state === "ready" ? <button type="button">Save alert delivery preferences</button> : null}
     </section>
   );
 }

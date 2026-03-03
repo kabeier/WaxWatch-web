@@ -24,7 +24,10 @@ export default function ProfileSettingsPage() {
         />
       ) : null}
       {meQuery.isError && !isRateLimitedError(meQuery.error) ? (
-        <StateError message="Could not load profile." detail={getErrorMessage(meQuery.error, "Request failed")} />
+        <StateError
+          message="Could not load profile."
+          detail={getErrorMessage(meQuery.error, "Request failed")}
+        />
       ) : null}
       {!meQuery.data && !meQuery.isLoading && !meQuery.isError ? (
         <StateEmpty message="No profile found." />

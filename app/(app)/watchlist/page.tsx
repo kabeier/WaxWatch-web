@@ -24,7 +24,10 @@ export default function WatchlistPage() {
         />
       ) : null}
       {watchReleasesQuery.isError && !isRateLimitedError(watchReleasesQuery.error) ? (
-        <StateError message="Could not load watchlist." detail={getErrorMessage(watchReleasesQuery.error, "Request failed")} />
+        <StateError
+          message="Could not load watchlist."
+          detail={getErrorMessage(watchReleasesQuery.error, "Request failed")}
+        />
       ) : null}
       {watchReleasesQuery.data && watchReleasesQuery.data.items.length === 0 ? (
         <StateEmpty message="No watchlist releases yet." />
