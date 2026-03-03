@@ -55,23 +55,23 @@ Open: http://localhost:3000
 
 ## Route matrix
 
-| Route | Status | Notes |
-| --- | --- | --- |
-| `/` | implemented | Redirects to `/search`. |
-| `/login` | scaffold | Sign-in shell placeholder for Supabase auth UI. |
-| `/search` | scaffold | Search + save-alert structure bound to `search` domain view model. |
-| `/alerts` | scaffold | Watch rules + matched releases shell bound to `watchRules/watchReleases` view model. |
-| `/alerts/new` | scaffold | Create-alert placeholder page. |
-| `/alerts/[id]` | scaffold | Alert detail/edit placeholder bound to alert domain operations. |
-| `/watchlist` | scaffold | Watch releases overview placeholder. |
-| `/notifications` | scaffold | Notification feed/read-state placeholder bound to notification domain operations. |
-| `/settings/profile` | scaffold | Profile/preferences placeholder bound to `me` domain operations. |
-| `/settings/alerts` | scaffold | Delivery policy placeholder. |
-| `/settings/integrations` | scaffold | Discogs connect/import placeholder bound to integrations domain operations. |
-| `/settings/danger` | scaffold | Account deactivation and hard-delete placeholder. |
-| `/signed-out` | implemented | Signed-out confirmation support route. |
-| `/account-removed` | implemented | Account removal confirmation support route. |
-| `/admin/provider-requests` | planned | Admin-only route; not yet present in `app/`. |
+| Route                      | Status      | Notes                                                                                |
+| -------------------------- | ----------- | ------------------------------------------------------------------------------------ |
+| `/`                        | implemented | Redirects to `/search`.                                                              |
+| `/login`                   | scaffold    | Sign-in shell placeholder for Supabase auth UI.                                      |
+| `/search`                  | scaffold    | Search + save-alert structure bound to `search` domain view model.                   |
+| `/alerts`                  | scaffold    | Watch rules + matched releases shell bound to `watchRules/watchReleases` view model. |
+| `/alerts/new`              | scaffold    | Create-alert placeholder page.                                                       |
+| `/alerts/[id]`             | scaffold    | Alert detail/edit placeholder bound to alert domain operations.                      |
+| `/watchlist`               | scaffold    | Watch releases overview placeholder.                                                 |
+| `/notifications`           | scaffold    | Notification feed/read-state placeholder bound to notification domain operations.    |
+| `/settings/profile`        | scaffold    | Profile/preferences placeholder bound to `me` domain operations.                     |
+| `/settings/alerts`         | scaffold    | Delivery policy placeholder.                                                         |
+| `/settings/integrations`   | scaffold    | Discogs connect/import placeholder bound to integrations domain operations.          |
+| `/settings/danger`         | scaffold    | Account deactivation and hard-delete placeholder.                                    |
+| `/signed-out`              | implemented | Signed-out confirmation support route.                                               |
+| `/account-removed`         | implemented | Account removal confirmation support route.                                          |
+| `/admin/provider-requests` | planned     | Admin-only route; not yet present in `app/`.                                         |
 
 See `docs/ROUTES.md` and `docs/IA_MAP.md`.
 

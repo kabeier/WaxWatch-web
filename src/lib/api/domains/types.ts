@@ -1,4 +1,4 @@
-import type { CursorParams, LimitOffsetParams } from '../pagination';
+import type { CursorParams, LimitOffsetParams } from "../pagination";
 
 export type PaginatedResult<TItem> = {
   items: TItem[];
@@ -18,7 +18,7 @@ export type MeProfileUpdate = {
   quietHoursStart?: string;
   quietHoursEnd?: string;
   notificationTimezone?: string;
-  deliveryFrequency?: 'instant' | 'hourly' | 'daily';
+  deliveryFrequency?: "instant" | "hourly" | "daily";
 };
 
 export type DiscogsRelease = {
@@ -73,7 +73,7 @@ export type Notification = {
 export type ProviderRequest = {
   id: string;
   provider: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   createdAt: string;
 };
 
@@ -81,13 +81,13 @@ export type OutboundDelivery = {
   id: string;
   channel: string;
   destination: string;
-  status: 'queued' | 'sent' | 'failed';
+  status: "queued" | "sent" | "failed";
   createdAt: string;
 };
 
 export type DiscogsSearchParams = {
   q: string;
-  type?: 'release' | 'master' | 'artist' | 'label';
+  type?: "release" | "master" | "artist" | "label";
 } & LimitOffsetParams;
 
 export type WatchRulesListParams = LimitOffsetParams;
@@ -112,7 +112,7 @@ export type DiscogsStatus = {
 
 export type DiscogsImportJob = {
   id: string;
-  status: 'queued' | 'running' | 'completed' | 'failed';
+  status: "queued" | "running" | "completed" | "failed";
   createdAt: string;
 };
 

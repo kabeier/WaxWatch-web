@@ -1,4 +1,4 @@
-import { routeViewModels } from '@/lib/view-models/routes';
+import { routeViewModels } from "@/lib/view-models/routes";
 
 export default function NotificationsPage() {
   const viewModel = routeViewModels.notifications;

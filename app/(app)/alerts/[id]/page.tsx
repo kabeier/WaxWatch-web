@@ -1,4 +1,4 @@
-import { routeViewModels } from '@/lib/view-models/routes';
+import { routeViewModels } from "@/lib/view-models/routes";
 
 export default async function AlertDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
