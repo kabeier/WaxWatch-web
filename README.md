@@ -1,76 +1,69 @@
-# WaxWatch Web Template
+# WaxWatch Frontend (Next.js)
 
-TypeScript + React application built with Next.js (Pages Router), hardened for EC2 production rollouts.
+WaxWatch is a record-price alert web app. Users can search listings across providers, save searches as alerts, manage alerts/watchlist, and receive notifications.
 
-## Production Topology (AWS EC2)
+## Stack (production)
 
-`ALB/ELB (TLS termination) -> EC2 instances (ASG) -> Next.js standalone runtime`
+- Next.js **App Router**
+- TypeScript
+- Supabase Auth (client session) + WaxWatch Backend API (JWT bearer)
+- TanStack Query for server state (Option A: SPA-style dashboard)
+- SSE for realtime notifications
 
-- TLS terminates on the ALB.
-- ALB forwards traffic to containerized Next.js on port `4173`.
-- Security headers are applied by Next.js (`next.config.mjs`) in the live serving path.
-- Health endpoints exposed for target-group checks:
-  - `/health` (liveness)
-  - `/ready` (readiness)
+## Runtime topology (AWS EC2)
 
-See full deployment guide: [`docs/deploy/aws-ec2.md`](docs/deploy/aws-ec2.md).
+`Route53 -> ALB (TLS termination) -> EC2 ASG -> Next.js standalone container (port 4173)`
 
-## Environment Contract
+Health endpoints for ALB target group checks:
 
-Copy `.env.example` to `.env` and fill all values.
+- `/health` (liveness)
+- `/ready` (readiness)
+
+See: `docs/deploy/aws-ec2.md`
+
+## Contracts (do not invent API)
+
+This repo is contract-driven. These are authoritative:
+
+- `contracts/openapi.snapshot.json` (pinned schema snapshot)
+- `docs/FRONTEND_API_CONTRACT.md` (behavior notes + screen mapping)
+
+## Quick start
 
 ```bash
 cp .env.example .env
-npm run build
+npm install
+npm run dev
 ```
 
-Validation runs before build/start and fails fast if env values are missing/malformed. Template parity is enforced by `npm run env:check:template`, which keeps `.env.example` aligned with the runtime contract in `src/config/env.ts`.
+Open: http://localhost:3000
 
-## Core Scripts
+## Dev commands (expected)
 
-- `npm run dev` - local development
-- `npm run build` - production build (with env validation)
-- `npm run start` - starts standalone server wrapper with graceful shutdown
-- `npm run test:coverage` - unit tests + coverage thresholds
-- `npm run format:check` - verifies Prettier formatting
-- `npm run format:check:changed` - checks formatting for changed files in PR CI
-- `npm run test:contract` - enforces test updates when production code changes in PRs
-- `npm run a11y:smoke` - accessibility smoke checks
-- `npm run bundle:check` - bundle-size budget enforcement
-- `npm run verify:deployment` - checks required response headers and health endpoints
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run test`
+- `npm run lint`
+- `npm run format`
 
-## Container Runtime Hardening
+(Exact scripts depend on repo package.json; keep docs aligned with the repo.)
 
-- Next.js standalone output (`output: 'standalone'`)
-- Non-root runtime user in Docker image
-- Docker `HEALTHCHECK` against `/health`
-- Restart policy (`unless-stopped`) in compose
-- Graceful shutdown handling for `SIGTERM`/`SIGINT`
+## Navigation map (MVP)
 
-## Observability
+Primary routes (authenticated shell):
 
-- Structured JSON logs for CloudWatch ingestion
-- `x-request-id` propagation via middleware
-- Client/server error capture hooks for centralized tracking pipeline
+- `/search`
+- `/alerts`
+- `/watchlist`
+- `/notifications`
+- `/settings/profile`
+- `/settings/alerts`
+- `/settings/integrations`
+- `/settings/danger`
 
-## CI/CD Production Gates
+See `docs/ROUTES.md` and `docs/IA_MAP.md`.
 
-CI enforces:
+## Agent work
 
-- typecheck + lint + format checks
-- PR test-update contract for production code changes
-- coverage thresholds
-- a11y smoke test
-- env template parity check (`.env.example` vs runtime contract)
-- build + bundle budget
-- deployment verification (`headers + /health + /ready`)
-
-## Release Checklist (Template Cleanup)
-
-Before each release:
-
-1. Confirm **WaxWatch** naming consistency (repo/docs/UI).
-2. Remove leftover template placeholders and references.
-3. Run `npm run env:check:template` to verify `.env.example` matches runtime contract.
-4. Run `npm run ci:prod-gates`.
-5. Confirm deployment runbook updates if architecture changed.
+If you are a code agent, read **docs/AGENT_GUIDE.md** first.
