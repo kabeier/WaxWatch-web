@@ -12,11 +12,39 @@ export type MeProfile = {
   username: string;
 };
 
+export type MeProfileUpdate = {
+  username?: string;
+  avatarUrl?: string;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  notificationTimezone?: string;
+  deliveryFrequency?: 'instant' | 'hourly' | 'daily';
+};
+
 export type DiscogsRelease = {
   id: string;
   title: string;
   year?: number;
   artists: string[];
+};
+
+export type SearchResult = {
+  id: string;
+  provider: string;
+  title: string;
+  price: number;
+  currency: string;
+  listedAt: string;
+};
+
+export type SearchRequest = {
+  query: string;
+  providerKeys?: string[];
+};
+
+export type SaveSearchAlertRequest = {
+  query: string;
+  providerKeys?: string[];
 };
 
 export type WatchRule = {
@@ -64,9 +92,29 @@ export type DiscogsSearchParams = {
 
 export type WatchRulesListParams = LimitOffsetParams;
 
+export type WatchRuleUpdate = {
+  query?: string;
+  enabled?: boolean;
+};
+
 export type WatchReleasesListParams = CursorParams;
 
 export type NotificationsListParams = CursorParams;
+
+export type NotificationUnreadCount = {
+  unreadCount: number;
+};
+
+export type DiscogsStatus = {
+  connected: boolean;
+  username?: string;
+};
+
+export type DiscogsImportJob = {
+  id: string;
+  status: 'queued' | 'running' | 'completed' | 'failed';
+  createdAt: string;
+};
 
 export type ProviderRequestsListParams = LimitOffsetParams;
 

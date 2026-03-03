@@ -1,30 +1,28 @@
-const ALERTS_ENDPOINTS = {
-  watchRules: "GET /api/alerts/watch-rules",
-  watchReleases: "GET /api/alerts/watch-releases",
-  createRule: "POST /api/alerts/watch-rules",
-} as const;
+import { routeViewModels } from '@/lib/view-models/routes';
 
 export default function AlertsPage() {
+  const viewModel = routeViewModels.alerts;
+
   return (
     <section>
-      <h1>Alerts Scaffold</h1>
-      <p>
-        Tab mapping is explicit to backend endpoints: <code>{ALERTS_ENDPOINTS.watchRules}</code> and{" "}
-        <code>{ALERTS_ENDPOINTS.watchReleases}</code>
-      </p>
+      <h1>{viewModel.heading}</h1>
+      <p>{viewModel.summary}</p>
+      <ul>
+        {viewModel.operations.map((operation) => (
+          <li key={operation.id}>
+            {operation.label}: <code>{operation.serviceMethod}</code>
+          </li>
+        ))}
+      </ul>
 
-      <h2>Tab: Watch Rules</h2>
-      <p>Loading state: fetch rule list from {ALERTS_ENDPOINTS.watchRules}.</p>
-      <p>Empty state: no watch rules configured.</p>
-      <p>Error state: show load failure and retry action.</p>
-      <button type="button">Placeholder: Retry watch-rules fetch</button>
-      <button type="button">Placeholder: Create rule ({ALERTS_ENDPOINTS.createRule})</button>
+      <h2>Watch Rules</h2>
+      <p>Loading state: request watch rules and show creation affordance.</p>
+      <button type="button">Retry watch rules load</button>
+      <button type="button">Create watch rule</button>
 
-      <h2>Tab: Watch Releases</h2>
-      <p>Loading state: fetch release matches from {ALERTS_ENDPOINTS.watchReleases}.</p>
-      <p>Empty state: no releases currently match active watch rules.</p>
-      <p>Error state: unable to fetch watch releases; provide retry affordance.</p>
-      <button type="button">Placeholder: Retry watch-releases fetch</button>
+      <h2>Watch Releases</h2>
+      <p>Loading state: request release matches for active rules.</p>
+      <button type="button">Retry watch releases load</button>
     </section>
   );
 }

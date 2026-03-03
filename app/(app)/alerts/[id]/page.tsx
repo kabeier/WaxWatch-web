@@ -1,39 +1,27 @@
-const ALERT_DETAIL_ENDPOINTS = {
-  watchRuleById: "GET /api/alerts/watch-rules/:id",
-  updateWatchRule: "PATCH /api/alerts/watch-rules/:id",
-  deleteWatchRule: "DELETE /api/alerts/watch-rules/:id",
-  watchReleases: "GET /api/alerts/watch-releases?ruleId=:id",
-} as const;
+import { routeViewModels } from '@/lib/view-models/routes';
 
 export default async function AlertDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const viewModel = routeViewModels.alertDetail;
 
   return (
     <section>
-      <h1>Alert Detail Scaffold</h1>
+      <h1>{viewModel.heading}</h1>
+      <p>{viewModel.summary}</p>
       <p>
-        Dynamic route id: <code>{id}</code>
+        Alert id: <code>{id}</code>
       </p>
-      <p>
-        Endpoint capability mapping: <code>{ALERT_DETAIL_ENDPOINTS.watchRuleById}</code>,{" "}
-        <code>{ALERT_DETAIL_ENDPOINTS.updateWatchRule}</code>,
-        <code> {ALERT_DETAIL_ENDPOINTS.deleteWatchRule}</code>, and{" "}
-        <code>{ALERT_DETAIL_ENDPOINTS.watchReleases}</code>.
-      </p>
+      <ul>
+        {viewModel.operations.map((operation) => (
+          <li key={operation.id}>
+            {operation.label}: <code>{operation.serviceMethod}</code>
+          </li>
+        ))}
+      </ul>
 
-      <h2>Tab: Watch Rule</h2>
-      <p>Loading state: request individual rule details.</p>
-      <p>Empty state: alert rule not found.</p>
-      <p>Error state: unable to fetch or update this watch rule.</p>
-      <button type="button">Placeholder: Retry rule load</button>
-      <button type="button">Placeholder: Save rule updates</button>
-      <button type="button">Placeholder: Delete rule</button>
-
-      <h2>Tab: Watch Releases</h2>
-      <p>Loading state: request release matches scoped to this watch rule.</p>
-      <p>Empty state: no matched releases for this watch rule yet.</p>
-      <p>Error state: failed to load release matches for this watch rule.</p>
-      <button type="button">Placeholder: Retry rule-specific releases load</button>
+      <button type="button">Retry alert detail load</button>
+      <button type="button">Save alert updates</button>
+      <button type="button">Delete alert</button>
     </section>
   );
 }

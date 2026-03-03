@@ -15,9 +15,16 @@
 - Danger zone
 - Logout
 
+## Auth + account lifecycle routes (supporting IA)
+
+- Login
+- Signed-out confirmation
+- Account removed confirmation
+
 ## “Search is add alert”
 
 Search is a user flow that can end in either:
+
 - clicking through to listings, OR
 - saving the search as an alert, OR
 - both

@@ -13,7 +13,7 @@ test("renders the search page content", () => {
     </Layout>,
   );
 
-  expect(screen.getByRole("heading", { name: /search scaffold/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /^search$/i })).toBeInTheDocument();
 });
 
 test("renders the app nav links", () => {
@@ -51,7 +51,7 @@ test("alerts page renders", () => {
     </Layout>,
   );
 
-  expect(screen.getByRole("heading", { name: /alerts scaffold/i })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: /^alerts$/i })).toBeInTheDocument();
 });
 
 test("404 page shows fallback link", () => {
