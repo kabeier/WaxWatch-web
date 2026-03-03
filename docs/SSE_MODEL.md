@@ -6,6 +6,10 @@ Endpoint:
 Event name:
 - `notification`
 
+Auth:
+- Requires `Authorization: Bearer <jwt>` (same as other `/api/**` routes).
+- Because the stream requires auth headers, use a fetch/ReadableStream SSE client instead of native `EventSource`.
+
 Recommended client behavior:
 - connect once per authenticated session
 - reconnect with exponential backoff

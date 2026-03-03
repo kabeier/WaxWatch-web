@@ -24,7 +24,7 @@ Avoid duplicating server state into a separate global store.
 ## SSE bridge
 
 SSE is global:
-- Keep a single EventSource connection under the authenticated layout.
+- Keep a single authenticated SSE connection under the authenticated layout.
 - On incoming `notification` event:
   - refresh unread count
   - optionally refetch inbox list (or merge if you keep normalized cache)
