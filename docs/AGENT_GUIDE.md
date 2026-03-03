@@ -23,6 +23,7 @@ This document is the “rules of engagement” for human contributors and code a
 ## Project approach (Option A)
 
 This app is a dashboard-style SPA:
+
 - Client-side routing under an authenticated layout
 - Data via TanStack Query
 - Mutations invalidate/refresh relevant queries
@@ -32,10 +33,12 @@ This app is a dashboard-style SPA:
 ### 1) Shared API client wrapper
 
 Implement a single wrapper (example paths):
+
 - `src/lib/api/client.ts`
 - `src/lib/api/errors.ts`
 
 Responsibilities:
+
 - inject bearer token
 - parse JSON
 - normalize backend error envelope
@@ -45,6 +48,7 @@ Responsibilities:
 ### 2) Query keys + invalidation
 
 Define query keys centrally:
+
 - `me`
 - `watchRules:list`
 - `watchRules:detail:<id>`
@@ -58,32 +62,38 @@ Define query keys centrally:
 ### 3) SSE event bridge
 
 At app shell:
+
 - connect to `/api/stream/events`
 - on `notification` event:
   - refresh unread count
   - optionally refetch inbox or merge minimal payload
 
 Reconnect policy:
+
 - exponential backoff with jitter
 - stop reconnecting if auth is missing
 
 ## UX rules by feature
 
 ### Search
+
 - User searches
 - Show results (even if partial provider failures occurred)
 - Show non-blocking warnings if `provider_errors` returned
 - “Save this search as alert” works whether results are empty or non-empty
 
 ### Alerts
+
 - CRUD watch rules (`/api/watch-rules`)
 - Query sources must only include enabled provider keys (from `/api/me` integrations list)
 
 ### Discogs import
+
 - tolerate “same job_id” returned on repeated import clicks
 - if import queue fails (503), show retry CTA; continue to poll job if a job_id exists
 
 ### Outbound redirect
+
 - `/api/outbound/ebay/{listing_id}` returns 307 redirect
 - open in new tab; do not append affiliate params client-side
 
