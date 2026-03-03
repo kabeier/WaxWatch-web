@@ -39,7 +39,10 @@ describe("auth session helpers", () => {
 
   test("clearAuthSession removes persisted auth keys", () => {
     window.localStorage.setItem("waxwatch.auth.jwt", "legacy-token");
-    window.localStorage.setItem("waxwatch.auth.session", JSON.stringify({ access_token: "abc123" }));
+    window.localStorage.setItem(
+      "waxwatch.auth.session",
+      JSON.stringify({ access_token: "abc123" }),
+    );
 
     clearAuthSession();
 
@@ -68,7 +71,10 @@ describe("auth session helpers", () => {
   test("401/403 handler clears session and redirects to reauth flow", () => {
     const redirectSpy = vi.fn();
     setAuthRedirectHandler(redirectSpy);
-    window.localStorage.setItem("waxwatch.auth.session", JSON.stringify({ access_token: "abc123" }));
+    window.localStorage.setItem(
+      "waxwatch.auth.session",
+      JSON.stringify({ access_token: "abc123" }),
+    );
 
     handleApiAuthorizationFailure({ path: "/me", status: 401 });
 

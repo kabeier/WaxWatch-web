@@ -1,12 +1,12 @@
-import { isApiError, toApiError, tryParseErrorEnvelope } from './errors';
-import { parseRateLimitMeta } from './rateLimit';
-import { error as logError, info, warn } from '../logger';
+import { isApiError, toApiError, tryParseErrorEnvelope } from "./errors";
+import { parseRateLimitMeta } from "./rateLimit";
+import { error as logError, info, warn } from "../logger";
 import {
   clearAuthSession,
   completeAuthEvent,
   getSupabaseAccessToken,
-  handleApiAuthorizationFailure
-} from '../auth-session';
+  handleApiAuthorizationFailure,
+} from "../auth-session";
 
 export type JwtProvider = () => string | null | undefined | Promise<string | null | undefined>;
 
@@ -19,16 +19,16 @@ export type ApiClientOptions = {
 };
 
 export type RequestOptions<TBody> = {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: TBody;
   headers?: HeadersInit;
   signal?: AbortSignal;
 };
 
 function buildUrl(baseUrl: string, path: string, query?: URLSearchParams): string {
-  const normalizedPath = path.replace(/^\/+/, '');
+  const normalizedPath = path.replace(/^\/+/, "");
   const base = new URL(baseUrl);
-  base.pathname = base.pathname.endsWith('/') ? base.pathname : `${base.pathname}/`;
+  base.pathname = base.pathname.endsWith("/") ? base.pathname : `${base.pathname}/`;
   const url = new URL(normalizedPath, base);
   if (query) {
     url.search = query.toString();
@@ -37,15 +37,15 @@ function buildUrl(baseUrl: string, path: string, query?: URLSearchParams): strin
 }
 
 function normalizePath(path: string): string {
-  const strippedPath = path.split('?')[0] ?? path;
-  const withLeadingSlash = strippedPath.startsWith('/') ? strippedPath : `/${strippedPath}`;
-  return withLeadingSlash.replace(/\/+/g, '/');
+  const strippedPath = path.split("?")[0] ?? path;
+  const withLeadingSlash = strippedPath.startsWith("/") ? strippedPath : `/${strippedPath}`;
+  return withLeadingSlash.replace(/\/+/g, "/");
 }
 
 function isAbortError(error: unknown): boolean {
   return error instanceof DOMException
-    ? error.name === 'AbortError'
-    : error instanceof Error && error.name === 'AbortError';
+    ? error.name === "AbortError"
+    : error instanceof Error && error.name === "AbortError";
 }
 
 export function createApiClient(options: ApiClientOptions) {
@@ -55,7 +55,7 @@ export function createApiClient(options: ApiClientOptions) {
   async function request<TResponse, TBody = unknown>(
     path: string,
     requestOptions: RequestOptions<TBody> = {},
-    query?: URLSearchParams
+    query?: URLSearchParams,
   ): Promise<TResponse> {
     const startedAt = Date.now();
     const normalizedPath = normalizePath(path);
@@ -64,30 +64,30 @@ export function createApiClient(options: ApiClientOptions) {
     const headers = new Headers(options.defaultHeaders);
 
     if (options.requestId) {
-      headers.set('x-request-id', options.requestId);
+      headers.set("x-request-id", options.requestId);
     }
 
     if (requestOptions.body !== undefined) {
-      headers.set('Content-Type', 'application/json');
+      headers.set("Content-Type", "application/json");
     }
 
     if (jwt) {
-      headers.set('Authorization', `Bearer ${jwt}`);
+      headers.set("Authorization", `Bearer ${jwt}`);
     }
 
     if (requestOptions.headers) {
       new Headers(requestOptions.headers).forEach((value, key) => headers.set(key, value));
     }
 
-    const method = requestOptions.method ?? 'GET';
-    const outboundRequestId = headers.get('x-request-id') ?? undefined;
+    const method = requestOptions.method ?? "GET";
+    const outboundRequestId = headers.get("x-request-id") ?? undefined;
 
     info({
-      message: 'api_request_start',
-      scope: 'api',
+      message: "api_request_start",
+      scope: "api",
       method,
       path: normalizedPath,
-      requestId: outboundRequestId
+      requestId: outboundRequestId,
     });
 
     let response: Response;
@@ -96,22 +96,22 @@ export function createApiClient(options: ApiClientOptions) {
         method,
         body: requestOptions.body !== undefined ? JSON.stringify(requestOptions.body) : undefined,
         headers,
-        signal: requestOptions.signal
+        signal: requestOptions.signal,
       });
     } catch (requestError) {
       const transportFailure = {
-        message: 'api_request_failure',
-        scope: 'api',
+        message: "api_request_failure",
+        scope: "api",
         method,
         path: normalizedPath,
         requestId: outboundRequestId,
         durationMs: Date.now() - startedAt,
-        errorMessage: requestError instanceof Error ? requestError.message : String(requestError)
+        errorMessage: requestError instanceof Error ? requestError.message : String(requestError),
       };
       if (isAbortError(requestError) || requestOptions.signal?.aborted) {
         warn({
           ...transportFailure,
-          failureKind: 'aborted'
+          failureKind: "aborted",
         });
       } else {
         logError(transportFailure);
@@ -119,14 +119,14 @@ export function createApiClient(options: ApiClientOptions) {
       throw requestError;
     }
 
-    const requestId = response.headers.get('x-request-id') ?? outboundRequestId;
+    const requestId = response.headers.get("x-request-id") ?? outboundRequestId;
     const durationMs = Date.now() - startedAt;
 
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
         handleApiAuthorizationFailure({
           path: normalizedPath,
-          status: response.status
+          status: response.status,
         });
       }
 
@@ -135,15 +135,15 @@ export function createApiClient(options: ApiClientOptions) {
       const rateLimitMeta = parseRateLimitMeta(response.headers, envelope?.error?.details);
 
       const failureLog = {
-        message: 'api_request_failure',
-        scope: 'api',
+        message: "api_request_failure",
+        scope: "api",
         requestId,
         method,
         path: normalizedPath,
         status: response.status,
         durationMs,
         kind: apiError.kind,
-        retryAfterSeconds: rateLimitMeta.retryAfterSeconds
+        retryAfterSeconds: rateLimitMeta.retryAfterSeconds,
       };
 
       if (isApiError(apiError) && apiError.status < 500) {
@@ -155,40 +155,37 @@ export function createApiClient(options: ApiClientOptions) {
       throw apiError;
     }
 
-    if (normalizedPath === '/me/logout' && method === 'POST') {
+    if (normalizedPath === "/me/logout" && method === "POST") {
       info({
-        message: 'auth_signed_out',
-        scope: 'auth',
+        message: "auth_signed_out",
+        scope: "auth",
         path: normalizedPath,
-        status: response.status
+        status: response.status,
       });
       clearAuthSession();
-      completeAuthEvent('signed-out');
+      completeAuthEvent("signed-out");
     }
 
-    if (
-      method === 'DELETE' &&
-      (normalizedPath === '/me' || normalizedPath === '/me/hard-delete')
-    ) {
+    if (method === "DELETE" && (normalizedPath === "/me" || normalizedPath === "/me/hard-delete")) {
       info({
-        message: 'auth_account_removed',
-        scope: 'auth',
+        message: "auth_account_removed",
+        scope: "auth",
         path: normalizedPath,
-        status: response.status
+        status: response.status,
       });
       clearAuthSession();
-      completeAuthEvent('account-removed');
+      completeAuthEvent("account-removed");
     }
 
     if (response.status === 204) {
       info({
-        message: 'api_request_success',
-        scope: 'api',
+        message: "api_request_success",
+        scope: "api",
         requestId,
         method,
         path: normalizedPath,
         status: response.status,
-        durationMs
+        durationMs,
       });
       return undefined as TResponse;
     }
@@ -196,32 +193,32 @@ export function createApiClient(options: ApiClientOptions) {
     try {
       const parsedResponse = (await response.json()) as TResponse;
       info({
-        message: 'api_request_success',
-        scope: 'api',
-        requestId,
-        method,
-        path: normalizedPath,
-        status: response.status,
-        durationMs
-      });
-      return parsedResponse;
-    } catch (parseError) {
-      logError({
-        message: 'api_request_failure',
-        scope: 'api',
+        message: "api_request_success",
+        scope: "api",
         requestId,
         method,
         path: normalizedPath,
         status: response.status,
         durationMs,
-        failureKind: 'response_parse_error',
-        errorMessage: parseError instanceof Error ? parseError.message : String(parseError)
+      });
+      return parsedResponse;
+    } catch (parseError) {
+      logError({
+        message: "api_request_failure",
+        scope: "api",
+        requestId,
+        method,
+        path: normalizedPath,
+        status: response.status,
+        durationMs,
+        failureKind: "response_parse_error",
+        errorMessage: parseError instanceof Error ? parseError.message : String(parseError),
       });
       throw parseError;
     }
   }
 
   return {
-    request
+    request,
   };
 }
