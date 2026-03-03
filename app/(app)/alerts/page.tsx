@@ -32,11 +32,11 @@ export default function AlertsPage() {
           detail={getErrorMessage(watchRulesQuery.error, "Request failed")}
         />
       ) : null}
-      {watchRulesQuery.data && watchRulesQuery.data.items.length === 0 ? (
+      {watchRulesQuery.data && watchRulesQuery.data.length === 0 ? (
         <StateEmpty message="No watch rules yet." />
       ) : null}
-      {watchRulesQuery.data && watchRulesQuery.data.items.length > 0 ? (
-        <p>Loaded {watchRulesQuery.data.items.length} rules.</p>
+      {watchRulesQuery.data && watchRulesQuery.data.length > 0 ? (
+        <p>Loaded {watchRulesQuery.data.length} rules.</p>
       ) : null}
 
       <h2>Watch Releases</h2>

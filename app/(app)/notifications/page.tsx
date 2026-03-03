@@ -17,7 +17,7 @@ export default function NotificationsPage() {
     <section>
       <h1>{viewModel.heading}</h1>
       <p>{viewModel.summary}</p>
-      <p>Unread notifications: {unreadCountQuery.data?.unreadCount ?? 0}</p>
+      <p>Unread notifications: {unreadCountQuery.data?.unread_count ?? 0}</p>
 
       {notificationsQuery.isLoading ? <StateLoading message="Loading notifications…" /> : null}
       {notificationsQuery.isError && isRateLimitedError(notificationsQuery.error) ? (
@@ -32,13 +32,13 @@ export default function NotificationsPage() {
           detail={getErrorMessage(notificationsQuery.error, "Request failed")}
         />
       ) : null}
-      {notificationsQuery.data && notificationsQuery.data.items.length === 0 ? (
+      {notificationsQuery.data && notificationsQuery.data.length === 0 ? (
         <StateEmpty message="No notifications yet." />
       ) : null}
-      {notificationsQuery.data && notificationsQuery.data.items.length > 0 ? (
+      {notificationsQuery.data && notificationsQuery.data.length > 0 ? (
         <ul>
-          {notificationsQuery.data.items.map((notification) => (
-            <li key={notification.id}>{notification.message}</li>
+          {notificationsQuery.data.map((notification) => (
+            <li key={notification.id}>{notification.event_type}</li>
           ))}
         </ul>
       ) : null}
