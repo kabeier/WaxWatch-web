@@ -19,8 +19,8 @@ export default defineConfig({
   },
   test: {
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'lcov'],
+      provider: "v8",
+      reporter: ["text", "lcov"],
       thresholds: {
         lines: 60,
         functions: 60,

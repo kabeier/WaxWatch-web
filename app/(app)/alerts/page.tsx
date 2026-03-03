@@ -9,7 +9,8 @@ export default function AlertsPage() {
     <section>
       <h1>Alerts Scaffold</h1>
       <p>
-        Tab mapping is explicit to backend endpoints: <code>{ALERTS_ENDPOINTS.watchRules}</code> and <code>{ALERTS_ENDPOINTS.watchReleases}</code>
+        Tab mapping is explicit to backend endpoints: <code>{ALERTS_ENDPOINTS.watchRules}</code> and{" "}
+        <code>{ALERTS_ENDPOINTS.watchReleases}</code>
       </p>
 
       <h2>Tab: Watch Rules</h2>

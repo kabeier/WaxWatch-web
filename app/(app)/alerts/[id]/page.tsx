@@ -15,8 +15,10 @@ export default async function AlertDetailPage({ params }: { params: Promise<{ id
         Dynamic route id: <code>{id}</code>
       </p>
       <p>
-        Endpoint capability mapping: <code>{ALERT_DETAIL_ENDPOINTS.watchRuleById}</code>, <code>{ALERT_DETAIL_ENDPOINTS.updateWatchRule}</code>,
-        <code> {ALERT_DETAIL_ENDPOINTS.deleteWatchRule}</code>, and <code>{ALERT_DETAIL_ENDPOINTS.watchReleases}</code>.
+        Endpoint capability mapping: <code>{ALERT_DETAIL_ENDPOINTS.watchRuleById}</code>,{" "}
+        <code>{ALERT_DETAIL_ENDPOINTS.updateWatchRule}</code>,
+        <code> {ALERT_DETAIL_ENDPOINTS.deleteWatchRule}</code>, and{" "}
+        <code>{ALERT_DETAIL_ENDPOINTS.watchReleases}</code>.
       </p>
 
       <h2>Tab: Watch Rule</h2>

@@ -10,7 +10,7 @@ test("renders the search page content", () => {
   render(
     <Layout>
       <SearchPage />
-    </Layout>
+    </Layout>,
   );
 
   expect(screen.getByRole("heading", { name: /search scaffold/i })).toBeInTheDocument();
@@ -21,7 +21,7 @@ test("renders the app nav links", () => {
   render(
     <Layout>
       <SearchPage />
-    </Layout>
+    </Layout>,
   );
 
   expect(screen.getByRole("link", { name: /search/i })).toBeInTheDocument();
@@ -37,7 +37,7 @@ test("shows a consistent session-expired notice", () => {
   render(
     <Layout>
       <SearchPage />
-    </Layout>
+    </Layout>,
   );
 
   expect(screen.getByRole("status")).toHaveTextContent(/session expired or became invalid/i);
@@ -48,7 +48,7 @@ test("alerts page renders", () => {
   render(
     <Layout>
       <AlertsPage />
-    </Layout>
+    </Layout>,
   );
 
   expect(screen.getByRole("heading", { name: /alerts scaffold/i })).toBeInTheDocument();
@@ -60,7 +60,7 @@ test("404 page shows fallback link", () => {
   render(
     <Layout>
       <NotFoundPage />
-    </Layout>
+    </Layout>,
   );
 
   expect(screen.getByRole("heading", { name: /404/i })).toBeInTheDocument();

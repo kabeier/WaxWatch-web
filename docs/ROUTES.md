@@ -18,9 +18,11 @@ Implemented structure:
 ## Route map (MVP)
 
 ### Auth
+
 - `/login` (or `/auth/login`) — Supabase auth UI / sign in flow
 
 ### Primary
+
 - `/search` — search listings + save search as alert
 - `/alerts` — list alerts (watch rules)
 - `/alerts/new` — create alert
@@ -33,4 +35,5 @@ Implemented structure:
 - `/settings/danger` — deactivate + hard delete
 
 ## Optional admin (disabled by default)
+
 - `/admin/provider-requests` — requires admin claim + feature flag
