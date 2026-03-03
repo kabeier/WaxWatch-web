@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useSearchParams } from "next/navigation";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -35,22 +37,28 @@ const authNoticeMessages: Record<string, string> = {
 };
 
 export default function Layout({ children }: LayoutProps) {
-  const router = useRouter();
-  const reason = typeof router.query.reason === "string" ? router.query.reason : "";
+  const searchParams = useSearchParams();
+  const reason = searchParams.get("reason") ?? "";
   const notice = authNoticeMessages[reason];
 
   return (
     <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
       <header style={{ marginBottom: 16 }}>
         <nav>
-          <Link href="/" style={linkStyle}>
-            Home
+          <Link href="/search" style={linkStyle}>
+            Search
           </Link>
-          <Link href="/projects" style={linkStyle}>
-            Projects
+          <Link href="/alerts" style={linkStyle}>
+            Alerts
           </Link>
-          <Link href="/about" style={linkStyle}>
-            About
+          <Link href="/watchlist" style={linkStyle}>
+            Watchlist
+          </Link>
+          <Link href="/notifications" style={linkStyle}>
+            Notifications
+          </Link>
+          <Link href="/settings/profile" style={linkStyle}>
+            Settings
           </Link>
         </nav>
         <hr style={{ marginTop: 12 }} />

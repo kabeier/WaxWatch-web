@@ -5,7 +5,7 @@ const DISCOGS_ENDPOINT_CAPABILITIES = [
   "GET /api/integrations/discogs/import/:jobId",
 ] as const;
 
-export default function DiscogsIntegrationPage() {
+export default function IntegrationSettingsPage() {
   return (
     <section>
       <h1>Discogs Integration Scaffold</h1>

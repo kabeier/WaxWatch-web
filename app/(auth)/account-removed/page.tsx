@@ -6,7 +6,7 @@ export default function AccountRemovedPage() {
       <h1>Account removed</h1>
       <p>Your account has been removed and you have been signed out from this device.</p>
       <p>
-        Need access again? <Link href="/">Return home</Link>
+        Need access again? <Link href="/login">Go to login</Link>
       </p>
     </section>
   );

@@ -2,9 +2,14 @@
 
 This app uses Next.js **App Router**.
 
+## Project decision
+
+- ✅ Decision: migrate to **Next.js App Router now** and treat `app/` as the canonical route tree.
+- Keep `pages/api/*` for API routes only during this phase.
+
 ## Layout groups
 
-Suggested structure:
+Implemented structure:
 
 - `app/(auth)/...` signed-out routes (login)
 - `app/(app)/...` authenticated shell routes

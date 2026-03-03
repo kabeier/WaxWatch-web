@@ -5,7 +5,7 @@ export default function NotFoundPage() {
     <section>
       <h1>404</h1>
       <p>That page doesn’t exist.</p>
-      <Link href="/">Go home</Link>
+      <Link href="/search">Go to search</Link>
     </section>
   );
 }
