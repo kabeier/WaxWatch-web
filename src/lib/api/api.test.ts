@@ -27,6 +27,138 @@ import {
 } from "./pagination";
 import { parseRetryAfter, parseRetryAfterFromErrorDetails } from "./rateLimit";
 
+const searchRunRequestFixture = {
+  keywords: ["deep house"],
+  providers: ["discogs"],
+  min_price: 10,
+  max_price: 50,
+  page: 1,
+  page_size: 24,
+};
+
+const searchRunResponseFixture: SearchResponse = {
+  items: [
+    {
+      id: "search-1",
+      listing_id: "31f64343-b868-4d4b-b4f8-ec8753dc9ad7",
+      provider: "discogs",
+      external_id: "123",
+      title: "Example Record",
+      url: "https://provider.example/listing/123",
+      public_url: "https://provider.example/listing/123",
+      price: 22.5,
+      currency: "USD",
+      condition: "vg+",
+      seller: "demo-seller",
+      location: "US",
+      discogs_release_id: 1001,
+      discogs_master_id: 2001,
+    },
+  ],
+  pagination: {
+    page: 1,
+    page_size: 24,
+    total: 1,
+    returned: 1,
+    total_pages: 1,
+    has_next: false,
+  },
+  providers_searched: ["discogs"],
+  provider_errors: { ebay: "timeout" },
+};
+
+const saveSearchAlertRequestFixture = {
+  name: "Deep house deals",
+  query: searchRunRequestFixture,
+  poll_interval_seconds: 600,
+};
+
+const watchRuleFixture: WatchRule = {
+  id: "80dc6333-3c3c-49b8-a803-938783fbeb99",
+  user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+  name: "Rare techno under $40",
+  query: { sources: ["discogs"], q: "detroit techno", max_price: 40 },
+  is_active: true,
+  poll_interval_seconds: 600,
+  last_run_at: "2026-01-20T12:00:00+00:00",
+  next_run_at: "2026-01-20T12:10:00+00:00",
+  created_at: "2026-01-20T11:52:00+00:00",
+  updated_at: "2026-01-20T12:00:00+00:00",
+};
+
+const watchRuleListFixture: WatchRule[] = [watchRuleFixture];
+
+const watchReleaseListFixture: WatchRelease[] = [
+  {
+    id: "24550438-0dfc-4f1f-a19b-3b8b682b5f6f",
+    user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+    discogs_release_id: 1001,
+    discogs_master_id: 5001,
+    match_mode: "master_release",
+    title: "Demo Want",
+    artist: "Artist A",
+    year: 1999,
+    target_price: 45,
+    currency: "USD",
+    min_condition: "vg+",
+    is_active: true,
+    created_at: "2026-01-20T10:00:00+00:00",
+    updated_at: "2026-01-20T10:00:00+00:00",
+  },
+];
+
+const notificationListFixture: Notification[] = [
+  {
+    id: "4c8d9157-4a8c-4ea8-9d27-3ad2fc1e8f95",
+    user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+    event_id: "f2eec3e4-1f39-4a9f-9f39-2359f3983be0",
+    event_type: "watch_match_found",
+    channel: "realtime",
+    status: "sent",
+    is_read: false,
+    delivered_at: "2026-01-20T12:00:04+00:00",
+    failed_at: null,
+    read_at: null,
+    created_at: "2026-01-20T12:00:03+00:00",
+  },
+];
+
+const notificationUnreadFixture = { unread_count: 3 };
+
+const meProfileFixture: MeProfile = {
+  id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+  email: "listener@example.com",
+  is_active: true,
+  created_at: "2026-01-20T11:52:00+00:00",
+  updated_at: "2026-01-20T12:00:00+00:00",
+  display_name: "Wax Collector",
+  preferences: {
+    timezone: "America/Chicago",
+    currency: "USD",
+    notifications_email: true,
+    notifications_push: false,
+    quiet_hours_start: 23,
+    quiet_hours_end: 7,
+    notification_timezone: "America/Chicago",
+    delivery_frequency: "daily",
+  },
+  integrations: [{ provider: "discogs", linked: true, watch_rule_count: 3 }],
+};
+
+const meProfileUpdateFixture = {
+  display_name: "Wax Collector",
+  preferences: {
+    timezone: "America/Chicago",
+    currency: "USD",
+    notifications_email: true,
+    notifications_push: false,
+    quiet_hours_start: 23,
+    quiet_hours_end: 7,
+    notification_timezone: "America/Chicago",
+    delivery_frequency: "daily" as const,
+  },
+};
+
 describe("api client", () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -217,63 +349,17 @@ describe("rate limit parsing", () => {
 
 describe("contract shape fixtures", () => {
   it("matches search run/save-alert contract shapes", async () => {
-    const searchRequest = {
-      keywords: ["deep house"],
-      providers: ["discogs"],
-      min_price: 10,
-      max_price: 50,
-      page: 1,
-      page_size: 24,
-    };
+    const searchRequest = searchRunRequestFixture;
 
-    const searchFixture: SearchResponse = {
-      items: [
-        {
-          id: "search-1",
-          listing_id: "31f64343-b868-4d4b-b4f8-ec8753dc9ad7",
-          provider: "discogs",
-          external_id: "123",
-          title: "Example Record",
-          url: "https://provider.example/listing/123",
-          public_url: "https://provider.example/listing/123",
-          price: 22.5,
-          currency: "USD",
-          condition: "vg+",
-          seller: "demo-seller",
-          location: "US",
-          discogs_release_id: 1001,
-          discogs_master_id: 2001,
-        },
-      ],
-      pagination: {
-        page: 1,
-        page_size: 24,
-        total: 1,
-        returned: 1,
-        total_pages: 1,
-        has_next: false,
-      },
-      providers_searched: ["discogs"],
-      provider_errors: { ebay: "timeout" },
-    };
+    const searchFixture: SearchResponse = searchRunResponseFixture;
 
-    const saveAlertRequest = {
-      name: "Deep house deals",
-      query: searchRequest,
-      poll_interval_seconds: 600,
-    };
+    const saveAlertRequest = saveSearchAlertRequestFixture;
 
     const savedAlertFixture: WatchRule = {
-      id: "80dc6333-3c3c-49b8-a803-938783fbeb99",
-      user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+      ...watchRuleFixture,
       name: "Deep house deals",
       query: { sources: ["discogs"], keywords: ["deep house"], max_price: 50 },
-      is_active: true,
-      poll_interval_seconds: 600,
       last_run_at: null,
-      next_run_at: "2026-01-20T12:10:00+00:00",
-      created_at: "2026-01-20T11:52:00+00:00",
-      updated_at: "2026-01-20T12:00:00+00:00",
     };
 
     const fetchMock = vi
@@ -308,20 +394,7 @@ describe("contract shape fixtures", () => {
   });
 
   it("matches watch-rules list/detail/create/update/delete contract shapes", async () => {
-    const listFixture: WatchRule[] = [
-      {
-        id: "80dc6333-3c3c-49b8-a803-938783fbeb99",
-        user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
-        name: "Rare techno under $40",
-        query: { sources: ["discogs"], q: "detroit techno", max_price: 40 },
-        is_active: true,
-        poll_interval_seconds: 600,
-        last_run_at: "2026-01-20T12:00:00+00:00",
-        next_run_at: "2026-01-20T12:10:00+00:00",
-        created_at: "2026-01-20T11:52:00+00:00",
-        updated_at: "2026-01-20T12:00:00+00:00",
-      },
-    ];
+    const listFixture: WatchRule[] = watchRuleListFixture;
 
     const createPayload = {
       name: "Fresh arrivals",
@@ -385,24 +458,7 @@ describe("contract shape fixtures", () => {
   });
 
   it("matches watch-releases list contract array shape", async () => {
-    const fixture: WatchRelease[] = [
-      {
-        id: "24550438-0dfc-4f1f-a19b-3b8b682b5f6f",
-        user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
-        discogs_release_id: 1001,
-        discogs_master_id: 5001,
-        match_mode: "master_release",
-        title: "Demo Want",
-        artist: "Artist A",
-        year: 1999,
-        target_price: 45,
-        currency: "USD",
-        min_condition: "vg+",
-        is_active: true,
-        created_at: "2026-01-20T10:00:00+00:00",
-        updated_at: "2026-01-20T10:00:00+00:00",
-      },
-    ];
+    const fixture: WatchRelease[] = watchReleaseListFixture;
 
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify(fixture), {
@@ -424,23 +480,9 @@ describe("contract shape fixtures", () => {
   });
 
   it("matches notifications list/unread-count/read contract shapes", async () => {
-    const listFixture: Notification[] = [
-      {
-        id: "4c8d9157-4a8c-4ea8-9d27-3ad2fc1e8f95",
-        user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
-        event_id: "f2eec3e4-1f39-4a9f-9f39-2359f3983be0",
-        event_type: "watch_match_found",
-        channel: "realtime",
-        status: "sent",
-        is_read: false,
-        delivered_at: "2026-01-20T12:00:04+00:00",
-        failed_at: null,
-        read_at: null,
-        created_at: "2026-01-20T12:00:03+00:00",
-      },
-    ];
+    const listFixture: Notification[] = notificationListFixture;
 
-    const unreadFixture = { unread_count: 3 };
+    const unreadFixture = notificationUnreadFixture;
 
     const fetchMock = vi
       .fn<typeof fetch>()
@@ -477,39 +519,9 @@ describe("contract shape fixtures", () => {
   });
 
   it("matches profile update/deactivate/hard-delete contract shapes", async () => {
-    const updatedProfileFixture: MeProfile = {
-      id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
-      email: "listener@example.com",
-      is_active: true,
-      created_at: "2026-01-20T11:52:00+00:00",
-      updated_at: "2026-01-20T12:00:00+00:00",
-      display_name: "Wax Collector",
-      preferences: {
-        timezone: "America/Chicago",
-        currency: "USD",
-        notifications_email: true,
-        notifications_push: false,
-        quiet_hours_start: 23,
-        quiet_hours_end: 7,
-        notification_timezone: "America/Chicago",
-        delivery_frequency: "daily",
-      },
-      integrations: [{ provider: "discogs", linked: true, watch_rule_count: 3 }],
-    };
+    const updatedProfileFixture: MeProfile = meProfileFixture;
 
-    const updatePayload = {
-      display_name: "Wax Collector",
-      preferences: {
-        timezone: "America/Chicago",
-        currency: "USD",
-        notifications_email: true,
-        notifications_push: false,
-        quiet_hours_start: 23,
-        quiet_hours_end: 7,
-        notification_timezone: "America/Chicago",
-        delivery_frequency: "daily" as const,
-      },
-    };
+    const updatePayload = meProfileUpdateFixture;
 
     const fetchMock = vi
       .fn<typeof fetch>()
@@ -539,36 +551,7 @@ describe("contract shape fixtures", () => {
 
 describe("domain response fixtures", () => {
   it("accepts SearchResponse transport shape", async () => {
-    const fixture: SearchResponse = {
-      items: [
-        {
-          id: "search-1",
-          listing_id: "31f64343-b868-4d4b-b4f8-ec8753dc9ad7",
-          provider: "discogs",
-          external_id: "123",
-          title: "Example Record",
-          url: "https://provider.example/listing/123",
-          public_url: "https://provider.example/listing/123",
-          price: 22.5,
-          currency: "USD",
-          condition: "vg+",
-          seller: "demo-seller",
-          location: "US",
-          discogs_release_id: 1001,
-          discogs_master_id: 2001,
-        },
-      ],
-      pagination: {
-        page: 1,
-        page_size: 24,
-        total: 1,
-        returned: 1,
-        total_pages: 1,
-        has_next: false,
-      },
-      providers_searched: ["discogs"],
-      provider_errors: { ebay: "timeout" },
-    };
+    const fixture: SearchResponse = searchRunResponseFixture;
 
     const noErrorsFixture: SearchResponse = {
       ...fixture,
@@ -604,23 +587,12 @@ describe("domain response fixtures", () => {
 
   it("accepts UserProfileOut transport shape", async () => {
     const fixture: MeProfile = {
-      id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
-      email: "listener@example.com",
-      is_active: true,
-      created_at: "2026-01-20T11:52:00+00:00",
-      updated_at: "2026-01-20T12:00:00+00:00",
-      display_name: "Wax Collector",
+      ...meProfileFixture,
       preferences: {
-        timezone: "America/Chicago",
-        currency: "USD",
-        notifications_email: true,
+        ...meProfileFixture.preferences,
         notifications_push: true,
-        quiet_hours_start: 23,
-        quiet_hours_end: 7,
-        notification_timezone: "America/Chicago",
         delivery_frequency: "hourly",
       },
-      integrations: [{ provider: "discogs", linked: true, watch_rule_count: 3 }],
     };
 
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
@@ -637,20 +609,7 @@ describe("domain response fixtures", () => {
   });
 
   it("accepts WatchRuleOut list and read transport shapes", async () => {
-    const listFixture: WatchRule[] = [
-      {
-        id: "80dc6333-3c3c-49b8-a803-938783fbeb99",
-        user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
-        name: "Rare techno under $40",
-        query: { sources: ["discogs"], q: "detroit techno", max_price: 40 },
-        is_active: true,
-        poll_interval_seconds: 600,
-        last_run_at: "2026-01-20T12:00:00+00:00",
-        next_run_at: "2026-01-20T12:10:00+00:00",
-        created_at: "2026-01-20T11:52:00+00:00",
-        updated_at: "2026-01-20T12:00:00+00:00",
-      },
-    ];
+    const listFixture: WatchRule[] = watchRuleListFixture;
 
     const readFixture = listFixture[0];
 
@@ -755,23 +714,9 @@ describe("domain response fixtures", () => {
   });
 
   it("accepts NotificationOut and unread_count transport shapes", async () => {
-    const notificationsFixture: Notification[] = [
-      {
-        id: "4c8d9157-4a8c-4ea8-9d27-3ad2fc1e8f95",
-        user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
-        event_id: "f2eec3e4-1f39-4a9f-9f39-2359f3983be0",
-        event_type: "watch_match_found",
-        channel: "realtime",
-        status: "sent",
-        is_read: false,
-        delivered_at: "2026-01-20T12:00:04+00:00",
-        failed_at: null,
-        read_at: null,
-        created_at: "2026-01-20T12:00:03+00:00",
-      },
-    ];
+    const notificationsFixture: Notification[] = notificationListFixture;
 
-    const unreadFixture = { unread_count: 3 };
+    const unreadFixture = notificationUnreadFixture;
 
     const fetchMock = vi
       .fn<typeof fetch>()

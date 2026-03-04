@@ -58,12 +58,12 @@ jobs:
           filters: |
             api_or_routes:
               - 'src/lib/api/**'
-              - 'src/app/**/page.tsx'
-              - 'src/pages/**/*.tsx'
+              - 'src/lib/query/**'
+              - 'app/(app)/**'
 
       - name: API shape fixtures gate (PR touched API/route pages)
         if: github.event_name == 'pull_request' && steps.api_shape_paths.outputs.api_or_routes == 'true'
-        run: npm run test:run -- src/lib/api/api.test.ts
+        run: npm run test:run -- src/lib/api/api.test.ts -t "contract shape fixtures"
 
       - name: Detect SSE changes
         if: github.event_name == 'pull_request'
