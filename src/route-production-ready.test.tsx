@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import AlertsPage from "../app/(app)/alerts/page";
@@ -437,6 +437,17 @@ describe("route-level production-ready paths", () => {
   it("/settings/integrations success", () => {
     render(<IntegrationSettingsPage />);
     expect(screen.getByText(/discogs connected/i)).toBeInTheDocument();
+  });
+
+  it("/settings/integrations connect uses provided discogs user id", () => {
+    render(<IntegrationSettingsPage />);
+
+    fireEvent.change(screen.getByLabelText(/discogs user id/i), {
+      target: { value: "discogs_user_2048" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /connect discogs account/i }));
+
+    expect(state.discogsConnectMutation.mutate).toHaveBeenCalledWith("discogs_user_2048");
   });
 
   it("/settings/integrations failure", () => {

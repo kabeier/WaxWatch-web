@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+
 import { RetryAction } from "@/components/RetryAction";
 import {
   StateEmpty,
@@ -20,9 +22,29 @@ export default function IntegrationSettingsPage() {
   const discogsStatusQuery = useDiscogsStatusQuery();
   const connectMutation = useDiscogsConnectMutation();
   const importMutation = useDiscogsImportMutation();
+  const [externalUserId, setExternalUserId] = useState("");
 
   const isBusy = connectMutation.isPending || importMutation.isPending;
   const retryLoad = () => void discogsStatusQuery.retry();
+  const resolvedExternalUserId = useMemo(
+    () => discogsStatusQuery.data?.external_user_id?.trim() ?? "",
+    [discogsStatusQuery.data?.external_user_id],
+  );
+  const trimmedExternalUserId = externalUserId.trim();
+  const canConnect = !isBusy && !discogsStatusQuery.isLoading && trimmedExternalUserId.length > 0;
+
+  useEffect(() => {
+    if (!externalUserId && resolvedExternalUserId) {
+      setExternalUserId(resolvedExternalUserId);
+    }
+  }, [externalUserId, resolvedExternalUserId]);
+
+  const handleConnect = () => {
+    if (!trimmedExternalUserId) {
+      return;
+    }
+    connectMutation.mutate(trimmedExternalUserId);
+  };
 
   return (
     <section>
@@ -56,6 +78,7 @@ export default function IntegrationSettingsPage() {
       {discogsStatusQuery.data ? (
         <p role="status" aria-live="polite">
           Status: Discogs connected: {discogsStatusQuery.data.connected ? "yes" : "no"}.
+          {resolvedExternalUserId ? ` User ID: ${resolvedExternalUserId}.` : ""}
         </p>
       ) : null}
       <button
@@ -65,11 +88,17 @@ export default function IntegrationSettingsPage() {
       >
         Refresh Discogs status
       </button>
-      <button
-        type="button"
+      <label htmlFor="discogs-external-user-id">Discogs user ID</label>
+      <input
+        id="discogs-external-user-id"
+        name="discogs-external-user-id"
+        value={externalUserId}
+        onChange={(event) => setExternalUserId(event.target.value)}
         disabled={isBusy || discogsStatusQuery.isLoading}
-        onClick={() => connectMutation.mutate("discogs-user")}
-      >
+        placeholder="Enter your Discogs user ID"
+        autoComplete="off"
+      />
+      <button type="button" disabled={!canConnect} onClick={handleConnect}>
         {connectMutation.isPending ? "Connecting Discogs account…" : "Connect Discogs account"}
       </button>
       <button
@@ -79,6 +108,10 @@ export default function IntegrationSettingsPage() {
       >
         {importMutation.isPending ? "Starting Discogs import…" : "Start Discogs import"}
       </button>
+
+      {!trimmedExternalUserId ? (
+        <StateEmpty message="Enter your Discogs user ID to connect your account." />
+      ) : null}
 
       {connectMutation.data ? <p role="status">Success: Discogs account connected.</p> : null}
       {importMutation.data ? <p role="status">Success: Discogs import started.</p> : null}
@@ -91,7 +124,7 @@ export default function IntegrationSettingsPage() {
             <RetryAction
               label="Retry Discogs connect"
               retryAfterSeconds={getRetryAfterSeconds(connectMutation.error)}
-              onRetry={() => connectMutation.mutate("discogs-user")}
+              onRetry={handleConnect}
             />
           }
         />
@@ -100,12 +133,7 @@ export default function IntegrationSettingsPage() {
         <StateError
           message="Could not connect Discogs account."
           detail={getErrorMessage(connectMutation.error, "Request failed")}
-          action={
-            <RetryAction
-              label="Retry Discogs connect"
-              onRetry={() => connectMutation.mutate("discogs-user")}
-            />
-          }
+          action={<RetryAction label="Retry Discogs connect" onRetry={handleConnect} />}
         />
       ) : null}
       {importMutation.isError && isRateLimitedError(importMutation.error) ? (

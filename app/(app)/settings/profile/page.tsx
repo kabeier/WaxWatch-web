@@ -47,7 +47,10 @@ export default function ProfileSettingsPage() {
     meQuery.isError && isRateLimitedError(meQuery.error) ? meQuery.error : null;
   const isRateLimited = Boolean(rateLimitedLoadError);
   const isSaveDisabled =
-    !isFormReady || meQuery.isLoading || updateProfileMutation.isPending || Boolean(validationMessage);
+    !isFormReady ||
+    meQuery.isLoading ||
+    updateProfileMutation.isPending ||
+    Boolean(validationMessage);
 
   return (
     <section>
@@ -112,7 +115,9 @@ export default function ProfileSettingsPage() {
           Display name
           <input
             value={displayName}
-            disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending || isRateLimited}
+            disabled={
+              !isFormReady || meQuery.isLoading || updateProfileMutation.isPending || isRateLimited
+            }
             onChange={(event) =>
               setDraft((current) => ({ ...current, displayName: event.currentTarget.value }))
             }
@@ -124,7 +129,9 @@ export default function ProfileSettingsPage() {
           Timezone
           <input
             value={timezone}
-            disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending || isRateLimited}
+            disabled={
+              !isFormReady || meQuery.isLoading || updateProfileMutation.isPending || isRateLimited
+            }
             onChange={(event) =>
               setDraft((current) => ({ ...current, timezone: event.currentTarget.value }))
             }
@@ -137,7 +144,9 @@ export default function ProfileSettingsPage() {
           <input
             value={currency}
             maxLength={3}
-            disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending || isRateLimited}
+            disabled={
+              !isFormReady || meQuery.isLoading || updateProfileMutation.isPending || isRateLimited
+            }
             onChange={(event) =>
               setDraft((current) => ({ ...current, currency: event.currentTarget.value }))
             }
