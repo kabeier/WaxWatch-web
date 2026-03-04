@@ -21,7 +21,28 @@ const mockRetry = vi.fn();
 const mockPush = vi.fn();
 const mockRefresh = vi.fn();
 
-const hooksState = {
+type HookState = {
+  meQuery: {
+    data: unknown;
+    isLoading: boolean;
+    isError: boolean;
+    error: unknown;
+  };
+  searchMutation: MockMutation;
+  saveAlertMutation: MockMutation;
+  watchRuleDetailQuery: {
+    data: unknown;
+    isLoading: boolean;
+    isError: boolean;
+    error: unknown;
+    retry: () => void;
+  };
+  updateWatchRuleMutation: MockMutation<unknown, unknown>;
+  deleteWatchRuleMutation: MockMutation;
+  updateProfileMutation: MockMutation;
+};
+
+const hooksState: HookState = {
   meQuery: {
     data: undefined,
     isLoading: false,
