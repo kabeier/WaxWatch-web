@@ -8,6 +8,76 @@ This document defines a **temporary baseline design system** for WaxWatch until 
 - **Future state:** Canonical design documentation will replace this baseline.
 - **Owner:** Product/design + frontend maintainers.
 
+## Design guide intake checklist
+
+Run this checklist as soon as official standards are published so migration work starts from a shared source of truth.
+
+### 1) Source links
+
+- [ ] Figma library + component specs: `<add URL>`
+- [ ] Design token dictionary (color/type/spacing/motion): `<add URL>`
+- [ ] Accessibility standards and content guidelines: `<add URL>`
+- [ ] Brand + voice guidelines: `<add URL>`
+- [ ] Engineering implementation notes/changelog: `<add URL>`
+
+### 2) Token mapping table
+
+Complete this table before route-by-route migration begins. Every temporary token should map to a canonical token, or be explicitly marked for removal.
+
+| Temporary token            | Canonical token/reference | Migration action | Notes                                 |
+| -------------------------- | ------------------------- | ---------------- | ------------------------------------- |
+| `font.family.sans`         | `<add canonical ref>`     | `map`            | Confirm fallbacks + loading strategy. |
+| `font.weight.regular`      | `<add canonical ref>`     | `map`            |                                       |
+| `font.weight.medium`       | `<add canonical ref>`     | `map`            |                                       |
+| `font.weight.semibold`     | `<add canonical ref>`     | `map`            |                                       |
+| `font.weight.bold`         | `<add canonical ref>`     | `map`            |                                       |
+| `text.xs`                  | `<add canonical ref>`     | `map`            |                                       |
+| `text.sm`                  | `<add canonical ref>`     | `map`            |                                       |
+| `text.base`                | `<add canonical ref>`     | `map`            |                                       |
+| `text.lg`                  | `<add canonical ref>`     | `map`            |                                       |
+| `text.xl`                  | `<add canonical ref>`     | `map`            |                                       |
+| `text.2xl`                 | `<add canonical ref>`     | `map`            |                                       |
+| `text.3xl`                 | `<add canonical ref>`     | `map`            |                                       |
+| `space.0`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.1`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.2`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.3`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.4`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.5`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.6`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.8`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.10`                 | `<add canonical ref>`     | `map`            |                                       |
+| `space.12`                 | `<add canonical ref>`     | `map`            |                                       |
+| `space.16`                 | `<add canonical ref>`     | `map`            |                                       |
+| `color.bg.canvas`          | `<add canonical ref>`     | `map`            |                                       |
+| `color.bg.surface`         | `<add canonical ref>`     | `map`            |                                       |
+| `color.bg.subtle`          | `<add canonical ref>`     | `map`            |                                       |
+| `color.fg.default`         | `<add canonical ref>`     | `map`            |                                       |
+| `color.fg.muted`           | `<add canonical ref>`     | `map`            |                                       |
+| `color.fg.inverse`         | `<add canonical ref>`     | `map`            |                                       |
+| `color.border.default`     | `<add canonical ref>`     | `map`            |                                       |
+| `color.border.muted`       | `<add canonical ref>`     | `map`            |                                       |
+| `color.brand.primary`      | `<add canonical ref>`     | `map`            |                                       |
+| `color.brand.primaryHover` | `<add canonical ref>`     | `map`            |                                       |
+| `color.state.success`      | `<add canonical ref>`     | `map`            |                                       |
+| `color.state.warning`      | `<add canonical ref>`     | `map`            |                                       |
+| `color.state.error`        | `<add canonical ref>`     | `map`            |                                       |
+| `color.state.info`         | `<add canonical ref>`     | `map`            |                                       |
+| `color.focus.ring`         | `<add canonical ref>`     | `map`            |                                       |
+
+### 3) Affected shared primitives
+
+Review these first, because route quality usually depends on them:
+
+- [ ] `StateLoading`
+- [ ] `StateEmpty`
+- [ ] `StateError`
+- [ ] `StateRateLimited`
+- [ ] `AppShell`
+- [ ] `TopNav`
+- [ ] `SideNav`
+- [ ] `ContentContainer`
+
 ## Temporary baseline tokens
 
 Use these tokens as the single source of truth for new UI work. Avoid adding one-off visual values unless they are first promoted to shared tokens/utilities.
@@ -159,3 +229,218 @@ Use this format for each temporary token/primitive during migration:
 - `canonical`: `<new_reference_name_or_link>`
 - `status`: `pending | in-progress | migrated | removed`
 - `notes`: `<breaking changes, behavioral differences, rollout notes>`
+
+## Migration tracker (pre-created)
+
+### Token-by-token tracker
+
+- `temporary`: `font.family.sans`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official typography token names.`
+- `temporary`: `font.weight.regular`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official typography token names.`
+- `temporary`: `font.weight.medium`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official typography token names.`
+- `temporary`: `font.weight.semibold`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official typography token names.`
+- `temporary`: `font.weight.bold`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official typography token names.`
+- `temporary`: `text.xs`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official type scale.`
+- `temporary`: `text.sm`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official type scale.`
+- `temporary`: `text.base`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official type scale.`
+- `temporary`: `text.lg`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official type scale.`
+- `temporary`: `text.xl`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official type scale.`
+- `temporary`: `text.2xl`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official type scale.`
+- `temporary`: `text.3xl`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official type scale.`
+- `temporary`: `space.0`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official spacing scale.`
+- `temporary`: `space.1`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official spacing scale.`
+- `temporary`: `space.2`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official spacing scale.`
+- `temporary`: `space.3`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official spacing scale.`
+- `temporary`: `space.4`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official spacing scale.`
+- `temporary`: `space.5`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official spacing scale.`
+- `temporary`: `space.6`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official spacing scale.`
+- `temporary`: `space.8`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official spacing scale.`
+- `temporary`: `space.10`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official spacing scale.`
+- `temporary`: `space.12`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official spacing scale.`
+- `temporary`: `space.16`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official spacing scale.`
+- `temporary`: `color.bg.canvas`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.bg.surface`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.bg.subtle`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.fg.default`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.fg.muted`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.fg.inverse`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.border.default`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.border.muted`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.brand.primary`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.brand.primaryHover`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.state.success`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.state.warning`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.state.error`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.state.info`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+- `temporary`: `color.focus.ring`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Awaiting official semantic color mapping.`
+
+### Component-by-component tracker
+
+- `temporary`: `StateLoading`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Verify skeleton, copy tone, and a11y announcements.`
+- `temporary`: `StateEmpty`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Verify iconography, guidance content, and CTA hierarchy.`
+- `temporary`: `StateError`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Verify error tone, retry behavior, and escalation patterns.`
+- `temporary`: `StateRateLimited`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Verify cooldown messaging and recovery actions.`
+- `temporary`: `AppShell`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Validate layout metrics, responsive behavior, and global chrome.`
+- `temporary`: `TopNav`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Validate nav item states and utility action placement.`
+- `temporary`: `SideNav`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Validate hierarchy, active state contrast, and collapsed modes.`
+- `temporary`: `ContentContainer`
+  - `canonical`: `<new_reference_name_or_link>`
+  - `status`: `pending`
+  - `notes`: `Validate max-widths and horizontal rhythm per breakpoint.`
+
+## Route readiness acceptance criteria (wired -> production-ready)
+
+A route can move from `wired` to `production-ready` only when all criteria below pass:
+
+1. **Canonical token adoption**
+   - 100% of route-level typography, spacing, and color usage maps to canonical design tokens (or approved aliases).
+   - No inline one-off visual values remain unless formally documented as a design exception.
+2. **Shared primitive compliance**
+   - Route uses canonical shared primitives for status handling and layout/navigation where applicable.
+   - Any local primitive overrides are reviewed and approved by design + frontend maintainers.
+3. **State completeness**
+   - Route includes and visually verifies loading, empty, error, and rate-limited states using shared patterns.
+4. **Interaction and accessibility sign-off**
+   - Keyboard navigation works end-to-end.
+   - Focus, contrast, semantics, and assistive-technology messaging meet WCAG 2.1 AA expectations.
+5. **Responsive and cross-browser validation**
+   - Route is validated at agreed breakpoints and in supported browsers/devices with no design regressions.
+6. **Visual regression + QA evidence**
+   - Screenshots or visual regression artifacts are attached and reviewed.
+   - Product/design sign-off recorded in the migration tracker notes for that route.
+7. **Documentation/tracker completion**
+   - The token and component tracker entries linked to this route are updated to `migrated` (or documented with an approved exception).
