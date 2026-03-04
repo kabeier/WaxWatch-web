@@ -103,10 +103,10 @@ At minimum, all new UI must satisfy:
 
 The app must provide and reuse shared primitives for common state handling:
 
-- `LoadingState`
-- `EmptyState`
-- `ErrorState`
-- `RateLimitedState`
+- `StateLoading` (`src/components/StateLoading.tsx`)
+- `StateEmpty` (`src/components/StateEmpty.tsx`)
+- `StateError` (`src/components/StateError.tsx`)
+- `StateRateLimited` (`src/components/StateRateLimited.tsx`)
 
 Minimum behavior contract:
 
@@ -114,6 +114,10 @@ Minimum behavior contract:
 - Support icon/illustration slot (optional).
 - Provide accessible semantics for status messaging.
 - Avoid layout shift where feasible (especially loading/skeleton usage).
+
+### Contributor note (temporary default)
+
+Until the official design guides land, contributors should treat `StateLoading`, `StateEmpty`, `StateError`, and `StateRateLimited` as required defaults for MVP route status handling (loading, empty, error, and rate-limited states). Avoid page-specific one-off status UI when these primitives cover the case.
 
 ### Navigation shell primitives
 
