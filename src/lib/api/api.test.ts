@@ -10,8 +10,10 @@ import { createDomainServices } from "./domains";
 import type {
   DiscogsImportJob,
   DiscogsStatus,
+  MeProfile,
   Notification,
   SearchResponse,
+  WatchRelease,
   WatchRule,
 } from "./domains/types";
 import { toApiError } from "./errors";
@@ -228,8 +230,42 @@ describe("domain response fixtures", () => {
     await expect(domains.search.run({ keywords: ["techno"] })).resolves.toEqual(fixture);
   });
 
-  it("accepts WatchRuleOut list shape", async () => {
-    const fixture: WatchRule[] = [
+  it("accepts UserProfileOut transport shape", async () => {
+    const fixture: MeProfile = {
+      id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+      email: "listener@example.com",
+      is_active: true,
+      created_at: "2026-01-20T11:52:00+00:00",
+      updated_at: "2026-01-20T12:00:00+00:00",
+      display_name: "Wax Collector",
+      preferences: {
+        timezone: "America/Chicago",
+        currency: "USD",
+        notifications_email: true,
+        notifications_push: true,
+        quiet_hours_start: 23,
+        quiet_hours_end: 7,
+        notification_timezone: "America/Chicago",
+        delivery_frequency: "hourly",
+      },
+      integrations: [{ provider: "discogs", linked: true, watch_rule_count: 3 }],
+    };
+
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify(fixture), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+    await expect(domains.me.getProfile()).resolves.toEqual(fixture);
+  });
+
+  it("accepts WatchRuleOut list and read transport shapes", async () => {
+    const listFixture: WatchRule[] = [
       {
         id: "80dc6333-3c3c-49b8-a803-938783fbeb99",
         user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
@@ -244,17 +280,74 @@ describe("domain response fixtures", () => {
       },
     ];
 
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(JSON.stringify(fixture), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      }),
-    );
+    const readFixture = listFixture[0];
+
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(listFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(readFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
 
     const domains = createDomainServices(
       createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
     );
-    await expect(domains.watchRules.list({ limit: 25, offset: 0 })).resolves.toEqual(fixture);
+    await expect(domains.watchRules.list({ limit: 25, offset: 0 })).resolves.toEqual(listFixture);
+    await expect(domains.watchRules.getById(readFixture.id)).resolves.toEqual(readFixture);
+  });
+
+  it("accepts WatchReleaseOut list and read transport shapes", async () => {
+    const listFixture: WatchRelease[] = [
+      {
+        id: "24550438-0dfc-4f1f-a19b-3b8b682b5f6f",
+        user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+        discogs_release_id: 1001,
+        discogs_master_id: 5001,
+        match_mode: "exact_release",
+        title: "Demo Want",
+        artist: "Artist A",
+        year: 1999,
+        target_price: 45,
+        currency: "USD",
+        min_condition: "vg+",
+        is_active: true,
+        created_at: "2026-01-20T10:00:00+00:00",
+        updated_at: "2026-01-20T10:00:00+00:00",
+      },
+    ];
+
+    const readFixture = listFixture[0];
+
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(listFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(readFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+    await expect(domains.watchReleases.list({ limit: 25, offset: 0 })).resolves.toEqual(
+      listFixture,
+    );
+    await expect(domains.watchReleases.getById(readFixture.id)).resolves.toEqual(readFixture);
   });
 
   it("accepts NotificationOut and unread_count transport shapes", async () => {
