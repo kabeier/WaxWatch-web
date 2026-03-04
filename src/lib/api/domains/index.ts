@@ -51,6 +51,18 @@ export function createDomainServices(client: ApiClient) {
         method: "PATCH",
         body: input,
       }),
+    logout: () =>
+      client.request<{ signed_out: boolean }>("/me/logout", {
+        method: "POST",
+      }),
+    deactivate: () =>
+      client.request<void>("/me", {
+        method: "DELETE",
+      }),
+    hardDelete: () =>
+      client.request<void>("/me/hard-delete", {
+        method: "DELETE",
+      }),
   };
 
   const search = {

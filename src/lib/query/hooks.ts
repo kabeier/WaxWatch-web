@@ -204,3 +204,25 @@ export function useUpdateProfileMutation() {
     },
   });
 }
+
+export function useDeactivateAccountMutation() {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (_: undefined) => waxwatchApi.me.deactivate(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.me });
+    },
+  });
+}
+
+export function useHardDeleteAccountMutation() {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (_: undefined) => waxwatchApi.me.hardDelete(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.me });
+    },
+  });
+}
