@@ -39,6 +39,7 @@ function createSseResponse(payload: string, init?: ResponseInit) {
 
 describe("SseController", () => {
   const fetchMock = vi.fn<typeof fetch>();
+  const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
@@ -49,6 +50,7 @@ describe("SseController", () => {
     vi.clearAllMocks();
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    warnSpy.mockClear();
   });
 
   it("connects successfully with authenticated bearer header", async () => {
@@ -68,6 +70,7 @@ describe("SseController", () => {
     expect(url).toBe("/api/stream/events");
     expect(headers.get("Authorization")).toBe("Bearer jwt-token");
     expect(headers.get("Accept")).toBe("text/event-stream");
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
 
     await waitFor(() =>
       expect(invalidateSpy).toHaveBeenCalledWith({
@@ -109,6 +112,12 @@ describe("SseController", () => {
 
     const reconnectDelays = setTimeoutSpy.mock.calls.map(([, delay]) => delay);
     expect(reconnectDelays.slice(0, 2)).toEqual([1_030, 2_150]);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[SSE] stream connection failed; scheduling reconnect",
+      expect.objectContaining({
+        endpoint: "/api/stream/events",
+      }),
+    );
   });
 
   it("stops immediately when token is missing", async () => {
@@ -146,6 +155,7 @@ describe("SseController", () => {
 
       await vi.advanceTimersByTimeAsync(35_000);
       expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(warnSpy).not.toHaveBeenCalled();
     },
   );
 });

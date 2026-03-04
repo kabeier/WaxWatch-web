@@ -105,6 +105,10 @@ Any PR that changes one or more route statuses in the matrix above must include 
 
 When moving a route to `production-ready`, reviewers should reject the status change if this evidence is missing or if route-level test updates are absent.
 
+### SSE verification (contributor workflow)
+
+For PRs that touch realtime streaming (`src/components/SseController.tsx`, `/api/stream/events`, or SSE-related auth/reconnect logic), include an "SSE verification" checklist in the PR description and confirm the done criteria in `docs/SSE_MODEL.md#sse-done-criteria`.
+
 See `docs/ROUTES.md` and `docs/IA_MAP.md`.
 
 ## Agent work
