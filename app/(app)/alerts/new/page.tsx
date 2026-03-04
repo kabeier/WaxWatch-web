@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { RetryAction } from "@/components/RetryAction";
 import {
   StateEmpty,
   StateError,
@@ -42,14 +43,23 @@ export default function NewAlertPage() {
       {meQuery.isLoading ? <StateLoading message="Loading alert preset data…" /> : null}
       {meQuery.isError && isRateLimitedError(meQuery.error) ? (
         <StateRateLimited
-          message={meQuery.error.message}
+          message="Alert setup is rate limited. Retry is available after cooldown."
+          detail={meQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
+          action={
+            <RetryAction
+              label="Retry alert setup load"
+              retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
+              onRetry={() => void meQuery.refetch()}
+            />
+          }
         />
       ) : null}
       {meQuery.isError && !isRateLimitedError(meQuery.error) ? (
         <StateError
           message="Could not load alert setup data."
           detail={getErrorMessage(meQuery.error, "Request failed")}
+          action={<RetryAction label="Retry alert setup load" onRetry={() => void meQuery.refetch()} />}
         />
       ) : null}
       {meQuery.data && (!meQuery.data.integrations || meQuery.data.integrations.length === 0) ? (
@@ -142,7 +152,8 @@ export default function NewAlertPage() {
       {createWatchRuleMutation.isPending ? <StateLoading message="Saving new alert…" /> : null}
       {createWatchRuleMutation.isError && isRateLimitedError(createWatchRuleMutation.error) ? (
         <StateRateLimited
-          message={createWatchRuleMutation.error.message}
+          message="Saving new alerts is temporarily rate limited."
+          detail={createWatchRuleMutation.error.message}
           retryAfterSeconds={getRetryAfterSeconds(createWatchRuleMutation.error)}
         />
       ) : null}

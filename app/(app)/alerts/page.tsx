@@ -1,5 +1,6 @@
 "use client";
 
+import { RetryAction } from "@/components/RetryAction";
 import {
   StateEmpty,
   StateError,
@@ -24,18 +25,27 @@ export default function AlertsPage() {
       {watchRulesQuery.isLoading ? <StateLoading message="Loading watch rules…" /> : null}
       {watchRulesQuery.isError && isRateLimitedError(watchRulesQuery.error) ? (
         <StateRateLimited
-          message={watchRulesQuery.error.message}
+          message="Too many watch-rule requests. We'll re-enable retry when cooldown finishes."
+          detail={watchRulesQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(watchRulesQuery.error)}
+          action={
+            <RetryAction
+              label="Retry watch rules"
+              retryAfterSeconds={getRetryAfterSeconds(watchRulesQuery.error)}
+              onRetry={() => void watchRulesQuery.refetch()}
+            />
+          }
         />
       ) : null}
       {watchRulesQuery.isError && !isRateLimitedError(watchRulesQuery.error) ? (
         <StateError
           message="Could not load watch rules."
           detail={getErrorMessage(watchRulesQuery.error, "Request failed")}
+          action={<RetryAction label="Retry watch rules" onRetry={() => void watchRulesQuery.refetch()} />}
         />
       ) : null}
       {watchRulesQuery.data && watchRulesQuery.data.length === 0 ? (
-        <StateEmpty message="No watch rules yet." />
+        <StateEmpty message="No watch rules yet. Create one to start matching releases." />
       ) : null}
       {watchRulesQuery.data && watchRulesQuery.data.length > 0 ? (
         <p role="status" aria-live="polite">
@@ -47,18 +57,29 @@ export default function AlertsPage() {
       {watchReleasesQuery.isLoading ? <StateLoading message="Loading release matches…" /> : null}
       {watchReleasesQuery.isError && isRateLimitedError(watchReleasesQuery.error) ? (
         <StateRateLimited
-          message={watchReleasesQuery.error.message}
+          message="Release matches are temporarily rate limited."
+          detail={watchReleasesQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(watchReleasesQuery.error)}
+          action={
+            <RetryAction
+              label="Retry release matches"
+              retryAfterSeconds={getRetryAfterSeconds(watchReleasesQuery.error)}
+              onRetry={() => void watchReleasesQuery.refetch()}
+            />
+          }
         />
       ) : null}
       {watchReleasesQuery.isError && !isRateLimitedError(watchReleasesQuery.error) ? (
         <StateError
           message="Could not load release matches."
           detail={getErrorMessage(watchReleasesQuery.error, "Request failed")}
+          action={
+            <RetryAction label="Retry release matches" onRetry={() => void watchReleasesQuery.refetch()} />
+          }
         />
       ) : null}
       {watchReleasesQuery.data && watchReleasesQuery.data.length === 0 ? (
-        <StateEmpty message="No matched releases yet." />
+        <StateEmpty message="No matched releases yet. We'll show matches as they arrive." />
       ) : null}
       {watchReleasesQuery.data && watchReleasesQuery.data.length > 0 ? (
         <p role="status" aria-live="polite">

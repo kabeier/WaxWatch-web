@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { RetryAction } from "@/components/RetryAction";
 import { StateEmpty } from "@/components/StateEmpty";
 import { StateError } from "@/components/StateError";
 import { StateLoading } from "@/components/StateLoading";
@@ -71,7 +72,7 @@ export default function AlertDetailClient({ id }: { id: string }) {
           message={watchRuleDetailQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(watchRuleDetailQuery.error)}
           action={
-            <button onClick={() => watchRuleDetailQuery.retry()}>Retry alert detail load</button>
+            <RetryAction label="Retry alert detail load" onRetry={() => watchRuleDetailQuery.retry()} />
           }
         />
       ) : null}
@@ -80,7 +81,7 @@ export default function AlertDetailClient({ id }: { id: string }) {
           message="Could not load alert detail."
           detail={getErrorMessage(watchRuleDetailQuery.error, "Request failed")}
           action={
-            <button onClick={() => watchRuleDetailQuery.retry()}>Retry alert detail load</button>
+            <RetryAction label="Retry alert detail load" onRetry={() => watchRuleDetailQuery.retry()} />
           }
         />
       ) : null}
@@ -182,7 +183,8 @@ export default function AlertDetailClient({ id }: { id: string }) {
       {updateWatchRuleMutation.isPending ? <StateLoading message="Saving alert updates…" /> : null}
       {updateWatchRuleMutation.isError && isRateLimitedError(updateWatchRuleMutation.error) ? (
         <StateRateLimited
-          message={updateWatchRuleMutation.error.message}
+          message="Saving alert updates is rate limited. Please wait for cooldown."
+          detail={updateWatchRuleMutation.error.message}
           retryAfterSeconds={getRetryAfterSeconds(updateWatchRuleMutation.error)}
         />
       ) : null}
@@ -195,7 +197,8 @@ export default function AlertDetailClient({ id }: { id: string }) {
       {deleteWatchRuleMutation.isPending ? <StateLoading message="Deleting alert…" /> : null}
       {deleteWatchRuleMutation.isError && isRateLimitedError(deleteWatchRuleMutation.error) ? (
         <StateRateLimited
-          message={deleteWatchRuleMutation.error.message}
+          message="Deleting alerts is rate limited. Please wait for cooldown."
+          detail={deleteWatchRuleMutation.error.message}
           retryAfterSeconds={getRetryAfterSeconds(deleteWatchRuleMutation.error)}
         />
       ) : null}

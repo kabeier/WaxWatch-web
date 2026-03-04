@@ -1,5 +1,6 @@
 "use client";
 
+import { RetryAction } from "@/components/RetryAction";
 import {
   StateEmpty,
   StateError,
@@ -35,9 +36,16 @@ export default function NotificationsPage() {
       {notificationsQuery.isError && isRateLimitedError(notificationsQuery.error) ? (
         <StateRateLimited
           title="Notifications are temporarily rate limited"
-          message={notificationsQuery.error.message}
+          message="The feed is cooling down. Retry unlocks when the cooldown ends."
+          detail={notificationsQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(notificationsQuery.error)}
-          action={<button type="button">Retry notifications feed</button>}
+          action={
+            <RetryAction
+              label="Retry notifications feed"
+              retryAfterSeconds={getRetryAfterSeconds(notificationsQuery.error)}
+              onRetry={() => void notificationsQuery.refetch()}
+            />
+          }
         />
       ) : null}
       {notificationsQuery.isError && !isRateLimitedError(notificationsQuery.error) ? (
@@ -45,7 +53,7 @@ export default function NotificationsPage() {
           title="Notifications failed to load"
           message="Could not load notifications."
           detail={getErrorMessage(notificationsQuery.error, "Request failed")}
-          action={<button type="button">Retry notifications feed</button>}
+          action={<RetryAction label="Retry notifications feed" onRetry={() => void notificationsQuery.refetch()} />}
         />
       ) : null}
       {notificationsQuery.data && notificationsQuery.data.length === 0 ? (
@@ -62,15 +70,28 @@ export default function NotificationsPage() {
         type="button"
         disabled={markReadMutation.isPending || !firstUnreadNotificationId}
         onClick={() => {
-          if (!firstUnreadNotificationId) {
-            return;
+          if (firstUnreadNotificationId) {
+            markReadMutation.mutate(undefined);
           }
-
-          markReadMutation.mutate(undefined);
         }}
       >
         {markReadMutation.isPending ? "Marking as read…" : "Mark first unread as read"}
       </button>
+
+      {markReadMutation.data ? <p role="status">Success: Notification marked as read.</p> : null}
+      {markReadMutation.isError && isRateLimitedError(markReadMutation.error) ? (
+        <StateRateLimited
+          message="Mark-as-read is temporarily rate limited."
+          detail={markReadMutation.error.message}
+          retryAfterSeconds={getRetryAfterSeconds(markReadMutation.error)}
+        />
+      ) : null}
+      {markReadMutation.isError && !isRateLimitedError(markReadMutation.error) ? (
+        <StateError
+          message="Could not mark notification as read."
+          detail={getErrorMessage(markReadMutation.error, "Request failed")}
+        />
+      ) : null}
     </section>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { SearchRequest } from "@/lib/api/domains/types";
+import { RetryAction } from "@/components/RetryAction";
 import {
   StateEmpty,
   StateError,
@@ -39,6 +40,14 @@ export default function SearchPage() {
   const searchErrors = useMemo(() => {
     const errors: string[] = [];
 
+    if (parseCsv(keywordsInput).length === 0) {
+      errors.push("Enter at least one keyword to run a search.");
+    }
+
+    if (parseCsv(providersInput).length === 0) {
+      errors.push("Enter at least one provider to run a search.");
+    }
+
     if (!Number.isInteger(page) || page < 1) {
       errors.push("Page must be an integer greater than or equal to 1.");
     }
@@ -48,7 +57,7 @@ export default function SearchPage() {
     }
 
     return errors;
-  }, [page, pageSize]);
+  }, [keywordsInput, page, pageSize, providersInput]);
 
   const saveAlertErrors = useMemo(() => {
     const errors: string[] = [];
@@ -162,18 +171,44 @@ export default function SearchPage() {
       {searchMutation.isPending ? <StateLoading message="Loading search results…" /> : null}
       {searchMutation.isError && isRateLimitedError(searchMutation.error) ? (
         <StateRateLimited
-          message={searchMutation.error.message}
+          message="Search is temporarily rate limited."
+          detail={searchMutation.error.message}
           retryAfterSeconds={getRetryAfterSeconds(searchMutation.error)}
+          action={
+            <RetryAction
+              label="Retry search"
+              retryAfterSeconds={getRetryAfterSeconds(searchMutation.error)}
+              disabled={searchErrors.length > 0 || saveAlertMutation.isPending}
+              onRetry={() => {
+                if (searchErrors.length === 0) {
+                  setLastSubmittedQuery(queryPayload);
+                  searchMutation.mutate(queryPayload);
+                }
+              }}
+            />
+          }
         />
       ) : null}
       {searchMutation.isError && !isRateLimitedError(searchMutation.error) ? (
         <StateError
           message="Could not run search."
           detail={getErrorMessage(searchMutation.error, "Request failed")}
+          action={
+            <RetryAction
+              label="Retry search"
+              disabled={searchErrors.length > 0 || saveAlertMutation.isPending}
+              onRetry={() => {
+                if (searchErrors.length === 0) {
+                  setLastSubmittedQuery(queryPayload);
+                  searchMutation.mutate(queryPayload);
+                }
+              }}
+            />
+          }
         />
       ) : null}
       {searchMutation.data && searchMutation.data.items.length === 0 ? (
-        <StateEmpty message="No search results yet." />
+        <StateEmpty message="No results matched this query. Adjust keywords or providers and retry." />
       ) : null}
       {searchMutation.data && searchMutation.data.items.length > 0 ? (
         <p role="status" aria-live="polite">
@@ -247,7 +282,8 @@ export default function SearchPage() {
       {saveAlertMutation.isPending ? <StateLoading message="Saving alert…" /> : null}
       {saveAlertMutation.isError && isRateLimitedError(saveAlertMutation.error) ? (
         <StateRateLimited
-          message={saveAlertMutation.error.message}
+          message="Saving alerts is temporarily rate limited."
+          detail={saveAlertMutation.error.message}
           retryAfterSeconds={getRetryAfterSeconds(saveAlertMutation.error)}
         />
       ) : null}

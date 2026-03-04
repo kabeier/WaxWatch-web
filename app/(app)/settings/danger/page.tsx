@@ -1,5 +1,6 @@
 "use client";
 
+import { RetryAction } from "@/components/RetryAction";
 import {
   StateEmpty,
   StateError,
@@ -27,14 +28,23 @@ export default function DangerSettingsPage() {
       {meQuery.isLoading ? <StateLoading message="Loading account danger-zone options…" /> : null}
       {meQuery.isError && isRateLimitedError(meQuery.error) ? (
         <StateRateLimited
-          message={meQuery.error.message}
+          message="Settings are temporarily rate limited."
+          detail={meQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
+          action={
+            <RetryAction
+              label="Retry settings load"
+              retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
+              onRetry={() => void meQuery.refetch()}
+            />
+          }
         />
       ) : null}
       {meQuery.isError && !isRateLimitedError(meQuery.error) ? (
         <StateError
           message="Could not load danger-zone settings."
           detail={getErrorMessage(meQuery.error, "Request failed")}
+          action={<RetryAction label="Retry danger-zone load" onRetry={() => void meQuery.refetch()} />}
         />
       ) : null}
       {!meQuery.data && !meQuery.isLoading && !meQuery.isError ? (
