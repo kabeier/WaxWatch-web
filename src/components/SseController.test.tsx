@@ -121,6 +121,43 @@ describe("SseController", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("stops reconnecting and triggers auth failure flow on 403", async () => {
+    vi.useFakeTimers();
+    fetchMock.mockResolvedValueOnce(
+      createSseResponse("", {
+        status: 403,
+      }),
+    );
+
+    const queryClient = new QueryClient();
+    renderWithClient(queryClient);
+
+    await vi.runAllTicks();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(handleApiAuthorizationFailure).toHaveBeenCalledWith({
+      path: "/api/stream/events",
+      status: 403,
+    });
+
+    await vi.advanceTimersByTimeAsync(35_000);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not connect or schedule reconnect when auth is missing", async () => {
+    vi.useFakeTimers();
+    vi.mocked(getSupabaseAccessToken).mockReturnValue(null);
+
+    const queryClient = new QueryClient();
+    renderWithClient(queryClient);
+
+    await vi.runAllTicks();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(35_000);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(handleApiAuthorizationFailure).not.toHaveBeenCalled();
+  });
+
   it("stops reconnecting when auth expires after disconnect", async () => {
     vi.useFakeTimers();
     fetchMock.mockResolvedValueOnce(createSseResponse("event: heartbeat\n\n"));
