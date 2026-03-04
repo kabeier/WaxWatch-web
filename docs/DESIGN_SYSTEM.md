@@ -24,46 +24,46 @@ Run this checklist as soon as official standards are published so migration work
 
 Complete this table before route-by-route migration begins. Every temporary token should map to a canonical token, or be explicitly marked for removal.
 
-| Temporary token | Canonical token/reference | Migration action | Notes |
-| --- | --- | --- | --- |
-| `font.family.sans` | `<add canonical ref>` | `map` | Confirm fallbacks + loading strategy. |
-| `font.weight.regular` | `<add canonical ref>` | `map` |  |
-| `font.weight.medium` | `<add canonical ref>` | `map` |  |
-| `font.weight.semibold` | `<add canonical ref>` | `map` |  |
-| `font.weight.bold` | `<add canonical ref>` | `map` |  |
-| `text.xs` | `<add canonical ref>` | `map` |  |
-| `text.sm` | `<add canonical ref>` | `map` |  |
-| `text.base` | `<add canonical ref>` | `map` |  |
-| `text.lg` | `<add canonical ref>` | `map` |  |
-| `text.xl` | `<add canonical ref>` | `map` |  |
-| `text.2xl` | `<add canonical ref>` | `map` |  |
-| `text.3xl` | `<add canonical ref>` | `map` |  |
-| `space.0` | `<add canonical ref>` | `map` |  |
-| `space.1` | `<add canonical ref>` | `map` |  |
-| `space.2` | `<add canonical ref>` | `map` |  |
-| `space.3` | `<add canonical ref>` | `map` |  |
-| `space.4` | `<add canonical ref>` | `map` |  |
-| `space.5` | `<add canonical ref>` | `map` |  |
-| `space.6` | `<add canonical ref>` | `map` |  |
-| `space.8` | `<add canonical ref>` | `map` |  |
-| `space.10` | `<add canonical ref>` | `map` |  |
-| `space.12` | `<add canonical ref>` | `map` |  |
-| `space.16` | `<add canonical ref>` | `map` |  |
-| `color.bg.canvas` | `<add canonical ref>` | `map` |  |
-| `color.bg.surface` | `<add canonical ref>` | `map` |  |
-| `color.bg.subtle` | `<add canonical ref>` | `map` |  |
-| `color.fg.default` | `<add canonical ref>` | `map` |  |
-| `color.fg.muted` | `<add canonical ref>` | `map` |  |
-| `color.fg.inverse` | `<add canonical ref>` | `map` |  |
-| `color.border.default` | `<add canonical ref>` | `map` |  |
-| `color.border.muted` | `<add canonical ref>` | `map` |  |
-| `color.brand.primary` | `<add canonical ref>` | `map` |  |
-| `color.brand.primaryHover` | `<add canonical ref>` | `map` |  |
-| `color.state.success` | `<add canonical ref>` | `map` |  |
-| `color.state.warning` | `<add canonical ref>` | `map` |  |
-| `color.state.error` | `<add canonical ref>` | `map` |  |
-| `color.state.info` | `<add canonical ref>` | `map` |  |
-| `color.focus.ring` | `<add canonical ref>` | `map` |  |
+| Temporary token            | Canonical token/reference | Migration action | Notes                                 |
+| -------------------------- | ------------------------- | ---------------- | ------------------------------------- |
+| `font.family.sans`         | `<add canonical ref>`     | `map`            | Confirm fallbacks + loading strategy. |
+| `font.weight.regular`      | `<add canonical ref>`     | `map`            |                                       |
+| `font.weight.medium`       | `<add canonical ref>`     | `map`            |                                       |
+| `font.weight.semibold`     | `<add canonical ref>`     | `map`            |                                       |
+| `font.weight.bold`         | `<add canonical ref>`     | `map`            |                                       |
+| `text.xs`                  | `<add canonical ref>`     | `map`            |                                       |
+| `text.sm`                  | `<add canonical ref>`     | `map`            |                                       |
+| `text.base`                | `<add canonical ref>`     | `map`            |                                       |
+| `text.lg`                  | `<add canonical ref>`     | `map`            |                                       |
+| `text.xl`                  | `<add canonical ref>`     | `map`            |                                       |
+| `text.2xl`                 | `<add canonical ref>`     | `map`            |                                       |
+| `text.3xl`                 | `<add canonical ref>`     | `map`            |                                       |
+| `space.0`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.1`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.2`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.3`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.4`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.5`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.6`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.8`                  | `<add canonical ref>`     | `map`            |                                       |
+| `space.10`                 | `<add canonical ref>`     | `map`            |                                       |
+| `space.12`                 | `<add canonical ref>`     | `map`            |                                       |
+| `space.16`                 | `<add canonical ref>`     | `map`            |                                       |
+| `color.bg.canvas`          | `<add canonical ref>`     | `map`            |                                       |
+| `color.bg.surface`         | `<add canonical ref>`     | `map`            |                                       |
+| `color.bg.subtle`          | `<add canonical ref>`     | `map`            |                                       |
+| `color.fg.default`         | `<add canonical ref>`     | `map`            |                                       |
+| `color.fg.muted`           | `<add canonical ref>`     | `map`            |                                       |
+| `color.fg.inverse`         | `<add canonical ref>`     | `map`            |                                       |
+| `color.border.default`     | `<add canonical ref>`     | `map`            |                                       |
+| `color.border.muted`       | `<add canonical ref>`     | `map`            |                                       |
+| `color.brand.primary`      | `<add canonical ref>`     | `map`            |                                       |
+| `color.brand.primaryHover` | `<add canonical ref>`     | `map`            |                                       |
+| `color.state.success`      | `<add canonical ref>`     | `map`            |                                       |
+| `color.state.warning`      | `<add canonical ref>`     | `map`            |                                       |
+| `color.state.error`        | `<add canonical ref>`     | `map`            |                                       |
+| `color.state.info`         | `<add canonical ref>`     | `map`            |                                       |
+| `color.focus.ring`         | `<add canonical ref>`     | `map`            |                                       |
 
 ### 3) Affected shared primitives
 
