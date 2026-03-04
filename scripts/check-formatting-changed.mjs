@@ -11,13 +11,30 @@ execFileSync("git", ["fetch", "--no-tags", "--depth=1", "origin", baseRef], {
   stdio: "inherit",
 });
 
-const changedFiles = execFileSync(
-  "git",
-  ["diff", "--name-only", "--diff-filter=AMR", `origin/${baseRef}...HEAD`],
-  {
-    encoding: "utf8",
-  },
-)
+const getChangedFilesOutput = () => {
+  const diffArgs = ["diff", "--name-only", "--diff-filter=AMR"];
+
+  try {
+    return execFileSync("git", [...diffArgs, `origin/${baseRef}...HEAD`], {
+      encoding: "utf8",
+    });
+  } catch (error) {
+    const stderr =
+      error && typeof error === "object" && "stderr" in error ? String(error.stderr ?? "") : "";
+
+    if (!stderr.includes("no merge base")) {
+      throw error;
+    }
+
+    console.warn(`No merge base between origin/${baseRef} and HEAD; falling back to two-dot diff.`);
+
+    return execFileSync("git", [...diffArgs, `origin/${baseRef}..HEAD`], {
+      encoding: "utf8",
+    });
+  }
+};
+
+const changedFiles = getChangedFilesOutput()
   .split("\n")
   .map((file) => file.trim())
   .filter(Boolean)
