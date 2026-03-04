@@ -15,24 +15,20 @@ function renderWithProviders(page: React.ReactElement) {
   );
 }
 
-async function renderSearchPage(searchParams?: { state?: string; retryAfter?: string }) {
-  const page = await SearchPage({
-    searchParams: Promise.resolve(searchParams ?? {}),
-  });
-
-  return renderWithProviders(page);
+function renderSearchPage() {
+  return renderWithProviders(<SearchPage />);
 }
 
 test("renders the search page content", async () => {
   __setSearchParams({});
-  await renderSearchPage();
+  renderSearchPage();
 
   expect(screen.getByRole("heading", { name: /^search$/i })).toBeInTheDocument();
 });
 
 test("renders the app nav links", async () => {
   __setSearchParams({});
-  await renderSearchPage();
+  renderSearchPage();
 
   expect(screen.getByRole("link", { name: /search/i })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /alerts/i })).toBeInTheDocument();
@@ -44,7 +40,7 @@ test("renders the app nav links", async () => {
 test("shows a consistent session-expired notice", async () => {
   __setSearchParams({ reason: "reauth-required" });
 
-  await renderSearchPage();
+  renderSearchPage();
 
   expect(screen.getByRole("status")).toHaveTextContent(/session expired or became invalid/i);
 });
