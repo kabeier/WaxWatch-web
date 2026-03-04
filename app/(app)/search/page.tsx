@@ -65,6 +65,18 @@ export default function SearchPage() {
   }, [alertName, pollInterval]);
 
   const isBusy = searchMutation.isPending || saveAlertMutation.isPending;
+  const searchPageHasError =
+    !Number.isInteger(page) ||
+    page < 1 ||
+    !Number.isInteger(pageSize) ||
+    pageSize < 1 ||
+    pageSize > 100;
+  const saveAlertHasError =
+    alertName.trim().length < 1 ||
+    alertName.trim().length > 120 ||
+    !Number.isInteger(pollInterval) ||
+    pollInterval < 30 ||
+    pollInterval > 86400;
 
   const queryPayload: SearchRequest = {
     keywords: parseCsv(keywordsInput),
@@ -79,13 +91,17 @@ export default function SearchPage() {
       <p>{viewModel.summary}</p>
 
       {searchErrors.length > 0 ? (
-        <StateError
-          message="Please fix search validation issues before submitting."
-          detail={searchErrors.join(" ")}
-        />
+        <div id="search-form-errors">
+          <StateError
+            message="Please fix search validation issues before submitting."
+            detail={searchErrors.join(" ")}
+          />
+        </div>
       ) : null}
 
       <form
+        aria-describedby={searchErrors.length > 0 ? "search-form-errors" : undefined}
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
           if (searchErrors.length > 0) {
@@ -96,6 +112,7 @@ export default function SearchPage() {
           searchMutation.mutate(queryPayload);
         }}
       >
+        <h2>Search criteria</h2>
         <label>
           Keywords (comma-separated)
           <input
@@ -120,6 +137,8 @@ export default function SearchPage() {
             value={pageInput}
             onChange={(event) => setPageInput(event.currentTarget.value)}
             disabled={isBusy}
+            aria-invalid={searchPageHasError}
+            aria-describedby={searchPageHasError ? "search-form-errors" : undefined}
           />
         </label>
         <label>
@@ -131,6 +150,8 @@ export default function SearchPage() {
             value={pageSizeInput}
             onChange={(event) => setPageSizeInput(event.currentTarget.value)}
             disabled={isBusy}
+            aria-invalid={searchPageHasError}
+            aria-describedby={searchPageHasError ? "search-form-errors" : undefined}
           />
         </label>
         <button type="submit" disabled={isBusy || searchErrors.length > 0}>
@@ -155,17 +176,23 @@ export default function SearchPage() {
         <StateEmpty message="No search results yet." />
       ) : null}
       {searchMutation.data && searchMutation.data.items.length > 0 ? (
-        <p>Loaded {searchMutation.data.items.length} search results.</p>
+        <p role="status" aria-live="polite">
+          Status: Loaded {searchMutation.data.items.length} search results.
+        </p>
       ) : null}
 
       {saveAlertErrors.length > 0 ? (
-        <StateError
-          message="Please fix save-alert validation issues before submitting."
-          detail={saveAlertErrors.join(" ")}
-        />
+        <div id="save-alert-errors">
+          <StateError
+            message="Please fix save-alert validation issues before submitting."
+            detail={saveAlertErrors.join(" ")}
+          />
+        </div>
       ) : null}
 
       <form
+        aria-describedby={saveAlertErrors.length > 0 ? "save-alert-errors" : undefined}
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
           if (saveAlertErrors.length > 0 || searchErrors.length > 0) {
@@ -187,6 +214,8 @@ export default function SearchPage() {
             value={alertName}
             onChange={(event) => setAlertName(event.currentTarget.value)}
             disabled={isBusy}
+            aria-invalid={saveAlertHasError}
+            aria-describedby={saveAlertHasError ? "save-alert-errors" : undefined}
           />
         </label>
         <label>
@@ -198,6 +227,8 @@ export default function SearchPage() {
             value={pollIntervalInput}
             onChange={(event) => setPollIntervalInput(event.currentTarget.value)}
             disabled={isBusy}
+            aria-invalid={saveAlertHasError}
+            aria-describedby={saveAlertHasError ? "save-alert-errors" : undefined}
           />
         </label>
         <button
@@ -208,7 +239,11 @@ export default function SearchPage() {
         </button>
       </form>
 
-      {saveAlertMutation.data ? <p>Alert saved successfully.</p> : null}
+      {saveAlertMutation.data ? (
+        <p role="status" aria-live="polite">
+          Success: Alert saved.
+        </p>
+      ) : null}
       {saveAlertMutation.isPending ? <StateLoading message="Saving alert…" /> : null}
       {saveAlertMutation.isError && isRateLimitedError(saveAlertMutation.error) ? (
         <StateRateLimited

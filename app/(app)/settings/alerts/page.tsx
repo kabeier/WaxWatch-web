@@ -81,10 +81,17 @@ export default function AlertSettingsPage() {
       ) : null}
 
       {validationMessage ? (
-        <StateError message="Validation error" detail={validationMessage} />
+        <div id="alert-settings-form-errors">
+          <StateError
+            message="Please fix the highlighted validation issues before saving."
+            detail={validationMessage}
+          />
+        </div>
       ) : null}
 
       <form
+        aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
           if (isSaveDisabled || !window.confirm("Save alert-delivery policy changes?")) {
@@ -111,6 +118,8 @@ export default function AlertSettingsPage() {
               setDraft((current) => ({ ...current, deliveryFrequency: event.currentTarget.value }))
             }
             disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+            aria-invalid={Boolean(validationMessage)}
+            aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
           >
             <option value="instant">Instant</option>
             <option value="hourly">Hourly</option>
@@ -128,6 +137,8 @@ export default function AlertSettingsPage() {
               }))
             }
             disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+            aria-invalid={Boolean(validationMessage)}
+            aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
           />
         </label>
         <label>
@@ -141,6 +152,8 @@ export default function AlertSettingsPage() {
               setDraft((current) => ({ ...current, quietStart: event.currentTarget.value }))
             }
             disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+            aria-invalid={Boolean(validationMessage)}
+            aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
           />
         </label>
         <label>
@@ -154,6 +167,8 @@ export default function AlertSettingsPage() {
               setDraft((current) => ({ ...current, quietEnd: event.currentTarget.value }))
             }
             disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+            aria-invalid={Boolean(validationMessage)}
+            aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
           />
         </label>
         <label>
@@ -167,6 +182,8 @@ export default function AlertSettingsPage() {
               }))
             }
             disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+            aria-invalid={Boolean(validationMessage)}
+            aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
           />
           Email notifications
         </label>
@@ -192,7 +209,11 @@ export default function AlertSettingsPage() {
         </button>
       </form>
 
-      {updateProfileMutation.data ? <p>Alert delivery settings saved.</p> : null}
+      {updateProfileMutation.data ? (
+        <p role="status" aria-live="polite">
+          Success: Alert delivery settings saved.
+        </p>
+      ) : null}
       {updateProfileMutation.isPending ? (
         <StateLoading message="Saving delivery settings…" />
       ) : null}

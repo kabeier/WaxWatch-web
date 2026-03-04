@@ -38,7 +38,9 @@ export default function AlertsPage() {
         <StateEmpty message="No watch rules yet." />
       ) : null}
       {watchRulesQuery.data && watchRulesQuery.data.length > 0 ? (
-        <p>Loaded {watchRulesQuery.data.length} rules.</p>
+        <p role="status" aria-live="polite">
+          Status: Loaded {watchRulesQuery.data.length} rules.
+        </p>
       ) : null}
 
       <h2>Watch Releases</h2>
@@ -59,7 +61,9 @@ export default function AlertsPage() {
         <StateEmpty message="No matched releases yet." />
       ) : null}
       {watchReleasesQuery.data && watchReleasesQuery.data.length > 0 ? (
-        <p>Loaded {watchReleasesQuery.data.length} releases.</p>
+        <p role="status" aria-live="polite">
+          Status: Loaded {watchReleasesQuery.data.length} releases.
+        </p>
       ) : null}
 
       <button type="button">Create watch rule</button>

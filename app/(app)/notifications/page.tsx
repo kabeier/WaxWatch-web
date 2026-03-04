@@ -27,7 +27,9 @@ export default function NotificationsPage() {
     <section>
       <h1>{viewModel.heading}</h1>
       <p>{viewModel.summary}</p>
-      <p>Unread notifications: {unreadCountQuery.data?.unread_count ?? 0}</p>
+      <p role="status" aria-live="polite">
+        Status: Unread notifications: {unreadCountQuery.data?.unread_count ?? 0}.
+      </p>
 
       {notificationsQuery.isLoading ? <StateLoading message="Loading notifications…" /> : null}
       {notificationsQuery.isError && isRateLimitedError(notificationsQuery.error) ? (

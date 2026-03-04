@@ -42,10 +42,14 @@ export default function DangerSettingsPage() {
       ) : null}
 
       {deactivateMutation.data !== undefined && !deactivateMutation.isPending ? (
-        <p>Account deactivated successfully.</p>
+        <p role="status" aria-live="polite">
+          Success: Account deactivated.
+        </p>
       ) : null}
       {hardDeleteMutation.data !== undefined && !hardDeleteMutation.isPending ? (
-        <p>Account permanently deleted successfully.</p>
+        <p role="status" aria-live="polite">
+          Success: Account permanently deleted.
+        </p>
       ) : null}
 
       {deactivateMutation.isPending || hardDeleteMutation.isPending ? (

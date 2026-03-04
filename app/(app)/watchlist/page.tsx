@@ -35,7 +35,9 @@ export default function WatchlistPage() {
         <StateEmpty message="No watchlist releases yet." />
       ) : null}
       {watchReleasesQuery.data && watchReleasesQuery.data.length > 0 ? (
-        <p>Total releases: {watchReleasesQuery.data.length}</p>
+        <p role="status" aria-live="polite">
+          Status: Loaded {watchReleasesQuery.data.length} watchlist releases.
+        </p>
       ) : null}
       <button type="button">Refresh watchlist</button>
     </section>
