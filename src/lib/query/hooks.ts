@@ -3,9 +3,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { waxwatchApi } from "@/lib/query/api";
 import { queryKeys } from "@/lib/query/keys";
 import type {
+  DiscogsStatus,
+  MeProfile,
   MeProfileUpdate,
+  Notification,
+  NotificationUnreadCount,
   SaveSearchAlertRequest,
   SearchRequest,
+  SearchResponse,
+  WatchRelease,
+  WatchRule,
   WatchRuleCreate,
   WatchRuleUpdate,
 } from "@/lib/api/domains/types";
@@ -13,14 +20,14 @@ import type {
 export function useMeQuery() {
   return useQuery({
     queryKey: queryKeys.me,
-    queryFn: () => waxwatchApi.me.getProfile(),
+    queryFn: (): Promise<MeProfile> => waxwatchApi.me.getProfile(),
   });
 }
 
 export function useWatchRulesQuery() {
   return useQuery({
     queryKey: queryKeys.watchRules.list,
-    queryFn: () => waxwatchApi.watchRules.list(),
+    queryFn: (): Promise<WatchRule[]> => waxwatchApi.watchRules.list(),
   });
 }
 
@@ -28,7 +35,7 @@ export function useWatchRuleDetailQuery(id: string) {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: queryKeys.watchRules.detail(id),
-    queryFn: () => waxwatchApi.watchRules.getById(id),
+    queryFn: (): Promise<WatchRule> => waxwatchApi.watchRules.getById(id),
     enabled: Boolean(id),
   });
 
@@ -45,28 +52,28 @@ export function useWatchRuleDetailQuery(id: string) {
 export function useWatchReleasesQuery() {
   return useQuery({
     queryKey: queryKeys.watchReleases.list,
-    queryFn: () => waxwatchApi.watchReleases.list(),
+    queryFn: (): Promise<WatchRelease[]> => waxwatchApi.watchReleases.list(),
   });
 }
 
 export function useNotificationsQuery() {
   return useQuery({
     queryKey: queryKeys.notifications.list,
-    queryFn: () => waxwatchApi.notifications.list(),
+    queryFn: (): Promise<Notification[]> => waxwatchApi.notifications.list(),
   });
 }
 
 export function useUnreadNotificationCountQuery() {
   return useQuery({
     queryKey: queryKeys.notifications.unreadCount,
-    queryFn: () => waxwatchApi.notifications.getUnreadCount(),
+    queryFn: (): Promise<NotificationUnreadCount> => waxwatchApi.notifications.getUnreadCount(),
   });
 }
 
 export function useDiscogsStatusQuery() {
   return useQuery({
     queryKey: queryKeys.integrations.discogs.status,
-    queryFn: () => waxwatchApi.integrations.discogs.getStatus(),
+    queryFn: (): Promise<DiscogsStatus> => waxwatchApi.integrations.discogs.getStatus(),
   });
 }
 
@@ -77,10 +84,14 @@ type MutationState<TData> = {
   isError: boolean;
 };
 
+type MutationResult<TInput, TData> = MutationState<TData> & {
+  mutate: (input: TInput) => void;
+};
+
 function useApiMutation<TInput, TData>(options: {
   mutationFn: (input: TInput) => Promise<TData>;
   onSuccess?: () => void;
-}) {
+}): MutationResult<TInput, TData> {
   const [state, setState] = useState<MutationState<TData>>({
     data: undefined,
     error: null,
@@ -143,7 +154,7 @@ function useApiMutation<TInput, TData>(options: {
 }
 
 export function useSearchMutation() {
-  return useApiMutation({
+  return useApiMutation<SearchRequest, SearchResponse>({
     mutationFn: (input: SearchRequest) => waxwatchApi.search.run(input),
   });
 }
