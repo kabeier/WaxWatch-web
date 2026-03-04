@@ -93,13 +93,15 @@ export function createDomainServices(client: ApiClient) {
 
   const watchReleases = {
     list: (params: WatchReleasesListParams = {}) => {
-      const query = appendCursorPagination(new URLSearchParams(), params);
-      return client.request<PaginatedResult<WatchRelease>>("/watch-releases", {}, query);
+      const query = appendLimitOffset(new URLSearchParams(), params);
+      return client.request<WatchRelease[]>("/watch-releases", {}, query);
     },
+    getById: (watchReleaseId: string) =>
+      client.request<WatchRelease>(`/watch-releases/${encodeURIComponent(watchReleaseId)}`),
     listByWatchRule: (watchRuleId: string, params: WatchReleasesListParams = {}) => {
-      const query = appendCursorPagination(new URLSearchParams(), params);
+      const query = appendLimitOffset(new URLSearchParams(), params);
       query.set("watch_rule_id", watchRuleId);
-      return client.request<PaginatedResult<WatchRelease>>("/watch-releases", {}, query);
+      return client.request<WatchRelease[]>("/watch-releases", {}, query);
     },
   };
 

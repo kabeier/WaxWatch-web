@@ -12,14 +12,20 @@ export type MeProfile = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  name?: string | null;
-  timezone?: string | null;
-  currency?: string | null;
-  preferences?: Record<string, unknown> | null;
+  display_name?: string | null;
+  preferences?: {
+    timezone?: string | null;
+    currency?: string | null;
+    notifications_email?: boolean | null;
+    notifications_push?: boolean | null;
+    quiet_hours_start?: number | null;
+    quiet_hours_end?: number | null;
+    notification_timezone?: string | null;
+    delivery_frequency?: "instant" | "hourly" | "daily" | null;
+  } | null;
   integrations?: Array<{
     provider: string;
     linked: boolean;
-    external_user_id?: string | null;
     watch_rule_count?: number;
   }>;
 };
@@ -127,10 +133,19 @@ export type WatchRule = {
 
 export type WatchRelease = {
   id: string;
-  rule_id: string;
-  discogs_release_id: string;
+  user_id: string;
+  discogs_release_id: number;
+  discogs_master_id: number | null;
+  match_mode: "exact_release" | "master_release";
   title: string;
-  published_at: string;
+  artist: string;
+  year: number | null;
+  target_price: number | null;
+  currency: string;
+  min_condition: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Notification = {
@@ -176,7 +191,7 @@ export type WatchRuleUpdate = {
   poll_interval_seconds?: number;
 };
 
-export type WatchReleasesListParams = CursorParams;
+export type WatchReleasesListParams = LimitOffsetParams;
 
 export type NotificationsListParams = LimitOffsetParams;
 

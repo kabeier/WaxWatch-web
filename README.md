@@ -31,6 +31,7 @@ This repo is contract-driven. These are authoritative:
 Validate these paths in CI (or locally) with:
 
 - `npm run contracts:check`
+- Before changing route-level rendering for API-backed screens (`/search`, `/alerts`, `/watchlist`, `/notifications`, `/settings/profile`, `/settings/integrations`), confirm transport shapes in `docs/FRONTEND_API_CONTRACT.md` and align `src/lib/api/domains/*` + query hooks first (contract-first, then UI).
 
 ## Quick start
 

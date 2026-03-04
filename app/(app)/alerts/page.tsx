@@ -53,11 +53,11 @@ export default function AlertsPage() {
           detail={getErrorMessage(watchReleasesQuery.error, "Request failed")}
         />
       ) : null}
-      {watchReleasesQuery.data && watchReleasesQuery.data.items.length === 0 ? (
+      {watchReleasesQuery.data && watchReleasesQuery.data.length === 0 ? (
         <StateEmpty message="No matched releases yet." />
       ) : null}
-      {watchReleasesQuery.data && watchReleasesQuery.data.items.length > 0 ? (
-        <p>Loaded {watchReleasesQuery.data.items.length} releases.</p>
+      {watchReleasesQuery.data && watchReleasesQuery.data.length > 0 ? (
+        <p>Loaded {watchReleasesQuery.data.length} releases.</p>
       ) : null}
 
       <button type="button">Retry watch rules load</button>

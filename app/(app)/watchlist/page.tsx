@@ -29,11 +29,11 @@ export default function WatchlistPage() {
           detail={getErrorMessage(watchReleasesQuery.error, "Request failed")}
         />
       ) : null}
-      {watchReleasesQuery.data && watchReleasesQuery.data.items.length === 0 ? (
+      {watchReleasesQuery.data && watchReleasesQuery.data.length === 0 ? (
         <StateEmpty message="No watchlist releases yet." />
       ) : null}
-      {watchReleasesQuery.data && watchReleasesQuery.data.items.length > 0 ? (
-        <p>Total releases: {watchReleasesQuery.data.items.length}</p>
+      {watchReleasesQuery.data && watchReleasesQuery.data.length > 0 ? (
+        <p>Total releases: {watchReleasesQuery.data.length}</p>
       ) : null}
       <button type="button">Refresh watchlist</button>
     </section>
