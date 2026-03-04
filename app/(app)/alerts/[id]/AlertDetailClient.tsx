@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { StateEmpty } from "@/components/StateEmpty";
 import { StateError } from "@/components/StateError";
 import { StateLoading } from "@/components/StateLoading";
@@ -17,6 +19,43 @@ export default function AlertDetailClient({ id }: { id: string }) {
   const updateWatchRuleMutation = useUpdateWatchRuleMutation(id);
   const deleteWatchRuleMutation = useDeleteWatchRuleMutation(id);
   const viewModel = routeViewModels.alertDetail;
+  const router = useRouter();
+  const retryAlertDetail = watchRuleDetailQuery.retry;
+  const [draft, setDraft] = useState<{ name?: string; pollInterval?: string; isActive?: boolean }>(
+    {},
+  );
+
+  useEffect(() => {
+    if (updateWatchRuleMutation.data) {
+      retryAlertDetail();
+    }
+  }, [retryAlertDetail, updateWatchRuleMutation.data]);
+
+  useEffect(() => {
+    if (deleteWatchRuleMutation.data !== undefined && !deleteWatchRuleMutation.isPending) {
+      router.push("/alerts");
+      router.refresh();
+    }
+  }, [deleteWatchRuleMutation.data, deleteWatchRuleMutation.isPending, router]);
+
+  const name = draft.name ?? watchRuleDetailQuery.data?.name ?? "";
+  const pollIntervalInput =
+    draft.pollInterval ??
+    (watchRuleDetailQuery.data ? String(watchRuleDetailQuery.data.poll_interval_seconds) : "300");
+  const isActive = draft.isActive ?? watchRuleDetailQuery.data?.is_active ?? true;
+
+  const pollInterval = Number(pollIntervalInput);
+  const validationMessage = useMemo(() => {
+    if (name.trim().length < 1 || name.trim().length > 120) {
+      return "Name must be between 1 and 120 characters.";
+    }
+    if (!Number.isInteger(pollInterval) || pollInterval < 30 || pollInterval > 86400) {
+      return "Poll interval must be an integer between 30 and 86400 seconds.";
+    }
+    return null;
+  }, [name, pollInterval]);
+
+  const isPending = updateWatchRuleMutation.isPending || deleteWatchRuleMutation.isPending;
 
   return (
     <section>
@@ -32,14 +71,7 @@ export default function AlertDetailClient({ id }: { id: string }) {
           message={watchRuleDetailQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(watchRuleDetailQuery.error)}
           action={
-            <button
-              type="button"
-              onClick={() => {
-                watchRuleDetailQuery.retry();
-              }}
-            >
-              Retry alert detail load
-            </button>
+            <button onClick={() => watchRuleDetailQuery.retry()}>Retry alert detail load</button>
           }
         />
       ) : null}
@@ -48,14 +80,7 @@ export default function AlertDetailClient({ id }: { id: string }) {
           message="Could not load alert detail."
           detail={getErrorMessage(watchRuleDetailQuery.error, "Request failed")}
           action={
-            <button
-              type="button"
-              onClick={() => {
-                watchRuleDetailQuery.retry();
-              }}
-            >
-              Retry alert detail load
-            </button>
+            <button onClick={() => watchRuleDetailQuery.retry()}>Retry alert detail load</button>
           }
         />
       ) : null}
@@ -64,13 +89,81 @@ export default function AlertDetailClient({ id }: { id: string }) {
       !watchRuleDetailQuery.isError ? (
         <StateEmpty message="Alert not found." />
       ) : null}
+
       {watchRuleDetailQuery.data ? (
-        <p>
-          Rule: {watchRuleDetailQuery.data.name} (
-          {watchRuleDetailQuery.data.is_active ? "active" : "paused"})
-        </p>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (validationMessage) {
+              return;
+            }
+
+            updateWatchRuleMutation.mutate({
+              name: name.trim(),
+              poll_interval_seconds: pollInterval,
+              is_active: isActive,
+            });
+          }}
+        >
+          <p>
+            Current status: {isActive ? "active" : "paused"}
+            {updateWatchRuleMutation.isPending ? " (saving…)" : ""}
+          </p>
+          {validationMessage ? (
+            <StateError message="Validation error" detail={validationMessage} />
+          ) : null}
+          <label>
+            Alert name
+            <input
+              value={name}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, name: event.currentTarget.value }))
+              }
+              disabled={isPending}
+            />
+          </label>
+          <label>
+            Poll interval (seconds)
+            <input
+              type="number"
+              min={30}
+              max={86400}
+              value={pollIntervalInput}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, pollInterval: event.currentTarget.value }))
+              }
+              disabled={isPending}
+            />
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, isActive: event.currentTarget.checked }))
+              }
+              disabled={isPending}
+            />
+            Alert active
+          </label>
+          <button type="submit" disabled={Boolean(validationMessage) || isPending}>
+            {updateWatchRuleMutation.isPending ? "Saving alert updates…" : "Save alert updates"}
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => {
+              if (window.confirm("Delete this alert permanently?")) {
+                deleteWatchRuleMutation.mutate(undefined);
+              }
+            }}
+          >
+            {deleteWatchRuleMutation.isPending ? "Deleting alert…" : "Delete alert"}
+          </button>
+        </form>
       ) : null}
 
+      {updateWatchRuleMutation.data ? <p>Alert updated successfully.</p> : null}
       {updateWatchRuleMutation.isPending ? <StateLoading message="Saving alert updates…" /> : null}
       {updateWatchRuleMutation.isError && isRateLimitedError(updateWatchRuleMutation.error) ? (
         <StateRateLimited
@@ -84,7 +177,6 @@ export default function AlertDetailClient({ id }: { id: string }) {
           detail={getErrorMessage(updateWatchRuleMutation.error, "Request failed")}
         />
       ) : null}
-
       {deleteWatchRuleMutation.isPending ? <StateLoading message="Deleting alert…" /> : null}
       {deleteWatchRuleMutation.isError && isRateLimitedError(deleteWatchRuleMutation.error) ? (
         <StateRateLimited
@@ -106,23 +198,6 @@ export default function AlertDetailClient({ id }: { id: string }) {
           </li>
         ))}
       </ul>
-
-      <button
-        type="button"
-        onClick={() => {
-          updateWatchRuleMutation.mutate({ name: "Updated alert name" });
-        }}
-      >
-        Save alert updates
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          deleteWatchRuleMutation.mutate(undefined);
-        }}
-      >
-        Delete alert
-      </button>
     </section>
   );
 }

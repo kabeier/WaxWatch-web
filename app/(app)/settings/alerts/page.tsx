@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { StateEmpty } from "@/components/StateEmpty";
 import { StateError } from "@/components/StateError";
 import { StateLoading } from "@/components/StateLoading";
@@ -10,6 +11,51 @@ import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib
 export default function AlertSettingsPage() {
   const meQuery = useMeQuery();
   const updateProfileMutation = useUpdateProfileMutation();
+  const [draft, setDraft] = useState<{
+    deliveryFrequency?: string;
+    notificationTimezone?: string;
+    quietStart?: string;
+    quietEnd?: string;
+    notificationsEmail?: boolean;
+    notificationsPush?: boolean;
+  }>({});
+
+  const deliveryFrequency =
+    draft.deliveryFrequency ?? meQuery.data?.preferences?.delivery_frequency ?? "instant";
+  const notificationTimezone =
+    draft.notificationTimezone ?? meQuery.data?.preferences?.notification_timezone ?? "UTC";
+  const quietStartInput =
+    draft.quietStart ?? String(meQuery.data?.preferences?.quiet_hours_start ?? 22);
+  const quietEndInput = draft.quietEnd ?? String(meQuery.data?.preferences?.quiet_hours_end ?? 7);
+  const notificationsEmail =
+    draft.notificationsEmail ?? Boolean(meQuery.data?.preferences?.notifications_email);
+  const notificationsPush =
+    draft.notificationsPush ?? Boolean(meQuery.data?.preferences?.notifications_push);
+
+  const quietStart = Number(quietStartInput);
+  const quietEnd = Number(quietEndInput);
+
+  const validationMessage = useMemo(() => {
+    if (!["instant", "hourly", "daily"].includes(deliveryFrequency)) {
+      return "Delivery frequency must be instant, hourly, or daily.";
+    }
+    if (!Number.isInteger(quietStart) || quietStart < 0 || quietStart > 23) {
+      return "Quiet hours start must be an integer between 0 and 23.";
+    }
+    if (!Number.isInteger(quietEnd) || quietEnd < 0 || quietEnd > 23) {
+      return "Quiet hours end must be an integer between 0 and 23.";
+    }
+    if (!notificationTimezone.trim()) {
+      return "Notification timezone is required.";
+    }
+    return null;
+  }, [deliveryFrequency, notificationTimezone, quietEnd, quietStart]);
+  const isFormReady = Boolean(meQuery.data);
+  const isSaveDisabled =
+    Boolean(validationMessage) ||
+    updateProfileMutation.isPending ||
+    meQuery.isLoading ||
+    !isFormReady;
 
   return (
     <section>
@@ -32,6 +78,119 @@ export default function AlertSettingsPage() {
         <StateEmpty message="No delivery settings configured yet." />
       ) : null}
 
+      {validationMessage ? (
+        <StateError message="Validation error" detail={validationMessage} />
+      ) : null}
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (isSaveDisabled || !window.confirm("Save alert-delivery policy changes?")) {
+            return;
+          }
+
+          updateProfileMutation.mutate({
+            preferences: {
+              delivery_frequency: deliveryFrequency as "instant" | "hourly" | "daily",
+              notification_timezone: notificationTimezone.trim(),
+              quiet_hours_start: quietStart,
+              quiet_hours_end: quietEnd,
+              notifications_email: notificationsEmail,
+              notifications_push: notificationsPush,
+            },
+          });
+        }}
+      >
+        <label>
+          Delivery frequency
+          <select
+            value={deliveryFrequency}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, deliveryFrequency: event.currentTarget.value }))
+            }
+            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+          >
+            <option value="instant">Instant</option>
+            <option value="hourly">Hourly</option>
+            <option value="daily">Daily</option>
+          </select>
+        </label>
+        <label>
+          Notification timezone
+          <input
+            value={notificationTimezone}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                notificationTimezone: event.currentTarget.value,
+              }))
+            }
+            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+          />
+        </label>
+        <label>
+          Quiet hours start (0-23)
+          <input
+            type="number"
+            min={0}
+            max={23}
+            value={quietStartInput}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, quietStart: event.currentTarget.value }))
+            }
+            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+          />
+        </label>
+        <label>
+          Quiet hours end (0-23)
+          <input
+            type="number"
+            min={0}
+            max={23}
+            value={quietEndInput}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, quietEnd: event.currentTarget.value }))
+            }
+            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+          />
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={notificationsEmail}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                notificationsEmail: event.currentTarget.checked,
+              }))
+            }
+            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+          />
+          Email notifications
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={notificationsPush}
+            onChange={(event) =>
+              setDraft((current) => ({
+                ...current,
+                notificationsPush: event.currentTarget.checked,
+              }))
+            }
+            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+          />
+          Push notifications
+        </label>
+
+        <button type="submit" disabled={isSaveDisabled}>
+          {updateProfileMutation.isPending
+            ? "Saving delivery settings…"
+            : "Save alert delivery preferences"}
+        </button>
+      </form>
+
+      {updateProfileMutation.data ? <p>Alert delivery settings saved.</p> : null}
       {updateProfileMutation.isPending ? (
         <StateLoading message="Saving delivery settings…" />
       ) : null}
@@ -47,20 +206,6 @@ export default function AlertSettingsPage() {
           detail={getErrorMessage(updateProfileMutation.error, "Request failed")}
         />
       ) : null}
-
-      <button
-        type="button"
-        onClick={() => {
-          updateProfileMutation.mutate({
-            preferences: {
-              delivery_frequency: "daily",
-              notifications_email: true,
-            },
-          });
-        }}
-      >
-        Save alert delivery preferences
-      </button>
     </section>
   );
 }
