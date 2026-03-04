@@ -53,7 +53,12 @@ export default function NotificationsPage() {
           title="Notifications failed to load"
           message="Could not load notifications."
           detail={getErrorMessage(notificationsQuery.error, "Request failed")}
-          action={<RetryAction label="Retry notifications feed" onRetry={() => void notificationsQuery.retry()} />}
+          action={
+            <RetryAction
+              label="Retry notifications feed"
+              onRetry={() => void notificationsQuery.retry()}
+            />
+          }
         />
       ) : null}
       {notificationsQuery.data && notificationsQuery.data.length === 0 ? (

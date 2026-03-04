@@ -72,7 +72,10 @@ export default function AlertDetailClient({ id }: { id: string }) {
           message={watchRuleDetailQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(watchRuleDetailQuery.error)}
           action={
-            <RetryAction label="Retry alert detail load" onRetry={() => watchRuleDetailQuery.retry()} />
+            <RetryAction
+              label="Retry alert detail load"
+              onRetry={() => watchRuleDetailQuery.retry()}
+            />
           }
         />
       ) : null}
@@ -81,7 +84,10 @@ export default function AlertDetailClient({ id }: { id: string }) {
           message="Could not load alert detail."
           detail={getErrorMessage(watchRuleDetailQuery.error, "Request failed")}
           action={
-            <RetryAction label="Retry alert detail load" onRetry={() => watchRuleDetailQuery.retry()} />
+            <RetryAction
+              label="Retry alert detail load"
+              onRetry={() => watchRuleDetailQuery.retry()}
+            />
           }
         />
       ) : null}

@@ -44,7 +44,9 @@ export default function DangerSettingsPage() {
         <StateError
           message="Could not load danger-zone settings."
           detail={getErrorMessage(meQuery.error, "Request failed")}
-          action={<RetryAction label="Retry danger-zone load" onRetry={() => void meQuery.retry()} />}
+          action={
+            <RetryAction label="Retry danger-zone load" onRetry={() => void meQuery.retry()} />
+          }
         />
       ) : null}
       {!meQuery.data && !meQuery.isLoading && !meQuery.isError ? (

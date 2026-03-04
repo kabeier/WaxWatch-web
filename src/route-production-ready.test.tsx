@@ -51,7 +51,13 @@ const state: {
   meQuery: { data: undefined, isLoading: false, isError: false, error: null, retry: vi.fn() },
   notificationsQuery: { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() },
   unreadCountQuery: { data: { unread_count: 0 }, isLoading: false, isError: false, error: null },
-  searchMutation: { data: undefined, isPending: false, isError: false, error: null, mutate: vi.fn() },
+  searchMutation: {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  },
   saveSearchAlertMutation: {
     data: undefined,
     isPending: false,
@@ -108,7 +114,13 @@ const state: {
     error: null,
     mutate: vi.fn(),
   },
-  markReadMutation: { data: undefined, isPending: false, isError: false, error: null, mutate: vi.fn() },
+  markReadMutation: {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  },
 };
 
 vi.mock("@/lib/query/hooks", () => ({
@@ -137,8 +149,20 @@ const apiError = { kind: "unknown_error", message: "boom" };
 
 beforeEach(() => {
   vi.clearAllMocks();
-  state.watchRulesQuery = { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() };
-  state.watchReleasesQuery = { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() };
+  state.watchRulesQuery = {
+    data: [],
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: vi.fn(),
+  };
+  state.watchReleasesQuery = {
+    data: [],
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: vi.fn(),
+  };
   state.meQuery = {
     data: {
       preferences: {
@@ -163,7 +187,12 @@ beforeEach(() => {
     error: null,
     retry: vi.fn(),
   };
-  state.unreadCountQuery = { data: { unread_count: 1 }, isLoading: false, isError: false, error: null };
+  state.unreadCountQuery = {
+    data: { unread_count: 1 },
+    isLoading: false,
+    isError: false,
+    error: null,
+  };
   state.searchMutation = {
     data: { items: [{ id: "1" }] },
     isPending: false,
@@ -243,7 +272,13 @@ describe("route-level production-ready paths", () => {
   });
 
   it("/search failure", () => {
-    state.searchMutation = { data: undefined, isPending: false, isError: true, error: apiError, mutate: vi.fn() };
+    state.searchMutation = {
+      data: undefined,
+      isPending: false,
+      isError: true,
+      error: apiError,
+      mutate: vi.fn(),
+    };
     render(<SearchPage />);
     expect(screen.getByText(/could not run search/i)).toBeInTheDocument();
   });

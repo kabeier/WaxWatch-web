@@ -41,7 +41,9 @@ export default function AlertsPage() {
         <StateError
           message="Could not load watch rules."
           detail={getErrorMessage(watchRulesQuery.error, "Request failed")}
-          action={<RetryAction label="Retry watch rules" onRetry={() => void watchRulesQuery.retry()} />}
+          action={
+            <RetryAction label="Retry watch rules" onRetry={() => void watchRulesQuery.retry()} />
+          }
         />
       ) : null}
       {watchRulesQuery.data && watchRulesQuery.data.length === 0 ? (
@@ -74,7 +76,10 @@ export default function AlertsPage() {
           message="Could not load release matches."
           detail={getErrorMessage(watchReleasesQuery.error, "Request failed")}
           action={
-            <RetryAction label="Retry release matches" onRetry={() => void watchReleasesQuery.retry()} />
+            <RetryAction
+              label="Retry release matches"
+              onRetry={() => void watchReleasesQuery.retry()}
+            />
           }
         />
       ) : null}
