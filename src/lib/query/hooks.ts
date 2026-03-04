@@ -123,9 +123,44 @@ export function useMarkNotificationReadMutation(notificationId: string) {
 }
 
 export function useDiscogsStatusQuery() {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: queryKeys.integrations.discogs.status,
     queryFn: (): Promise<DiscogsStatus> => waxwatchApi.integrations.discogs.getStatus(),
+  });
+
+  const retry = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.integrations.discogs.status });
+  }, [queryClient]);
+
+  return {
+    ...query,
+    retry,
+  };
+}
+
+export function useDiscogsConnectMutation() {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (externalUserId: string) =>
+      waxwatchApi.integrations.discogs.connect({ external_user_id: externalUserId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.integrations.discogs.status });
+      queryClient.invalidateQueries({ queryKey: queryKeys.me });
+    },
+  });
+}
+
+export function useDiscogsImportMutation() {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (source: "wantlist" | "collection" | "both") =>
+      waxwatchApi.integrations.discogs.importCollection({ source }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchReleases.list });
+    },
   });
 }
 
