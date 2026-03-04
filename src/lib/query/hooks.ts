@@ -70,6 +70,18 @@ export function useUnreadNotificationCountQuery() {
   });
 }
 
+export function useMarkNotificationReadMutation(notificationId: string) {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (_: undefined) => waxwatchApi.notifications.markRead(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
+    },
+  });
+}
+
 export function useDiscogsStatusQuery() {
   return useQuery({
     queryKey: queryKeys.integrations.discogs.status,
@@ -220,7 +232,7 @@ export function useDeactivateAccountMutation() {
   const queryClient = useQueryClient();
 
   return useApiMutation({
-    mutationFn: (_: undefined) => waxwatchApi.me.deactivate(),
+    mutationFn: (_: undefined) => waxwatchApi.me.deactivate().then(() => ({ ok: true as const })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.me });
     },
@@ -231,7 +243,7 @@ export function useHardDeleteAccountMutation() {
   const queryClient = useQueryClient();
 
   return useApiMutation({
-    mutationFn: (_: undefined) => waxwatchApi.me.hardDelete(),
+    mutationFn: (_: undefined) => waxwatchApi.me.hardDelete().then(() => ({ ok: true as const })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.me });
     },

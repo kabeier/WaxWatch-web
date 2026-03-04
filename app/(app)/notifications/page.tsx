@@ -6,7 +6,11 @@ import {
   StateLoading,
   StateRateLimited,
 } from "@/components/ui/primitives/state";
-import { useNotificationsQuery, useUnreadNotificationCountQuery } from "@/lib/query/hooks";
+import {
+  useMarkNotificationReadMutation,
+  useNotificationsQuery,
+  useUnreadNotificationCountQuery,
+} from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import { routeViewModels } from "@/lib/view-models/routes";
 
@@ -14,6 +18,10 @@ export default function NotificationsPage() {
   const viewModel = routeViewModels.notifications;
   const notificationsQuery = useNotificationsQuery();
   const unreadCountQuery = useUnreadNotificationCountQuery();
+  const firstUnreadNotificationId = notificationsQuery.data?.find(
+    (notification) => !notification.is_read,
+  )?.id;
+  const markReadMutation = useMarkNotificationReadMutation(firstUnreadNotificationId ?? "");
 
   return (
     <section>
@@ -48,7 +56,19 @@ export default function NotificationsPage() {
           ))}
         </ul>
       ) : null}
-      <button type="button">Mark selected as read</button>
+      <button
+        type="button"
+        disabled={markReadMutation.isPending || !firstUnreadNotificationId}
+        onClick={() => {
+          if (!firstUnreadNotificationId) {
+            return;
+          }
+
+          markReadMutation.mutate(undefined);
+        }}
+      >
+        {markReadMutation.isPending ? "Marking as read…" : "Mark first unread as read"}
+      </button>
     </section>
   );
 }
