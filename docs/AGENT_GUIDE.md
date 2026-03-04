@@ -108,3 +108,11 @@ Reconnect policy:
   - a feature flag
 - Introduce new providers/values client-side outside the contract
 - Add new design tokens without updating the design guide docs
+
+## PR contributor checklist (design-system guardrails)
+
+Before opening a PR, confirm all items:
+
+- [ ] No hardcoded design values (spacing, color, typography, radius) when a shared token equivalent exists.
+- [ ] Route/page state UI uses shared primitives from `src/components/ui/primitives/state` for loading, empty, error, and rate-limited states.
+- [ ] Shell/layout work reuses shared primitives from `src/components/ui/primitives/shell` (`AppShell`, `TopNav`, `SideNav`, `ContentContainer`) instead of ad-hoc wrappers.
