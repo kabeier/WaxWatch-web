@@ -25,10 +25,14 @@
 
 ## Design-guide intake checklist (required when UI/design guide updates are included)
 
-- [ ] Source links captured (Figma/specs/tokens/a11y/changelog).
+- [ ] Source design links captured:
+  - [ ] Figma/library/component spec links
+  - [ ] Token dictionary/source links
+  - [ ] Accessibility/content standards links
+  - [ ] Design/engineering changelog links
 - [ ] Token mapping documented (spacing/typography/colors).
 - [ ] Affected shared primitives/components listed (`src/components/ui/primitives/state` and `src/components/ui/primitives/shell`).
-- [ ] Rollout order documented and followed: tokens -> shared primitives -> route pages -> cleanup deprecated temporary mappings.
+- [ ] Rollout order documented and followed: tokens -> shared primitives -> route pages -> cleanup.
 
 ## SSE merge requirements (only if this PR touches SSE behavior)
 
