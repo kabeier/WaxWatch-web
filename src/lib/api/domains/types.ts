@@ -89,7 +89,7 @@ export type SearchResponse = {
     has_next: boolean;
   };
   providers_searched: string[];
-  provider_errors?: Record<string, string>;
+  provider_errors: Record<string, string>;
 };
 
 export type SearchRequest = SearchQuery;

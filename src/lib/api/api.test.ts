@@ -248,8 +248,21 @@ describe("domain response fixtures", () => {
       provider_errors: { ebay: "timeout" },
     };
 
+    const noErrorsFixture: SearchResponse = {
+      ...fixture,
+      providers_searched: ["discogs", "ebay"],
+      provider_errors: {},
+    };
+
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify(fixture), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const fetchMockWithoutErrors = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify(noErrorsFixture), {
         status: 200,
         headers: { "content-type": "application/json" },
       }),
@@ -258,7 +271,13 @@ describe("domain response fixtures", () => {
     const domains = createDomainServices(
       createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
     );
+    const domainsWithoutErrors = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMockWithoutErrors }),
+    );
     await expect(domains.search.run({ keywords: ["techno"] })).resolves.toEqual(fixture);
+    await expect(domainsWithoutErrors.search.run({ keywords: ["house"] })).resolves.toEqual(
+      noErrorsFixture,
+    );
   });
 
   it("accepts UserProfileOut transport shape", async () => {
@@ -632,5 +651,29 @@ describe("domain response fixtures", () => {
     expect(fetchMock.mock.calls[7][0]).toBe(
       "https://api.example.com/integrations/discogs/imported-items?limit=25&offset=0&source=wantlist",
     );
+  });
+
+  it("accepts Discogs status when disconnected", async () => {
+    const fixture: DiscogsStatus = {
+      connected: false,
+      provider: "discogs",
+      connected_at: null,
+      external_user_id: null,
+      has_access_token: false,
+    };
+
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify(fixture), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+
+    await expect(domains.integrations.discogs.getStatus()).resolves.toEqual(fixture);
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api.example.com/integrations/discogs/status");
   });
 });

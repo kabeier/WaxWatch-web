@@ -50,6 +50,21 @@ jobs:
         if: github.event_name == 'pull_request'
         run: npm run format:check:changed
 
+      - name: Detect API/route-page changes
+        if: github.event_name == 'pull_request'
+        id: api_shape_paths
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api_or_routes:
+              - 'src/lib/api/**'
+              - 'src/app/**/page.tsx'
+              - 'src/pages/**/*.tsx'
+
+      - name: API shape fixtures gate (PR touched API/route pages)
+        if: github.event_name == 'pull_request' && steps.api_shape_paths.outputs.api_or_routes == 'true'
+        run: npm run test:run -- src/lib/api/api.test.ts
+
       - name: Lint
         run: npm run lint
       - name: Env template contract check
