@@ -65,6 +65,21 @@ jobs:
         if: github.event_name == 'pull_request' && steps.api_shape_paths.outputs.api_or_routes == 'true'
         run: npm run test:run -- src/lib/api/api.test.ts
 
+      - name: Detect SSE changes
+        if: github.event_name == 'pull_request'
+        id: sse_paths
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            sse_related:
+              - 'src/components/SseController.tsx'
+              - 'src/components/SseController.test.tsx'
+              - 'docs/SSE_MODEL.md'
+
+      - name: SSE regression gate (PR touched SSE files)
+        if: github.event_name == 'pull_request' && steps.sse_paths.outputs.sse_related == 'true'
+        run: npm run test:run -- src/components/SseController.test.tsx
+
       - name: Lint
         run: npm run lint
       - name: Env template contract check

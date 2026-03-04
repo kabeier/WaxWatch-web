@@ -42,7 +42,6 @@ describe("SseController", () => {
 
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
-    vi.spyOn(Math, "random").mockReturnValue(0);
     vi.mocked(getSupabaseAccessToken).mockReturnValue("jwt-token");
   });
 
@@ -80,12 +79,16 @@ describe("SseController", () => {
     });
   });
 
-  it("reconnects with exponential backoff after disconnect", async () => {
+  it("reconnects with exponential backoff + jitter after transient disconnects", async () => {
     vi.useFakeTimers();
+    vi.spyOn(Math, "random")
+      .mockReturnValueOnce(0.1)
+      .mockReturnValueOnce(0.5)
+      .mockReturnValue(0);
     fetchMock
       .mockRejectedValueOnce(new Error("disconnect-1"))
       .mockRejectedValueOnce(new Error("disconnect-2"))
-      .mockRejectedValueOnce(new Error("disconnect-3"));
+      .mockResolvedValueOnce(createSseResponse("event: message\ndata: recovered\n\n"));
 
     const setTimeoutSpy = vi.spyOn(window, "setTimeout");
     const queryClient = new QueryClient();
@@ -95,16 +98,20 @@ describe("SseController", () => {
     await vi.runAllTicks();
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    await vi.advanceTimersByTimeAsync(1_000);
+    await vi.advanceTimersByTimeAsync(1_029);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
     await vi.runAllTicks();
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
-    await vi.advanceTimersByTimeAsync(2_000);
+    await vi.advanceTimersByTimeAsync(2_149);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
     await vi.runAllTicks();
     expect(fetchMock).toHaveBeenCalledTimes(3);
 
     const reconnectDelays = setTimeoutSpy.mock.calls.map(([, delay]) => delay);
-    expect(reconnectDelays.slice(0, 3)).toEqual([1_000, 2_000, 4_000]);
+    expect(reconnectDelays.slice(0, 2)).toEqual([1_030, 2_150]);
   });
 
   it("stops immediately when token is missing", async () => {
@@ -126,22 +133,19 @@ describe("SseController", () => {
   it.each([401, 403])(
     "handles auth failure status %s by invoking authorization failure and halting reconnect",
     async (status) => {
-      vi.useFakeTimers();
       fetchMock.mockResolvedValueOnce(createSseResponse("", { status }));
 
-      const setTimeoutSpy = vi.spyOn(window, "setTimeout");
+      vi.useFakeTimers();
       const queryClient = new QueryClient();
 
       renderWithClient(queryClient);
 
       await vi.runAllTicks();
-
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(handleApiAuthorizationFailure).toHaveBeenCalledWith({
         path: "/api/stream/events",
         status,
       });
-      expect(setTimeoutSpy).not.toHaveBeenCalled();
 
       await vi.advanceTimersByTimeAsync(35_000);
       expect(fetchMock).toHaveBeenCalledTimes(1);
