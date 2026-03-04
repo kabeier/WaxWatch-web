@@ -68,23 +68,23 @@ Status criteria used in this matrix:
 - `wired-minimum`: route uses real TanStack Query hooks and/or mutations connected to the API client, with baseline form validation and pending/error handling.
 - `production-ready`: route has complete UX polish, robust error/retry flows, accessibility coverage, and automated tests.
 
-| Route                      | Status         | Notes                                                                                               |
-| -------------------------- | -------- | --------------------------------------------------------------------------------------------------- |
-| `/`                        | scaffold | Redirect exists, but landing flow depends on `/search`, which is still synthetic-state scaffolding. |
-| `/login`                   | scaffold | Sign-in shell placeholder for Supabase auth UI.                                                     |
-| `/search`                  | wired-minimum | Uses TanStack Query mutations (`useSearchMutation`, `useSaveSearchAlertMutation`) via API client.   |
-| `/alerts`                  | wired-minimum | Uses real query hooks (`useWatchRulesQuery`, `useWatchReleasesQuery`) via API client.               |
-| `/alerts/new`              | wired-minimum | Uses real query/mutation hooks (`useMeQuery`, `useCreateWatchRuleMutation`) via API client.         |
-| `/alerts/[id]`             | wired-minimum | Uses real query/mutation hooks (`useWatchRuleDetailQuery`, update/delete mutations) via API client. |
-| `/watchlist`               | wired-minimum | Uses real query hook (`useWatchReleasesQuery`) via API client.                                      |
-| `/notifications`           | wired-minimum | Uses real query hooks (`useNotificationsQuery`, `useUnreadNotificationCountQuery`) via API client.  |
-| `/settings/profile`        | wired-minimum | Uses real query hook (`useMeQuery`) via API client.                                                 |
-| `/settings/alerts`         | wired-minimum | Uses real query/mutation hooks (`useMeQuery`, delivery preferences via `useUpdateProfileMutation`) via API client.           |
-| `/settings/integrations`   | wired-minimum | Uses real query hook (`useDiscogsStatusQuery`) via API client.                                      |
-| `/settings/danger`         | wired-minimum | Uses real query/mutation hooks (`useMeQuery`, `useDeactivateAccountMutation`, `useHardDeleteAccountMutation`) via API client.           |
-| `/signed-out`              | scaffold | Static confirmation page exists; no API wiring or production-hardening checks yet.                  |
-| `/account-removed`         | scaffold | Static confirmation page exists; no API wiring or production-hardening checks yet.                  |
-| `/admin/provider-requests` | planned  | Admin-only route; not yet present in `app/`.                                                        |
+| Route                      | Status        | Notes                                                                                                                         |
+| -------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `/`                        | scaffold      | Redirect exists, but landing flow depends on `/search`, which is still synthetic-state scaffolding.                           |
+| `/login`                   | scaffold      | Sign-in shell placeholder for Supabase auth UI.                                                                               |
+| `/search`                  | wired-minimum | Uses TanStack Query mutations (`useSearchMutation`, `useSaveSearchAlertMutation`) via API client.                             |
+| `/alerts`                  | wired-minimum | Uses real query hooks (`useWatchRulesQuery`, `useWatchReleasesQuery`) via API client.                                         |
+| `/alerts/new`              | wired-minimum | Uses real query/mutation hooks (`useMeQuery`, `useCreateWatchRuleMutation`) via API client.                                   |
+| `/alerts/[id]`             | wired-minimum | Uses real query/mutation hooks (`useWatchRuleDetailQuery`, update/delete mutations) via API client.                           |
+| `/watchlist`               | wired-minimum | Uses real query hook (`useWatchReleasesQuery`) via API client.                                                                |
+| `/notifications`           | wired-minimum | Uses real query hooks (`useNotificationsQuery`, `useUnreadNotificationCountQuery`) via API client.                            |
+| `/settings/profile`        | wired-minimum | Uses real query hook (`useMeQuery`) via API client.                                                                           |
+| `/settings/alerts`         | wired-minimum | Uses real query/mutation hooks (`useMeQuery`, delivery preferences via `useUpdateProfileMutation`) via API client.            |
+| `/settings/integrations`   | wired-minimum | Uses real query hook (`useDiscogsStatusQuery`) via API client.                                                                |
+| `/settings/danger`         | wired-minimum | Uses real query/mutation hooks (`useMeQuery`, `useDeactivateAccountMutation`, `useHardDeleteAccountMutation`) via API client. |
+| `/signed-out`              | scaffold      | Static confirmation page exists; no API wiring or production-hardening checks yet.                                            |
+| `/account-removed`         | scaffold      | Static confirmation page exists; no API wiring or production-hardening checks yet.                                            |
+| `/admin/provider-requests` | planned       | Admin-only route; not yet present in `app/`.                                                                                  |
 
 ### How to pick next work
 

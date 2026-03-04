@@ -20,13 +20,16 @@ export default function AlertDetailClient({ id }: { id: string }) {
   const deleteWatchRuleMutation = useDeleteWatchRuleMutation(id);
   const viewModel = routeViewModels.alertDetail;
   const router = useRouter();
-  const [draft, setDraft] = useState<{ name?: string; pollInterval?: string; isActive?: boolean }>({});
+  const retryAlertDetail = watchRuleDetailQuery.retry;
+  const [draft, setDraft] = useState<{ name?: string; pollInterval?: string; isActive?: boolean }>(
+    {},
+  );
 
   useEffect(() => {
     if (updateWatchRuleMutation.data) {
-      watchRuleDetailQuery.retry();
+      retryAlertDetail();
     }
-  }, [updateWatchRuleMutation.data, watchRuleDetailQuery]);
+  }, [retryAlertDetail, updateWatchRuleMutation.data]);
 
   useEffect(() => {
     if (deleteWatchRuleMutation.data !== undefined && !deleteWatchRuleMutation.isPending) {
@@ -67,17 +70,23 @@ export default function AlertDetailClient({ id }: { id: string }) {
         <StateRateLimited
           message={watchRuleDetailQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(watchRuleDetailQuery.error)}
-          action={<button onClick={() => watchRuleDetailQuery.retry()}>Retry alert detail load</button>}
+          action={
+            <button onClick={() => watchRuleDetailQuery.retry()}>Retry alert detail load</button>
+          }
         />
       ) : null}
       {watchRuleDetailQuery.isError && !isRateLimitedError(watchRuleDetailQuery.error) ? (
         <StateError
           message="Could not load alert detail."
           detail={getErrorMessage(watchRuleDetailQuery.error, "Request failed")}
-          action={<button onClick={() => watchRuleDetailQuery.retry()}>Retry alert detail load</button>}
+          action={
+            <button onClick={() => watchRuleDetailQuery.retry()}>Retry alert detail load</button>
+          }
         />
       ) : null}
-      {!watchRuleDetailQuery.data && !watchRuleDetailQuery.isLoading && !watchRuleDetailQuery.isError ? (
+      {!watchRuleDetailQuery.data &&
+      !watchRuleDetailQuery.isLoading &&
+      !watchRuleDetailQuery.isError ? (
         <StateEmpty message="Alert not found." />
       ) : null}
 
@@ -100,12 +109,16 @@ export default function AlertDetailClient({ id }: { id: string }) {
             Current status: {isActive ? "active" : "paused"}
             {updateWatchRuleMutation.isPending ? " (saving…)" : ""}
           </p>
-          {validationMessage ? <StateError message="Validation error" detail={validationMessage} /> : null}
+          {validationMessage ? (
+            <StateError message="Validation error" detail={validationMessage} />
+          ) : null}
           <label>
             Alert name
             <input
               value={name}
-              onChange={(event) => setDraft((current) => ({ ...current, name: event.currentTarget.value }))}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, name: event.currentTarget.value }))
+              }
               disabled={isPending}
             />
           </label>
@@ -126,7 +139,9 @@ export default function AlertDetailClient({ id }: { id: string }) {
             <input
               type="checkbox"
               checked={isActive}
-              onChange={(event) => setDraft((current) => ({ ...current, isActive: event.currentTarget.checked }))}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, isActive: event.currentTarget.checked }))
+              }
               disabled={isPending}
             />
             Alert active

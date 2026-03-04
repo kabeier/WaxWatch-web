@@ -54,7 +54,9 @@ export default function NewAlertPage() {
         <StateEmpty message="No provider integrations available for new alerts." />
       ) : null}
 
-      {validationMessage ? <StateError message="Validation error" detail={validationMessage} /> : null}
+      {validationMessage ? (
+        <StateError message="Validation error" detail={validationMessage} />
+      ) : null}
 
       <form
         onSubmit={(event) => {
@@ -65,7 +67,12 @@ export default function NewAlertPage() {
 
           createWatchRuleMutation.mutate({
             name: name.trim(),
-            query: { keywords: keywordsInput.split(",").map((value) => value.trim()).filter(Boolean) },
+            query: {
+              keywords: keywordsInput
+                .split(",")
+                .map((value) => value.trim())
+                .filter(Boolean),
+            },
             poll_interval_seconds: pollInterval,
             is_active: isActive,
           });
@@ -73,7 +80,11 @@ export default function NewAlertPage() {
       >
         <label>
           Alert name
-          <input value={name} onChange={(event) => setName(event.currentTarget.value)} disabled={isPending} />
+          <input
+            value={name}
+            onChange={(event) => setName(event.currentTarget.value)}
+            disabled={isPending}
+          />
         </label>
         <label>
           Keywords (comma-separated)

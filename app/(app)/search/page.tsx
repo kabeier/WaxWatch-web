@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { SearchRequest } from "@/lib/api/domains/types";
 import { StateEmpty } from "@/components/StateEmpty";
 import { StateError } from "@/components/StateError";
 import { StateLoading } from "@/components/StateLoading";
 import { StateRateLimited } from "@/components/StateRateLimited";
 import { useSaveSearchAlertMutation, useSearchMutation } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
-import type { SearchRequest } from "@/lib/api/domains/types";
 import { routeViewModels } from "@/lib/view-models/routes";
 
 function parseCsv(input: string): string[] {
@@ -28,14 +28,13 @@ export default function SearchPage() {
   const [pageSizeInput, setPageSizeInput] = useState("24");
   const [alertName, setAlertName] = useState("Saved from search");
   const [pollIntervalInput, setPollIntervalInput] = useState("600");
-
   const [lastSubmittedQuery, setLastSubmittedQuery] = useState<SearchRequest | null>(null);
 
   const page = Number(pageInput);
   const pageSize = Number(pageSizeInput);
   const pollInterval = Number(pollIntervalInput);
 
-  const formErrors = useMemo(() => {
+  const searchErrors = useMemo(() => {
     const errors: string[] = [];
 
     if (!Number.isInteger(page) || page < 1) {
@@ -46,6 +45,12 @@ export default function SearchPage() {
       errors.push("Page size must be an integer between 1 and 100.");
     }
 
+    return errors;
+  }, [page, pageSize]);
+
+  const saveAlertErrors = useMemo(() => {
+    const errors: string[] = [];
+
     if (alertName.trim().length < 1 || alertName.trim().length > 120) {
       errors.push("Alert name must be between 1 and 120 characters.");
     }
@@ -55,7 +60,7 @@ export default function SearchPage() {
     }
 
     return errors;
-  }, [alertName, page, pageSize, pollInterval]);
+  }, [alertName, pollInterval]);
 
   const isBusy = searchMutation.isPending || saveAlertMutation.isPending;
 
@@ -71,14 +76,17 @@ export default function SearchPage() {
       <h1>{viewModel.heading}</h1>
       <p>{viewModel.summary}</p>
 
-      {formErrors.length > 0 ? (
-        <StateError message="Please fix validation issues before submitting." detail={formErrors.join(" ")} />
+      {searchErrors.length > 0 ? (
+        <StateError
+          message="Please fix search validation issues before submitting."
+          detail={searchErrors.join(" ")}
+        />
       ) : null}
 
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (formErrors.length > 0) {
+          if (searchErrors.length > 0) {
             return;
           }
 
@@ -123,7 +131,7 @@ export default function SearchPage() {
             disabled={isBusy}
           />
         </label>
-        <button type="submit" disabled={isBusy || formErrors.length > 0}>
+        <button type="submit" disabled={isBusy || searchErrors.length > 0}>
           {searchMutation.isPending ? "Running search…" : "Run search"}
         </button>
       </form>
@@ -148,10 +156,17 @@ export default function SearchPage() {
         <p>Loaded {searchMutation.data.items.length} search results.</p>
       ) : null}
 
+      {saveAlertErrors.length > 0 ? (
+        <StateError
+          message="Please fix save-alert validation issues before submitting."
+          detail={saveAlertErrors.join(" ")}
+        />
+      ) : null}
+
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (formErrors.length > 0) {
+          if (saveAlertErrors.length > 0 || searchErrors.length > 0) {
             return;
           }
 
@@ -183,7 +198,10 @@ export default function SearchPage() {
             disabled={isBusy}
           />
         </label>
-        <button type="submit" disabled={isBusy || formErrors.length > 0}>
+        <button
+          type="submit"
+          disabled={isBusy || saveAlertErrors.length > 0 || searchErrors.length > 0}
+        >
           {saveAlertMutation.isPending ? "Saving alert…" : "Save as alert"}
         </button>
       </form>
@@ -204,7 +222,8 @@ export default function SearchPage() {
       ) : null}
 
       <p>
-        API operations: {viewModel.operations.map((operation) => operation.serviceMethod).join(", ")}.
+        API operations:{" "}
+        {viewModel.operations.map((operation) => operation.serviceMethod).join(", ")}.
       </p>
     </section>
   );
