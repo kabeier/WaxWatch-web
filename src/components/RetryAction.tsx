@@ -17,11 +17,9 @@ export function RetryAction({
   disabled = false,
   onRetry,
 }: RetryActionProps) {
-  const [remainingSeconds, setRemainingSeconds] = useState<number>(retryAfterSeconds ?? 0);
-
-  useEffect(() => {
-    setRemainingSeconds(retryAfterSeconds ?? 0);
-  }, [retryAfterSeconds]);
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(() =>
+    Math.max(0, retryAfterSeconds ?? 0),
+  );
 
   useEffect(() => {
     if (remainingSeconds <= 0) {
@@ -46,6 +44,7 @@ export function RetryAction({
           if (retryAfterSeconds && retryAfterSeconds > 0) {
             setRemainingSeconds(retryAfterSeconds);
           }
+
           onRetry();
         }
       }}
