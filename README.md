@@ -78,9 +78,9 @@ Status criteria used in this matrix:
 | `/alerts/[id]`             | production-ready | Full detail/edit/delete UX states, retry behavior, and route-level success/failure tests.                     |
 | `/watchlist`               | production-ready | Full loading/empty/error/rate-limited behavior with explicit retry/cooldown actions and route-level tests.    |
 | `/notifications`           | production-ready | Full feed/mutation UX states, retry/cooldown behavior, and route-level success/failure tests.                 |
-| `/settings/profile`        | wired-minimum    | Uses real query hook (`useMeQuery`) via API client.                                                           |
+| `/settings/profile`        | production-ready | Full profile settings UX with validation, pending/disabled controls, cooldown-aware retries, and route tests. |
 | `/settings/alerts`         | production-ready | Full settings UX states, validation/pending/success handling, cooldown-aware retries, and route-level tests.  |
-| `/settings/integrations`   | wired-minimum    | Uses real query hook (`useDiscogsStatusQuery`) via API client.                                                |
+| `/settings/integrations`   | production-ready | Full Discogs integration UX with retry/cooldown handling and route-level success/failure tests.               |
 | `/settings/danger`         | production-ready | Full danger-zone UX states with robust pending/success/error handling and route-level success/failure tests.  |
 | `/signed-out`              | scaffold         | Static confirmation page exists; no API wiring or production-hardening checks yet.                            |
 | `/account-removed`         | scaffold         | Static confirmation page exists; no API wiring or production-hardening checks yet.                            |

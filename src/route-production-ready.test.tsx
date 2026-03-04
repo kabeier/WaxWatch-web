@@ -8,6 +8,8 @@ import NotificationsPage from "../app/(app)/notifications/page";
 import SearchPage from "../app/(app)/search/page";
 import AlertSettingsPage from "../app/(app)/settings/alerts/page";
 import DangerSettingsPage from "../app/(app)/settings/danger/page";
+import IntegrationSettingsPage from "../app/(app)/settings/integrations/page";
+import ProfileSettingsPage from "../app/(app)/settings/profile/page";
 import WatchlistPage from "../app/(app)/watchlist/page";
 
 type MockQuery = {
@@ -45,6 +47,9 @@ const state: {
   deactivateMutation: MockMutation;
   hardDeleteMutation: MockMutation;
   markReadMutation: MockMutation;
+  discogsStatusQuery: MockQuery;
+  discogsConnectMutation: MockMutation;
+  discogsImportMutation: MockMutation;
 } = {
   watchRulesQuery: { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() },
   watchReleasesQuery: { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() },
@@ -121,6 +126,27 @@ const state: {
     error: null,
     mutate: vi.fn(),
   },
+  discogsStatusQuery: {
+    data: { connected: false, provider: "discogs" },
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: vi.fn(),
+  },
+  discogsConnectMutation: {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  },
+  discogsImportMutation: {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  },
 };
 
 vi.mock("@/lib/query/hooks", () => ({
@@ -139,6 +165,9 @@ vi.mock("@/lib/query/hooks", () => ({
   useDeactivateAccountMutation: () => state.deactivateMutation,
   useHardDeleteAccountMutation: () => state.hardDeleteMutation,
   useMarkNotificationReadMutation: () => state.markReadMutation,
+  useDiscogsStatusQuery: () => state.discogsStatusQuery,
+  useDiscogsConnectMutation: () => state.discogsConnectMutation,
+  useDiscogsImportMutation: () => state.discogsImportMutation,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -263,6 +292,27 @@ beforeEach(() => {
     error: null,
     mutate: vi.fn(),
   };
+  state.discogsStatusQuery = {
+    data: { connected: true, provider: "discogs" },
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: vi.fn(),
+  };
+  state.discogsConnectMutation = {
+    data: { connected: true, provider: "discogs" },
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
+  state.discogsImportMutation = {
+    data: { id: "import-1" },
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
 });
 
 describe("route-level production-ready paths", () => {
@@ -371,5 +421,27 @@ describe("route-level production-ready paths", () => {
     state.watchReleasesQuery = { ...state.watchReleasesQuery, isError: true, error: apiError };
     render(<WatchlistPage />);
     expect(screen.getByText(/could not load watchlist/i)).toBeInTheDocument();
+  });
+
+  it("/settings/profile success", () => {
+    render(<ProfileSettingsPage />);
+    expect(screen.getByText(/signed in as/i)).toBeInTheDocument();
+  });
+
+  it("/settings/profile failure", () => {
+    state.meQuery = { ...state.meQuery, isError: true, error: apiError };
+    render(<ProfileSettingsPage />);
+    expect(screen.getByText(/could not load profile/i)).toBeInTheDocument();
+  });
+
+  it("/settings/integrations success", () => {
+    render(<IntegrationSettingsPage />);
+    expect(screen.getByText(/discogs connected/i)).toBeInTheDocument();
+  });
+
+  it("/settings/integrations failure", () => {
+    state.discogsStatusQuery = { ...state.discogsStatusQuery, isError: true, error: apiError };
+    render(<IntegrationSettingsPage />);
+    expect(screen.getByText(/could not load discogs integration status/i)).toBeInTheDocument();
   });
 });
