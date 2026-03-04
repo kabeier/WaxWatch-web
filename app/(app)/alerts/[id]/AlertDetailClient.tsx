@@ -31,12 +31,32 @@ export default function AlertDetailClient({ id }: { id: string }) {
         <StateRateLimited
           message={watchRuleDetailQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(watchRuleDetailQuery.error)}
+          action={
+            <button
+              type="button"
+              onClick={() => {
+                watchRuleDetailQuery.retry();
+              }}
+            >
+              Retry alert detail load
+            </button>
+          }
         />
       ) : null}
       {watchRuleDetailQuery.isError && !isRateLimitedError(watchRuleDetailQuery.error) ? (
         <StateError
           message="Could not load alert detail."
           detail={getErrorMessage(watchRuleDetailQuery.error, "Request failed")}
+          action={
+            <button
+              type="button"
+              onClick={() => {
+                watchRuleDetailQuery.retry();
+              }}
+            >
+              Retry alert detail load
+            </button>
+          }
         />
       ) : null}
       {!watchRuleDetailQuery.data &&
