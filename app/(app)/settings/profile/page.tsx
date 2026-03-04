@@ -22,9 +22,7 @@ export default function ProfileSettingsPage() {
           title="Profile requests are temporarily rate limited"
           message={meQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
-          action={
-            <button type="button">Retry profile load</button>
-          }
+          action={<button type="button">Retry profile load</button>}
         />
       ) : null}
       {meQuery.isError && !isRateLimitedError(meQuery.error) ? (
@@ -32,9 +30,7 @@ export default function ProfileSettingsPage() {
           title="Profile failed to load"
           message="Could not load profile."
           detail={getErrorMessage(meQuery.error, "Request failed")}
-          action={
-            <button type="button">Retry profile load</button>
-          }
+          action={<button type="button">Retry profile load</button>}
         />
       ) : null}
       {!meQuery.data && !meQuery.isLoading && !meQuery.isError ? (

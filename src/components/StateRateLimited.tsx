@@ -23,7 +23,8 @@ export function StateRateLimited({
       <p>{message}</p>
       {detail ? <p>{detail}</p> : null}
       <p>
-        Retry-After: {typeof retryAfterSeconds === "number" ? `${retryAfterSeconds}s` : "Not provided"}
+        Retry-After:{" "}
+        {typeof retryAfterSeconds === "number" ? `${retryAfterSeconds}s` : "Not provided"}
       </p>
       {action ? <div>{action}</div> : null}
     </section>
