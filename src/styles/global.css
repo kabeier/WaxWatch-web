@@ -2,24 +2,38 @@
   /* background + surfaces */
   --bg: #0b0614;
   --surface: #140b24;
+  --surface-subtle: #1d1231;
 
   /* text */
   --text: #f2eefc;
   --muted: #b9b0d6;
 
   /* accents */
-  --accent: #7c3aed; /* purple */
-  --accent2: #2dd4bf; /* teal */
+  --accent: #7c3aed;
+  --accent2: #2dd4bf;
 
   /* borders */
   --border: rgba(255, 255, 255, 0.08);
+
+  /* temporary spacing tokens */
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+
+  --radius-md: 6px;
 }
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    sans-serif;
   line-height: 1.5;
 }
 
@@ -34,4 +48,78 @@ a:hover {
 hr {
   border: none;
   border-top: 1px solid var(--border);
+}
+
+.ww-shell {
+  padding: var(--space-6);
+}
+
+.ww-content-container {
+  margin: 0 auto;
+  max-width: 1100px;
+}
+
+.ww-top-nav-wrap {
+  margin-bottom: var(--space-4);
+}
+
+.ww-top-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.ww-top-nav a {
+  text-decoration: none;
+}
+
+.ww-auth-notice {
+  border: 1px solid var(--border);
+  background: var(--surface-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.ww-page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.ww-page-header {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ww-page-header h1,
+.ww-state h2 {
+  margin: 0;
+}
+
+.ww-page-header p,
+.ww-state p {
+  margin: 0;
+}
+
+.ww-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.ww-state {
+  display: grid;
+  gap: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  padding: var(--space-4);
+}
+
+.ww-state-error {
+  border-color: var(--accent);
+}
+
+.ww-state-action {
+  margin-top: var(--space-2);
 }

@@ -1,9 +1,14 @@
 "use client";
 
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  Page,
+  PageActions,
+  PageHeader,
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/primitives";
 import { useNotificationsQuery, useUnreadNotificationCountQuery } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import { routeViewModels } from "@/lib/view-models/routes";
@@ -14,9 +19,8 @@ export default function NotificationsPage() {
   const unreadCountQuery = useUnreadNotificationCountQuery();
 
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
+    <Page>
+      <PageHeader title={viewModel.heading} summary={viewModel.summary} />
       <p>Unread notifications: {unreadCountQuery.data?.unread_count ?? 0}</p>
 
       {notificationsQuery.isLoading ? <StateLoading message="Loading notifications…" /> : null}
@@ -46,7 +50,9 @@ export default function NotificationsPage() {
           ))}
         </ul>
       ) : null}
-      <button type="button">Mark selected as read</button>
-    </section>
+      <PageActions>
+        <button type="button">Mark selected as read</button>
+      </PageActions>
+    </Page>
   );
 }

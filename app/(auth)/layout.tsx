@@ -1,3 +1,9 @@
+import { AppShell, ContentContainer } from "@/components/primitives";
+
 export default function AuthGroupLayout({ children }: { children: React.ReactNode }) {
-  return <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>{children}</main>;
+  return (
+    <AppShell>
+      <ContentContainer>{children}</ContentContainer>
+    </AppShell>
+  );
 }

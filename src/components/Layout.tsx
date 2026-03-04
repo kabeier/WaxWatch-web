@@ -1,36 +1,20 @@
 "use client";
 
 import { Suspense } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { AppShell, ContentContainer, TopNav } from "@/components/primitives";
 
 type LayoutProps = {
   children: React.ReactNode;
 };
 
-const linkStyle = {
-  marginRight: 12,
-  textDecoration: "none",
-};
-
-const authNoticeStyles: Record<string, React.CSSProperties> = {
-  "reauth-required": {
-    border: "1px solid #f59e0b",
-    backgroundColor: "#fef3c7",
-    color: "#78350f",
-    padding: 12,
-    marginBottom: 16,
-    borderRadius: 6,
-  },
-  "signed-out": {
-    border: "1px solid #22c55e",
-    backgroundColor: "#dcfce7",
-    color: "#14532d",
-    padding: 12,
-    marginBottom: 16,
-    borderRadius: 6,
-  },
-};
+const topNavItems = [
+  { href: "/search", label: "Search" },
+  { href: "/alerts", label: "Alerts" },
+  { href: "/watchlist", label: "Watchlist" },
+  { href: "/notifications", label: "Notifications" },
+  { href: "/settings/profile", label: "Settings" },
+];
 
 const authNoticeMessages: Record<string, string> = {
   "reauth-required": "Your session expired or became invalid. Please sign in again.",
@@ -47,7 +31,7 @@ function AuthNotice() {
   }
 
   return (
-    <div role="status" aria-live="polite" style={authNoticeStyles[reason]}>
+    <div role="status" aria-live="polite" className="ww-auth-notice">
       {notice}
     </div>
   );
@@ -55,33 +39,16 @@ function AuthNotice() {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <div style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
-      <header style={{ marginBottom: 16 }}>
-        <nav>
-          <Link href="/search" style={linkStyle}>
-            Search
-          </Link>
-          <Link href="/alerts" style={linkStyle}>
-            Alerts
-          </Link>
-          <Link href="/watchlist" style={linkStyle}>
-            Watchlist
-          </Link>
-          <Link href="/notifications" style={linkStyle}>
-            Notifications
-          </Link>
-          <Link href="/settings/profile" style={linkStyle}>
-            Settings
-          </Link>
-        </nav>
-        <hr style={{ marginTop: 12 }} />
-      </header>
+    <AppShell>
+      <ContentContainer>
+        <TopNav items={topNavItems} />
 
-      <Suspense fallback={null}>
-        <AuthNotice />
-      </Suspense>
+        <Suspense fallback={null}>
+          <AuthNotice />
+        </Suspense>
 
-      <main>{children}</main>
-    </div>
+        <main>{children}</main>
+      </ContentContainer>
+    </AppShell>
   );
 }

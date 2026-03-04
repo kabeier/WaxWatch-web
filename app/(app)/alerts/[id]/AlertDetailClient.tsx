@@ -1,9 +1,14 @@
 "use client";
 
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  Page,
+  PageActions,
+  PageHeader,
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/primitives";
 import {
   useDeleteWatchRuleMutation,
   useUpdateWatchRuleMutation,
@@ -19,12 +24,16 @@ export default function AlertDetailClient({ id }: { id: string }) {
   const viewModel = routeViewModels.alertDetail;
 
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
-      <p>
-        Alert id: <code>{id}</code>
-      </p>
+    <Page>
+      <PageHeader
+        title={viewModel.heading}
+        summary={viewModel.summary}
+        meta={
+          <p>
+            Alert id: <code>{id}</code>
+          </p>
+        }
+      />
 
       {watchRuleDetailQuery.isLoading ? <StateLoading message="Loading alert detail…" /> : null}
       {watchRuleDetailQuery.isError && isRateLimitedError(watchRuleDetailQuery.error) ? (
@@ -107,22 +116,24 @@ export default function AlertDetailClient({ id }: { id: string }) {
         ))}
       </ul>
 
-      <button
-        type="button"
-        onClick={() => {
-          updateWatchRuleMutation.mutate({ name: "Updated alert name" });
-        }}
-      >
-        Save alert updates
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          deleteWatchRuleMutation.mutate(undefined);
-        }}
-      >
-        Delete alert
-      </button>
-    </section>
+      <PageActions>
+        <button
+          type="button"
+          onClick={() => {
+            updateWatchRuleMutation.mutate({ name: "Updated alert name" });
+          }}
+        >
+          Save alert updates
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            deleteWatchRuleMutation.mutate(undefined);
+          }}
+        >
+          Delete alert
+        </button>
+      </PageActions>
+    </Page>
   );
 }

@@ -185,6 +185,16 @@ Minimum behavior contract:
 - Provide accessible semantics for status messaging.
 - Avoid layout shift where feasible (especially loading/skeleton usage).
 
+### Shared primitive namespace (current implementation)
+
+Use the dedicated namespace under `src/components/primitives` for all temporary baseline UI primitives:
+
+- State primitives: `StateLoading`, `StateEmpty`, `StateError`, `StateRateLimited`
+- Shell primitives: `AppShell`, `TopNav`, `SideNav`, `ContentContainer`
+- Route/page primitives: `Page`, `PageHeader`, `PageActions`
+
+Route components should import from `@/components/primitives` instead of local ad-hoc variants.
+
 ### Contributor note (temporary default)
 
 Until the official design guides land, contributors should treat `StateLoading`, `StateEmpty`, `StateError`, and `StateRateLimited` as required defaults for MVP route status handling (loading, empty, error, and rate-limited states). Avoid page-specific one-off status UI when these primitives cover the case.
@@ -229,6 +239,20 @@ Use this format for each temporary token/primitive during migration:
 - `canonical`: `<new_reference_name_or_link>`
 - `status`: `pending | in-progress | migrated | removed`
 - `notes`: `<breaking changes, behavioral differences, rollout notes>`
+
+### Route/component migration table stub (fill when official guides land)
+
+Use this table immediately when canonical design guidance is available so teams can track route-level migration status in parallel.
+
+| Route/component       | Current primitive usage                  | Canonical target refs | Owner    | Status (`pending/in-progress/migrated`) | Notes |
+| --------------------- | ---------------------------------------- | --------------------- | -------- | --------------------------------------- | ----- |
+| `/search`             | `Page`, `PageHeader`, state primitives   | `<add official refs>` | `<team>` | `pending`                               |       |
+| `/alerts`             | `Page`, `PageHeader`, state primitives   | `<add official refs>` | `<team>` | `pending`                               |       |
+| `/watchlist`          | `Page`, `PageHeader`, state primitives   | `<add official refs>` | `<team>` | `pending`                               |       |
+| `/notifications`      | `Page`, `PageHeader`, state primitives   | `<add official refs>` | `<team>` | `pending`                               |       |
+| `/settings/*`         | `Page`, `PageHeader`, state primitives   | `<add official refs>` | `<team>` | `pending`                               |       |
+| `/login` + auth pages | `Page`, `PageHeader`                     | `<add official refs>` | `<team>` | `pending`                               |       |
+| `App shell`           | `AppShell`, `TopNav`, `ContentContainer` | `<add official refs>` | `<team>` | `pending`                               |       |
 
 ## Migration tracker (pre-created)
 

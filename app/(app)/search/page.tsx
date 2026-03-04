@@ -1,9 +1,14 @@
 "use client";
 
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  Page,
+  PageActions,
+  PageHeader,
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/primitives";
 import { useSaveSearchAlertMutation, useSearchMutation } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import { routeViewModels } from "@/lib/view-models/routes";
@@ -21,9 +26,8 @@ export default function SearchPage() {
   const saveAlertMutation = useSaveSearchAlertMutation();
 
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
+    <Page>
+      <PageHeader title={viewModel.heading} summary={viewModel.summary} />
 
       {searchMutation.isPending ? <StateLoading message="Loading search results…" /> : null}
       {searchMutation.isError && isRateLimitedError(searchMutation.error) ? (
@@ -63,26 +67,28 @@ export default function SearchPage() {
         API operations:{" "}
         {viewModel.operations.map((operation) => operation.serviceMethod).join(", ")}.
       </p>
-      <button
-        type="button"
-        onClick={() => {
-          searchMutation.mutate(demoSearchInput);
-        }}
-      >
-        Run search
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          saveAlertMutation.mutate({
-            name: "Saved from search",
-            query: demoSearchInput,
-            poll_interval_seconds: 300,
-          });
-        }}
-      >
-        Save as alert
-      </button>
-    </section>
+      <PageActions>
+        <button
+          type="button"
+          onClick={() => {
+            searchMutation.mutate(demoSearchInput);
+          }}
+        >
+          Run search
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            saveAlertMutation.mutate({
+              name: "Saved from search",
+              query: demoSearchInput,
+              poll_interval_seconds: 300,
+            });
+          }}
+        >
+          Save as alert
+        </button>
+      </PageActions>
+    </Page>
   );
 }

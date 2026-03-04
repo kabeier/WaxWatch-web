@@ -1,9 +1,14 @@
 "use client";
 
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  Page,
+  PageActions,
+  PageHeader,
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/primitives";
 import { useDiscogsStatusQuery } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import { routeViewModels } from "@/lib/view-models/routes";
@@ -13,9 +18,8 @@ export default function IntegrationSettingsPage() {
   const discogsStatusQuery = useDiscogsStatusQuery();
 
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
+    <Page>
+      <PageHeader title={viewModel.heading} summary={viewModel.summary} />
       {discogsStatusQuery.isLoading ? <StateLoading message="Loading Discogs status…" /> : null}
       {discogsStatusQuery.isError && isRateLimitedError(discogsStatusQuery.error) ? (
         <StateRateLimited
@@ -35,9 +39,11 @@ export default function IntegrationSettingsPage() {
       {discogsStatusQuery.data ? (
         <p>Discogs connected: {discogsStatusQuery.data.connected ? "yes" : "no"}</p>
       ) : null}
-      <button type="button">Refresh Discogs status</button>
-      <button type="button">Connect Discogs account</button>
-      <button type="button">Start Discogs import</button>
-    </section>
+      <PageActions>
+        <button type="button">Refresh Discogs status</button>
+        <button type="button">Connect Discogs account</button>
+        <button type="button">Start Discogs import</button>
+      </PageActions>
+    </Page>
   );
 }

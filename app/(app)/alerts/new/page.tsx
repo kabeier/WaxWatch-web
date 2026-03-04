@@ -1,9 +1,14 @@
 "use client";
 
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  Page,
+  PageActions,
+  PageHeader,
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/primitives";
 import { useCreateWatchRuleMutation, useMeQuery } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
@@ -12,9 +17,11 @@ export default function NewAlertPage() {
   const createWatchRuleMutation = useCreateWatchRuleMutation();
 
   return (
-    <section>
-      <h1>Create Alert</h1>
-      <p>Create a new alert rule from saved search criteria.</p>
+    <Page>
+      <PageHeader
+        title="Create Alert"
+        summary="Create a new alert rule from saved search criteria."
+      />
 
       {meQuery.isLoading ? <StateLoading message="Loading alert preset data…" /> : null}
       {meQuery.isError && isRateLimitedError(meQuery.error) ? (
@@ -47,19 +54,21 @@ export default function NewAlertPage() {
         />
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => {
-          createWatchRuleMutation.mutate({
-            name: "My new alert",
-            query: { keywords: ["vinyl"] },
-            poll_interval_seconds: 300,
-            is_active: true,
-          });
-        }}
-      >
-        Save new alert
-      </button>
-    </section>
+      <PageActions>
+        <button
+          type="button"
+          onClick={() => {
+            createWatchRuleMutation.mutate({
+              name: "My new alert",
+              query: { keywords: ["vinyl"] },
+              poll_interval_seconds: 300,
+              is_active: true,
+            });
+          }}
+        >
+          Save new alert
+        </button>
+      </PageActions>
+    </Page>
   );
 }

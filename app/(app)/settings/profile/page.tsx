@@ -1,9 +1,14 @@
 "use client";
 
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  Page,
+  PageActions,
+  PageHeader,
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/primitives";
 import { useMeQuery } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import { routeViewModels } from "@/lib/view-models/routes";
@@ -13,9 +18,8 @@ export default function ProfileSettingsPage() {
   const meQuery = useMeQuery();
 
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
+    <Page>
+      <PageHeader title={viewModel.heading} summary={viewModel.summary} />
       {meQuery.isLoading ? <StateLoading message="Loading profile…" /> : null}
       {meQuery.isError && isRateLimitedError(meQuery.error) ? (
         <StateRateLimited
@@ -37,7 +41,9 @@ export default function ProfileSettingsPage() {
         <StateEmpty message="No profile found." />
       ) : null}
       {meQuery.data ? <p>Signed in as {meQuery.data.email}</p> : null}
-      <button type="button">Save profile changes</button>
-    </section>
+      <PageActions>
+        <button type="button">Save profile changes</button>
+      </PageActions>
+    </Page>
   );
 }

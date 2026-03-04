@@ -1,9 +1,14 @@
 "use client";
 
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  Page,
+  PageActions,
+  PageHeader,
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/primitives";
 import { useMeQuery, useUpdateProfileMutation } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
@@ -12,9 +17,8 @@ export default function DangerSettingsPage() {
   const updateProfileMutation = useUpdateProfileMutation();
 
   return (
-    <section>
-      <h1>Danger Zone</h1>
-      <p>Deactivate or permanently remove your account.</p>
+    <Page>
+      <PageHeader title="Danger Zone" summary="Deactivate or permanently remove your account." />
       {meQuery.isLoading ? <StateLoading message="Loading account danger-zone options…" /> : null}
       {meQuery.isError && isRateLimitedError(meQuery.error) ? (
         <StateRateLimited
@@ -48,22 +52,24 @@ export default function DangerSettingsPage() {
         />
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => {
-          updateProfileMutation.mutate({ display_name: "Deactivation requested" });
-        }}
-      >
-        Deactivate account
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          updateProfileMutation.mutate({ display_name: "Deletion requested" });
-        }}
-      >
-        Permanently delete account
-      </button>
-    </section>
+      <PageActions>
+        <button
+          type="button"
+          onClick={() => {
+            updateProfileMutation.mutate({ display_name: "Deactivation requested" });
+          }}
+        >
+          Deactivate account
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            updateProfileMutation.mutate({ display_name: "Deletion requested" });
+          }}
+        >
+          Permanently delete account
+        </button>
+      </PageActions>
+    </Page>
   );
 }

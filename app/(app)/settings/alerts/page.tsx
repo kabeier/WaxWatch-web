@@ -1,9 +1,14 @@
 "use client";
 
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  Page,
+  PageActions,
+  PageHeader,
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/primitives";
 import { useMeQuery, useUpdateProfileMutation } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
@@ -12,9 +17,11 @@ export default function AlertSettingsPage() {
   const updateProfileMutation = useUpdateProfileMutation();
 
   return (
-    <section>
-      <h1>Alert Delivery Settings</h1>
-      <p>Configure quiet hours, delivery channels, and notification frequency.</p>
+    <Page>
+      <PageHeader
+        title="Alert Delivery Settings"
+        summary="Configure quiet hours, delivery channels, and notification frequency."
+      />
       {meQuery.isLoading ? <StateLoading message="Loading delivery settings…" /> : null}
       {meQuery.isError && isRateLimitedError(meQuery.error) ? (
         <StateRateLimited
@@ -48,19 +55,21 @@ export default function AlertSettingsPage() {
         />
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => {
-          updateProfileMutation.mutate({
-            preferences: {
-              delivery_frequency: "daily",
-              notifications_email: true,
-            },
-          });
-        }}
-      >
-        Save alert delivery preferences
-      </button>
-    </section>
+      <PageActions>
+        <button
+          type="button"
+          onClick={() => {
+            updateProfileMutation.mutate({
+              preferences: {
+                delivery_frequency: "daily",
+                notifications_email: true,
+              },
+            });
+          }}
+        >
+          Save alert delivery preferences
+        </button>
+      </PageActions>
+    </Page>
   );
 }

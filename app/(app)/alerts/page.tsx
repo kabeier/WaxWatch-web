@@ -1,9 +1,14 @@
 "use client";
 
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  Page,
+  PageActions,
+  PageHeader,
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/primitives";
 import { useWatchReleasesQuery, useWatchRulesQuery } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import { routeViewModels } from "@/lib/view-models/routes";
@@ -14,9 +19,8 @@ export default function AlertsPage() {
   const watchReleasesQuery = useWatchReleasesQuery();
 
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
+    <Page>
+      <PageHeader title={viewModel.heading} summary={viewModel.summary} />
 
       <h2>Watch Rules</h2>
       {watchRulesQuery.isLoading ? <StateLoading message="Loading watch rules…" /> : null}
@@ -60,7 +64,9 @@ export default function AlertsPage() {
         <p>Loaded {watchReleasesQuery.data.length} releases.</p>
       ) : null}
 
-      <button type="button">Create watch rule</button>
-    </section>
+      <PageActions>
+        <button type="button">Create watch rule</button>
+      </PageActions>
+    </Page>
   );
 }

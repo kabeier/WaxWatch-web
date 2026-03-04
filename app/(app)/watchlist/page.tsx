@@ -1,9 +1,14 @@
 "use client";
 
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  Page,
+  PageActions,
+  PageHeader,
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/primitives";
 import { useWatchReleasesQuery } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import { routeViewModels } from "@/lib/view-models/routes";
@@ -13,9 +18,8 @@ export default function WatchlistPage() {
   const watchReleasesQuery = useWatchReleasesQuery();
 
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
+    <Page>
+      <PageHeader title={viewModel.heading} summary={viewModel.summary} />
       {watchReleasesQuery.isLoading ? <StateLoading message="Loading watchlist…" /> : null}
       {watchReleasesQuery.isError && isRateLimitedError(watchReleasesQuery.error) ? (
         <StateRateLimited
@@ -35,7 +39,9 @@ export default function WatchlistPage() {
       {watchReleasesQuery.data && watchReleasesQuery.data.length > 0 ? (
         <p>Total releases: {watchReleasesQuery.data.length}</p>
       ) : null}
-      <button type="button">Refresh watchlist</button>
-    </section>
+      <PageActions>
+        <button type="button">Refresh watchlist</button>
+      </PageActions>
+    </Page>
   );
 }
