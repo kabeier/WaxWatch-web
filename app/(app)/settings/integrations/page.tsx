@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 import { RetryAction } from "@/components/RetryAction";
 import {
@@ -22,22 +22,14 @@ export default function IntegrationSettingsPage() {
   const discogsStatusQuery = useDiscogsStatusQuery();
   const connectMutation = useDiscogsConnectMutation();
   const importMutation = useDiscogsImportMutation();
-  const [externalUserId, setExternalUserId] = useState("");
+  const [externalUserIdDraft, setExternalUserIdDraft] = useState<string | null>(null);
 
   const isBusy = connectMutation.isPending || importMutation.isPending;
   const retryLoad = () => void discogsStatusQuery.retry();
-  const resolvedExternalUserId = useMemo(
-    () => discogsStatusQuery.data?.external_user_id?.trim() ?? "",
-    [discogsStatusQuery.data?.external_user_id],
-  );
+  const resolvedExternalUserId = discogsStatusQuery.data?.external_user_id?.trim() ?? "";
+  const externalUserId = externalUserIdDraft ?? resolvedExternalUserId;
   const trimmedExternalUserId = externalUserId.trim();
   const canConnect = !isBusy && !discogsStatusQuery.isLoading && trimmedExternalUserId.length > 0;
-
-  useEffect(() => {
-    if (!externalUserId && resolvedExternalUserId) {
-      setExternalUserId(resolvedExternalUserId);
-    }
-  }, [externalUserId, resolvedExternalUserId]);
 
   const handleConnect = () => {
     if (!trimmedExternalUserId) {
@@ -93,7 +85,7 @@ export default function IntegrationSettingsPage() {
         id="discogs-external-user-id"
         name="discogs-external-user-id"
         value={externalUserId}
-        onChange={(event) => setExternalUserId(event.target.value)}
+        onChange={(event) => setExternalUserIdDraft(event.target.value)}
         disabled={isBusy || discogsStatusQuery.isLoading}
         placeholder="Enter your Discogs user ID"
         autoComplete="off"
