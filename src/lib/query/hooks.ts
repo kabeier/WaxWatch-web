@@ -1,6 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { waxwatchApi } from "@/lib/query/api";
 import { queryKeys } from "@/lib/query/keys";
+import type {
+  MeProfileUpdate,
+  SaveSearchAlertRequest,
+  SearchRequest,
+  WatchRuleCreate,
+  WatchRuleUpdate,
+} from "@/lib/api/domains/types";
 
 export function useMeQuery() {
   return useQuery({
@@ -13,6 +21,14 @@ export function useWatchRulesQuery() {
   return useQuery({
     queryKey: queryKeys.watchRules.list,
     queryFn: () => waxwatchApi.watchRules.list(),
+  });
+}
+
+export function useWatchRuleDetailQuery(id: string) {
+  return useQuery({
+    queryKey: queryKeys.watchRules.detail(id),
+    queryFn: () => waxwatchApi.watchRules.getById(id),
+    enabled: Boolean(id),
   });
 }
 
@@ -41,5 +57,108 @@ export function useDiscogsStatusQuery() {
   return useQuery({
     queryKey: queryKeys.integrations.discogs.status,
     queryFn: () => waxwatchApi.integrations.discogs.getStatus(),
+  });
+}
+
+type MutationState<TData> = {
+  data?: TData;
+  error: unknown;
+  isPending: boolean;
+  isError: boolean;
+};
+
+function useApiMutation<TInput, TData>(options: {
+  mutationFn: (input: TInput) => Promise<TData>;
+  onSuccess?: () => void;
+}) {
+  const [state, setState] = useState<MutationState<TData>>({
+    data: undefined,
+    error: null,
+    isPending: false,
+    isError: false,
+  });
+
+  const mutate = useCallback(
+    (input: TInput) => {
+      setState((current) => ({ ...current, isPending: true, isError: false, error: null }));
+
+      void options
+        .mutationFn(input)
+        .then((data) => {
+          setState({ data, error: null, isPending: false, isError: false });
+          options.onSuccess?.();
+        })
+        .catch((error: unknown) => {
+          setState({ data: undefined, error, isPending: false, isError: true });
+        });
+    },
+    [options],
+  );
+
+  return {
+    ...state,
+    mutate,
+  };
+}
+
+export function useSearchMutation() {
+  return useApiMutation({
+    mutationFn: (input: SearchRequest) => waxwatchApi.search.run(input),
+  });
+}
+
+export function useSaveSearchAlertMutation() {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (input: SaveSearchAlertRequest) => waxwatchApi.search.saveAlert(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchRules.list });
+    },
+  });
+}
+
+export function useCreateWatchRuleMutation() {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (input: WatchRuleCreate) => waxwatchApi.watchRules.create(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchRules.list });
+    },
+  });
+}
+
+export function useUpdateWatchRuleMutation(id: string) {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (input: WatchRuleUpdate) => waxwatchApi.watchRules.update(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchRules.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchRules.list });
+    },
+  });
+}
+
+export function useDeleteWatchRuleMutation(id: string) {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (_: undefined) => waxwatchApi.watchRules.remove(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchRules.list });
+    },
+  });
+}
+
+export function useUpdateProfileMutation() {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (input: MeProfileUpdate) => waxwatchApi.me.updateProfile(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.me });
+    },
   });
 }

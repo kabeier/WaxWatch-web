@@ -1,33 +1,66 @@
+"use client";
+
 import { StateEmpty } from "@/components/StateEmpty";
 import { StateError } from "@/components/StateError";
 import { StateLoading } from "@/components/StateLoading";
 import { StateRateLimited } from "@/components/StateRateLimited";
+import { useMeQuery, useUpdateProfileMutation } from "@/lib/query/hooks";
+import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
-type RouteState = "loading" | "empty" | "error" | "rate_limited" | "ready";
-
-export default async function AlertSettingsPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ state?: string; retryAfter?: string }>;
-}) {
-  const { state: stateParam, retryAfter } = await (searchParams ??
-    Promise.resolve({} as { state?: string; retryAfter?: string }));
-  const state = (stateParam as RouteState | undefined) ?? "ready";
+export default function AlertSettingsPage() {
+  const meQuery = useMeQuery();
+  const updateProfileMutation = useUpdateProfileMutation();
 
   return (
     <section>
       <h1>Alert Delivery Settings</h1>
       <p>Configure quiet hours, delivery channels, and notification frequency.</p>
-      {state === "loading" ? <StateLoading message="Loading delivery settings…" /> : null}
-      {state === "empty" ? <StateEmpty message="No delivery settings configured yet." /> : null}
-      {state === "error" ? <StateError message="Could not load alert delivery settings." /> : null}
-      {state === "rate_limited" ? (
+      {meQuery.isLoading ? <StateLoading message="Loading delivery settings…" /> : null}
+      {meQuery.isError && isRateLimitedError(meQuery.error) ? (
         <StateRateLimited
-          message="Delivery settings are temporarily rate limited."
-          retryAfterSeconds={retryAfter ? Number(retryAfter) : undefined}
+          message={meQuery.error.message}
+          retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
         />
       ) : null}
-      {state === "ready" ? <button type="button">Save alert delivery preferences</button> : null}
+      {meQuery.isError && !isRateLimitedError(meQuery.error) ? (
+        <StateError
+          message="Could not load alert delivery settings."
+          detail={getErrorMessage(meQuery.error, "Request failed")}
+        />
+      ) : null}
+      {meQuery.data && !meQuery.data.preferences ? (
+        <StateEmpty message="No delivery settings configured yet." />
+      ) : null}
+
+      {updateProfileMutation.isPending ? (
+        <StateLoading message="Saving delivery settings…" />
+      ) : null}
+      {updateProfileMutation.isError && isRateLimitedError(updateProfileMutation.error) ? (
+        <StateRateLimited
+          message={updateProfileMutation.error.message}
+          retryAfterSeconds={getRetryAfterSeconds(updateProfileMutation.error)}
+        />
+      ) : null}
+      {updateProfileMutation.isError && !isRateLimitedError(updateProfileMutation.error) ? (
+        <StateError
+          message="Could not save alert delivery preferences."
+          detail={getErrorMessage(updateProfileMutation.error, "Request failed")}
+        />
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => {
+          updateProfileMutation.mutate({
+            preferences: {
+              delivery_frequency: "daily",
+              notifications_email: true,
+            },
+          });
+        }}
+      >
+        Save alert delivery preferences
+      </button>
     </section>
   );
 }

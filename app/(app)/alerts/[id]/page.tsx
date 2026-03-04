@@ -1,22 +1,22 @@
+"use client";
+
 import { StateEmpty } from "@/components/StateEmpty";
 import { StateError } from "@/components/StateError";
 import { StateLoading } from "@/components/StateLoading";
 import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  useDeleteWatchRuleMutation,
+  useUpdateWatchRuleMutation,
+  useWatchRuleDetailQuery,
+} from "@/lib/query/hooks";
+import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import { routeViewModels } from "@/lib/view-models/routes";
 
-type RouteState = "loading" | "empty" | "error" | "rate_limited" | "ready";
-
-export default async function AlertDetailPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams?: Promise<{ state?: string; retryAfter?: string }>;
-}) {
-  const { id } = await params;
-  const { state: stateParam, retryAfter } = await (searchParams ??
-    Promise.resolve({} as { state?: string; retryAfter?: string }));
-  const state = (stateParam as RouteState | undefined) ?? "ready";
+export default function AlertDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
+  const watchRuleDetailQuery = useWatchRuleDetailQuery(id);
+  const updateWatchRuleMutation = useUpdateWatchRuleMutation(id);
+  const deleteWatchRuleMutation = useDeleteWatchRuleMutation(id);
   const viewModel = routeViewModels.alertDetail;
 
   return (
@@ -27,30 +27,91 @@ export default async function AlertDetailPage({
         Alert id: <code>{id}</code>
       </p>
 
-      {state === "loading" ? <StateLoading message="Loading alert detail…" /> : null}
-      {state === "empty" ? <StateEmpty message="Alert not found." /> : null}
-      {state === "error" ? <StateError message="Could not load alert detail." /> : null}
-      {state === "rate_limited" ? (
+      {watchRuleDetailQuery.isLoading ? <StateLoading message="Loading alert detail…" /> : null}
+      {watchRuleDetailQuery.isError && isRateLimitedError(watchRuleDetailQuery.error) ? (
         <StateRateLimited
-          message="Alert detail is temporarily rate limited."
-          retryAfterSeconds={retryAfter ? Number(retryAfter) : undefined}
+          message={watchRuleDetailQuery.error.message}
+          retryAfterSeconds={getRetryAfterSeconds(watchRuleDetailQuery.error)}
         />
       ) : null}
-      {state === "ready" ? (
-        <>
-          <ul>
-            {viewModel.operations.map((operation) => (
-              <li key={operation.id}>
-                {operation.label}: <code>{operation.serviceMethod}</code>
-              </li>
-            ))}
-          </ul>
-
-          <button type="button">Retry alert detail load</button>
-          <button type="button">Save alert updates</button>
-          <button type="button">Delete alert</button>
-        </>
+      {watchRuleDetailQuery.isError && !isRateLimitedError(watchRuleDetailQuery.error) ? (
+        <StateError
+          message="Could not load alert detail."
+          detail={getErrorMessage(watchRuleDetailQuery.error, "Request failed")}
+        />
       ) : null}
+      {!watchRuleDetailQuery.data &&
+      !watchRuleDetailQuery.isLoading &&
+      !watchRuleDetailQuery.isError ? (
+        <StateEmpty message="Alert not found." />
+      ) : null}
+      {watchRuleDetailQuery.data ? (
+        <p>
+          Rule: {watchRuleDetailQuery.data.name} (
+          {watchRuleDetailQuery.data.is_active ? "active" : "paused"})
+        </p>
+      ) : null}
+
+      {updateWatchRuleMutation.isPending ? <StateLoading message="Saving alert updates…" /> : null}
+      {updateWatchRuleMutation.isError && isRateLimitedError(updateWatchRuleMutation.error) ? (
+        <StateRateLimited
+          message={updateWatchRuleMutation.error.message}
+          retryAfterSeconds={getRetryAfterSeconds(updateWatchRuleMutation.error)}
+        />
+      ) : null}
+      {updateWatchRuleMutation.isError && !isRateLimitedError(updateWatchRuleMutation.error) ? (
+        <StateError
+          message="Could not save alert updates."
+          detail={getErrorMessage(updateWatchRuleMutation.error, "Request failed")}
+        />
+      ) : null}
+
+      {deleteWatchRuleMutation.isPending ? <StateLoading message="Deleting alert…" /> : null}
+      {deleteWatchRuleMutation.isError && isRateLimitedError(deleteWatchRuleMutation.error) ? (
+        <StateRateLimited
+          message={deleteWatchRuleMutation.error.message}
+          retryAfterSeconds={getRetryAfterSeconds(deleteWatchRuleMutation.error)}
+        />
+      ) : null}
+      {deleteWatchRuleMutation.isError && !isRateLimitedError(deleteWatchRuleMutation.error) ? (
+        <StateError
+          message="Could not delete alert."
+          detail={getErrorMessage(deleteWatchRuleMutation.error, "Request failed")}
+        />
+      ) : null}
+
+      <ul>
+        {viewModel.operations.map((operation) => (
+          <li key={operation.id}>
+            {operation.label}: <code>{operation.serviceMethod}</code>
+          </li>
+        ))}
+      </ul>
+
+      <button
+        type="button"
+        onClick={() => {
+          void watchRuleDetailQuery.refetch();
+        }}
+      >
+        Retry alert detail load
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          updateWatchRuleMutation.mutate({ name: "Updated alert name" });
+        }}
+      >
+        Save alert updates
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          deleteWatchRuleMutation.mutate(undefined);
+        }}
+      >
+        Delete alert
+      </button>
     </section>
   );
 }
