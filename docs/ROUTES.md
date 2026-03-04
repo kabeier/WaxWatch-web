@@ -17,6 +17,14 @@ Implemented structure:
 
 ## Route map
 
+## Design-system guardrails for all new route work
+
+All new route implementation/migration work must compose shared primitives first and avoid route-specific ad-hoc styling patterns.
+
+- Use state primitives from `src/components/ui/primitives/state` for loading, empty, error, and rate-limited route states.
+- Use shell primitives from `src/components/ui/primitives/shell` for route-level layout scaffolding and navigation chrome.
+- Promote any missing visual behavior into shared primitives/tokens before consuming it in route pages.
+
 ### MVP routes
 
 - `/login` — Supabase auth UI / sign in flow
