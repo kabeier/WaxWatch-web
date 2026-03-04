@@ -85,12 +85,16 @@ if (promotedRoutes.length === 0) {
   process.exit(0);
 }
 
-const routeLevelTestChange = changedFiles.some((file) => {
-  const isRouteLevelUnitTest = /^src\/app\/.*\/(page|route)\.(test|spec)\.[cm]?[jt]sx?$/.test(file);
-  const isRouteFocusedE2E = /^e2e\/.*\.(test|spec)\.[cm]?[jt]sx?$/.test(file);
+const routeLevelTestPatterns = [
+  /^app\/.*\/(page|route)\.(test|spec)\.[cm]?[jt]sx?$/,
+  /^src\/app\/.*\/(page|route)\.(test|spec)\.[cm]?[jt]sx?$/,
+  /^src\/route-.*\.(test|spec)\.[cm]?[jt]sx?$/,
+  /^e2e\/.*\.(test|spec)\.[cm]?[jt]sx?$/,
+];
 
-  return isRouteLevelUnitTest || isRouteFocusedE2E;
-});
+const routeLevelTestChange = changedFiles.some((file) =>
+  routeLevelTestPatterns.some((pattern) => pattern.test(file)),
+);
 
 if (!routeLevelTestChange) {
   console.error("Detected route promotions to production-ready in README.md:");
@@ -98,7 +102,7 @@ if (!routeLevelTestChange) {
     console.error(`  - ${route}`);
   }
   console.error(
-    "\nThis PR must include route-level test updates (for example src/app/**/page.test.* or e2e/**/*.spec.*) when promoting a route to production-ready.",
+    "\nThis PR must include route-level test updates (for example app/**/page.test.*, src/route-*.test.*, or e2e/**/*.spec.*) when promoting a route to production-ready.",
   );
   process.exit(1);
 }
