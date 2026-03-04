@@ -215,6 +215,328 @@ describe("rate limit parsing", () => {
   });
 });
 
+describe("contract shape fixtures", () => {
+  it("matches search run/save-alert contract shapes", async () => {
+    const searchRequest = {
+      keywords: ["deep house"],
+      providers: ["discogs"],
+      min_price: 10,
+      max_price: 50,
+      page: 1,
+      page_size: 24,
+    };
+
+    const searchFixture: SearchResponse = {
+      items: [
+        {
+          id: "search-1",
+          listing_id: "31f64343-b868-4d4b-b4f8-ec8753dc9ad7",
+          provider: "discogs",
+          external_id: "123",
+          title: "Example Record",
+          url: "https://provider.example/listing/123",
+          public_url: "https://provider.example/listing/123",
+          price: 22.5,
+          currency: "USD",
+          condition: "vg+",
+          seller: "demo-seller",
+          location: "US",
+          discogs_release_id: 1001,
+          discogs_master_id: 2001,
+        },
+      ],
+      pagination: {
+        page: 1,
+        page_size: 24,
+        total: 1,
+        returned: 1,
+        total_pages: 1,
+        has_next: false,
+      },
+      providers_searched: ["discogs"],
+      provider_errors: { ebay: "timeout" },
+    };
+
+    const saveAlertRequest = {
+      name: "Deep house deals",
+      query: searchRequest,
+      poll_interval_seconds: 600,
+    };
+
+    const savedAlertFixture: WatchRule = {
+      id: "80dc6333-3c3c-49b8-a803-938783fbeb99",
+      user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+      name: "Deep house deals",
+      query: { sources: ["discogs"], keywords: ["deep house"], max_price: 50 },
+      is_active: true,
+      poll_interval_seconds: 600,
+      last_run_at: null,
+      next_run_at: "2026-01-20T12:10:00+00:00",
+      created_at: "2026-01-20T11:52:00+00:00",
+      updated_at: "2026-01-20T12:00:00+00:00",
+    };
+
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(searchFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(savedAlertFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+
+    await expect(domains.search.run(searchRequest)).resolves.toEqual(searchFixture);
+    await expect(domains.search.saveAlert(saveAlertRequest)).resolves.toEqual(savedAlertFixture);
+
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api.example.com/search");
+    expect(fetchMock.mock.calls[1][0]).toBe("https://api.example.com/search/save-alert");
+
+    const runBody = JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body));
+    const saveAlertBody = JSON.parse(String((fetchMock.mock.calls[1][1] as RequestInit).body));
+    expect(runBody).toEqual(searchRequest);
+    expect(saveAlertBody).toEqual(saveAlertRequest);
+  });
+
+  it("matches watch-rules list/detail/create/update/delete contract shapes", async () => {
+    const listFixture: WatchRule[] = [
+      {
+        id: "80dc6333-3c3c-49b8-a803-938783fbeb99",
+        user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+        name: "Rare techno under $40",
+        query: { sources: ["discogs"], q: "detroit techno", max_price: 40 },
+        is_active: true,
+        poll_interval_seconds: 600,
+        last_run_at: "2026-01-20T12:00:00+00:00",
+        next_run_at: "2026-01-20T12:10:00+00:00",
+        created_at: "2026-01-20T11:52:00+00:00",
+        updated_at: "2026-01-20T12:00:00+00:00",
+      },
+    ];
+
+    const createPayload = {
+      name: "Fresh arrivals",
+      query: { sources: ["discogs"], keywords: ["ambient"] },
+      poll_interval_seconds: 300,
+    };
+
+    const updatePayload = { is_active: false, poll_interval_seconds: 1800 };
+
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(listFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(listFixture[0]), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ...listFixture[0], ...createPayload }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ...listFixture[0], ...updatePayload }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+
+    await expect(domains.watchRules.list({ limit: 25, offset: 0 })).resolves.toEqual(listFixture);
+    await expect(domains.watchRules.getById(listFixture[0].id)).resolves.toEqual(listFixture[0]);
+    await expect(domains.watchRules.create(createPayload)).resolves.toMatchObject(createPayload);
+    await expect(
+      domains.watchRules.update(listFixture[0].id, updatePayload),
+    ).resolves.toMatchObject(updatePayload);
+    await expect(domains.watchRules.remove(listFixture[0].id)).resolves.toBeUndefined();
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.example.com/watch-rules?offset=0&limit=25",
+    );
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      `https://api.example.com/watch-rules/${encodeURIComponent(listFixture[0].id)}`,
+    );
+
+    const createBody = JSON.parse(String((fetchMock.mock.calls[2][1] as RequestInit).body));
+    const updateBody = JSON.parse(String((fetchMock.mock.calls[3][1] as RequestInit).body));
+    expect(createBody).toEqual(createPayload);
+    expect(updateBody).toEqual(updatePayload);
+  });
+
+  it("matches watch-releases list contract array shape", async () => {
+    const fixture: WatchRelease[] = [
+      {
+        id: "24550438-0dfc-4f1f-a19b-3b8b682b5f6f",
+        user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+        discogs_release_id: 1001,
+        discogs_master_id: 5001,
+        match_mode: "master_release",
+        title: "Demo Want",
+        artist: "Artist A",
+        year: 1999,
+        target_price: 45,
+        currency: "USD",
+        min_condition: "vg+",
+        is_active: true,
+        created_at: "2026-01-20T10:00:00+00:00",
+        updated_at: "2026-01-20T10:00:00+00:00",
+      },
+    ];
+
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify(fixture), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+    await expect(domains.watchReleases.list({ limit: 25, cursor: "next-page" })).resolves.toEqual(
+      fixture,
+    );
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.example.com/watch-releases?cursor=next-page&limit=25",
+    );
+  });
+
+  it("matches notifications list/unread-count/read contract shapes", async () => {
+    const listFixture: Notification[] = [
+      {
+        id: "4c8d9157-4a8c-4ea8-9d27-3ad2fc1e8f95",
+        user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+        event_id: "f2eec3e4-1f39-4a9f-9f39-2359f3983be0",
+        event_type: "watch_match_found",
+        channel: "realtime",
+        status: "sent",
+        is_read: false,
+        delivered_at: "2026-01-20T12:00:04+00:00",
+        failed_at: null,
+        read_at: null,
+        created_at: "2026-01-20T12:00:03+00:00",
+      },
+    ];
+
+    const unreadFixture = { unread_count: 3 };
+
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(listFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(unreadFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+    await expect(domains.notifications.list({ limit: 20, offset: 0 })).resolves.toEqual(
+      listFixture,
+    );
+    await expect(domains.notifications.getUnreadCount()).resolves.toEqual(unreadFixture);
+    await expect(domains.notifications.markRead(listFixture[0].id)).resolves.toBeUndefined();
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.example.com/notifications?offset=0&limit=20",
+    );
+    expect(fetchMock.mock.calls[1][0]).toBe("https://api.example.com/notifications/unread-count");
+    expect(fetchMock.mock.calls[2][0]).toBe(
+      `https://api.example.com/notifications/${encodeURIComponent(listFixture[0].id)}/read`,
+    );
+  });
+
+  it("matches profile update/deactivate/hard-delete contract shapes", async () => {
+    const updatedProfileFixture: MeProfile = {
+      id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+      email: "listener@example.com",
+      is_active: true,
+      created_at: "2026-01-20T11:52:00+00:00",
+      updated_at: "2026-01-20T12:00:00+00:00",
+      display_name: "Wax Collector",
+      preferences: {
+        timezone: "America/Chicago",
+        currency: "USD",
+        notifications_email: true,
+        notifications_push: false,
+        quiet_hours_start: 23,
+        quiet_hours_end: 7,
+        notification_timezone: "America/Chicago",
+        delivery_frequency: "daily",
+      },
+      integrations: [{ provider: "discogs", linked: true, watch_rule_count: 3 }],
+    };
+
+    const updatePayload = {
+      display_name: "Wax Collector",
+      preferences: {
+        timezone: "America/Chicago",
+        currency: "USD",
+        notifications_email: true,
+        notifications_push: false,
+        quiet_hours_start: 23,
+        quiet_hours_end: 7,
+        notification_timezone: "America/Chicago",
+        delivery_frequency: "daily" as const,
+      },
+    };
+
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(updatedProfileFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+
+    await expect(domains.me.updateProfile(updatePayload)).resolves.toEqual(updatedProfileFixture);
+    await expect(domains.me.deactivate()).resolves.toBeUndefined();
+    await expect(domains.me.hardDelete()).resolves.toBeUndefined();
+
+    const updateBody = JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body));
+    expect(updateBody).toEqual(updatePayload);
+    expect(fetchMock.mock.calls[1][0]).toBe("https://api.example.com/me");
+    expect(fetchMock.mock.calls[2][0]).toBe("https://api.example.com/me/hard-delete");
+  });
+});
+
 describe("domain response fixtures", () => {
   it("accepts SearchResponse transport shape", async () => {
     const fixture: SearchResponse = {
