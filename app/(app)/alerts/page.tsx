@@ -32,7 +32,7 @@ export default function AlertsPage() {
             <RetryAction
               label="Retry watch rules"
               retryAfterSeconds={getRetryAfterSeconds(watchRulesQuery.error)}
-              onRetry={() => void watchRulesQuery.refetch()}
+              onRetry={() => void watchRulesQuery.retry()}
             />
           }
         />
@@ -41,7 +41,7 @@ export default function AlertsPage() {
         <StateError
           message="Could not load watch rules."
           detail={getErrorMessage(watchRulesQuery.error, "Request failed")}
-          action={<RetryAction label="Retry watch rules" onRetry={() => void watchRulesQuery.refetch()} />}
+          action={<RetryAction label="Retry watch rules" onRetry={() => void watchRulesQuery.retry()} />}
         />
       ) : null}
       {watchRulesQuery.data && watchRulesQuery.data.length === 0 ? (
@@ -64,7 +64,7 @@ export default function AlertsPage() {
             <RetryAction
               label="Retry release matches"
               retryAfterSeconds={getRetryAfterSeconds(watchReleasesQuery.error)}
-              onRetry={() => void watchReleasesQuery.refetch()}
+              onRetry={() => void watchReleasesQuery.retry()}
             />
           }
         />
@@ -74,7 +74,7 @@ export default function AlertsPage() {
           message="Could not load release matches."
           detail={getErrorMessage(watchReleasesQuery.error, "Request failed")}
           action={
-            <RetryAction label="Retry release matches" onRetry={() => void watchReleasesQuery.refetch()} />
+            <RetryAction label="Retry release matches" onRetry={() => void watchReleasesQuery.retry()} />
           }
         />
       ) : null}

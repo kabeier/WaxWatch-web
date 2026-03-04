@@ -74,7 +74,7 @@ export default function AlertSettingsPage() {
             <RetryAction
               label="Retry settings load"
               retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
-              onRetry={() => void meQuery.refetch()}
+              onRetry={() => void meQuery.retry()}
             />
           }
         />
@@ -83,7 +83,7 @@ export default function AlertSettingsPage() {
         <StateError
           message="Could not load alert delivery settings."
           detail={getErrorMessage(meQuery.error, "Request failed")}
-          action={<RetryAction label="Retry settings load" onRetry={() => void meQuery.refetch()} />}
+          action={<RetryAction label="Retry settings load" onRetry={() => void meQuery.retry()} />}
         />
       ) : null}
       {meQuery.data && !meQuery.data.preferences ? (

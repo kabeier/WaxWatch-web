@@ -18,17 +18,37 @@ import type {
 } from "@/lib/api/domains/types";
 
 export function useMeQuery() {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: queryKeys.me,
     queryFn: (): Promise<MeProfile> => waxwatchApi.me.getProfile(),
   });
+
+  const retry = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.me });
+  }, [queryClient]);
+
+  return {
+    ...query,
+    retry,
+  };
 }
 
 export function useWatchRulesQuery() {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: queryKeys.watchRules.list,
     queryFn: (): Promise<WatchRule[]> => waxwatchApi.watchRules.list(),
   });
+
+  const retry = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.watchRules.list });
+  }, [queryClient]);
+
+  return {
+    ...query,
+    retry,
+  };
 }
 
 export function useWatchRuleDetailQuery(id: string) {
@@ -50,17 +70,37 @@ export function useWatchRuleDetailQuery(id: string) {
 }
 
 export function useWatchReleasesQuery() {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: queryKeys.watchReleases.list,
     queryFn: (): Promise<WatchRelease[]> => waxwatchApi.watchReleases.list(),
   });
+
+  const retry = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.watchReleases.list });
+  }, [queryClient]);
+
+  return {
+    ...query,
+    retry,
+  };
 }
 
 export function useNotificationsQuery() {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: queryKeys.notifications.list,
     queryFn: (): Promise<Notification[]> => waxwatchApi.notifications.list(),
   });
+
+  const retry = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list });
+  }, [queryClient]);
+
+  return {
+    ...query,
+    retry,
+  };
 }
 
 export function useUnreadNotificationCountQuery() {

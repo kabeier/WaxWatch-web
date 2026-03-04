@@ -50,7 +50,7 @@ export default function NewAlertPage() {
             <RetryAction
               label="Retry alert setup load"
               retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
-              onRetry={() => void meQuery.refetch()}
+              onRetry={() => void meQuery.retry()}
             />
           }
         />
@@ -59,7 +59,7 @@ export default function NewAlertPage() {
         <StateError
           message="Could not load alert setup data."
           detail={getErrorMessage(meQuery.error, "Request failed")}
-          action={<RetryAction label="Retry alert setup load" onRetry={() => void meQuery.refetch()} />}
+          action={<RetryAction label="Retry alert setup load" onRetry={() => void meQuery.retry()} />}
         />
       ) : null}
       {meQuery.data && (!meQuery.data.integrations || meQuery.data.integrations.length === 0) ? (

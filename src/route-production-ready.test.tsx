@@ -10,14 +10,46 @@ import AlertSettingsPage from "../app/(app)/settings/alerts/page";
 import DangerSettingsPage from "../app/(app)/settings/danger/page";
 import WatchlistPage from "../app/(app)/watchlist/page";
 
+type MockQuery = {
+  data: unknown;
+  isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  retry: () => void;
+};
+
+type MockMutation = {
+  data: unknown;
+  isPending: boolean;
+  isError: boolean;
+  error: unknown;
+  mutate: (input: unknown) => void;
+};
+
 const mockPush = vi.fn();
 const mockRefresh = vi.fn();
 
-const state = {
-  watchRulesQuery: { data: [], isLoading: false, isError: false, error: null, refetch: vi.fn() },
-  watchReleasesQuery: { data: [], isLoading: false, isError: false, error: null, refetch: vi.fn() },
-  meQuery: { data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() },
-  notificationsQuery: { data: [], isLoading: false, isError: false, error: null, refetch: vi.fn() },
+const state: {
+  watchRulesQuery: MockQuery;
+  watchReleasesQuery: MockQuery;
+  meQuery: MockQuery;
+  notificationsQuery: MockQuery;
+  unreadCountQuery: { data: unknown; isLoading: boolean; isError: boolean; error: unknown };
+  searchMutation: MockMutation;
+  saveSearchAlertMutation: MockMutation;
+  createWatchRuleMutation: MockMutation;
+  watchRuleDetailQuery: MockQuery;
+  updateWatchRuleMutation: MockMutation;
+  deleteWatchRuleMutation: MockMutation;
+  updateProfileMutation: MockMutation;
+  deactivateMutation: MockMutation;
+  hardDeleteMutation: MockMutation;
+  markReadMutation: MockMutation;
+} = {
+  watchRulesQuery: { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() },
+  watchReleasesQuery: { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() },
+  meQuery: { data: undefined, isLoading: false, isError: false, error: null, retry: vi.fn() },
+  notificationsQuery: { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() },
   unreadCountQuery: { data: { unread_count: 0 }, isLoading: false, isError: false, error: null },
   searchMutation: { data: undefined, isPending: false, isError: false, error: null, mutate: vi.fn() },
   saveSearchAlertMutation: {
@@ -62,8 +94,20 @@ const state = {
     error: null,
     mutate: vi.fn(),
   },
-  deactivateMutation: { data: undefined, isPending: false, isError: false, error: null, mutate: vi.fn() },
-  hardDeleteMutation: { data: undefined, isPending: false, isError: false, error: null, mutate: vi.fn() },
+  deactivateMutation: {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  },
+  hardDeleteMutation: {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  },
   markReadMutation: { data: undefined, isPending: false, isError: false, error: null, mutate: vi.fn() },
 };
 
@@ -93,27 +137,103 @@ const apiError = { kind: "unknown_error", message: "boom" };
 
 beforeEach(() => {
   vi.clearAllMocks();
-  state.watchRulesQuery = { data: [], isLoading: false, isError: false, error: null, refetch: vi.fn() };
-  state.watchReleasesQuery = { data: [], isLoading: false, isError: false, error: null, refetch: vi.fn() };
+  state.watchRulesQuery = { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() };
+  state.watchReleasesQuery = { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() };
   state.meQuery = {
-    data: { preferences: { delivery_frequency: "instant", notification_timezone: "UTC", quiet_hours_start: 22, quiet_hours_end: 7, notifications_email: true, notifications_push: false }, integrations: [{ provider: "discogs" }] },
+    data: {
+      preferences: {
+        delivery_frequency: "instant",
+        notification_timezone: "UTC",
+        quiet_hours_start: 22,
+        quiet_hours_end: 7,
+        notifications_email: true,
+        notifications_push: false,
+      },
+      integrations: [{ provider: "discogs" }],
+    },
     isLoading: false,
     isError: false,
     error: null,
-    refetch: vi.fn(),
+    retry: vi.fn(),
   };
-  state.notificationsQuery = { data: [{ id: "n1", event_type: "match", is_read: false }], isLoading: false, isError: false, error: null, refetch: vi.fn() };
+  state.notificationsQuery = {
+    data: [{ id: "n1", event_type: "match", is_read: false }],
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: vi.fn(),
+  };
   state.unreadCountQuery = { data: { unread_count: 1 }, isLoading: false, isError: false, error: null };
-  state.searchMutation = { data: { items: [{ id: "1" }] }, isPending: false, isError: false, error: null, mutate: vi.fn() } as never;
-  state.saveSearchAlertMutation = { data: undefined, isPending: false, isError: false, error: null, mutate: vi.fn() };
-  state.createWatchRuleMutation = { data: { id: "r1" }, isPending: false, isError: false, error: null, mutate: vi.fn() };
-  state.watchRuleDetailQuery = { data: { id: "rule-1", name: "Rule", poll_interval_seconds: 300, is_active: true }, isLoading: false, isError: false, error: null, retry: vi.fn() };
-  state.updateWatchRuleMutation = { data: { id: "rule-1" }, isPending: false, isError: false, error: null, mutate: vi.fn() };
-  state.deleteWatchRuleMutation = { data: undefined, isPending: false, isError: false, error: null, mutate: vi.fn() };
-  state.updateProfileMutation = { data: { id: "me" }, isPending: false, isError: false, error: null, mutate: vi.fn() };
-  state.deactivateMutation = { data: { ok: true }, isPending: false, isError: false, error: null, mutate: vi.fn() };
-  state.hardDeleteMutation = { data: undefined, isPending: false, isError: false, error: null, mutate: vi.fn() };
-  state.markReadMutation = { data: { ok: true }, isPending: false, isError: false, error: null, mutate: vi.fn() };
+  state.searchMutation = {
+    data: { items: [{ id: "1" }] },
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
+  state.saveSearchAlertMutation = {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
+  state.createWatchRuleMutation = {
+    data: { id: "r1" },
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
+  state.watchRuleDetailQuery = {
+    data: { id: "rule-1", name: "Rule", poll_interval_seconds: 300, is_active: true },
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: vi.fn(),
+  };
+  state.updateWatchRuleMutation = {
+    data: { id: "rule-1" },
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
+  state.deleteWatchRuleMutation = {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
+  state.updateProfileMutation = {
+    data: { id: "me" },
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
+  state.deactivateMutation = {
+    data: { ok: true },
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
+  state.hardDeleteMutation = {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
+  state.markReadMutation = {
+    data: { ok: true },
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
 });
 
 describe("route-level production-ready paths", () => {
@@ -147,7 +267,12 @@ describe("route-level production-ready paths", () => {
   });
 
   it("/alerts/new failure", () => {
-    state.createWatchRuleMutation = { ...state.createWatchRuleMutation, isError: true, error: apiError, data: undefined };
+    state.createWatchRuleMutation = {
+      ...state.createWatchRuleMutation,
+      isError: true,
+      error: apiError,
+      data: undefined,
+    };
     render(<NewAlertPage />);
     expect(screen.getByText(/could not save new alert/i)).toBeInTheDocument();
   });
@@ -158,7 +283,12 @@ describe("route-level production-ready paths", () => {
   });
 
   it("/alerts/[id] failure", () => {
-    state.watchRuleDetailQuery = { ...state.watchRuleDetailQuery, isError: true, error: apiError, data: undefined };
+    state.watchRuleDetailQuery = {
+      ...state.watchRuleDetailQuery,
+      isError: true,
+      error: apiError,
+      data: undefined,
+    };
     render(<AlertDetailClient id="rule-1" />);
     expect(screen.getByText(/could not load alert detail/i)).toBeInTheDocument();
   });

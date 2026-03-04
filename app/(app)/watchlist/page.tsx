@@ -29,7 +29,7 @@ export default function WatchlistPage() {
             <RetryAction
               label="Retry watchlist"
               retryAfterSeconds={getRetryAfterSeconds(watchReleasesQuery.error)}
-              onRetry={() => void watchReleasesQuery.refetch()}
+              onRetry={() => void watchReleasesQuery.retry()}
             />
           }
         />
@@ -38,7 +38,7 @@ export default function WatchlistPage() {
         <StateError
           message="Could not load watchlist."
           detail={getErrorMessage(watchReleasesQuery.error, "Request failed")}
-          action={<RetryAction label="Retry watchlist" onRetry={() => void watchReleasesQuery.refetch()} />}
+          action={<RetryAction label="Retry watchlist" onRetry={() => void watchReleasesQuery.retry()} />}
         />
       ) : null}
       {watchReleasesQuery.data && watchReleasesQuery.data.length === 0 ? (
@@ -49,7 +49,7 @@ export default function WatchlistPage() {
           Status: Loaded {watchReleasesQuery.data.length} watchlist releases.
         </p>
       ) : null}
-      <button type="button" disabled={watchReleasesQuery.isLoading} onClick={() => void watchReleasesQuery.refetch()}>
+      <button type="button" disabled={watchReleasesQuery.isLoading} onClick={() => void watchReleasesQuery.retry()}>
         Refresh watchlist
       </button>
     </section>

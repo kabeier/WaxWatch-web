@@ -43,7 +43,7 @@ export default function NotificationsPage() {
             <RetryAction
               label="Retry notifications feed"
               retryAfterSeconds={getRetryAfterSeconds(notificationsQuery.error)}
-              onRetry={() => void notificationsQuery.refetch()}
+              onRetry={() => void notificationsQuery.retry()}
             />
           }
         />
@@ -53,7 +53,7 @@ export default function NotificationsPage() {
           title="Notifications failed to load"
           message="Could not load notifications."
           detail={getErrorMessage(notificationsQuery.error, "Request failed")}
-          action={<RetryAction label="Retry notifications feed" onRetry={() => void notificationsQuery.refetch()} />}
+          action={<RetryAction label="Retry notifications feed" onRetry={() => void notificationsQuery.retry()} />}
         />
       ) : null}
       {notificationsQuery.data && notificationsQuery.data.length === 0 ? (
