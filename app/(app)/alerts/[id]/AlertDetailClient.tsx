@@ -90,14 +90,6 @@ export default function AlertDetailClient({ id }: { id: string }) {
       <button
         type="button"
         onClick={() => {
-          watchRuleDetailQuery.retry();
-        }}
-      >
-        Retry alert detail load
-      </button>
-      <button
-        type="button"
-        onClick={() => {
           updateWatchRuleMutation.mutate({ name: "Updated alert name" });
         }}
       >

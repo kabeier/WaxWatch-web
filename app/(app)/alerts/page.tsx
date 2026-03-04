@@ -60,9 +60,7 @@ export default function AlertsPage() {
         <p>Loaded {watchReleasesQuery.data.length} releases.</p>
       ) : null}
 
-      <button type="button">Retry watch rules load</button>
       <button type="button">Create watch rule</button>
-      <button type="button">Retry watch releases load</button>
     </section>
   );
 }

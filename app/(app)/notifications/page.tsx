@@ -22,14 +22,22 @@ export default function NotificationsPage() {
       {notificationsQuery.isLoading ? <StateLoading message="Loading notifications…" /> : null}
       {notificationsQuery.isError && isRateLimitedError(notificationsQuery.error) ? (
         <StateRateLimited
+          title="Notifications are temporarily rate limited"
           message={notificationsQuery.error.message}
           retryAfterSeconds={getRetryAfterSeconds(notificationsQuery.error)}
+          action={
+            <button type="button">Retry notifications feed</button>
+          }
         />
       ) : null}
       {notificationsQuery.isError && !isRateLimitedError(notificationsQuery.error) ? (
         <StateError
+          title="Notifications failed to load"
           message="Could not load notifications."
           detail={getErrorMessage(notificationsQuery.error, "Request failed")}
+          action={
+            <button type="button">Retry notifications feed</button>
+          }
         />
       ) : null}
       {notificationsQuery.data && notificationsQuery.data.length === 0 ? (
@@ -42,7 +50,6 @@ export default function NotificationsPage() {
           ))}
         </ul>
       ) : null}
-      <button type="button">Retry notifications feed</button>
       <button type="button">Mark selected as read</button>
     </section>
   );
