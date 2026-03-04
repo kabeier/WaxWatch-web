@@ -154,6 +154,11 @@ export default function SseController() {
           return;
         }
 
+        console.warn("[SSE] stream connection failed; scheduling reconnect", {
+          endpoint: "/api/stream/events",
+          reconnectAttempt,
+        });
+
         const hasToken = getSupabaseAccessToken();
         if (!hasToken) {
           stop();
