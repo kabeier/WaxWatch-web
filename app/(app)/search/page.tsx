@@ -39,6 +39,12 @@ export default function SearchPage() {
   const searchErrors = useMemo(() => {
     const errors: string[] = [];
 
+    if (parseCsv(keywordsInput).length === 0) {
+      errors.push("Enter at least one keyword to search.");
+    }
+    if (parseCsv(providersInput).length === 0) {
+      errors.push("Enter at least one provider.");
+    }
     if (!Number.isInteger(page) || page < 1) {
       errors.push("Page must be an integer greater than or equal to 1.");
     }
@@ -48,7 +54,7 @@ export default function SearchPage() {
     }
 
     return errors;
-  }, [page, pageSize]);
+  }, [keywordsInput, page, pageSize, providersInput]);
 
   const saveAlertErrors = useMemo(() => {
     const errors: string[] = [];
@@ -73,6 +79,8 @@ export default function SearchPage() {
     page_size: pageSize,
   };
 
+  const canRunSearch = !isBusy && searchErrors.length === 0;
+
   return (
     <section>
       <h1>{viewModel.heading}</h1>
@@ -80,7 +88,8 @@ export default function SearchPage() {
 
       {searchErrors.length > 0 ? (
         <StateError
-          message="Please fix search validation issues before submitting."
+          title="Search request needs changes"
+          message="Fix the search inputs before running this request."
           detail={searchErrors.join(" ")}
         />
       ) : null}
@@ -88,7 +97,7 @@ export default function SearchPage() {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (searchErrors.length > 0) {
+          if (!canRunSearch) {
             return;
           }
 
@@ -133,7 +142,7 @@ export default function SearchPage() {
             disabled={isBusy}
           />
         </label>
-        <button type="submit" disabled={isBusy || searchErrors.length > 0}>
+        <button type="submit" disabled={!canRunSearch}>
           {searchMutation.isPending ? "Running search…" : "Run search"}
         </button>
       </form>
@@ -141,26 +150,53 @@ export default function SearchPage() {
       {searchMutation.isPending ? <StateLoading message="Loading search results…" /> : null}
       {searchMutation.isError && isRateLimitedError(searchMutation.error) ? (
         <StateRateLimited
-          message={searchMutation.error.message}
+          title="Search is temporarily rate-limited"
+          message="Search requests are cooling down right now."
+          detail="Wait for the cooldown and retry the same query."
           retryAfterSeconds={getRetryAfterSeconds(searchMutation.error)}
+          action={
+            <button
+              type="button"
+              disabled={isBusy || searchErrors.length > 0}
+              onClick={() => searchMutation.mutate(queryPayload)}
+            >
+              Retry search
+            </button>
+          }
         />
       ) : null}
       {searchMutation.isError && !isRateLimitedError(searchMutation.error) ? (
         <StateError
-          message="Could not run search."
+          title="Search failed"
+          message="We could not load results for that search."
           detail={getErrorMessage(searchMutation.error, "Request failed")}
+          action={
+            <button
+              type="button"
+              disabled={isBusy || searchErrors.length > 0}
+              onClick={() => searchMutation.mutate(queryPayload)}
+            >
+              Retry search
+            </button>
+          }
         />
       ) : null}
       {searchMutation.data && searchMutation.data.items.length === 0 ? (
-        <StateEmpty message="No search results yet." />
+        <StateEmpty
+          title="No search matches yet"
+          message="Try broadening keywords or adding more providers."
+        />
       ) : null}
       {searchMutation.data && searchMutation.data.items.length > 0 ? (
-        <p>Loaded {searchMutation.data.items.length} search results.</p>
+        <p>
+          Loaded {searchMutation.data.items.length} search results. You can now save this query.
+        </p>
       ) : null}
 
       {saveAlertErrors.length > 0 ? (
         <StateError
-          message="Please fix save-alert validation issues before submitting."
+          title="Alert details need updates"
+          message="Fix the alert fields before saving."
           detail={saveAlertErrors.join(" ")}
         />
       ) : null}
@@ -208,18 +244,55 @@ export default function SearchPage() {
         </button>
       </form>
 
-      {saveAlertMutation.data ? <p>Alert saved successfully.</p> : null}
+      {saveAlertMutation.data ? (
+        <p>Alert saved successfully and added to your alerts list.</p>
+      ) : null}
       {saveAlertMutation.isPending ? <StateLoading message="Saving alert…" /> : null}
       {saveAlertMutation.isError && isRateLimitedError(saveAlertMutation.error) ? (
         <StateRateLimited
-          message={saveAlertMutation.error.message}
+          title="Saving alert is rate-limited"
+          message="Too many alert updates were submitted."
+          detail="Wait for the cooldown and retry saving this alert."
           retryAfterSeconds={getRetryAfterSeconds(saveAlertMutation.error)}
+          action={
+            <button
+              type="button"
+              disabled={isBusy || saveAlertErrors.length > 0 || searchErrors.length > 0}
+              onClick={() => {
+                const sourceQuery = lastSubmittedQuery ?? queryPayload;
+                saveAlertMutation.mutate({
+                  name: alertName.trim(),
+                  query: sourceQuery,
+                  poll_interval_seconds: pollInterval,
+                });
+              }}
+            >
+              Retry save alert
+            </button>
+          }
         />
       ) : null}
       {saveAlertMutation.isError && !isRateLimitedError(saveAlertMutation.error) ? (
         <StateError
-          message="Could not save alert from this search."
+          title="Saving alert failed"
+          message="Could not save this search as an alert."
           detail={getErrorMessage(saveAlertMutation.error, "Request failed")}
+          action={
+            <button
+              type="button"
+              disabled={isBusy || saveAlertErrors.length > 0 || searchErrors.length > 0}
+              onClick={() => {
+                const sourceQuery = lastSubmittedQuery ?? queryPayload;
+                saveAlertMutation.mutate({
+                  name: alertName.trim(),
+                  query: sourceQuery,
+                  poll_interval_seconds: pollInterval,
+                });
+              }}
+            >
+              Retry save alert
+            </button>
+          }
         />
       ) : null}
 

@@ -66,14 +66,27 @@ export default function AlertSettingsPage() {
       {meQuery.isLoading ? <StateLoading message="Loading delivery settings…" /> : null}
       {meQuery.isError && isRateLimitedError(meQuery.error) ? (
         <StateRateLimited
+          title="Alert settings are rate-limited"
           message={meQuery.error.message}
+          detail="Wait for cooldown and retry loading delivery settings."
           retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
+          action={
+            <button type="button" onClick={() => meQuery.refetch()}>
+              Retry settings load
+            </button>
+          }
         />
       ) : null}
       {meQuery.isError && !isRateLimitedError(meQuery.error) ? (
         <StateError
+          title="Alert settings failed to load"
           message="Could not load alert delivery settings."
           detail={getErrorMessage(meQuery.error, "Request failed")}
+          action={
+            <button type="button" onClick={() => meQuery.refetch()}>
+              Retry settings load
+            </button>
+          }
         />
       ) : null}
       {meQuery.data && !meQuery.data.preferences ? (
@@ -192,20 +205,63 @@ export default function AlertSettingsPage() {
         </button>
       </form>
 
-      {updateProfileMutation.data ? <p>Alert delivery settings saved.</p> : null}
+      {updateProfileMutation.data ? <p>Alert delivery settings saved successfully.</p> : null}
       {updateProfileMutation.isPending ? (
         <StateLoading message="Saving delivery settings…" />
       ) : null}
       {updateProfileMutation.isError && isRateLimitedError(updateProfileMutation.error) ? (
         <StateRateLimited
+          title="Saving settings is rate-limited"
           message={updateProfileMutation.error.message}
+          detail="Wait for cooldown and retry saving delivery settings."
           retryAfterSeconds={getRetryAfterSeconds(updateProfileMutation.error)}
+          action={
+            <button
+              type="button"
+              disabled={isSaveDisabled}
+              onClick={() =>
+                updateProfileMutation.mutate({
+                  preferences: {
+                    delivery_frequency: deliveryFrequency as "instant" | "hourly" | "daily",
+                    notification_timezone: notificationTimezone.trim(),
+                    quiet_hours_start: quietStart,
+                    quiet_hours_end: quietEnd,
+                    notifications_email: notificationsEmail,
+                    notifications_push: notificationsPush,
+                  },
+                })
+              }
+            >
+              Retry save settings
+            </button>
+          }
         />
       ) : null}
       {updateProfileMutation.isError && !isRateLimitedError(updateProfileMutation.error) ? (
         <StateError
+          title="Saving settings failed"
           message="Could not save alert delivery preferences."
           detail={getErrorMessage(updateProfileMutation.error, "Request failed")}
+          action={
+            <button
+              type="button"
+              disabled={isSaveDisabled}
+              onClick={() =>
+                updateProfileMutation.mutate({
+                  preferences: {
+                    delivery_frequency: deliveryFrequency as "instant" | "hourly" | "daily",
+                    notification_timezone: notificationTimezone.trim(),
+                    quiet_hours_start: quietStart,
+                    quiet_hours_end: quietEnd,
+                    notifications_email: notificationsEmail,
+                    notifications_push: notificationsPush,
+                  },
+                })
+              }
+            >
+              Retry save settings
+            </button>
+          }
         />
       ) : null}
     </section>

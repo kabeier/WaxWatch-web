@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import {
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/ui/primitives/state";
 import {
   useDeleteWatchRuleMutation,
   useUpdateWatchRuleMutation,
@@ -68,33 +70,44 @@ export default function AlertDetailClient({ id }: { id: string }) {
       {watchRuleDetailQuery.isLoading ? <StateLoading message="Loading alert detail…" /> : null}
       {watchRuleDetailQuery.isError && isRateLimitedError(watchRuleDetailQuery.error) ? (
         <StateRateLimited
-          message={watchRuleDetailQuery.error.message}
+          title="Alert detail is rate-limited"
+          message="We cannot load this alert yet due to request limits."
+          detail="Wait for cooldown and retry loading this alert."
           retryAfterSeconds={getRetryAfterSeconds(watchRuleDetailQuery.error)}
           action={
-            <button onClick={() => watchRuleDetailQuery.retry()}>Retry alert detail load</button>
+            <button type="button" onClick={() => watchRuleDetailQuery.retry()}>
+              Retry alert detail load
+            </button>
           }
         />
       ) : null}
       {watchRuleDetailQuery.isError && !isRateLimitedError(watchRuleDetailQuery.error) ? (
         <StateError
+          title="Alert detail failed to load"
           message="Could not load alert detail."
           detail={getErrorMessage(watchRuleDetailQuery.error, "Request failed")}
           action={
-            <button onClick={() => watchRuleDetailQuery.retry()}>Retry alert detail load</button>
+            <button type="button" onClick={() => watchRuleDetailQuery.retry()}>
+              Retry alert detail load
+            </button>
           }
         />
       ) : null}
       {!watchRuleDetailQuery.data &&
       !watchRuleDetailQuery.isLoading &&
       !watchRuleDetailQuery.isError ? (
-        <StateEmpty message="Alert not found." />
+        <StateEmpty
+          title="Alert not found"
+          message="This alert may have been removed. Return to alerts and pick another rule."
+          action={<a href="/alerts">Back to alerts</a>}
+        />
       ) : null}
 
       {watchRuleDetailQuery.data ? (
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (validationMessage) {
+            if (validationMessage || isPending) {
               return;
             }
 
@@ -167,27 +180,81 @@ export default function AlertDetailClient({ id }: { id: string }) {
       {updateWatchRuleMutation.isPending ? <StateLoading message="Saving alert updates…" /> : null}
       {updateWatchRuleMutation.isError && isRateLimitedError(updateWatchRuleMutation.error) ? (
         <StateRateLimited
-          message={updateWatchRuleMutation.error.message}
+          title="Updating alert is rate-limited"
+          message="Too many update requests were sent for this alert."
+          detail="Wait for cooldown and retry saving changes."
           retryAfterSeconds={getRetryAfterSeconds(updateWatchRuleMutation.error)}
+          action={
+            <button
+              type="button"
+              disabled={Boolean(validationMessage) || isPending}
+              onClick={() =>
+                updateWatchRuleMutation.mutate({
+                  name: name.trim(),
+                  poll_interval_seconds: pollInterval,
+                  is_active: isActive,
+                })
+              }
+            >
+              Retry alert update
+            </button>
+          }
         />
       ) : null}
       {updateWatchRuleMutation.isError && !isRateLimitedError(updateWatchRuleMutation.error) ? (
         <StateError
+          title="Updating alert failed"
           message="Could not save alert updates."
           detail={getErrorMessage(updateWatchRuleMutation.error, "Request failed")}
+          action={
+            <button
+              type="button"
+              disabled={Boolean(validationMessage) || isPending}
+              onClick={() =>
+                updateWatchRuleMutation.mutate({
+                  name: name.trim(),
+                  poll_interval_seconds: pollInterval,
+                  is_active: isActive,
+                })
+              }
+            >
+              Retry alert update
+            </button>
+          }
         />
       ) : null}
       {deleteWatchRuleMutation.isPending ? <StateLoading message="Deleting alert…" /> : null}
       {deleteWatchRuleMutation.isError && isRateLimitedError(deleteWatchRuleMutation.error) ? (
         <StateRateLimited
-          message={deleteWatchRuleMutation.error.message}
+          title="Deleting alert is rate-limited"
+          message="Delete requests are temporarily cooling down."
+          detail="Wait for cooldown and retry deleting this alert."
           retryAfterSeconds={getRetryAfterSeconds(deleteWatchRuleMutation.error)}
+          action={
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => deleteWatchRuleMutation.mutate(undefined)}
+            >
+              Retry delete alert
+            </button>
+          }
         />
       ) : null}
       {deleteWatchRuleMutation.isError && !isRateLimitedError(deleteWatchRuleMutation.error) ? (
         <StateError
+          title="Deleting alert failed"
           message="Could not delete alert."
           detail={getErrorMessage(deleteWatchRuleMutation.error, "Request failed")}
+          action={
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => deleteWatchRuleMutation.mutate(undefined)}
+            >
+              Retry delete alert
+            </button>
+          }
         />
       ) : null}
 

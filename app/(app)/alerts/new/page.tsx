@@ -24,13 +24,20 @@ export default function NewAlertPage() {
     if (name.trim().length < 1 || name.trim().length > 120) {
       return "Name must be between 1 and 120 characters.";
     }
-
+    if (
+      keywordsInput
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean).length === 0
+    ) {
+      return "Enter at least one keyword.";
+    }
     if (!Number.isInteger(pollInterval) || pollInterval < 30 || pollInterval > 86400) {
       return "Poll interval must be an integer between 30 and 86400 seconds.";
     }
 
     return null;
-  }, [name, pollInterval]);
+  }, [keywordsInput, name, pollInterval]);
 
   const isPending = createWatchRuleMutation.isPending;
 
@@ -42,18 +49,34 @@ export default function NewAlertPage() {
       {meQuery.isLoading ? <StateLoading message="Loading alert preset data…" /> : null}
       {meQuery.isError && isRateLimitedError(meQuery.error) ? (
         <StateRateLimited
-          message={meQuery.error.message}
+          title="Alert setup is temporarily rate-limited"
+          message="We cannot load setup data right now."
+          detail="Wait for cooldown, then retry fetching alert setup data."
           retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
+          action={
+            <button type="button" onClick={() => meQuery.refetch()}>
+              Retry setup load
+            </button>
+          }
         />
       ) : null}
       {meQuery.isError && !isRateLimitedError(meQuery.error) ? (
         <StateError
+          title="Alert setup failed to load"
           message="Could not load alert setup data."
           detail={getErrorMessage(meQuery.error, "Request failed")}
+          action={
+            <button type="button" onClick={() => meQuery.refetch()}>
+              Retry setup load
+            </button>
+          }
         />
       ) : null}
       {meQuery.data && (!meQuery.data.integrations || meQuery.data.integrations.length === 0) ? (
-        <StateEmpty message="No provider integrations available for new alerts." />
+        <StateEmpty
+          title="No provider integrations"
+          message="Connect a provider before creating alerts from search criteria."
+        />
       ) : null}
 
       {validationMessage ? (
@@ -63,7 +86,7 @@ export default function NewAlertPage() {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          if (validationMessage) {
+          if (validationMessage || isPending) {
             return;
           }
 
@@ -121,18 +144,69 @@ export default function NewAlertPage() {
         </button>
       </form>
 
-      {createWatchRuleMutation.data ? <p>Alert created successfully.</p> : null}
+      {createWatchRuleMutation.data ? <p>Alert created successfully and ready to run.</p> : null}
       {createWatchRuleMutation.isPending ? <StateLoading message="Saving new alert…" /> : null}
       {createWatchRuleMutation.isError && isRateLimitedError(createWatchRuleMutation.error) ? (
         <StateRateLimited
-          message={createWatchRuleMutation.error.message}
+          title="New alert creation is rate-limited"
+          message="Too many create-alert requests were sent."
+          detail="Wait for cooldown, then retry creating this alert."
           retryAfterSeconds={getRetryAfterSeconds(createWatchRuleMutation.error)}
+          action={
+            <button
+              type="button"
+              disabled={Boolean(validationMessage) || isPending}
+              onClick={() => {
+                if (validationMessage || isPending) {
+                  return;
+                }
+                createWatchRuleMutation.mutate({
+                  name: name.trim(),
+                  query: {
+                    keywords: keywordsInput
+                      .split(",")
+                      .map((value) => value.trim())
+                      .filter(Boolean),
+                  },
+                  poll_interval_seconds: pollInterval,
+                  is_active: isActive,
+                });
+              }}
+            >
+              Retry create alert
+            </button>
+          }
         />
       ) : null}
       {createWatchRuleMutation.isError && !isRateLimitedError(createWatchRuleMutation.error) ? (
         <StateError
+          title="Creating alert failed"
           message="Could not save new alert."
           detail={getErrorMessage(createWatchRuleMutation.error, "Request failed")}
+          action={
+            <button
+              type="button"
+              disabled={Boolean(validationMessage) || isPending}
+              onClick={() => {
+                if (validationMessage || isPending) {
+                  return;
+                }
+                createWatchRuleMutation.mutate({
+                  name: name.trim(),
+                  query: {
+                    keywords: keywordsInput
+                      .split(",")
+                      .map((value) => value.trim())
+                      .filter(Boolean),
+                  },
+                  poll_interval_seconds: pollInterval,
+                  is_active: isActive,
+                });
+              }}
+            >
+              Retry create alert
+            </button>
+          }
         />
       ) : null}
     </section>
