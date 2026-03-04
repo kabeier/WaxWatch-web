@@ -57,10 +57,17 @@ export default function NewAlertPage() {
       ) : null}
 
       {validationMessage ? (
-        <StateError message="Validation error" detail={validationMessage} />
+        <div id="new-alert-form-errors">
+          <StateError
+            message="Please fix the highlighted validation issues before saving."
+            detail={validationMessage}
+          />
+        </div>
       ) : null}
 
       <form
+        aria-describedby={validationMessage ? "new-alert-form-errors" : undefined}
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
           if (validationMessage) {
@@ -86,6 +93,8 @@ export default function NewAlertPage() {
             value={name}
             onChange={(event) => setName(event.currentTarget.value)}
             disabled={isPending}
+            aria-invalid={Boolean(validationMessage)}
+            aria-describedby={validationMessage ? "new-alert-form-errors" : undefined}
           />
         </label>
         <label>
@@ -94,6 +103,8 @@ export default function NewAlertPage() {
             value={keywordsInput}
             onChange={(event) => setKeywordsInput(event.currentTarget.value)}
             disabled={isPending}
+            aria-invalid={Boolean(validationMessage)}
+            aria-describedby={validationMessage ? "new-alert-form-errors" : undefined}
           />
         </label>
         <label>
@@ -105,6 +116,8 @@ export default function NewAlertPage() {
             value={pollIntervalInput}
             onChange={(event) => setPollIntervalInput(event.currentTarget.value)}
             disabled={isPending}
+            aria-invalid={Boolean(validationMessage)}
+            aria-describedby={validationMessage ? "new-alert-form-errors" : undefined}
           />
         </label>
         <label>
@@ -121,7 +134,11 @@ export default function NewAlertPage() {
         </button>
       </form>
 
-      {createWatchRuleMutation.data ? <p>Alert created successfully.</p> : null}
+      {createWatchRuleMutation.data ? (
+        <p role="status" aria-live="polite">
+          Success: Alert created.
+        </p>
+      ) : null}
       {createWatchRuleMutation.isPending ? <StateLoading message="Saving new alert…" /> : null}
       {createWatchRuleMutation.isError && isRateLimitedError(createWatchRuleMutation.error) ? (
         <StateRateLimited

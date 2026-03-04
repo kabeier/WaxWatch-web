@@ -92,6 +92,8 @@ export default function AlertDetailClient({ id }: { id: string }) {
 
       {watchRuleDetailQuery.data ? (
         <form
+          aria-describedby={validationMessage ? "alert-detail-form-errors" : undefined}
+          noValidate
           onSubmit={(event) => {
             event.preventDefault();
             if (validationMessage) {
@@ -110,7 +112,12 @@ export default function AlertDetailClient({ id }: { id: string }) {
             {updateWatchRuleMutation.isPending ? " (saving…)" : ""}
           </p>
           {validationMessage ? (
-            <StateError message="Validation error" detail={validationMessage} />
+            <div id="alert-detail-form-errors">
+              <StateError
+                message="Please fix the highlighted validation issues before saving."
+                detail={validationMessage}
+              />
+            </div>
           ) : null}
           <label>
             Alert name
@@ -120,6 +127,8 @@ export default function AlertDetailClient({ id }: { id: string }) {
                 setDraft((current) => ({ ...current, name: event.currentTarget.value }))
               }
               disabled={isPending}
+              aria-invalid={Boolean(validationMessage)}
+              aria-describedby={validationMessage ? "alert-detail-form-errors" : undefined}
             />
           </label>
           <label>
@@ -133,6 +142,8 @@ export default function AlertDetailClient({ id }: { id: string }) {
                 setDraft((current) => ({ ...current, pollInterval: event.currentTarget.value }))
               }
               disabled={isPending}
+              aria-invalid={Boolean(validationMessage)}
+              aria-describedby={validationMessage ? "alert-detail-form-errors" : undefined}
             />
           </label>
           <label>
@@ -163,7 +174,11 @@ export default function AlertDetailClient({ id }: { id: string }) {
         </form>
       ) : null}
 
-      {updateWatchRuleMutation.data ? <p>Alert updated successfully.</p> : null}
+      {updateWatchRuleMutation.data ? (
+        <p role="status" aria-live="polite">
+          Success: Alert updated.
+        </p>
+      ) : null}
       {updateWatchRuleMutation.isPending ? <StateLoading message="Saving alert updates…" /> : null}
       {updateWatchRuleMutation.isError && isRateLimitedError(updateWatchRuleMutation.error) ? (
         <StateRateLimited

@@ -35,7 +35,9 @@ export default function IntegrationSettingsPage() {
         <StateEmpty message="No integration status found." />
       ) : null}
       {discogsStatusQuery.data ? (
-        <p>Discogs connected: {discogsStatusQuery.data.connected ? "yes" : "no"}</p>
+        <p role="status" aria-live="polite">
+          Status: Discogs connected: {discogsStatusQuery.data.connected ? "yes" : "no"}.
+        </p>
       ) : null}
       <button type="button">Refresh Discogs status</button>
       <button type="button">Connect Discogs account</button>

@@ -204,6 +204,76 @@ describe("route flow regressions", () => {
     expect(mockRetry).toHaveBeenCalledTimes(1);
   });
 
+  it("associates search form field errors with invalid controls", () => {
+    render(<SearchPage />);
+
+    fireEvent.change(screen.getByLabelText(/^page$/i), { target: { value: "0" } });
+
+    const pageInput = screen.getByLabelText(/^page$/i);
+    expect(pageInput).toHaveAttribute("aria-invalid", "true");
+    expect(pageInput).toHaveAttribute("aria-describedby", "search-form-errors");
+    expect(
+      screen.getByText(/please fix search validation issues before submitting/i),
+    ).toBeInTheDocument();
+  });
+
+  it("announces alert update success via status role", () => {
+    hooksState.watchRuleDetailQuery = {
+      data: {
+        id: "rule-1",
+        name: "Rule",
+        is_active: true,
+        poll_interval_seconds: 300,
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: mockRetry,
+    };
+    hooksState.updateWatchRuleMutation = {
+      data: {
+        id: "rule-1",
+        name: "Updated",
+        is_active: true,
+        poll_interval_seconds: 300,
+      },
+      error: null,
+      isPending: false,
+      isError: false,
+      mutate: mockUpdateMutate,
+    };
+
+    render(<AlertDetailClient id="rule-1" />);
+
+    expect(screen.getByText(/success: alert updated\./i)).toHaveAttribute("role", "status");
+  });
+
+  it("links alert settings validation errors to form controls", () => {
+    hooksState.meQuery = {
+      data: {
+        preferences: {
+          delivery_frequency: "instant",
+          notification_timezone: "UTC",
+          quiet_hours_start: 22,
+          quiet_hours_end: 7,
+          notifications_email: true,
+          notifications_push: false,
+        },
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    };
+
+    render(<AlertSettingsPage />);
+
+    fireEvent.change(screen.getByLabelText(/notification timezone/i), { target: { value: "" } });
+
+    const timezoneInput = screen.getByLabelText(/notification timezone/i);
+    expect(timezoneInput).toHaveAttribute("aria-invalid", "true");
+    expect(timezoneInput).toHaveAttribute("aria-describedby", "alert-settings-form-errors");
+  });
+
   it("keeps alert settings controls disabled while profile preferences are loading", () => {
     hooksState.meQuery = {
       data: undefined,

@@ -38,7 +38,11 @@ export default function ProfileSettingsPage() {
       {!meQuery.data && !meQuery.isLoading && !meQuery.isError ? (
         <StateEmpty message="No profile found." />
       ) : null}
-      {meQuery.data ? <p>Signed in as {meQuery.data.email}</p> : null}
+      {meQuery.data ? (
+        <p role="status" aria-live="polite">
+          Status: Signed in as {meQuery.data.email}.
+        </p>
+      ) : null}
       <button type="button">Save profile changes</button>
     </section>
   );
