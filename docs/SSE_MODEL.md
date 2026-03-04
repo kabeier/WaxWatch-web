@@ -24,3 +24,12 @@ Recommended client behavior:
 Failure behavior:
 
 - If the server returns 401/403 or auth is missing, stop reconnect attempts.
+
+## SSE done criteria
+
+Before merging SSE-related changes, verify all of the following:
+
+- [ ] Requests include `Authorization: Bearer <jwt>` and `Accept: text/event-stream`.
+- [ ] Client maintains a singleton SSE connection per authenticated app session.
+- [ ] Reconnect uses exponential backoff with jitter after disconnects/non-auth transient failures.
+- [ ] Reconnect stops immediately when auth token is missing or server responds with 401/403.

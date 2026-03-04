@@ -75,6 +75,7 @@ Reconnect policy:
 
 - exponential backoff with jitter
 - stop reconnecting if auth is missing
+- validate all SSE merge requirements using the checklist in `docs/SSE_MODEL.md` before submitting changes
 
 ## UX rules by feature
 
