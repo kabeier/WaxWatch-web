@@ -61,23 +61,33 @@ Open: http://localhost:3000
 
 ## Route matrix
 
-| Route                      | Status      | Notes                                                                               |
-| -------------------------- | ----------- | ----------------------------------------------------------------------------------- |
-| `/`                        | implemented | Redirects to `/search`.                                                             |
-| `/login`                   | scaffold    | Sign-in shell placeholder for Supabase auth UI.                                     |
-| `/search`                  | implemented | Search route now includes explicit loading/empty/error/rate-limited render states.  |
-| `/alerts`                  | implemented | Watch rules/releases route now renders loading/empty/error/rate-limited states.     |
-| `/alerts/new`              | implemented | Create-alert route now includes explicit loading/empty/error/rate-limited branches. |
-| `/alerts/[id]`             | implemented | Alert detail route now includes explicit loading/empty/error/rate-limited branches. |
-| `/watchlist`               | implemented | Watchlist route now renders loading/empty/error/rate-limited states.                |
-| `/notifications`           | implemented | Notifications route now renders loading/empty/error/rate-limited states.            |
-| `/settings/profile`        | implemented | Profile settings now render loading/empty/error/rate-limited states.                |
-| `/settings/alerts`         | implemented | Alert settings route now includes loading/empty/error/rate-limited branches.        |
-| `/settings/integrations`   | implemented | Integrations route now renders loading/empty/error/rate-limited states.             |
-| `/settings/danger`         | implemented | Danger-zone route now includes loading/empty/error/rate-limited branches.           |
-| `/signed-out`              | implemented | Signed-out confirmation support route.                                              |
-| `/account-removed`         | implemented | Account removal confirmation support route.                                         |
-| `/admin/provider-requests` | planned     | Admin-only route; not yet present in `app/`.                                        |
+Status criteria used in this matrix:
+
+- `scaffold`: route exists, but is still placeholder-first (including synthetic state toggles via URL/search params) and does not yet use real API wiring.
+- `wired`: route uses real TanStack Query hooks and/or mutations connected to the API client.
+- `production-ready`: route has complete UX polish, robust error/retry flows, accessibility coverage, and automated tests.
+
+| Route                      | Status   | Notes                                                                                               |
+| -------------------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| `/`                        | scaffold | Redirect exists, but landing flow depends on `/search`, which is still synthetic-state scaffolding. |
+| `/login`                   | scaffold | Sign-in shell placeholder for Supabase auth UI.                                                     |
+| `/search`                  | scaffold | Uses synthetic loading/empty/error/rate-limited state switches from `searchParams`.                 |
+| `/alerts`                  | wired    | Uses real query hooks (`useWatchRulesQuery`, `useWatchReleasesQuery`) via API client.               |
+| `/alerts/new`              | scaffold | Uses synthetic loading/empty/error/rate-limited state switches from `searchParams`.                 |
+| `/alerts/[id]`             | scaffold | Uses synthetic loading/empty/error/rate-limited state switches from `searchParams`.                 |
+| `/watchlist`               | wired    | Uses real query hook (`useWatchReleasesQuery`) via API client.                                      |
+| `/notifications`           | wired    | Uses real query hooks (`useNotificationsQuery`, `useUnreadNotificationCountQuery`) via API client.  |
+| `/settings/profile`        | wired    | Uses real query hook (`useMeQuery`) via API client.                                                 |
+| `/settings/alerts`         | scaffold | Uses synthetic loading/empty/error/rate-limited state switches from `searchParams`.                 |
+| `/settings/integrations`   | wired    | Uses real query hook (`useDiscogsStatusQuery`) via API client.                                      |
+| `/settings/danger`         | scaffold | Uses synthetic loading/empty/error/rate-limited state switches from `searchParams`.                 |
+| `/signed-out`              | scaffold | Static confirmation page exists; no API wiring or production-hardening checks yet.                  |
+| `/account-removed`         | scaffold | Static confirmation page exists; no API wiring or production-hardening checks yet.                  |
+| `/admin/provider-requests` | planned  | Admin-only route; not yet present in `app/`.                                                        |
+
+### How to pick next work
+
+Prioritize routes marked `scaffold` first, especially routes still driven by synthetic state switches. Converting these to `wired` (real hooks/mutations through the API client) closes the biggest delivery gap. After that, move `wired` routes toward `production-ready` by adding end-to-end UX polish, retry behavior, accessibility validation, and automated tests.
 
 See `docs/ROUTES.md` and `docs/IA_MAP.md`.
 
