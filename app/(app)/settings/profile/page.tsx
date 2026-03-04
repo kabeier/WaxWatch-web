@@ -43,7 +43,9 @@ export default function ProfileSettingsPage() {
   }, [currency, displayName, timezone]);
 
   const isFormReady = Boolean(meQuery.data);
-  const isRateLimited = meQuery.isError && isRateLimitedError(meQuery.error);
+  const rateLimitedLoadError =
+    meQuery.isError && isRateLimitedError(meQuery.error) ? meQuery.error : null;
+  const isRateLimited = Boolean(rateLimitedLoadError);
   const isSaveDisabled =
     !isFormReady || meQuery.isLoading || updateProfileMutation.isPending || Boolean(validationMessage);
 
@@ -52,16 +54,16 @@ export default function ProfileSettingsPage() {
       <h1>{viewModel.heading}</h1>
       <p>{viewModel.summary}</p>
       {meQuery.isLoading ? <StateLoading message="Loading profile…" /> : null}
-      {isRateLimited ? (
+      {rateLimitedLoadError ? (
         <StateRateLimited
           title="Profile requests are temporarily rate limited"
           message="Retry unlocks automatically when cooldown ends."
-          detail={meQuery.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
+          detail={rateLimitedLoadError.message}
+          retryAfterSeconds={getRetryAfterSeconds(rateLimitedLoadError)}
           action={
             <RetryAction
               label="Retry profile load"
-              retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
+              retryAfterSeconds={getRetryAfterSeconds(rateLimitedLoadError)}
               onRetry={() => void meQuery.retry()}
             />
           }
