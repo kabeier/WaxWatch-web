@@ -9,6 +9,20 @@
 - [ ] `npm run lint`
 - [ ] `npm run test:coverage`
 
+## Route matrix status-change evidence (required when `README.md` route statuses change)
+
+- Routes changed:
+  - [ ] Listed each affected route path exactly as shown in `README.md`.
+- Status transition:
+  - [ ] Documented current status -> target status for each route.
+- Status criteria evidence (map to `README.md` definitions):
+  - [ ] `scaffold`: Route is placeholder-first/synthetic-state driven and not yet API-wired.
+  - [ ] `wired-minimum`: Real query/mutation wiring exists, with baseline validation + pending/error handling.
+  - [ ] `production-ready`: Complete UX polish demonstrated.
+  - [ ] `production-ready`: Robust error + retry behavior (including cooldown handling where applicable) demonstrated.
+  - [ ] `production-ready`: Accessibility coverage validated.
+  - [ ] `production-ready`: Route-level tests were added/updated in this PR.
+
 ## Design-guide intake checklist (required when UI/design guide updates are included)
 
 - [ ] Source links captured (Figma/specs/tokens/a11y/changelog).

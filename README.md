@@ -90,6 +90,21 @@ Status criteria used in this matrix:
 
 Prioritize routes marked `scaffold` first, especially routes still driven by synthetic state switches. Converting these to `wired-minimum` (real hooks/mutations through the API client) closes the biggest delivery gap. After that, move `wired-minimum` routes toward `production-ready` by adding end-to-end UX polish, retry behavior, accessibility validation, and automated tests.
 
+### Route matrix status-change workflow (PR requirement)
+
+Any PR that changes one or more route statuses in the matrix above must include a dedicated PR section with:
+
+1. **Route(s) changed** (exact path names from the matrix).
+2. **Current status -> target status** for each changed route.
+3. **Checklist evidence** that supports the target status:
+   - UX state coverage (loading, empty, success, error, and rate-limited/cooldown states where applicable).
+   - Validation behavior (required-field checks, invalid input handling, and clear recovery paths).
+   - Retry behavior (explicit retry actions and cooldown-aware handling when applicable).
+   - Route-level automated tests added/updated in the same PR.
+   - Accessibility validation evidence (for example: semantic roles/labels, keyboard behavior, and/or a11y smoke coverage).
+
+When moving a route to `production-ready`, reviewers should reject the status change if this evidence is missing or if route-level test updates are absent.
+
 See `docs/ROUTES.md` and `docs/IA_MAP.md`.
 
 ## Agent work
