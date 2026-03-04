@@ -10,6 +10,8 @@ This document defines a **temporary baseline design system** for WaxWatch until 
 
 ## Design guide intake checklist
 
+Primary intake workflow lives in `docs/DESIGN_GUIDE_INTAKE_CHECKLIST.md` and is required for design-guide adoption/migration planning.
+
 Run this checklist as soon as official standards are published so migration work starts from a shared source of truth.
 
 ### 1) Source links
@@ -215,6 +217,12 @@ Minimum behavior contract:
 
 **Rule:** New UI components must consume shared tokens and reusable utilities/components. Do **not** ship inline ad-hoc styles (e.g., arbitrary per-component spacing, color hex values, font sizing, or one-off state patterns) when equivalent shared tokens/utilities exist.
 
+**Required for new UI work:**
+
+- Use shared state primitives from `src/components/ui/primitives/state` for loading/empty/error/rate-limited patterns.
+- Use shared shell primitives from `src/components/ui/primitives/shell` for layout/shell patterns.
+- Use shared spacing/typography/color tokens defined in this document where equivalents already exist.
+
 If needed tokens/utilities do not exist yet, add them to shared design-system primitives first, then consume them from the new component.
 
 ## Migration plan when official guides arrive
@@ -223,10 +231,10 @@ When canonical design guides are available:
 
 1. Add links/references to the official design docs at the top of this file.
 2. Mark this temporary baseline section as deprecated.
-3. Map each temporary token to its canonical counterpart.
-4. Document migration notes per token category (typography, spacing, color, state primitives, nav shell).
-5. Track and execute component-level migration in batches.
-6. Remove temporary tokens/utilities after migration completion.
+3. Migrate tokens first (typography/spacing/color mappings).
+4. Migrate shared primitives second (state + shell primitives).
+5. Migrate route pages third (consume updated primitives and tokens).
+6. Remove deprecated temporary mappings/utilities last.
 
 ### Migration notes template
 

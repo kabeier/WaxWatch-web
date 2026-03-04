@@ -113,6 +113,8 @@ Reconnect policy:
 
 Before opening a PR, confirm all items:
 
-- [ ] No hardcoded design values (spacing, color, typography, radius) when a shared token equivalent exists.
+- [ ] No hardcoded design values (spacing, color, typography, radius) when a shared token equivalent exists in `docs/DESIGN_SYSTEM.md`.
 - [ ] Route/page state UI uses shared primitives from `src/components/ui/primitives/state` for loading, empty, error, and rate-limited states.
 - [ ] Shell/layout work reuses shared primitives from `src/components/ui/primitives/shell` (`AppShell`, `TopNav`, `SideNav`, `ContentContainer`) instead of ad-hoc wrappers.
+- [ ] If this PR implements new design-guide input, `docs/DESIGN_GUIDE_INTAKE_CHECKLIST.md` is completed and attached in the PR description.
+- [ ] Design-guide migration sequence is respected: tokens -> shared primitives -> route pages -> cleanup deprecated temporary mappings.

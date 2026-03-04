@@ -9,6 +9,13 @@
 - [ ] `npm run lint`
 - [ ] `npm run test:coverage`
 
+## Design-guide intake checklist (required when UI/design guide updates are included)
+
+- [ ] Source links captured (Figma/specs/tokens/a11y/changelog).
+- [ ] Token mapping documented (spacing/typography/colors).
+- [ ] Affected shared primitives/components listed (`src/components/ui/primitives/state` and `src/components/ui/primitives/shell`).
+- [ ] Rollout order documented and followed: tokens -> shared primitives -> route pages -> cleanup deprecated temporary mappings.
+
 ## SSE merge requirements (only if this PR touches SSE behavior)
 
 Reference: `docs/SSE_MODEL.md` -> **SSE done criteria**
