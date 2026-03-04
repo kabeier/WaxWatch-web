@@ -266,14 +266,14 @@ Execute migration in this order and do not skip ahead unless dependencies are co
 
 Track migration work using the template fields from this document: `temporary`, `canonical`, `status`, and `notes`.
 
-| temporary | canonical | status | notes |
-| --- | --- | --- | --- |
-| `font.family.sans` | `<new_reference_name_or_link>` | `pending` | `Token migration starts in phase 1 (tokens).` |
-| `color.brand.primary` | `<new_reference_name_or_link>` | `pending` | `Map to official semantic brand token in phase 1.` |
-| `StateLoading` | `<new_reference_name_or_link>` | `pending` | `Validate copy/skeleton/a11y as part of phase 2 (shared primitives).` |
-| `AppShell` | `<new_reference_name_or_link>` | `pending` | `Migrate layout/nav shell behavior in phase 2.` |
-| `app/(app)/alerts/page.tsx` | `<route-level canonical mapping>` | `pending` | `Adopt migrated tokens/primitives in phase 3 (route pages).` |
-| `<deprecated temporary mapping>` | `<n/a>` | `pending` | `Remove in phase 4 cleanup after route migration completes.` |
+| temporary                        | canonical                         | status    | notes                                                                 |
+| -------------------------------- | --------------------------------- | --------- | --------------------------------------------------------------------- |
+| `font.family.sans`               | `<new_reference_name_or_link>`    | `pending` | `Token migration starts in phase 1 (tokens).`                         |
+| `color.brand.primary`            | `<new_reference_name_or_link>`    | `pending` | `Map to official semantic brand token in phase 1.`                    |
+| `StateLoading`                   | `<new_reference_name_or_link>`    | `pending` | `Validate copy/skeleton/a11y as part of phase 2 (shared primitives).` |
+| `AppShell`                       | `<new_reference_name_or_link>`    | `pending` | `Migrate layout/nav shell behavior in phase 2.`                       |
+| `app/(app)/alerts/page.tsx`      | `<route-level canonical mapping>` | `pending` | `Adopt migrated tokens/primitives in phase 3 (route pages).`          |
+| `<deprecated temporary mapping>` | `<n/a>`                           | `pending` | `Remove in phase 4 cleanup after route migration completes.`          |
 
 ### Token-by-token tracker
 
