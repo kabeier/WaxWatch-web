@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { waxwatchApi } from "@/lib/query/api";
 import { queryKeys } from "@/lib/query/keys";
@@ -25,11 +25,21 @@ export function useWatchRulesQuery() {
 }
 
 export function useWatchRuleDetailQuery(id: string) {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: queryKeys.watchRules.detail(id),
     queryFn: () => waxwatchApi.watchRules.getById(id),
     enabled: Boolean(id),
   });
+
+  const retry = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.watchRules.detail(id) });
+  }, [id, queryClient]);
+
+  return {
+    ...query,
+    retry,
+  };
 }
 
 export function useWatchReleasesQuery() {
@@ -77,19 +87,50 @@ function useApiMutation<TInput, TData>(options: {
     isPending: false,
     isError: false,
   });
+  const pendingCountRef = useRef(0);
+  const latestMutationIdRef = useRef(0);
 
   const mutate = useCallback(
     (input: TInput) => {
+      pendingCountRef.current += 1;
+      latestMutationIdRef.current += 1;
+      const mutationId = latestMutationIdRef.current;
+
       setState((current) => ({ ...current, isPending: true, isError: false, error: null }));
 
       void options
         .mutationFn(input)
         .then((data) => {
-          setState({ data, error: null, isPending: false, isError: false });
+          pendingCountRef.current = Math.max(0, pendingCountRef.current - 1);
+          const isLatest = mutationId === latestMutationIdRef.current;
+
+          if (isLatest) {
+            setState({
+              data,
+              error: null,
+              isPending: pendingCountRef.current > 0,
+              isError: false,
+            });
+          } else {
+            setState((current) => ({ ...current, isPending: pendingCountRef.current > 0 }));
+          }
+
           options.onSuccess?.();
         })
         .catch((error: unknown) => {
-          setState({ data: undefined, error, isPending: false, isError: true });
+          pendingCountRef.current = Math.max(0, pendingCountRef.current - 1);
+          const isLatest = mutationId === latestMutationIdRef.current;
+
+          if (isLatest) {
+            setState({
+              data: undefined,
+              error,
+              isPending: pendingCountRef.current > 0,
+              isError: true,
+            });
+          } else {
+            setState((current) => ({ ...current, isPending: pendingCountRef.current > 0 }));
+          }
         });
     },
     [options],
@@ -147,6 +188,7 @@ export function useDeleteWatchRuleMutation(id: string) {
   return useApiMutation({
     mutationFn: (_: undefined) => waxwatchApi.watchRules.remove(id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchRules.detail(id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.watchRules.list });
     },
   });

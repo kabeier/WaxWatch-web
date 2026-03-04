@@ -91,7 +91,7 @@ export default function AlertDetailPage({ params }: { params: { id: string } }) 
       <button
         type="button"
         onClick={() => {
-          void watchRuleDetailQuery.refetch();
+          watchRuleDetailQuery.retry();
         }}
       >
         Retry alert detail load
