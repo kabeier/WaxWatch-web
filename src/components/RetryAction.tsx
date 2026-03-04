@@ -43,6 +43,9 @@ export function RetryAction({
       disabled={disabled || isCoolingDown}
       onClick={() => {
         if (!isCoolingDown && !disabled) {
+          if (retryAfterSeconds && retryAfterSeconds > 0) {
+            setRemainingSeconds(retryAfterSeconds);
+          }
           onRetry();
         }
       }}
