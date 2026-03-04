@@ -1,9 +1,22 @@
 import type { createApiClient } from "../client";
-import { appendCursorPagination, appendLimitOffset } from "../pagination";
+import {
+  appendCursorOrOffsetPagination,
+  appendCursorPagination,
+  appendLimitOffset,
+} from "../pagination";
 import type {
   DiscogsConnectInput,
+  DiscogsDisconnectInput,
+  DiscogsDisconnectResponse,
   DiscogsImportInput,
   DiscogsImportJob,
+  DiscogsImportedItemsParams,
+  DiscogsImportedItemsResponse,
+  DiscogsOAuthCallbackInput,
+  DiscogsOAuthCallbackResponse,
+  DiscogsOAuthStartResponse,
+  DiscogsOpenInDiscogsParams,
+  DiscogsOpenInDiscogsResponse,
   DiscogsRelease,
   DiscogsSearchParams,
   DiscogsStatus,
@@ -67,7 +80,7 @@ export function createDomainServices(client: ApiClient) {
 
   const watchRules = {
     list: (params: WatchRulesListParams = {}) => {
-      const query = appendLimitOffset(new URLSearchParams(), params);
+      const query = appendCursorOrOffsetPagination(new URLSearchParams(), params);
       return client.request<WatchRule[]>("/watch-rules", {}, query);
     },
     getById: (watchRuleId: string) =>
@@ -93,13 +106,13 @@ export function createDomainServices(client: ApiClient) {
 
   const watchReleases = {
     list: (params: WatchReleasesListParams = {}) => {
-      const query = appendLimitOffset(new URLSearchParams(), params);
+      const query = appendCursorOrOffsetPagination(new URLSearchParams(), params);
       return client.request<WatchRelease[]>("/watch-releases", {}, query);
     },
     getById: (watchReleaseId: string) =>
       client.request<WatchRelease>(`/watch-releases/${encodeURIComponent(watchReleaseId)}`),
     listByWatchRule: (watchRuleId: string, params: WatchReleasesListParams = {}) => {
-      const query = appendLimitOffset(new URLSearchParams(), params);
+      const query = appendCursorOrOffsetPagination(new URLSearchParams(), params);
       query.set("watch_rule_id", watchRuleId);
       return client.request<WatchRelease[]>("/watch-releases", {}, query);
     },
@@ -107,7 +120,7 @@ export function createDomainServices(client: ApiClient) {
 
   const notifications = {
     list: (params: NotificationsListParams = {}) => {
-      const query = appendLimitOffset(new URLSearchParams(), params);
+      const query = appendCursorOrOffsetPagination(new URLSearchParams(), params);
       return client.request<Notification[]>("/notifications", {}, query);
     },
     getUnreadCount: () => client.request<NotificationUnreadCount>("/notifications/unread-count"),
@@ -119,12 +132,35 @@ export function createDomainServices(client: ApiClient) {
 
   const integrations = {
     discogs: {
+      startOauth: () =>
+        client.request<DiscogsOAuthStartResponse>("/integrations/discogs/oauth/start", {
+          method: "POST",
+        }),
+      completeOauth: (input: DiscogsOAuthCallbackInput) =>
+        client.request<DiscogsOAuthCallbackResponse, DiscogsOAuthCallbackInput>(
+          "/integrations/discogs/oauth/callback",
+          {
+            method: "POST",
+            body: input,
+          },
+        ),
       getStatus: () => client.request<DiscogsStatus>("/integrations/discogs/status"),
       connect: (input: DiscogsConnectInput) =>
-        client.request<void, DiscogsConnectInput>("/integrations/discogs/connect", {
-          method: "POST",
-          body: input,
-        }),
+        client.request<DiscogsOAuthCallbackResponse, DiscogsConnectInput>(
+          "/integrations/discogs/connect",
+          {
+            method: "POST",
+            body: input,
+          },
+        ),
+      disconnect: (input: DiscogsDisconnectInput = {}) =>
+        client.request<DiscogsDisconnectResponse, DiscogsDisconnectInput>(
+          "/integrations/discogs/disconnect",
+          {
+            method: "POST",
+            body: input,
+          },
+        ),
       importCollection: (input: DiscogsImportInput = {}) =>
         client.request<DiscogsImportJob, DiscogsImportInput>("/integrations/discogs/import", {
           method: "POST",
@@ -134,6 +170,24 @@ export function createDomainServices(client: ApiClient) {
         client.request<DiscogsImportJob>(
           `/integrations/discogs/import/${encodeURIComponent(jobId)}`,
         ),
+      listImportedItems: (params: DiscogsImportedItemsParams) => {
+        const query = appendLimitOffset(new URLSearchParams(), params);
+        query.set("source", params.source);
+        return client.request<DiscogsImportedItemsResponse>(
+          "/integrations/discogs/imported-items",
+          {},
+          query,
+        );
+      },
+      getOpenInDiscogsUrl: (watchReleaseId: string, params: DiscogsOpenInDiscogsParams) => {
+        const query = new URLSearchParams();
+        query.set("source", params.source);
+        return client.request<DiscogsOpenInDiscogsResponse>(
+          `/integrations/discogs/imported-items/${encodeURIComponent(watchReleaseId)}/open-in-discogs`,
+          {},
+          query,
+        );
+      },
     },
   };
 

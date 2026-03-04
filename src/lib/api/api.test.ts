@@ -9,6 +9,9 @@ import { createApiClient } from "./client";
 import { createDomainServices } from "./domains";
 import type {
   DiscogsImportJob,
+  DiscogsImportedItemsResponse,
+  DiscogsOAuthCallbackResponse,
+  DiscogsOAuthStartResponse,
   DiscogsStatus,
   MeProfile,
   Notification,
@@ -17,7 +20,11 @@ import type {
   WatchRule,
 } from "./domains/types";
 import { toApiError } from "./errors";
-import { appendCursorPagination, appendLimitOffset } from "./pagination";
+import {
+  appendCursorOrOffsetPagination,
+  appendCursorPagination,
+  appendLimitOffset,
+} from "./pagination";
 import { parseRetryAfter, parseRetryAfterFromErrorDetails } from "./rateLimit";
 
 describe("api client", () => {
@@ -173,6 +180,29 @@ describe("pagination helpers", () => {
     const query = appendCursorPagination(new URLSearchParams(), { cursor: "abc", limit: 5 });
     expect(query.toString()).toBe("cursor=abc&limit=5");
   });
+
+  it("builds cursor-or-offset query params", () => {
+    const offsetQuery = appendCursorOrOffsetPagination(new URLSearchParams(), {
+      limit: 25,
+      offset: 10,
+    });
+    expect(offsetQuery.toString()).toBe("offset=10&limit=25");
+
+    const cursorQuery = appendCursorOrOffsetPagination(new URLSearchParams(), {
+      cursor: "next-token",
+      limit: 25,
+    });
+    expect(cursorQuery.toString()).toBe("cursor=next-token&limit=25");
+  });
+
+  it("rejects non-zero offset when cursor is provided", () => {
+    expect(() =>
+      appendCursorOrOffsetPagination(new URLSearchParams(), {
+        cursor: "next-token",
+        offset: 1,
+      }),
+    ).toThrow('"offset" must be 0 when "cursor" is provided');
+  });
 });
 
 describe("rate limit parsing", () => {
@@ -203,6 +233,7 @@ describe("domain response fixtures", () => {
           seller: "demo-seller",
           location: "US",
           discogs_release_id: 1001,
+          discogs_master_id: 2001,
         },
       ],
       pagination: {
@@ -291,6 +322,12 @@ describe("domain response fixtures", () => {
         }),
       )
       .mockResolvedValueOnce(
+        new Response(JSON.stringify(listFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
         new Response(JSON.stringify(readFixture), {
           status: 200,
           headers: { "content-type": "application/json" },
@@ -301,7 +338,17 @@ describe("domain response fixtures", () => {
       createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
     );
     await expect(domains.watchRules.list({ limit: 25, offset: 0 })).resolves.toEqual(listFixture);
+    await expect(domains.watchRules.list({ limit: 25, cursor: "cursor-token" })).resolves.toEqual(
+      listFixture,
+    );
     await expect(domains.watchRules.getById(readFixture.id)).resolves.toEqual(readFixture);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.example.com/watch-rules?offset=0&limit=25",
+    );
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      "https://api.example.com/watch-rules?cursor=cursor-token&limit=25",
+    );
   });
 
   it("accepts WatchReleaseOut list and read transport shapes", async () => {
@@ -335,6 +382,12 @@ describe("domain response fixtures", () => {
         }),
       )
       .mockResolvedValueOnce(
+        new Response(JSON.stringify(listFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
         new Response(JSON.stringify(readFixture), {
           status: 200,
           headers: { "content-type": "application/json" },
@@ -347,7 +400,17 @@ describe("domain response fixtures", () => {
     await expect(domains.watchReleases.list({ limit: 25, offset: 0 })).resolves.toEqual(
       listFixture,
     );
+    await expect(domains.watchReleases.list({ limit: 25, cursor: "next-page" })).resolves.toEqual(
+      listFixture,
+    );
     await expect(domains.watchReleases.getById(readFixture.id)).resolves.toEqual(readFixture);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.example.com/watch-releases?offset=0&limit=25",
+    );
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      "https://api.example.com/watch-releases?cursor=next-page&limit=25",
+    );
   });
 
   it("accepts NotificationOut and unread_count transport shapes", async () => {
@@ -378,6 +441,12 @@ describe("domain response fixtures", () => {
         }),
       )
       .mockResolvedValueOnce(
+        new Response(JSON.stringify(notificationsFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
         new Response(JSON.stringify(unreadFixture), {
           status: 200,
           headers: { "content-type": "application/json" },
@@ -390,10 +459,35 @@ describe("domain response fixtures", () => {
     await expect(domains.notifications.list({ limit: 20, offset: 0 })).resolves.toEqual(
       notificationsFixture,
     );
+    await expect(
+      domains.notifications.list({ limit: 20, cursor: "cursor-token" }),
+    ).resolves.toEqual(notificationsFixture);
     await expect(domains.notifications.getUnreadCount()).resolves.toEqual(unreadFixture);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.example.com/notifications?offset=0&limit=20",
+    );
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      "https://api.example.com/notifications?cursor=cursor-token&limit=20",
+    );
   });
 
   it("accepts Discogs integration transport shapes", async () => {
+    const oauthStartFixture: DiscogsOAuthStartResponse = {
+      authorize_url: "https://discogs.example/oauth/authorize?state=abc",
+      provider: "discogs",
+      scopes: ["identity", "collection", "wantlist"],
+      state: "abc",
+      expires_at: "2026-01-20T10:10:00+00:00",
+    };
+
+    const oauthCallbackFixture: DiscogsOAuthCallbackResponse = {
+      provider: "discogs",
+      external_user_id: "discogs_user_2048",
+      connected: true,
+      connected_at: "2026-01-20T10:02:00+00:00",
+    };
+
     const statusFixture: DiscogsStatus = {
       connected: true,
       provider: "discogs",
@@ -422,10 +516,59 @@ describe("domain response fixtures", () => {
       updated_at: "2026-01-20T10:00:07+00:00",
     };
 
+    const importedItemsFixture: DiscogsImportedItemsResponse = {
+      source: "wantlist",
+      limit: 25,
+      offset: 0,
+      count: 1,
+      items: [
+        {
+          watch_release_id: "24550438-0dfc-4f1f-a19b-3b8b682b5f6f",
+          discogs_release_id: 1001,
+          discogs_master_id: 5001,
+          title: "Demo Want",
+          artist: "Artist A",
+          year: 1999,
+          source: "wantlist",
+          open_in_discogs_url: "https://www.discogs.com/release/1001",
+        },
+      ],
+    };
+
+    const openInDiscogsFixture = {
+      watch_release_id: "24550438-0dfc-4f1f-a19b-3b8b682b5f6f",
+      source: "wantlist" as const,
+      open_in_discogs_url: "https://www.discogs.com/release/1001",
+    };
+
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
+        new Response(JSON.stringify(oauthStartFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(oauthCallbackFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
         new Response(JSON.stringify(statusFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(oauthCallbackFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ disconnected: true, provider: "discogs" }), {
           status: 200,
           headers: { "content-type": "application/json" },
         }),
@@ -435,14 +578,59 @@ describe("domain response fixtures", () => {
           status: 200,
           headers: { "content-type": "application/json" },
         }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(importFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(importedItemsFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(openInDiscogsFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
       );
 
     const domains = createDomainServices(
       createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
     );
+
+    await expect(domains.integrations.discogs.startOauth()).resolves.toEqual(oauthStartFixture);
+    await expect(
+      domains.integrations.discogs.completeOauth({ code: "code-123", state: "abc" }),
+    ).resolves.toEqual(oauthCallbackFixture);
     await expect(domains.integrations.discogs.getStatus()).resolves.toEqual(statusFixture);
+    await expect(
+      domains.integrations.discogs.connect({ external_user_id: "discogs_user_2048" }),
+    ).resolves.toEqual(oauthCallbackFixture);
+    await expect(domains.integrations.discogs.disconnect()).resolves.toEqual({
+      disconnected: true,
+      provider: "discogs",
+    });
     await expect(
       domains.integrations.discogs.importCollection({ source: "both" }),
     ).resolves.toEqual(importFixture);
+    await expect(domains.integrations.discogs.getImportJob(importFixture.id)).resolves.toEqual(
+      importFixture,
+    );
+    await expect(
+      domains.integrations.discogs.listImportedItems({ source: "wantlist", limit: 25, offset: 0 }),
+    ).resolves.toEqual(importedItemsFixture);
+    await expect(
+      domains.integrations.discogs.getOpenInDiscogsUrl("24550438-0dfc-4f1f-a19b-3b8b682b5f6f", {
+        source: "wantlist",
+      }),
+    ).resolves.toEqual(openInDiscogsFixture);
+
+    expect(fetchMock.mock.calls[7][0]).toBe(
+      "https://api.example.com/integrations/discogs/imported-items?limit=25&offset=0&source=wantlist",
+    );
   });
 });
