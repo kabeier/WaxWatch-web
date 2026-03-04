@@ -89,6 +89,10 @@ jobs:
         if: github.event_name == 'pull_request'
         run: npm run test:contract
 
+      - name: Route status promotion test gate (PR only)
+        if: github.event_name == 'pull_request'
+        run: npm run docs:route-status-gate
+
       - name: Unit tests + coverage gates
         env:
           NODE_ENV: test
