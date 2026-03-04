@@ -10,6 +10,12 @@ export type CursorParams = {
   limit?: number;
 };
 
+export type CursorOrOffsetParams = {
+  cursor?: string | null;
+  offset?: number;
+  limit?: number;
+};
+
 export function validateLimit(limit: number | undefined, maxLimit = DEFAULT_MAX_LIMIT): void {
   if (limit === undefined) {
     return;
@@ -40,31 +46,66 @@ export function validateCursor(cursor: string | undefined): void {
   }
 }
 
-export function appendLimitOffset(params: URLSearchParams, options: LimitOffsetParams, maxLimit?: number): URLSearchParams {
+export function appendLimitOffset(
+  params: URLSearchParams,
+  options: LimitOffsetParams,
+  maxLimit?: number,
+): URLSearchParams {
   validateLimit(options.limit, maxLimit);
   validateOffset(options.offset);
 
   if (options.limit !== undefined) {
-    params.set('limit', String(options.limit));
+    params.set("limit", String(options.limit));
   }
 
   if (options.offset !== undefined) {
-    params.set('offset', String(options.offset));
+    params.set("offset", String(options.offset));
   }
 
   return params;
 }
 
-export function appendCursorPagination(params: URLSearchParams, options: CursorParams, maxLimit?: number): URLSearchParams {
+export function appendCursorPagination(
+  params: URLSearchParams,
+  options: CursorParams,
+  maxLimit?: number,
+): URLSearchParams {
   validateLimit(options.limit, maxLimit);
   validateCursor(options.cursor);
 
   if (options.cursor !== undefined) {
-    params.set('cursor', options.cursor);
+    params.set("cursor", options.cursor);
   }
 
   if (options.limit !== undefined) {
-    params.set('limit', String(options.limit));
+    params.set("limit", String(options.limit));
+  }
+
+  return params;
+}
+
+export function appendCursorOrOffsetPagination(
+  params: URLSearchParams,
+  options: CursorOrOffsetParams,
+  maxLimit?: number,
+): URLSearchParams {
+  const normalizedCursor = options.cursor ?? undefined;
+  validateLimit(options.limit, maxLimit);
+  validateOffset(options.offset);
+  validateCursor(normalizedCursor);
+
+  if (normalizedCursor !== undefined && options.offset !== undefined && options.offset !== 0) {
+    throw new Error('"offset" must be 0 when "cursor" is provided');
+  }
+
+  if (normalizedCursor !== undefined) {
+    params.set("cursor", normalizedCursor);
+  } else if (options.offset !== undefined) {
+    params.set("offset", String(options.offset));
+  }
+
+  if (options.limit !== undefined) {
+    params.set("limit", String(options.limit));
   }
 
   return params;

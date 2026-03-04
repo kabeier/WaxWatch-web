@@ -1,4 +1,4 @@
-import type { CursorParams, LimitOffsetParams } from "../pagination";
+import type { CursorOrOffsetParams, CursorParams, LimitOffsetParams } from "../pagination";
 
 export type PaginatedResult<TItem> = {
   items: TItem[];
@@ -31,9 +31,7 @@ export type MeProfile = {
 };
 
 export type MeProfileUpdate = {
-  name?: string;
-  timezone?: string | null;
-  currency?: string | null;
+  display_name?: string | null;
   preferences?: {
     timezone?: string | null;
     currency?: string | null;
@@ -77,6 +75,7 @@ export type SearchListingOut = {
   seller?: string | null;
   location?: string | null;
   discogs_release_id?: number | null;
+  discogs_master_id?: number | null;
 };
 
 export type SearchResponse = {
@@ -182,7 +181,7 @@ export type DiscogsSearchParams = {
   type?: "release" | "master" | "artist" | "label";
 } & LimitOffsetParams;
 
-export type WatchRulesListParams = LimitOffsetParams;
+export type WatchRulesListParams = CursorOrOffsetParams;
 
 export type WatchRuleUpdate = {
   name?: string;
@@ -191,9 +190,9 @@ export type WatchRuleUpdate = {
   poll_interval_seconds?: number;
 };
 
-export type WatchReleasesListParams = LimitOffsetParams;
+export type WatchReleasesListParams = CursorOrOffsetParams;
 
-export type NotificationsListParams = LimitOffsetParams;
+export type NotificationsListParams = CursorOrOffsetParams;
 
 export type NotificationUnreadCount = {
   unread_count: number;
@@ -225,6 +224,68 @@ export type DiscogsImportJob = {
   completed_at?: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type DiscogsDisconnectInput = {
+  revoke?: boolean;
+};
+
+export type DiscogsDisconnectResponse = {
+  disconnected: boolean;
+  provider: string;
+};
+
+export type DiscogsOAuthStartResponse = {
+  authorize_url: string;
+  provider: string;
+  scopes: string[];
+  state: string;
+  expires_at: string;
+};
+
+export type DiscogsOAuthCallbackInput = {
+  code: string;
+  state: string;
+};
+
+export type DiscogsOAuthCallbackResponse = {
+  provider: string;
+  external_user_id: string;
+  connected: boolean;
+  connected_at: string;
+};
+
+export type DiscogsImportedItemsParams = LimitOffsetParams & {
+  source: "wantlist" | "collection";
+};
+
+export type DiscogsImportedItem = {
+  watch_release_id: string;
+  discogs_release_id: number;
+  discogs_master_id: number | null;
+  title: string;
+  artist: string | null;
+  year: number | null;
+  source: "wantlist" | "collection";
+  open_in_discogs_url: string;
+};
+
+export type DiscogsImportedItemsResponse = {
+  source: "wantlist" | "collection";
+  limit: number;
+  offset: number;
+  count: number;
+  items: DiscogsImportedItem[];
+};
+
+export type DiscogsOpenInDiscogsParams = {
+  source: "wantlist" | "collection";
+};
+
+export type DiscogsOpenInDiscogsResponse = {
+  watch_release_id: string;
+  source: "wantlist" | "collection";
+  open_in_discogs_url: string;
 };
 
 export type ProviderRequestsListParams = LimitOffsetParams;
