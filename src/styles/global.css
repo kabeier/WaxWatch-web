@@ -13,13 +13,32 @@
 
   /* borders */
   --border: rgba(255, 255, 255, 0.08);
+
+  --font-family-sans: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+  /* spacing */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+
+  /* radii */
+  --radius-md: 6px;
+
+  /* semantic aliases */
+  --color-bg-subtle: var(--surface);
+  --color-fg-default: var(--text);
+  --color-state-warning: #f59e0b;
+  --color-state-success: #22c55e;
 }
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: var(--font-family-sans);
   line-height: 1.5;
 }
 

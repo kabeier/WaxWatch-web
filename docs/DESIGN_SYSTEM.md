@@ -167,6 +167,13 @@ At minimum, all new UI must satisfy:
 - Form fields include programmatically associated labels and clear validation/error messaging.
 - State UI (loading/empty/error/rate-limited) is announced or otherwise accessible to assistive technologies where applicable.
 
+## Shared component namespace
+
+Use `src/components/ui/primitives/*` as the single namespace for design-system primitives.
+
+- State primitives: `src/components/ui/primitives/state/*`
+- Shell primitives: `src/components/ui/primitives/shell/*`
+
 ## Required reusable primitives
 
 ### State UI primitives
@@ -229,6 +236,14 @@ Use this format for each temporary token/primitive during migration:
 - `canonical`: `<new_reference_name_or_link>`
 - `status`: `pending | in-progress | migrated | removed`
 - `notes`: `<breaking changes, behavioral differences, rollout notes>`
+
+## Team migration table stub (fill when official guides land)
+
+Use this table for immediate route/component tracking while official guidelines are being integrated.
+
+| Team/Area | Route or component | Current primitive/token | Canonical target | Owner | Status    | Notes     |
+| --------- | ------------------ | ----------------------- | ---------------- | ----- | --------- | --------- |
+| `<team>`  | `<route-or-file>`  | `<temporary ref>`       | `<official ref>` | `<@>` | `pending` | `<notes>` |
 
 ## Migration tracker (pre-created)
 

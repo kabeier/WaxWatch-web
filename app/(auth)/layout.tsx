@@ -1,3 +1,9 @@
+import { ContentContainer } from "@/components/ui/primitives/shell";
+
 export default function AuthGroupLayout({ children }: { children: React.ReactNode }) {
-  return <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>{children}</main>;
+  return (
+    <main style={{ padding: "var(--space-6)", fontFamily: "var(--font-family-sans)" }}>
+      <ContentContainer>{children}</ContentContainer>
+    </main>
+  );
 }
