@@ -81,10 +81,7 @@ describe("SseController", () => {
 
   it("reconnects with exponential backoff + jitter after transient disconnects", async () => {
     vi.useFakeTimers();
-    vi.spyOn(Math, "random")
-      .mockReturnValueOnce(0.1)
-      .mockReturnValueOnce(0.5)
-      .mockReturnValue(0);
+    vi.spyOn(Math, "random").mockReturnValueOnce(0.1).mockReturnValueOnce(0.5).mockReturnValue(0);
     fetchMock
       .mockRejectedValueOnce(new Error("disconnect-1"))
       .mockRejectedValueOnce(new Error("disconnect-2"))

@@ -9,7 +9,6 @@
 - [ ] `npm run lint`
 - [ ] `npm run test:coverage`
 
-
 ## SSE merge requirements (only if this PR touches SSE behavior)
 
 Reference: `docs/SSE_MODEL.md` -> **SSE done criteria**
