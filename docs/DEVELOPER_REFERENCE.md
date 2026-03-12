@@ -2,6 +2,52 @@
 
 WaxWatch is a record-price alert web app. Users can search listings across providers, save searches as alerts, manage alerts/watchlist, and receive notifications.
 
+## Developer quickstart (read this first)
+
+### 1) Boot your local environment
+
+```bash
+cp .env.example .env
+npm install
+npm run env:check:template
+```
+
+Minimum local values are already provided in `.env.example` (for example: `NODE_ENV=development`, `APP_BASE_URL=http://localhost:3000`, and local-safe placeholders for Sentry/AWS keys). Keep these keys present because `src/config/env.ts` requires all of them at runtime.
+
+For production deployments, replace placeholder/template values with environment-specific secrets and infrastructure values (especially `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_SECRETS_PREFIX`, and `TRUSTED_PROXY_CIDRS`).
+
+### 2) Confirm API contracts before building
+
+```bash
+npm run contracts:check
+```
+
+Before changing route-level rendering for API-backed screens (`/search`, `/alerts`, `/watchlist`, `/notifications`, `/settings/profile`, `/settings/integrations`), confirm transport shapes in `docs/FRONTEND_API_CONTRACT.md` and align `src/lib/api/domains/*` + query hooks first (contract-first, then UI).
+
+### 3) Run the app + common contributor commands
+
+```bash
+npm run dev
+```
+
+Open: http://localhost:3000
+
+- `npm run build`
+- `npm run start`
+- `npm run test`
+- `npm run lint`
+- `npm run format`
+
+### Read this first (in order)
+
+1. `docs/AGENT_GUIDE.md`
+2. `docs/ROUTES.md`
+3. `docs/FRONTEND_API_CONTRACT.md`
+4. `docs/SSE_MODEL.md`
+5. `docs/DESIGN_SYSTEM.md`
+
+Route maturity/status guidance is canonical in this reference's **Route matrix** section and in `docs/ROUTES.md`.
+
 ## Stack (production)
 
 - Next.js **App Router**
@@ -32,21 +78,6 @@ Validate these paths in CI (or locally) with:
 
 - `npm run contracts:check`
 - Before changing route-level rendering for API-backed screens (`/search`, `/alerts`, `/watchlist`, `/notifications`, `/settings/profile`, `/settings/integrations`), confirm transport shapes in `docs/FRONTEND_API_CONTRACT.md` and align `src/lib/api/domains/*` + query hooks first (contract-first, then UI).
-
-## Quick start
-
-```bash
-cp .env.example .env
-npm install
-npm run env:check:template
-npm run dev
-```
-
-Minimum local values are already provided in `.env.example` (for example: `NODE_ENV=development`, `APP_BASE_URL=http://localhost:3000`, and local-safe placeholders for Sentry/AWS keys). Keep these keys present because `src/config/env.ts` requires all of them at runtime.
-
-For production deployments, replace placeholder/template values with environment-specific secrets and infrastructure values (especially `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_SECRETS_PREFIX`, and `TRUSTED_PROXY_CIDRS`).
-
-Open: http://localhost:3000
 
 ## Dev commands (expected)
 
