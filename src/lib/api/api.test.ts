@@ -281,7 +281,6 @@ describe("api client", () => {
     ).resolves.toBeUndefined();
   });
 
-
   it("supports relative /api base urls for web runtimes", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {

@@ -24,9 +24,7 @@ export type RequestOptions<TBody> = {
 function buildUrl(baseUrl: string, path: string, query?: URLSearchParams): string {
   const normalizedPath = path.replace(/^\/+/, "");
   const isAbsoluteBaseUrl = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(baseUrl);
-  const base = isAbsoluteBaseUrl
-    ? new URL(baseUrl)
-    : new URL(baseUrl, "https://waxwatch.local");
+  const base = isAbsoluteBaseUrl ? new URL(baseUrl) : new URL(baseUrl, "https://waxwatch.local");
   base.pathname = base.pathname.endsWith("/") ? base.pathname : `${base.pathname}/`;
   const url = new URL(normalizedPath, base);
   if (query) {
