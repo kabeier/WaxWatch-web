@@ -79,6 +79,13 @@ Any browser assumptions must live behind injected adapters (for example `AuthSes
 - ESLint override for `src/lib/api/**/*` blocks restricted imports/globals.
 - CI/local script `npm run lint:api-core-boundaries` (`scripts/check-api-core-boundaries.mjs`) fails on disallowed imports or browser globals in api-core files.
 
+### Logger import convention
+
+- Use `@/lib/logger` for logger imports from any file outside `src/lib` root peers.
+- Use relative imports only for same-folder logger imports (for example `./logger` inside `src/lib`).
+- Avoid parent-relative (`../logger`) logger imports; ESLint enforces canonical forms.
+
+
 ### Web vs Mobile ownership
 
 - **Shared (web + mobile):** `src/lib/api/*` contracts/client/domain services and related domain types/errors.

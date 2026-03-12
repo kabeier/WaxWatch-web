@@ -1,6 +1,6 @@
 import { isApiError, toApiError, tryParseErrorEnvelope } from "./errors";
 import { parseRateLimitMeta } from "./rateLimit";
-import { error as logError, info, warn } from "../logger";
+import { error as logError, info, warn } from "@/lib/logger";
 import type { AuthSessionAdapter } from "../auth/session-adapter";
 
 export type JwtProvider = () => string | null | undefined | Promise<string | null | undefined>;

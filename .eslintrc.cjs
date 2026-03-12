@@ -36,6 +36,26 @@ module.exports = {
 
   overrides: [
     {
+      files: ["src/lib/**/*.{ts,tsx,js,jsx}"],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            patterns: [
+              {
+                group: ["../logger", "../../logger", "../../../logger", "../../../../logger", "../../../../../logger"],
+                message: "Use '@/lib/logger' for cross-folder logger imports.",
+              },
+              {
+                group: ["@/lib/logger/*"],
+                message: "Import directly from '@/lib/logger'.",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
       files: ["src/lib/api/**/*.{ts,tsx,js,jsx}"],
       excludedFiles: ["**/*.test.*", "**/*.spec.*"],
       rules: {
@@ -62,6 +82,14 @@ module.exports = {
               {
                 group: ["client-only", "client-only/*"],
                 message: "api core cannot depend on browser-only modules.",
+              },
+              {
+                group: ["../logger", "../../logger", "../../../logger", "../../../../logger", "../../../../../logger"],
+                message: "Use '@/lib/logger' for cross-folder logger imports.",
+              },
+              {
+                group: ["@/lib/logger/*"],
+                message: "Import directly from '@/lib/logger'.",
               },
             ],
           },

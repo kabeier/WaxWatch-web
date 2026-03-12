@@ -1,5 +1,5 @@
 import type { AuthEvent, AuthSessionAdapter, SignedOutReason } from "./auth/session-adapter";
-import { info, warn } from "./logger";
+import { info, warn } from "@/lib/logger";
 
 const AUTH_SESSION_KEY = "waxwatch.auth.session";
 const LEGACY_AUTH_TOKEN_KEY = "waxwatch.auth.jwt";
