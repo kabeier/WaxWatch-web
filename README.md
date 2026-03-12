@@ -1,116 +1,32 @@
-# WaxWatch Frontend (Next.js)
+# WaxWatch Web
 
-WaxWatch is a record-price alert web app. Users can search listings across providers, save searches as alerts, manage alerts/watchlist, and receive notifications.
+WaxWatch helps record collectors discover good listings faster.
 
-## Stack (production)
+Instead of manually checking marketplaces over and over, users can search for records, save alert rules, track a watchlist, and get notified when new listings match what they care about.
 
-- Next.js **App Router**
-- TypeScript
-- Supabase Auth (client session) + WaxWatch Backend API (JWT bearer)
-- TanStack Query for server state (Option A: SPA-style dashboard)
-- SSE for realtime notifications
+## What this repo is
 
-## Runtime topology (AWS EC2)
+This repository contains the **web frontend** for WaxWatch.
 
-`Route53 -> ALB (TLS termination) -> EC2 ASG -> Next.js standalone container (port 4173)`
+It focuses on the user-facing experience: search, alerts, watchlist, notifications, and account settings.
 
-Health endpoints for ALB target group checks:
+## Tech stack (high level)
 
-- `/health` (liveness)
-- `/ready` (readiness)
+- **Next.js** (React framework) for the web app
+- **TypeScript** for safer, maintainable code
+- **Supabase Auth** for sign-in/session handling
+- **Backend API integration** for listings, alerts, watchlist, notifications, and settings
+- **TanStack Query** for data fetching and caching
+- **Server-Sent Events (SSE)** for realtime notification updates
 
-See: `docs/deploy/aws-ec2.md`
+## Project goal
 
-## Contracts (do not invent API)
+Build a reliable, fast, and approachable record-alert experience that helps collectors:
 
-This repo is contract-driven. These are authoritative:
+- spend less time refreshing pages
+- catch relevant listings quickly
+- manage searches and alerts with confidence
 
-- `contracts/openapi.snapshot.json` (pinned schema snapshot)
-- `docs/FRONTEND_API_CONTRACT.md` (behavior notes + screen mapping)
+## Looking for technical docs?
 
-Validate these paths in CI (or locally) with:
-
-- `npm run contracts:check`
-- Before changing route-level rendering for API-backed screens (`/search`, `/alerts`, `/watchlist`, `/notifications`, `/settings/profile`, `/settings/integrations`), confirm transport shapes in `docs/FRONTEND_API_CONTRACT.md` and align `src/lib/api/domains/*` + query hooks first (contract-first, then UI).
-
-## Quick start
-
-```bash
-cp .env.example .env
-npm install
-npm run env:check:template
-npm run dev
-```
-
-Minimum local values are already provided in `.env.example` (for example: `NODE_ENV=development`, `APP_BASE_URL=http://localhost:3000`, and local-safe placeholders for Sentry/AWS keys). Keep these keys present because `src/config/env.ts` requires all of them at runtime.
-
-For production deployments, replace placeholder/template values with environment-specific secrets and infrastructure values (especially `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_SECRETS_PREFIX`, and `TRUSTED_PROXY_CIDRS`).
-
-Open: http://localhost:3000
-
-## Dev commands (expected)
-
-- `npm run env:check:template` (pre-flight: verifies `.env.example` stays aligned with `src/config/env.ts`)
-- `npm run dev`
-- `npm run build`
-- `npm run start`
-- `npm run test`
-- `npm run lint`
-- `npm run format`
-
-(Exact scripts depend on repo package.json; keep docs aligned with the repo.)
-
-## Route matrix
-
-Status criteria used in this matrix:
-
-- `scaffold`: route exists, but is still placeholder-first (including synthetic state toggles via URL/search params) and does not yet use real API wiring.
-- `wired-minimum`: route uses real TanStack Query hooks and/or mutations connected to the API client, with baseline form validation and pending/error handling.
-- `production-ready`: route has complete UX polish, robust error/retry flows, accessibility coverage, and automated tests.
-
-| Route                      | Status           | Notes                                                                                                         |
-| -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------- |
-| `/`                        | scaffold         | Redirect exists, but landing flow depends on `/search`, which is still synthetic-state scaffolding.           |
-| `/login`                   | scaffold         | Sign-in shell placeholder for Supabase auth UI.                                                               |
-| `/search`                  | production-ready | Full UX states, validation/mutation hardening, cooldown-aware retries, and route-level success/failure tests. |
-| `/alerts`                  | production-ready | Full query UX states with retry actions (including cooldown handling) and route-level success/failure tests.  |
-| `/alerts/new`              | production-ready | Full setup/create UX states, validation/pending feedback, and route-level success/failure tests.              |
-| `/alerts/[id]`             | production-ready | Full detail/edit/delete UX states, retry behavior, and route-level success/failure tests.                     |
-| `/watchlist`               | production-ready | Full loading/empty/error/rate-limited behavior with explicit retry/cooldown actions and route-level tests.    |
-| `/notifications`           | production-ready | Full feed/mutation UX states, retry/cooldown behavior, and route-level success/failure tests.                 |
-| `/settings/profile`        | production-ready | Full profile settings UX with validation, pending/disabled controls, cooldown-aware retries, and route tests. |
-| `/settings/alerts`         | production-ready | Full settings UX states, validation/pending/success handling, cooldown-aware retries, and route-level tests.  |
-| `/settings/integrations`   | production-ready | Full Discogs integration UX with retry/cooldown handling and route-level success/failure tests.               |
-| `/settings/danger`         | production-ready | Full danger-zone UX states with robust pending/success/error handling and route-level success/failure tests.  |
-| `/signed-out`              | scaffold         | Static confirmation page exists; no API wiring or production-hardening checks yet.                            |
-| `/account-removed`         | scaffold         | Static confirmation page exists; no API wiring or production-hardening checks yet.                            |
-| `/admin/provider-requests` | planned          | Admin-only route; not yet present in `app/`.                                                                  |
-
-### How to pick next work
-
-Prioritize routes marked `scaffold` first, especially routes still driven by synthetic state switches. Converting these to `wired-minimum` (real hooks/mutations through the API client) closes the biggest delivery gap. After that, move `wired-minimum` routes toward `production-ready` by adding end-to-end UX polish, retry behavior, accessibility validation, and automated tests.
-
-### Route matrix status-change workflow (PR requirement)
-
-Any PR that changes one or more route statuses in the matrix above must include a dedicated PR section with:
-
-1. **Route(s) changed** (exact path names from the matrix).
-2. **Current status -> target status** for each changed route.
-3. **Checklist evidence** that supports the target status:
-   - UX state coverage (loading, empty, success, error, and rate-limited/cooldown states where applicable).
-   - Validation behavior (required-field checks, invalid input handling, and clear recovery paths).
-   - Retry behavior (explicit retry actions and cooldown-aware handling when applicable).
-   - Route-level automated tests added/updated in the same PR.
-   - Accessibility validation evidence (for example: semantic roles/labels, keyboard behavior, and/or a11y smoke coverage).
-
-When moving a route to `production-ready`, reviewers should reject the status change if this evidence is missing or if route-level test updates are absent.
-
-### SSE verification (contributor workflow)
-
-For PRs that touch realtime streaming (`src/components/SseController.tsx`, `/api/stream/events`, or SSE-related auth/reconnect logic), include an "SSE verification" checklist in the PR description and confirm the done criteria in `docs/SSE_MODEL.md#sse-done-criteria`.
-
-See `docs/ROUTES.md` and `docs/IA_MAP.md`.
-
-## Agent work
-
-If you are a code agent, read **docs/AGENT_GUIDE.md** first.
+Developer and implementation documentation lives in [`docs/`](docs), including the previous repository reference now in [`docs/DEVELOPER_REFERENCE.md`](docs/DEVELOPER_REFERENCE.md).
