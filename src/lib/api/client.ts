@@ -23,13 +23,21 @@ export type RequestOptions<TBody> = {
 
 function buildUrl(baseUrl: string, path: string, query?: URLSearchParams): string {
   const normalizedPath = path.replace(/^\/+/, "");
-  const base = new URL(baseUrl);
+  const isAbsoluteBaseUrl = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(baseUrl);
+  const base = isAbsoluteBaseUrl
+    ? new URL(baseUrl)
+    : new URL(baseUrl, "https://waxwatch.local");
   base.pathname = base.pathname.endsWith("/") ? base.pathname : `${base.pathname}/`;
   const url = new URL(normalizedPath, base);
   if (query) {
     url.search = query.toString();
   }
-  return url.toString();
+
+  if (isAbsoluteBaseUrl) {
+    return url.toString();
+  }
+
+  return `${url.pathname}${url.search}`;
 }
 
 function normalizePath(path: string): string {
