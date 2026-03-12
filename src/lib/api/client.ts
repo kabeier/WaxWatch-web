@@ -56,6 +56,20 @@ async function getAccessToken(options: ApiClientOptions): Promise<string | null 
   return null;
 }
 
+async function runAuthAdapterHook(hookName: string, path: string, run: () => void | Promise<void>) {
+  try {
+    await run();
+  } catch (hookError) {
+    warn({
+      message: "auth_adapter_hook_failed",
+      scope: "auth",
+      hook: hookName,
+      path,
+      errorMessage: hookError instanceof Error ? hookError.message : String(hookError),
+    });
+  }
+}
+
 async function handleAuthorizationFailure(
   authSessionAdapter: AuthSessionAdapter | undefined,
   context: { path: string; status: number },
@@ -67,26 +81,37 @@ async function handleAuthorizationFailure(
     status: context.status,
   });
 
-  await authSessionAdapter?.clearSession?.();
-  await authSessionAdapter?.emitAuthEvent?.("reauth-required");
-  await authSessionAdapter?.redirectToSignedOut?.("reauth-required");
+  if (!authSessionAdapter) return;
+
+  await runAuthAdapterHook("clearSession", context.path, () => authSessionAdapter.clearSession());
+  await runAuthAdapterHook("emitAuthEvent", context.path, () =>
+    authSessionAdapter.emitAuthEvent("reauth-required"),
+  );
+  await runAuthAdapterHook("redirectToSignedOut", context.path, () =>
+    authSessionAdapter.redirectToSignedOut("reauth-required"),
+  );
 }
 
 async function completeAuthEvent(
   authSessionAdapter: AuthSessionAdapter | undefined,
   event: "signed-out" | "account-removed",
+  path: string,
 ) {
   if (!authSessionAdapter) return;
 
-  await authSessionAdapter.clearSession?.();
-  await authSessionAdapter.emitAuthEvent?.(event);
+  await runAuthAdapterHook("clearSession", path, () => authSessionAdapter.clearSession());
+  await runAuthAdapterHook("emitAuthEvent", path, () => authSessionAdapter.emitAuthEvent(event));
 
   if (event === "account-removed") {
-    await authSessionAdapter.redirectToAccountRemoved?.();
+    await runAuthAdapterHook("redirectToAccountRemoved", path, () =>
+      authSessionAdapter.redirectToAccountRemoved?.(),
+    );
     return;
   }
 
-  await authSessionAdapter.redirectToSignedOut?.("signed-out");
+  await runAuthAdapterHook("redirectToSignedOut", path, () =>
+    authSessionAdapter.redirectToSignedOut("signed-out"),
+  );
 }
 
 export function createApiClient(options: ApiClientOptions) {
@@ -202,7 +227,7 @@ export function createApiClient(options: ApiClientOptions) {
         path: normalizedPath,
         status: response.status,
       });
-      await completeAuthEvent(options.authSessionAdapter, "signed-out");
+      await completeAuthEvent(options.authSessionAdapter, "signed-out", normalizedPath);
     }
 
     if (method === "DELETE" && (normalizedPath === "/me" || normalizedPath === "/me/hard-delete")) {
@@ -212,7 +237,7 @@ export function createApiClient(options: ApiClientOptions) {
         path: normalizedPath,
         status: response.status,
       });
-      await completeAuthEvent(options.authSessionAdapter, "account-removed");
+      await completeAuthEvent(options.authSessionAdapter, "account-removed", normalizedPath);
     }
 
     if (response.status === 204) {
