@@ -33,4 +33,53 @@ module.exports = {
     "react/react-in-jsx-scope": "off",
     "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
   },
+
+  overrides: [
+    {
+      files: ["src/lib/api/**/*.{ts,tsx,js,jsx}"],
+      excludedFiles: ["**/*.test.*", "**/*.spec.*"],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            patterns: [
+              {
+                group: ["react", "react/*"],
+                message: "api core must remain platform-agnostic (no React imports).",
+              },
+              {
+                group: ["next", "next/*"],
+                message: "api core must remain platform-agnostic (no Next.js imports).",
+              },
+              {
+                group: ["@/components", "@/components/*"],
+                message: "api core cannot import UI modules.",
+              },
+              {
+                group: ["@/lib/query", "@/lib/query/*", "@web-query", "@web-query/*"],
+                message: "api core cannot depend on the web query layer.",
+              },
+              {
+                group: ["client-only", "client-only/*"],
+                message: "api core cannot depend on browser-only modules.",
+              },
+            ],
+          },
+        ],
+        "no-restricted-globals": [
+          "error",
+          { name: "window", message: "Inject browser access behind adapters in the web layer." },
+          { name: "document", message: "Inject browser access behind adapters in the web layer." },
+          {
+            name: "localStorage",
+            message: "Inject browser access behind adapters in the web layer.",
+          },
+          {
+            name: "sessionStorage",
+            message: "Inject browser access behind adapters in the web layer.",
+          },
+        ],
+      },
+    },
+  ],
 };
