@@ -1,4 +1,4 @@
-import { createWaxWatchApi } from "@/lib/api";
+import { createWaxWatchApi } from "@api-core/index";
 import { webAuthSessionAdapter } from "@/lib/auth-session";
 
 export const waxwatchApi = createWaxWatchApi({

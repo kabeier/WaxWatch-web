@@ -56,6 +56,35 @@ Route maturity/status guidance is canonical in this reference's **Route matrix**
 - TanStack Query for server state (Option A: SPA-style dashboard)
 - SSE for realtime notifications
 
+## Architecture layering: api core vs web query
+
+WaxWatch uses a strict layering split for data access code:
+
+- `src/lib/api/*` is **api core** and must stay platform-agnostic. This layer owns transport/domain types, API errors, pagination/rate-limit helpers, the API client, and domain services.
+- `src/lib/query/*` is the **web integration layer**. It wires TanStack Query hooks/mutations to api core services and can import browser/web-specific modules.
+
+### Strict api-core rule
+
+Code in `src/lib/api/*` **must not import or reference**:
+
+- React modules (`react`, `react-dom`, etc.)
+- Next.js modules (`next/*`)
+- Browser globals (`window`, `document`, `localStorage`, `sessionStorage`)
+- Web query/UI modules (`src/lib/query/*`, `src/components/*`)
+
+Any browser assumptions must live behind injected adapters (for example `AuthSessionAdapter`) that are provided by the web layer.
+
+### Guardrails
+
+- ESLint override for `src/lib/api/**/*` blocks restricted imports/globals.
+- CI/local script `npm run lint:api-core-boundaries` (`scripts/check-api-core-boundaries.mjs`) fails on disallowed imports or browser globals in api-core files.
+
+### Web vs Mobile ownership
+
+- **Shared (web + mobile):** `src/lib/api/*` contracts/client/domain services and related domain types/errors.
+- **Web-owned:** `src/lib/query/*`, React hooks, and browser adapters such as `webAuthSessionAdapter`.
+- **Mobile-owned (future):** a mobile adapter layer can consume `src/lib/api/*` directly, providing mobile-specific auth/session/storage adapters without importing `src/lib/query/*`.
+
 ## Runtime topology (AWS EC2)
 
 `Route53 -> ALB (TLS termination) -> EC2 ASG -> Next.js standalone container (port 4173)`

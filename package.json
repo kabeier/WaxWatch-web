@@ -31,7 +31,8 @@
     "format:check:changed": "node scripts/check-formatting-changed.mjs",
     "env:check:template": "node scripts/check-env-template-sync.mjs",
     "contracts:check": "node scripts/check-contract-doc-paths.mjs",
-    "docs:route-status-gate": "node scripts/check-route-status-test-updates.mjs"
+    "docs:route-status-gate": "node scripts/check-route-status-test-updates.mjs",
+    "lint:api-core-boundaries": "node scripts/check-api-core-boundaries.mjs"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md,yml,yaml,css}": [

@@ -1,5 +1,5 @@
-import { createApiClient, type ApiClientOptions } from './client';
-import { createDomainServices } from './domains/index';
+import { createApiClient, type ApiClientOptions } from "./client";
+import { createDomainServices } from "./domains/index";
 
 export type WaxWatchApiOptions = ApiClientOptions;
 
@@ -8,10 +8,8 @@ export function createWaxWatchApi(options: WaxWatchApiOptions) {
   return createDomainServices(client);
 }
 
-export * from './client';
-export * from './errors';
-export * from './pagination';
-export * from './rateLimit';
-export * from './domains/types';
-
-export * from './request-logging';
+export * from "./client";
+export * from "./errors";
+export * from "./pagination";
+export * from "./rateLimit";
+export * from "./domains/types";

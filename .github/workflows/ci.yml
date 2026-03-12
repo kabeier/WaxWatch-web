@@ -82,6 +82,8 @@ jobs:
 
       - name: Lint
         run: npm run lint
+      - name: API core boundaries
+        run: npm run lint:api-core-boundaries
       - name: Env template contract check
         run: npm run env:check:template
 
