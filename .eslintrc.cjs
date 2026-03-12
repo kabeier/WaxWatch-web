@@ -37,18 +37,32 @@ module.exports = {
   overrides: [
     {
       files: ["src/lib/**/*.{ts,tsx,js,jsx}"],
+      excludedFiles: ["src/lib/*.test.*", "src/lib/*.helper.*", "src/lib/*-helper.*"],
       rules: {
         "no-restricted-imports": [
           "error",
           {
             patterns: [
               {
-                group: ["../logger", "../../logger", "../../../logger", "../../../../logger", "../../../../../logger"],
-                message: "Use '@/lib/logger' for cross-folder logger imports.",
+                group: [
+                  "../logger",
+                  "../../logger",
+                  "../../../logger",
+                  "../../../../logger",
+                  "../../../../../logger",
+                  "./logger",
+                  "./logger.ts",
+                ],
+                message:
+                  "Use '@/lib/logger' for logger imports (same-folder tests/helpers may use './logger').",
               },
               {
                 group: ["@/lib/logger/*"],
                 message: "Import directly from '@/lib/logger'.",
+              },
+              {
+                group: ["src/lib/logger", "src/lib/logger.ts", "~/lib/logger", "~/lib/logger.ts"],
+                message: "Use '@/lib/logger' for logger imports.",
               },
             ],
           },
@@ -85,11 +99,15 @@ module.exports = {
               },
               {
                 group: ["../logger", "../../logger", "../../../logger", "../../../../logger", "../../../../../logger"],
-                message: "Use '@/lib/logger' for cross-folder logger imports.",
+                message: "Use '@/lib/logger' for logger imports.",
               },
               {
                 group: ["@/lib/logger/*"],
                 message: "Import directly from '@/lib/logger'.",
+              },
+              {
+                group: ["src/lib/logger", "src/lib/logger.ts", "~/lib/logger", "~/lib/logger.ts"],
+                message: "Use '@/lib/logger' for logger imports.",
               },
             ],
           },
