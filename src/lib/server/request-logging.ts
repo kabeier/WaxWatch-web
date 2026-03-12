@@ -1,5 +1,5 @@
 import type { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
-import { info } from '@/lib/logger';
+import { info } from "@/lib/logger";
 import { logServerError } from "@/lib/server-error";
 
 function generateRequestId(): string {

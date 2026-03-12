@@ -98,7 +98,13 @@ module.exports = {
                 message: "api core cannot depend on browser-only modules.",
               },
               {
-                group: ["../logger", "../../logger", "../../../logger", "../../../../logger", "../../../../../logger"],
+                group: [
+                  "../logger",
+                  "../../logger",
+                  "../../../logger",
+                  "../../../../logger",
+                  "../../../../../logger",
+                ],
                 message: "Use '@/lib/logger' for logger imports.",
               },
               {
