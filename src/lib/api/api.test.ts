@@ -4,8 +4,10 @@ import {
   resetAuthRedirectHandler,
   resetAuthSessionState,
   setAuthRedirectHandler,
+  webAuthSessionAdapter,
 } from "../auth-session";
 import { createApiClient } from "./client";
+import type { AuthSessionAdapter } from "../auth/session-adapter";
 import { createDomainServices } from "./domains";
 import type {
   DiscogsImportJob,
@@ -170,7 +172,7 @@ describe("api client", () => {
     vi.restoreAllMocks();
   });
 
-  it("adds bearer auth header from persisted supabase session by default", async () => {
+  it("adds bearer auth header when an auth adapter is injected", async () => {
     window.localStorage.setItem(
       "waxwatch.auth.session",
       JSON.stringify({ session: { access_token: "abc123" } }),
@@ -188,6 +190,7 @@ describe("api client", () => {
     const client = createApiClient({
       baseUrl: "https://api.example.com",
       fetchImpl: fetchMock,
+      authSessionAdapter: webAuthSessionAdapter,
     });
 
     await client.request("/me");
@@ -217,11 +220,65 @@ describe("api client", () => {
     const client = createApiClient({
       baseUrl: "https://api.example.com",
       fetchImpl: fetchMock,
+      authSessionAdapter: webAuthSessionAdapter,
     });
 
     await expect(client.request("/me")).rejects.toMatchObject({ status: 401 });
     expect(window.localStorage.getItem("waxwatch.auth.session")).toBeNull();
     expect(redirectSpy).toHaveBeenCalledWith("/signed-out?reason=reauth-required");
+  });
+
+  it("still throws ApiError when auth adapter hooks fail on 401/403", async () => {
+    const failingAdapter: AuthSessionAdapter = {
+      getAccessToken: () => "abc123",
+      clearSession: () => Promise.reject(new Error("storage failed")),
+      emitAuthEvent: () => Promise.reject(new Error("event failed")),
+      redirectToSignedOut: () => Promise.reject(new Error("navigation failed")),
+    };
+
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ error: { type: "unauthorized", message: "expired" } }), {
+        status: 401,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+      authSessionAdapter: failingAdapter,
+    });
+
+    await expect(client.request("/me")).rejects.toMatchObject({ status: 401, kind: "http_error" });
+  });
+
+  it("does not reject successful logout when auth adapter hooks fail", async () => {
+    const failingAdapter: AuthSessionAdapter = {
+      getAccessToken: () => "abc123",
+      clearSession: () => Promise.reject(new Error("storage failed")),
+      emitAuthEvent: () => Promise.reject(new Error("event failed")),
+      redirectToSignedOut: () => Promise.reject(new Error("navigation failed")),
+    };
+
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(null, {
+        status: 204,
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+      authSessionAdapter: failingAdapter,
+    });
+
+    await expect(
+      client.request<undefined>("/me/logout", {
+        method: "POST",
+      }),
+    ).resolves.toBeUndefined();
   });
 
   it("preserves base path when building request urls", async () => {

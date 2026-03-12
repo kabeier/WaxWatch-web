@@ -1,18 +1,14 @@
 import { isApiError, toApiError, tryParseErrorEnvelope } from "./errors";
 import { parseRateLimitMeta } from "./rateLimit";
 import { error as logError, info, warn } from "../logger";
-import {
-  clearAuthSession,
-  completeAuthEvent,
-  getSupabaseAccessToken,
-  handleApiAuthorizationFailure,
-} from "../auth-session";
+import type { AuthSessionAdapter } from "../auth/session-adapter";
 
 export type JwtProvider = () => string | null | undefined | Promise<string | null | undefined>;
 
 export type ApiClientOptions = {
   baseUrl: string;
   getJwt?: JwtProvider;
+  authSessionAdapter?: AuthSessionAdapter;
   fetchImpl?: typeof fetch;
   defaultHeaders?: HeadersInit;
   requestId?: string;
@@ -48,9 +44,78 @@ function isAbortError(error: unknown): boolean {
     : error instanceof Error && error.name === "AbortError";
 }
 
+async function getAccessToken(options: ApiClientOptions): Promise<string | null | undefined> {
+  if (options.getJwt) {
+    return options.getJwt();
+  }
+
+  if (options.authSessionAdapter?.getAccessToken) {
+    return options.authSessionAdapter.getAccessToken();
+  }
+
+  return null;
+}
+
+async function runAuthAdapterHook(hookName: string, path: string, run: () => void | Promise<void>) {
+  try {
+    await run();
+  } catch (hookError) {
+    warn({
+      message: "auth_adapter_hook_failed",
+      scope: "auth",
+      hook: hookName,
+      path,
+      errorMessage: hookError instanceof Error ? hookError.message : String(hookError),
+    });
+  }
+}
+
+async function handleAuthorizationFailure(
+  authSessionAdapter: AuthSessionAdapter | undefined,
+  context: { path: string; status: number },
+) {
+  warn({
+    message: "auth_reauth_required",
+    scope: "auth",
+    path: context.path,
+    status: context.status,
+  });
+
+  if (!authSessionAdapter) return;
+
+  await runAuthAdapterHook("clearSession", context.path, () => authSessionAdapter.clearSession());
+  await runAuthAdapterHook("emitAuthEvent", context.path, () =>
+    authSessionAdapter.emitAuthEvent("reauth-required"),
+  );
+  await runAuthAdapterHook("redirectToSignedOut", context.path, () =>
+    authSessionAdapter.redirectToSignedOut("reauth-required"),
+  );
+}
+
+async function completeAuthEvent(
+  authSessionAdapter: AuthSessionAdapter | undefined,
+  event: "signed-out" | "account-removed",
+  path: string,
+) {
+  if (!authSessionAdapter) return;
+
+  await runAuthAdapterHook("clearSession", path, () => authSessionAdapter.clearSession());
+  await runAuthAdapterHook("emitAuthEvent", path, () => authSessionAdapter.emitAuthEvent(event));
+
+  if (event === "account-removed") {
+    await runAuthAdapterHook("redirectToAccountRemoved", path, () =>
+      authSessionAdapter.redirectToAccountRemoved?.(),
+    );
+    return;
+  }
+
+  await runAuthAdapterHook("redirectToSignedOut", path, () =>
+    authSessionAdapter.redirectToSignedOut("signed-out"),
+  );
+}
+
 export function createApiClient(options: ApiClientOptions) {
   const fetchImpl = options.fetchImpl ?? fetch;
-  const jwtProvider = options.getJwt ?? getSupabaseAccessToken;
 
   async function request<TResponse, TBody = unknown>(
     path: string,
@@ -60,7 +125,7 @@ export function createApiClient(options: ApiClientOptions) {
     const startedAt = Date.now();
     const normalizedPath = normalizePath(path);
     const url = buildUrl(options.baseUrl, path, query);
-    const jwt = await jwtProvider?.();
+    const jwt = await getAccessToken(options);
     const headers = new Headers(options.defaultHeaders);
 
     if (options.requestId) {
@@ -124,7 +189,7 @@ export function createApiClient(options: ApiClientOptions) {
 
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        handleApiAuthorizationFailure({
+        await handleAuthorizationFailure(options.authSessionAdapter, {
           path: normalizedPath,
           status: response.status,
         });
@@ -162,8 +227,7 @@ export function createApiClient(options: ApiClientOptions) {
         path: normalizedPath,
         status: response.status,
       });
-      clearAuthSession();
-      completeAuthEvent("signed-out");
+      await completeAuthEvent(options.authSessionAdapter, "signed-out", normalizedPath);
     }
 
     if (method === "DELETE" && (normalizedPath === "/me" || normalizedPath === "/me/hard-delete")) {
@@ -173,8 +237,7 @@ export function createApiClient(options: ApiClientOptions) {
         path: normalizedPath,
         status: response.status,
       });
-      clearAuthSession();
-      completeAuthEvent("account-removed");
+      await completeAuthEvent(options.authSessionAdapter, "account-removed", normalizedPath);
     }
 
     if (response.status === 204) {
