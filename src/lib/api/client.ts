@@ -72,7 +72,10 @@ async function handleAuthorizationFailure(
   await authSessionAdapter?.redirectToSignedOut?.("reauth-required");
 }
 
-async function completeAuthEvent(authSessionAdapter: AuthSessionAdapter | undefined, event: "signed-out" | "account-removed") {
+async function completeAuthEvent(
+  authSessionAdapter: AuthSessionAdapter | undefined,
+  event: "signed-out" | "account-removed",
+) {
   if (!authSessionAdapter) return;
 
   await authSessionAdapter.clearSession?.();

@@ -49,7 +49,10 @@ export function createNativeAuthSessionAdapter(nav: NavigationTarget): AuthSessi
           currentSession?: { access_token?: string };
         };
         return (
-          parsed.access_token ?? parsed.session?.access_token ?? parsed.currentSession?.access_token ?? null
+          parsed.access_token ??
+          parsed.session?.access_token ??
+          parsed.currentSession?.access_token ??
+          null
         );
       } catch {
         return null;
