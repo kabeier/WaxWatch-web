@@ -1,10 +1,13 @@
 # WaxWatch Frontend API Contract
 
-**Contract version:** `2026-03-12.0`
+**Contract version:** `2026-03-12.1`
 
 This contract captures **current API behavior** and maps it to intended React surfaces so frontend can scaffold screens directly from OpenAPI payloads.
 
 ## Changelog
+
+- `2026-03-12.1`
+  - Clarified watch-rules frontend scope: `DELETE /api/watch-rules/{rule_id}/hard` is admin/dev-only and excluded from current web/mobile frontend implementation.
 
 - `2026-03-12.0`
   - Added a cross-platform `API_BASE_URL` strategy for web and mobile clients, including environment-variable recommendations for local/staging/production and explicit `createWaxWatchApi` adapter injection guidance (`fetchImpl`, `authSessionAdapter`, `getJwt`).
@@ -485,11 +488,11 @@ The API has two watch paradigms; frontend can present both under a single “Ale
 - `PATCH /api/watch-rules/{rule_id}` → edit alert parameters.
 - `DELETE /api/watch-rules/{rule_id}` → soft-disable alert.
 - `POST /api/watch-rules/{rule_id}/disable` → explicit disable action variant.
-- `DELETE /api/watch-rules/{rule_id}/hard` → permanent delete.
+- `DELETE /api/watch-rules/{rule_id}/hard` → permanent delete (**admin/dev-only; excluded from current web/mobile frontend scope**).
 
 **Screens + actions:**
 
-- `AlertsListScreen`: view + paginate + disable/hard-delete.
+- `AlertsListScreen`: view + paginate + disable (no hard-delete action in current user-facing web/mobile scope).
 - `AlertEditorScreen`: create/update rule name, sources, polling interval.
 - `query.sources` is validated against the live provider registry; values must be registered+enabled provider keys. Frontend must not submit enum-only/disabled values, and should refresh provider choices from profile integrations or provider-capabilities endpoints.
 - `AlertDetailScreen`: inspect scheduling fields (`last_run_at`, `next_run_at`).
