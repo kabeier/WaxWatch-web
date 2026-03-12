@@ -25,7 +25,6 @@ All new route implementation/migration work must compose shared primitives first
 - Use shell primitives from `src/components/ui/primitives/shell` for route-level layout scaffolding and navigation chrome.
 - Promote any missing visual behavior into shared primitives/tokens before consuming it in route pages.
 
-
 ## Route maturity/status (canonical guidance)
 
 Route maturity definitions and the up-to-date status matrix are maintained in `docs/DEVELOPER_REFERENCE.md` under **Route matrix**.
