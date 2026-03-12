@@ -4,6 +4,7 @@ import {
   resetAuthRedirectHandler,
   resetAuthSessionState,
   setAuthRedirectHandler,
+  webAuthSessionAdapter,
 } from "../auth-session";
 import { createApiClient } from "./client";
 import { createDomainServices } from "./domains";
@@ -170,7 +171,7 @@ describe("api client", () => {
     vi.restoreAllMocks();
   });
 
-  it("adds bearer auth header from persisted supabase session by default", async () => {
+  it("adds bearer auth header when an auth adapter is injected", async () => {
     window.localStorage.setItem(
       "waxwatch.auth.session",
       JSON.stringify({ session: { access_token: "abc123" } }),
@@ -188,6 +189,7 @@ describe("api client", () => {
     const client = createApiClient({
       baseUrl: "https://api.example.com",
       fetchImpl: fetchMock,
+      authSessionAdapter: webAuthSessionAdapter,
     });
 
     await client.request("/me");
@@ -217,6 +219,7 @@ describe("api client", () => {
     const client = createApiClient({
       baseUrl: "https://api.example.com",
       fetchImpl: fetchMock,
+      authSessionAdapter: webAuthSessionAdapter,
     });
 
     await expect(client.request("/me")).rejects.toMatchObject({ status: 401 });

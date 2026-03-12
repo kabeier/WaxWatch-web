@@ -1,3 +1,4 @@
+import type { AuthEvent, AuthSessionAdapter, SignedOutReason } from "./auth/session-adapter";
 import { info, warn } from "./logger";
 
 const AUTH_SESSION_KEY = "waxwatch.auth.session";
@@ -5,8 +6,6 @@ const LEGACY_AUTH_TOKEN_KEY = "waxwatch.auth.jwt";
 
 export const SIGNED_OUT_ROUTE = "/signed-out";
 export const ACCOUNT_REMOVED_ROUTE = "/account-removed";
-
-export type AuthEvent = "signed-out" | "account-removed" | "reauth-required";
 
 type RedirectHandler = (to: string) => void;
 
@@ -60,42 +59,61 @@ export function resetAuthRedirectHandler() {
   };
 }
 
+export const webAuthSessionAdapter: AuthSessionAdapter = {
+  getAccessToken() {
+    const session = readPersistedSession();
+    if (!session) {
+      return null;
+    }
+
+    const token =
+      session.access_token ?? session.session?.access_token ?? session.currentSession?.access_token;
+
+    return typeof token === "string" && token.length > 0 ? token : null;
+  },
+  clearSession() {
+    if (typeof window === "undefined") return;
+
+    window.localStorage.removeItem(AUTH_SESSION_KEY);
+    window.localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY);
+
+    info({
+      message: "auth_session_cleared",
+      scope: "auth",
+    });
+  },
+  emitAuthEvent(event: AuthEvent) {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new CustomEvent("waxwatch:auth", { detail: event }));
+  },
+  redirectToSignedOut(reason: SignedOutReason) {
+    redirectHandler(`${SIGNED_OUT_ROUTE}?reason=${reason}`);
+  },
+  redirectToAccountRemoved() {
+    redirectHandler(ACCOUNT_REMOVED_ROUTE);
+  },
+};
+
 export function getSupabaseAccessToken(): string | null {
-  const session = readPersistedSession();
-  if (!session) {
-    return null;
-  }
-
-  const token =
-    session.access_token ?? session.session?.access_token ?? session.currentSession?.access_token;
-
-  return typeof token === "string" && token.length > 0 ? token : null;
+  return webAuthSessionAdapter.getAccessToken() as string | null;
 }
 
 export function clearAuthSession() {
-  if (typeof window === "undefined") return;
-
-  window.localStorage.removeItem(AUTH_SESSION_KEY);
-  window.localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY);
-
-  info({
-    message: "auth_session_cleared",
-    scope: "auth",
-  });
+  webAuthSessionAdapter.clearSession();
 }
 
 export function completeAuthEvent(event: AuthEvent) {
   if (typeof window === "undefined" || redirectInProgress) return;
 
   redirectInProgress = true;
-  window.dispatchEvent(new CustomEvent("waxwatch:auth", { detail: event }));
+  webAuthSessionAdapter.emitAuthEvent(event);
 
   if (event === "account-removed") {
-    redirectHandler(ACCOUNT_REMOVED_ROUTE);
+    webAuthSessionAdapter.redirectToAccountRemoved?.();
     return;
   }
 
-  redirectHandler(`${SIGNED_OUT_ROUTE}?reason=${event}`);
+  webAuthSessionAdapter.redirectToSignedOut(event);
 }
 
 export function handleApiAuthorizationFailure(context: { path: string; status: number }) {
