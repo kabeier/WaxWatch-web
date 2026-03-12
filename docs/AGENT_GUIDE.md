@@ -118,3 +118,9 @@ Before opening a PR, confirm all items:
 - [ ] Shell/layout work reuses shared primitives from `src/components/ui/primitives/shell` (`AppShell`, `TopNav`, `SideNav`, `ContentContainer`) instead of ad-hoc wrappers.
 - [ ] If this PR implements new design-guide input, `docs/DESIGN_GUIDE_INTAKE_CHECKLIST.md` is completed and attached in the PR description.
 - [ ] Design-guide migration sequence is respected: tokens -> shared primitives -> route pages -> cleanup deprecated temporary mappings.
+
+## Route status matrix + promotion criteria
+
+- The canonical route status matrix and status definitions (`scaffold`, `wired-minimum`, `production-ready`) live in `docs/DEVELOPER_REFERENCE.md` under **Route matrix**.
+- Promotion evidence requirements (including route-level test updates) also live in `docs/DEVELOPER_REFERENCE.md` under **Route matrix status-change workflow (PR requirement)**.
+- `README.md` intentionally stays high-level; do not add route-level promotion gates there.

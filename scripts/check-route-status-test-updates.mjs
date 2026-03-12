@@ -17,6 +17,7 @@ try {
 }
 
 const diffRange = `origin/${baseRef}...HEAD`;
+const ROUTE_STATUS_DOC = "docs/DEVELOPER_REFERENCE.md";
 const changedFilesOutput = execFileSync(
   "git",
   ["diff", "--name-only", "--diff-filter=AMR", diffRange],
@@ -28,12 +29,12 @@ const changedFiles = changedFilesOutput
   .map((file) => file.trim())
   .filter(Boolean);
 
-if (!changedFiles.includes("README.md")) {
-  console.log("Route-status test gate passed (README.md route matrix unchanged).");
+if (!changedFiles.includes(ROUTE_STATUS_DOC)) {
+  console.log(`Route-status test gate passed (${ROUTE_STATUS_DOC} route matrix unchanged).`);
   process.exit(0);
 }
 
-const readmeDiff = execFileSync("git", ["diff", "-U0", diffRange, "--", "README.md"], {
+const routeStatusDocDiff = execFileSync("git", ["diff", "-U0", diffRange, "--", ROUTE_STATUS_DOC], {
   encoding: "utf8",
 });
 
@@ -52,7 +53,7 @@ const parseRouteStatus = (line) => {
   };
 };
 
-for (const line of readmeDiff.split("\n")) {
+for (const line of routeStatusDocDiff.split("\n")) {
   if (!line.startsWith("-") && !line.startsWith("+")) {
     continue;
   }
@@ -97,7 +98,7 @@ const routeLevelTestChange = changedFiles.some((file) =>
 );
 
 if (!routeLevelTestChange) {
-  console.error("Detected route promotions to production-ready in README.md:");
+  console.error(`Detected route promotions to production-ready in ${ROUTE_STATUS_DOC}:`);
   for (const route of promotedRoutes) {
     console.error(`  - ${route}`);
   }

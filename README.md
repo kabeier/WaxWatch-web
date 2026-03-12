@@ -30,3 +30,9 @@ Build a reliable, fast, and approachable record-alert experience that helps coll
 ## Looking for technical docs?
 
 Developer and implementation documentation lives in [`docs/`](docs), including the previous repository reference now in [`docs/DEVELOPER_REFERENCE.md`](docs/DEVELOPER_REFERENCE.md).
+
+Canonical internal references:
+
+- Route status matrix + status definitions: [`docs/DEVELOPER_REFERENCE.md#route-matrix`](docs/DEVELOPER_REFERENCE.md#route-matrix)
+- Route promotion evidence requirements: [`docs/DEVELOPER_REFERENCE.md#route-matrix-status-change-workflow-pr-requirement`](docs/DEVELOPER_REFERENCE.md#route-matrix-status-change-workflow-pr-requirement)
+- Agent/contributor execution rules: [`docs/AGENT_GUIDE.md`](docs/AGENT_GUIDE.md)
