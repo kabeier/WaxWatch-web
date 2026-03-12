@@ -85,7 +85,6 @@ Any browser assumptions must live behind injected adapters (for example `AuthSes
 - Use relative imports only for same-folder logger imports (for example `./logger` inside `src/lib`).
 - Avoid parent-relative (`../logger`) logger imports; ESLint enforces canonical forms.
 
-
 ### Web vs Mobile ownership
 
 - **Shared (web + mobile):** `src/lib/api/*` contracts/client/domain services and related domain types/errors.
