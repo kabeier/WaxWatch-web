@@ -26,9 +26,14 @@ import type {
   NotificationUnreadCount,
   NotificationsListParams,
   OutboundDelivery,
+  OutboundEbayRedirectParams,
   PaginatedResult,
+  ProviderRequestAdmin,
+  ProviderRequestAdminFilters,
+  ProviderRequestSummary,
   OutboundListParams,
   ProviderRequest,
+  ProviderRequestsAdminListParams,
   ProviderRequestsListParams,
   SaveSearchAlertRequest,
   SearchRequest,
@@ -44,8 +49,6 @@ import type {
 type ApiClient = ReturnType<typeof createApiClient>;
 
 export function createDomainServices(client: ApiClient) {
-  // Frontend SDK parity targets user-facing endpoints only.
-  // Admin/dev-only routes (for example watch-rule hard-delete endpoints) are intentionally out of scope unless product requirements change.
   const me = {
     getProfile: () => client.request<MeProfile>("/me"),
     updateProfile: (input: MeProfileUpdate) =>
@@ -114,6 +117,14 @@ export function createDomainServices(client: ApiClient) {
       ),
     remove: (watchRuleId: string) =>
       client.request<void>(`/watch-rules/${encodeURIComponent(watchRuleId)}`, {
+        method: "DELETE",
+      }),
+    disable: (watchRuleId: string) =>
+      client.request<WatchRule>(`/watch-rules/${encodeURIComponent(watchRuleId)}/disable`, {
+        method: "POST",
+      }),
+    hardDelete: (watchRuleId: string) =>
+      client.request<void>(`/watch-rules/${encodeURIComponent(watchRuleId)}/hard`, {
         method: "DELETE",
       }),
   };
@@ -208,19 +219,43 @@ export function createDomainServices(client: ApiClient) {
   const providerRequests = {
     list: (params: ProviderRequestsListParams = {}) => {
       const query = appendLimitOffset(new URLSearchParams(), params);
-      return client.request<PaginatedResult<ProviderRequest>>("/provider-requests", {}, query);
+      return client.request<ProviderRequest[]>("/provider-requests", {}, query);
     },
     create: (provider: string) =>
       client.request<ProviderRequest, { provider: string }>("/provider-requests", {
         method: "POST",
         body: { provider },
       }),
+    summary: () => client.request<ProviderRequestSummary[]>("/provider-requests/summary"),
+    admin: {
+      list: (params: ProviderRequestsAdminListParams = {}) => {
+        const query = appendCursorOrOffsetPagination(new URLSearchParams(), params);
+        appendProviderRequestAdminFilters(query, params);
+        return client.request<ProviderRequestAdmin[]>("/provider-requests/admin", {}, query);
+      },
+      summary: (params: ProviderRequestAdminFilters = {}) => {
+        const query = new URLSearchParams();
+        appendProviderRequestAdminFilters(query, params);
+        return client.request<ProviderRequestSummary[]>(
+          "/provider-requests/admin/summary",
+          {},
+          query,
+        );
+      },
+    },
   };
 
   const outbound = {
     list: (params: OutboundListParams = {}) => {
       const query = appendCursorPagination(new URLSearchParams(), params);
       return client.request<PaginatedResult<OutboundDelivery>>("/outbound", {}, query);
+    },
+    getEbayRedirect: (listingId: string, params: OutboundEbayRedirectParams = {}) => {
+      const query = new URLSearchParams();
+      if (params.referer) {
+        query.set("referer", params.referer);
+      }
+      return client.request<void>(`/outbound/ebay/${encodeURIComponent(listingId)}`, {}, query);
     },
   };
 
@@ -235,4 +270,21 @@ export function createDomainServices(client: ApiClient) {
     providerRequests,
     outbound,
   };
+}
+
+function appendProviderRequestAdminFilters(
+  query: URLSearchParams,
+  params: ProviderRequestAdminFilters,
+): URLSearchParams {
+  if (params.provider) query.set("provider", params.provider);
+  if (params.status_code_gte !== undefined) {
+    query.set("status_code_gte", String(params.status_code_gte));
+  }
+  if (params.status_code_lte !== undefined) {
+    query.set("status_code_lte", String(params.status_code_lte));
+  }
+  if (params.created_from) query.set("created_from", params.created_from);
+  if (params.created_to) query.set("created_to", params.created_to);
+  if (params.user_id) query.set("user_id", params.user_id);
+  return query;
 }
