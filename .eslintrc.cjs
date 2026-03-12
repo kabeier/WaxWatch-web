@@ -37,7 +37,7 @@ module.exports = {
   overrides: [
     {
       files: ["src/lib/**/*.{ts,tsx,js,jsx}"],
-      excludedFiles: ["src/lib/*.test.*", "src/lib/*.helper.*", "src/lib/*-helper.*"],
+      excludedFiles: ["src/lib/**/*.test.*", "src/lib/**/*.helper.*", "src/lib/**/*-helper.*"],
       rules: {
         "no-restricted-imports": [
           "error",
