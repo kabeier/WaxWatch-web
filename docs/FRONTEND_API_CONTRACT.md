@@ -1,10 +1,14 @@
 # WaxWatch Frontend API Contract
 
-**Contract version:** `2026-03-02.4`
+**Contract version:** `2026-03-12.0`
 
 This contract captures **current API behavior** and maps it to intended React surfaces so frontend can scaffold screens directly from OpenAPI payloads.
 
 ## Changelog
+
+- `2026-03-12.0`
+  - Added a cross-platform `API_BASE_URL` strategy for web and mobile clients, including environment-variable recommendations for local/staging/production and explicit `createWaxWatchApi` adapter injection guidance (`fetchImpl`, `authSessionAdapter`, `getJwt`).
+  - Documented mobile CORS/auth-header behavior expectations when native apps call the API directly, including staging/production origin and client-header policy notes.
 
 - `2026-03-02.4`
   - Structural cleanup only: reordered section `4.6 Provider Request Observability (User + Admin)` to follow `4.5` and keep all `4.x` endpoint contracts before governance/process sections `5/6/7`.
@@ -92,6 +96,50 @@ Recommended values:
 - **Production**: `CORS_ALLOWED_ORIGINS=https://app.your-frontend.example`
 
 Security rule: when `CORS_ALLOW_CREDENTIALS=true`, do **not** use wildcard (`*`) for origins, methods, or headers.
+
+## 2.1 Cross-platform `API_BASE_URL` strategy (Web + Mobile)
+
+Use a single API-client contract (`createWaxWatchApi`) across platforms and vary only runtime wiring (`baseUrl`, auth adapter, fetch implementation):
+
+- **Web (Next.js/browser):** keep `baseUrl` relative (`/api`) so browser requests stay same-origin via the web app/reverse proxy.
+- **Mobile (React Native/native shell):** use an absolute `https://...` API URL because native clients do not share the browser origin model.
+- **API client support:** `createWaxWatchApi` supports both relative and absolute `baseUrl` values and also supports externally injected runtime adapters via:
+  - `fetchImpl` for host-specific HTTP stack overrides/tests.
+  - `authSessionAdapter` for platform auth-session lifecycle hooks.
+  - `getJwt` for explicit token provisioning where adapter-based auth is not used.
+
+Recommended environment variables:
+
+- `NEXT_PUBLIC_API_BASE_URL` (web): default `/api` in local/staging/prod unless deploying frontend and API on separate origins.
+- `MOBILE_API_BASE_URL` (mobile): required absolute URL per environment.
+
+Suggested values:
+
+- **Web local/staging/production (same-origin proxy):** `/api`
+- **Mobile local dev:** `http://<LAN-IP>:8000/api` (device/emulator reachable host)
+- **Mobile staging:** `https://api.staging.your-backend.example/api`
+- **Mobile production:** `https://api.your-backend.example/api`
+
+Implementation note: if web is moved to cross-origin API calls, switch web `API_BASE_URL` to absolute HTTPS and align CORS allowlists accordingly.
+
+## 2.2 CORS + auth-header notes for mobile native HTTP clients
+
+Mobile apps using native HTTP stacks (for example `fetch`/`URLSession`/`OkHttp` within the app process) still send `Authorization: Bearer <jwt>` and `Content-Type: application/json`, but browser preflight semantics do not apply in the same way as web. Backend policy should still be explicit:
+
+- Keep strict web CORS allowlists for browser origins only (no wildcard with credentials).
+- Accept bearer auth for known mobile client builds over TLS and treat mobile identity as app/client metadata (for example `X-Client-Platform`, `X-App-Version`) rather than browser `Origin` headers.
+- Expected browser origins:
+  - **Staging:** `https://staging.your-frontend.example`
+  - **Production:** `https://app.your-frontend.example`
+- Expected mobile clients:
+  - **Staging:** internal/beta mobile builds pointing to `https://api.staging.your-backend.example/api`
+  - **Production:** signed release builds pointing to `https://api.your-backend.example/api`
+
+Operational guidance:
+
+- Ensure auth middleware consistently parses bearer tokens regardless of browser/native caller.
+- Keep server-side rate limits and audit logs segmented by route scope and client metadata where possible.
+- If any endpoint is cookie-based for web, preserve token-header auth for mobile parity and avoid forcing credentialed cross-origin cookies on native clients.
 
 ---
 

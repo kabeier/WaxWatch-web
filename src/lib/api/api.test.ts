@@ -281,6 +281,46 @@ describe("api client", () => {
     ).resolves.toBeUndefined();
   });
 
+  it("supports relative /api base urls for web runtimes", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "/api",
+      fetchImpl: fetchMock,
+    });
+
+    await client.request("/markets", undefined, new URLSearchParams([["limit", "10"]]));
+
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/markets?limit=10");
+  });
+
+  it("supports protocol-relative API bases without dropping host", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "//api.example.com/api",
+      fetchImpl: fetchMock,
+    });
+
+    await client.request("/markets", undefined, new URLSearchParams([["limit", "10"]]));
+
+    expect(fetchMock.mock.calls[0][0]).toBe("//api.example.com/api/markets?limit=10");
+  });
+
   it("preserves base path when building request urls", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {

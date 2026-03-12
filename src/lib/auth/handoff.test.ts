@@ -56,6 +56,39 @@ describe("auth handoff helpers", () => {
     vi.useRealTimers();
   });
 
+  test("rejects repeated query params (array values) without throwing", () => {
+    expect(normalizeRouteReturnTo(["/account", "/login"])).toBeNull();
+    expect(
+      normalizeMobileHandoff(["waxwatch://auth/callback", "waxwatch://auth/callback"]),
+    ).toBeNull();
+
+    expect(() =>
+      resolveAuthHandoffContext({
+        return_to: ["/account", "/login"],
+        handoff: ["waxwatch://auth/callback", "waxwatch://auth/callback"],
+        state: ["state-1", "state-2"],
+        nonce: ["nonce-1", "nonce-2"],
+        expires_at: ["1735689600", "1735689700"],
+      }),
+    ).not.toThrow();
+
+    const context = resolveAuthHandoffContext({
+      return_to: ["/account", "/login"],
+      handoff: ["waxwatch://auth/callback", "waxwatch://auth/callback"],
+      state: ["state-1", "state-2"],
+      nonce: ["nonce-1", "nonce-2"],
+      expires_at: ["1735689600", "1735689700"],
+    });
+
+    expect(context.returnTo).toBeNull();
+    expect(context.handoffUrl).toBeNull();
+    expect(context.state).toBeNull();
+    expect(context.nonce).toBeNull();
+    expect(context.expiresAt).toBeNull();
+    expect(context.expiresAtEpochMs).toBeNull();
+    expect(context.hasRequiredSecurityParams).toBe(false);
+  });
+
   test("rebuilds a safe login href from normalized handoff context", () => {
     const context = resolveAuthHandoffContext({
       return_to: "/account",

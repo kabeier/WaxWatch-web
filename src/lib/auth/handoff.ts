@@ -14,32 +14,44 @@ export type AuthHandoffContext = {
   hasRequiredSecurityParams: boolean;
 };
 
-export function normalizeRouteReturnTo(value: string | null | undefined): string | null {
-  if (!value) {
+type QueryParamValue = string | string[] | null | undefined;
+
+function coerceSingleQueryParam(value: QueryParamValue): string | null {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return null;
+}
+
+export function normalizeRouteReturnTo(value: QueryParamValue): string | null {
+  const scalarValue = coerceSingleQueryParam(value);
+  if (!scalarValue) {
     return null;
   }
 
-  if (!value.startsWith("/")) {
+  if (!scalarValue.startsWith("/")) {
     return null;
   }
 
-  if (value.startsWith("//")) {
+  if (scalarValue.startsWith("//")) {
     return null;
   }
 
-  const routePath = value.split("?")[0] ?? value;
+  const routePath = scalarValue.split("?")[0] ?? scalarValue;
   return WEB_ONLY_AUTH_ROUTES.includes(routePath as (typeof WEB_ONLY_AUTH_ROUTES)[number])
-    ? value
+    ? scalarValue
     : null;
 }
 
-export function normalizeMobileHandoff(value: string | null | undefined): string | null {
-  if (!value) {
+export function normalizeMobileHandoff(value: QueryParamValue): string | null {
+  const scalarValue = coerceSingleQueryParam(value);
+  if (!scalarValue) {
     return null;
   }
 
   try {
-    const parsed = new URL(value);
+    const parsed = new URL(scalarValue);
 
     if (
       MOBILE_HANDOFF_SCHEMES.includes(parsed.protocol as (typeof MOBILE_HANDOFF_SCHEMES)[number])
@@ -61,16 +73,17 @@ export function normalizeMobileHandoff(value: string | null | undefined): string
   }
 }
 
-function normalizeOpaque(value: string | null | undefined): string | null {
-  if (!value) {
+function normalizeOpaque(value: QueryParamValue): string | null {
+  const scalarValue = coerceSingleQueryParam(value);
+  if (!scalarValue) {
     return null;
   }
 
-  const trimmed = value.trim();
+  const trimmed = scalarValue.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
 
-function normalizeExpiry(value: string | null | undefined): {
+function normalizeExpiry(value: QueryParamValue): {
   raw: string | null;
   epochMs: number | null;
 } {
@@ -93,11 +106,11 @@ function normalizeExpiry(value: string | null | undefined): {
 }
 
 export function resolveAuthHandoffContext(searchParams: {
-  return_to?: string;
-  handoff?: string;
-  state?: string;
-  nonce?: string;
-  expires_at?: string;
+  return_to?: string | string[];
+  handoff?: string | string[];
+  state?: string | string[];
+  nonce?: string | string[];
+  expires_at?: string | string[];
 }): AuthHandoffContext {
   const returnTo = normalizeRouteReturnTo(searchParams.return_to);
   const handoffUrl = normalizeMobileHandoff(searchParams.handoff);
