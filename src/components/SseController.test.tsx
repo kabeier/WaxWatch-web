@@ -3,14 +3,27 @@ import { render, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import SseController from "./SseController";
 import { queryKeys } from "@/lib/query/keys";
-import { getSupabaseAccessToken, handleApiAuthorizationFailure } from "@/lib/auth-session";
+import { webAuthSessionAdapter } from "@/lib/auth-session";
+import { handleAuthorizationFailureWithAdapter } from "@/lib/auth/session-lifecycle";
 
 vi.mock("@/lib/auth-session", async () => {
   const actual = await vi.importActual<typeof import("@/lib/auth-session")>("@/lib/auth-session");
   return {
     ...actual,
-    getSupabaseAccessToken: vi.fn(),
-    handleApiAuthorizationFailure: vi.fn(),
+    webAuthSessionAdapter: {
+      ...actual.webAuthSessionAdapter,
+      getAccessToken: vi.fn(),
+    },
+  };
+});
+
+vi.mock("@/lib/auth/session-lifecycle", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/auth/session-lifecycle")>(
+    "@/lib/auth/session-lifecycle",
+  );
+  return {
+    ...actual,
+    handleAuthorizationFailureWithAdapter: vi.fn(),
   };
 });
 
@@ -43,7 +56,7 @@ describe("SseController", () => {
 
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
-    vi.mocked(getSupabaseAccessToken).mockReturnValue("jwt-token");
+    vi.mocked(webAuthSessionAdapter.getAccessToken).mockResolvedValue("jwt-token");
   });
 
   afterEach(() => {
@@ -122,7 +135,7 @@ describe("SseController", () => {
 
   it("stops immediately when token is missing", async () => {
     vi.useFakeTimers();
-    vi.mocked(getSupabaseAccessToken).mockReturnValue(null);
+    vi.mocked(webAuthSessionAdapter.getAccessToken).mockResolvedValue(null);
 
     const setTimeoutSpy = vi.spyOn(window, "setTimeout");
     const queryClient = new QueryClient();
@@ -133,7 +146,7 @@ describe("SseController", () => {
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(setTimeoutSpy).not.toHaveBeenCalled();
-    expect(handleApiAuthorizationFailure).not.toHaveBeenCalled();
+    expect(handleAuthorizationFailureWithAdapter).not.toHaveBeenCalled();
   });
 
   it.each([401, 403])(
@@ -141,19 +154,16 @@ describe("SseController", () => {
     async (status) => {
       fetchMock.mockResolvedValueOnce(createSseResponse("", { status }));
 
-      vi.useFakeTimers();
       const queryClient = new QueryClient();
 
       renderWithClient(queryClient);
 
-      await vi.runAllTicks();
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(handleApiAuthorizationFailure).toHaveBeenCalledWith({
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      expect(handleAuthorizationFailureWithAdapter).toHaveBeenCalledWith(webAuthSessionAdapter, {
         path: "/api/stream/events",
         status,
       });
-
-      await vi.advanceTimersByTimeAsync(35_000);
+      await new Promise((resolve) => setTimeout(resolve, 20));
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(warnSpy).not.toHaveBeenCalled();
     },
