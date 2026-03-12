@@ -17,6 +17,9 @@ import type {
   DiscogsStatus,
   MeProfile,
   Notification,
+  ProviderRequest,
+  ProviderRequestAdmin,
+  ProviderRequestSummary,
   SearchResponse,
   WatchRelease,
   WatchRule,
@@ -527,6 +530,13 @@ describe("contract shape fixtures", () => {
           headers: { "content-type": "application/json" },
         }),
       )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ...listFixture[0], is_active: false }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
 
     const domains = createDomainServices(
@@ -540,6 +550,11 @@ describe("contract shape fixtures", () => {
       domains.watchRules.update(listFixture[0].id, updatePayload),
     ).resolves.toMatchObject(updatePayload);
     await expect(domains.watchRules.remove(listFixture[0].id)).resolves.toBeUndefined();
+    await expect(domains.watchRules.disable(listFixture[0].id)).resolves.toMatchObject({
+      ...listFixture[0],
+      is_active: false,
+    });
+    await expect(domains.watchRules.hardDelete(listFixture[0].id)).resolves.toBeUndefined();
 
     expect(fetchMock.mock.calls[0][0]).toBe(
       "https://api.example.com/watch-rules?offset=0&limit=25",
@@ -552,6 +567,128 @@ describe("contract shape fixtures", () => {
     const updateBody = JSON.parse(String((fetchMock.mock.calls[3][1] as RequestInit).body));
     expect(createBody).toEqual(createPayload);
     expect(updateBody).toEqual(updatePayload);
+    expect(fetchMock.mock.calls[5][0]).toBe(
+      `https://api.example.com/watch-rules/${encodeURIComponent(listFixture[0].id)}/disable`,
+    );
+    expect(fetchMock.mock.calls[6][0]).toBe(
+      `https://api.example.com/watch-rules/${encodeURIComponent(listFixture[0].id)}/hard`,
+    );
+  });
+
+  it("matches provider-request summary/admin endpoint path/query behavior", async () => {
+    const userListFixture: ProviderRequest[] = [
+      {
+        provider: "discogs",
+        endpoint: "/provider/discogs/search",
+        method: "GET",
+        status_code: 200,
+        duration_ms: 143,
+        error: null,
+        meta: { trace: "abc" },
+        created_at: "2026-01-20T11:52:00+00:00",
+      },
+    ];
+
+    const summaryFixture: ProviderRequestSummary[] = [
+      { provider: "discogs", total_requests: 12, error_requests: 2, avg_duration_ms: 164.5 },
+    ];
+
+    const adminListFixture: ProviderRequestAdmin[] = [
+      {
+        ...userListFixture[0],
+        id: "80dc6333-3c3c-49b8-a803-938783fbeb99",
+        user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+      },
+    ];
+
+    const adminSummaryFixture: ProviderRequestSummary[] = [
+      { provider: "ebay", total_requests: 20, error_requests: 4, avg_duration_ms: 219.1 },
+    ];
+
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(userListFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(summaryFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(adminListFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(adminSummaryFixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+
+    await expect(domains.providerRequests.list({ limit: 10, offset: 5 })).resolves.toEqual(
+      userListFixture,
+    );
+    await expect(domains.providerRequests.summary()).resolves.toEqual(summaryFixture);
+    await expect(
+      domains.providerRequests.admin.list({
+        provider: "discogs",
+        status_code_gte: 400,
+        status_code_lte: 599,
+        created_from: "2026-01-20T00:00:00+00:00",
+        created_to: "2026-01-21T00:00:00+00:00",
+        user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+        limit: 25,
+        cursor: "c1",
+      }),
+    ).resolves.toEqual(adminListFixture);
+    await expect(
+      domains.providerRequests.admin.summary({ provider: "ebay", status_code_gte: 500 }),
+    ).resolves.toEqual(adminSummaryFixture);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.example.com/provider-requests?limit=10&offset=5",
+    );
+    expect(fetchMock.mock.calls[1][0]).toBe("https://api.example.com/provider-requests/summary");
+    expect(fetchMock.mock.calls[2][0]).toBe(
+      "https://api.example.com/provider-requests/admin?cursor=c1&limit=25&provider=discogs&status_code_gte=400&status_code_lte=599&created_from=2026-01-20T00%3A00%3A00%2B00%3A00&created_to=2026-01-21T00%3A00%3A00%2B00%3A00&user_id=8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+    );
+    expect(fetchMock.mock.calls[3][0]).toBe(
+      "https://api.example.com/provider-requests/admin/summary?provider=ebay&status_code_gte=500",
+    );
+  });
+
+  it("matches outbound eBay redirect endpoint path/query behavior", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+
+    await expect(domains.outbound.getEbayRedirect("listing-1")).resolves.toBeUndefined();
+    await expect(
+      domains.outbound.getEbayRedirect("listing-2", {
+        referer: "https://app.example.com/search",
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api.example.com/outbound/ebay/listing-1");
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      "https://api.example.com/outbound/ebay/listing-2?referer=https%3A%2F%2Fapp.example.com%2Fsearch",
+    );
   });
 
   it("matches watch-releases list contract array shape", async () => {

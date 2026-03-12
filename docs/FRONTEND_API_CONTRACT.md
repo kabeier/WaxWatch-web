@@ -1,6 +1,6 @@
 # WaxWatch Frontend API Contract
 
-**Contract version:** `2026-03-12.1`
+**Contract version:** `2026-03-12.2`
 
 This contract captures **current API behavior** and maps it to intended React surfaces so frontend can scaffold screens directly from OpenAPI payloads.
 
@@ -8,6 +8,11 @@ This contract captures **current API behavior** and maps it to intended React su
 
 - `2026-03-12.1`
   - Clarified watch-rules frontend scope: `DELETE /api/watch-rules/{rule_id}/hard` is admin/dev-only and excluded from current web/mobile frontend implementation.
+
+- `2026-03-12.2`
+  - Updated frontend SDK coverage expectations to include documented watch-rule action variants (`POST /api/watch-rules/{rule_id}/disable` and `DELETE /api/watch-rules/{rule_id}/hard`) for admin/internal frontend surfaces.
+  - Added explicit frontend SDK coverage expectation for provider-request summary + admin diagnostics endpoints (`GET /api/provider-requests/summary`, `GET /api/provider-requests/admin`, `GET /api/provider-requests/admin/summary`).
+  - Added explicit frontend SDK coverage expectation for outbound eBay redirect lookup endpoint (`GET /api/outbound/ebay/{listing_id}`), including optional `referer` query propagation when clients call through SDK transport.
 
 - `2026-03-12.0`
   - Added a cross-platform `API_BASE_URL` strategy for web and mobile clients, including environment-variable recommendations for local/staging/production and explicit `createWaxWatchApi` adapter injection guidance (`fetchImpl`, `authSessionAdapter`, `getJwt`).
@@ -488,7 +493,7 @@ The API has two watch paradigms; frontend can present both under a single “Ale
 - `PATCH /api/watch-rules/{rule_id}` → edit alert parameters.
 - `DELETE /api/watch-rules/{rule_id}` → soft-disable alert.
 - `POST /api/watch-rules/{rule_id}/disable` → explicit disable action variant.
-- `DELETE /api/watch-rules/{rule_id}/hard` → permanent delete (**admin/dev-only; excluded from current web/mobile frontend scope**).
+- `DELETE /api/watch-rules/{rule_id}/hard` → permanent delete (admin/internal surfaces; SDK-exposed for parity with documented contract).
 
 **Screens + actions:**
 

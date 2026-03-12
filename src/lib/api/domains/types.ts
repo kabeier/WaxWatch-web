@@ -162,10 +162,43 @@ export type Notification = {
 };
 
 export type ProviderRequest = {
-  id: string;
   provider: string;
-  status: "pending" | "approved" | "rejected";
+  endpoint: string;
+  method: string;
+  status_code: number | null;
+  duration_ms: number | null;
+  error: string | null;
+  meta: Record<string, unknown> | null;
   created_at: string;
+};
+
+export type ProviderRequestAdmin = ProviderRequest & {
+  id: string;
+  user_id: string;
+};
+
+export type ProviderRequestSummary = {
+  provider: string;
+  total_requests: number;
+  error_requests: number;
+  avg_duration_ms: number | null;
+};
+
+export type ProviderRequestProvider = "discogs" | "ebay" | "mock";
+
+export type ProviderRequestAdminFilters = {
+  provider?: ProviderRequestProvider;
+  status_code_gte?: number;
+  status_code_lte?: number;
+  created_from?: string;
+  created_to?: string;
+  user_id?: string;
+};
+
+export type ProviderRequestsAdminListParams = ProviderRequestAdminFilters & CursorOrOffsetParams;
+
+export type OutboundEbayRedirectParams = {
+  referer?: string;
 };
 
 export type OutboundDelivery = {
