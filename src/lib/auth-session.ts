@@ -92,14 +92,17 @@ export const webAuthSessionAdapter: AuthSessionAdapter = {
   },
 };
 
+/** @deprecated Use authSessionAdapter.getAccessToken() directly. Target removal: 2026-06. */
 export function getSupabaseAccessToken(): string | null {
   return webAuthSessionAdapter.getAccessToken() as string | null;
 }
 
+/** @deprecated Use authSessionAdapter.clearSession() directly. Target removal: 2026-06. */
 export function clearAuthSession() {
   webAuthSessionAdapter.clearSession();
 }
 
+/** @deprecated Use completeAuthEventWithAdapter(authSessionAdapter, ...) via API-client-driven flows. Target removal: 2026-06. */
 export function completeAuthEvent(event: AuthEvent) {
   if (typeof window === "undefined" || redirectInProgress) return;
 
@@ -114,6 +117,7 @@ export function completeAuthEvent(event: AuthEvent) {
   webAuthSessionAdapter.redirectToSignedOut(event);
 }
 
+/** @deprecated Use handleAuthorizationFailureWithAdapter(authSessionAdapter, ...) via API-client-driven flows. Target removal: 2026-06. */
 export function handleApiAuthorizationFailure(context: { path: string; status: number }) {
   warn({
     message: "auth_reauth_required",

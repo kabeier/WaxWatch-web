@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getSupabaseAccessToken, handleApiAuthorizationFailure } from "@/lib/auth-session";
+import { webAuthSessionAdapter } from "@/lib/auth-session";
+import { handleAuthorizationFailureWithAdapter } from "@/lib/auth/session-lifecycle";
 import { queryKeys } from "@/lib/query/keys";
 
 const BASE_BACKOFF_MS = 1_000;
@@ -31,6 +32,8 @@ export default function SseController() {
       streamAbortController?.abort();
       streamAbortController = null;
     };
+
+    const hasAccessToken = async () => Boolean(await webAuthSessionAdapter.getAccessToken());
 
     const processStream = async (response: Response) => {
       const reader = response.body?.getReader();
@@ -79,12 +82,12 @@ export default function SseController() {
       }
     };
 
-    const scheduleReconnect = () => {
+    const scheduleReconnect = async () => {
       if (!active || reconnectTimer !== undefined) {
         return;
       }
 
-      const token = getSupabaseAccessToken();
+      const token = await webAuthSessionAdapter.getAccessToken();
       if (!token) {
         stop();
         return;
@@ -95,12 +98,12 @@ export default function SseController() {
 
       reconnectTimer = window.setTimeout(() => {
         reconnectTimer = undefined;
-        connect();
+        void connect();
       }, delayMs);
     };
 
     const connect = async () => {
-      const token = getSupabaseAccessToken();
+      const token = await webAuthSessionAdapter.getAccessToken();
       if (!token || !active) {
         stop();
         return;
@@ -124,7 +127,7 @@ export default function SseController() {
         }
 
         if (response.status === 401 || response.status === 403) {
-          handleApiAuthorizationFailure({
+          await handleAuthorizationFailureWithAdapter(webAuthSessionAdapter, {
             path: "/api/stream/events",
             status: response.status,
           });
@@ -142,13 +145,13 @@ export default function SseController() {
         if (!active) {
           return;
         }
-        const hasToken = getSupabaseAccessToken();
-        if (!hasToken) {
+
+        if (!(await hasAccessToken())) {
           stop();
           return;
         }
 
-        scheduleReconnect();
+        await scheduleReconnect();
       } catch {
         if (!active || streamAbortController?.signal.aborted) {
           return;
@@ -159,13 +162,12 @@ export default function SseController() {
           reconnectAttempt,
         });
 
-        const hasToken = getSupabaseAccessToken();
-        if (!hasToken) {
+        if (!(await hasAccessToken())) {
           stop();
           return;
         }
 
-        scheduleReconnect();
+        await scheduleReconnect();
       }
     };
 
@@ -176,7 +178,7 @@ export default function SseController() {
       }
     };
 
-    connect();
+    void connect();
     window.addEventListener("waxwatch:auth", handleAuthEvent as EventListener);
 
     return () => {
