@@ -13,6 +13,16 @@
 5. **Production-ready deployment**
    - Next.js standalone container behind AWS ALB/EC2 ASG; health endpoints.
 
+## Documentation planning (root README)
+
+- The repository root `README.md` is a **public landing page by design**.
+- Root README success criteria are intentionally concise:
+  1. Explain what WaxWatch is.
+  2. Summarize the high-level stack.
+  3. State the project goal.
+  4. Provide clear links to `docs/` and `docs/DEVELOPER_REFERENCE.md`.
+- Dense implementation details, operational runbooks, and deep developer reference material belong in `docs/` (especially `docs/DEVELOPER_REFERENCE.md`) rather than the root README.
+
 ## MVP features
 
 - Authenticated app shell with top nav + profile dropdown
