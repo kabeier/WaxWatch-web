@@ -89,6 +89,7 @@ Any browser assumptions must live behind injected adapters (for example `AuthSes
 ### Web vs Mobile ownership
 
 - **Shared (web + mobile):** `src/lib/api/*` contracts/client/domain services and related domain types/errors.
+  - API/client expectation: domain services should expose only user-facing endpoints in current product scope; admin/dev-only routes (for example hard-delete watch-rule endpoints) are intentionally excluded unless product scope changes.
 - **Web-owned:** `src/lib/query/*`, React hooks, and browser adapters such as `webAuthSessionAdapter`.
 - **Mobile-owned (future):** a mobile adapter layer can consume `src/lib/api/*` directly, providing mobile-specific auth/session/storage adapters without importing `src/lib/query/*`.
 

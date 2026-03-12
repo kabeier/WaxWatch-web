@@ -44,6 +44,8 @@ import type {
 type ApiClient = ReturnType<typeof createApiClient>;
 
 export function createDomainServices(client: ApiClient) {
+  // Frontend SDK parity targets user-facing endpoints only.
+  // Admin/dev-only routes (for example watch-rule hard-delete endpoints) are intentionally out of scope unless product requirements change.
   const me = {
     getProfile: () => client.request<MeProfile>("/me"),
     updateProfile: (input: MeProfileUpdate) =>
