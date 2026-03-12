@@ -2,7 +2,6 @@ import type { AuthEvent, AuthSessionAdapter, SignedOutReason } from "./auth/sess
 import { info, warn } from "./logger";
 
 const AUTH_SESSION_KEY = "waxwatch.auth.session";
-const LEGACY_AUTH_TOKEN_KEY = "waxwatch.auth.jwt";
 
 export const SIGNED_OUT_ROUTE = "/signed-out";
 export const ACCOUNT_REMOVED_ROUTE = "/account-removed";
@@ -75,7 +74,6 @@ export const webAuthSessionAdapter: AuthSessionAdapter = {
     if (typeof window === "undefined") return;
 
     window.localStorage.removeItem(AUTH_SESSION_KEY);
-    window.localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY);
 
     info({
       message: "auth_session_cleared",

@@ -35,7 +35,6 @@ type NavigationTarget = {
 };
 
 const AUTH_SESSION_KEY = "waxwatch.auth.session";
-const LEGACY_TOKEN_KEY = "waxwatch.auth.jwt";
 
 export function createNativeAuthSessionAdapter(nav: NavigationTarget): AuthSessionAdapter {
   return {
@@ -59,7 +58,7 @@ export function createNativeAuthSessionAdapter(nav: NavigationTarget): AuthSessi
       }
     },
     async clearSession() {
-      await AsyncStorage.multiRemove([AUTH_SESSION_KEY, LEGACY_TOKEN_KEY]);
+      await AsyncStorage.removeItem(AUTH_SESSION_KEY);
       await SecureStore.deleteItemAsync("waxwatch.refresh.token");
     },
     emitAuthEvent(event) {

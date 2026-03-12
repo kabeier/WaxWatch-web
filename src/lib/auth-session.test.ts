@@ -37,8 +37,7 @@ describe("auth session helpers", () => {
     expect(getSupabaseAccessToken()).toBeNull();
   });
 
-  test("clearAuthSession removes persisted auth keys", () => {
-    window.localStorage.setItem("waxwatch.auth.jwt", "legacy-token");
+  test("clearAuthSession removes persisted auth session", () => {
     window.localStorage.setItem(
       "waxwatch.auth.session",
       JSON.stringify({ access_token: "abc123" }),
@@ -46,7 +45,6 @@ describe("auth session helpers", () => {
 
     clearAuthSession();
 
-    expect(window.localStorage.getItem("waxwatch.auth.jwt")).toBeNull();
     expect(window.localStorage.getItem("waxwatch.auth.session")).toBeNull();
   });
 
