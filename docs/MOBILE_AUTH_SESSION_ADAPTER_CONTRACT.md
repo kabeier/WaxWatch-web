@@ -96,5 +96,5 @@ export function createNativeAuthSessionAdapter(nav: NavigationTarget): AuthSessi
 ## Migration guidance
 
 - Prefer passing the adapter once to shared API client creation.
-- Avoid direct calls to legacy web helper functions (`getSupabaseAccessToken`, `clearAuthSession`, `completeAuthEvent`, `handleApiAuthorizationFailure`) in mobile code.
+- Use adapter-only auth session wiring: interact through `AuthSessionAdapter` hooks and shared adapter-driven lifecycle helpers, not platform-specific helper wrappers.
 - For non-API network paths (for example SSE), reuse shared auth lifecycle helpers that accept an `AuthSessionAdapter` so behavior stays identical to API requests.
