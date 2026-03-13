@@ -1,4 +1,4 @@
-const WEB_ONLY_AUTH_ROUTES = ["/login", "/signup", "/account", "/account/subscription"] as const;
+const WEB_ONLY_HANDOFF_ROUTES = ["/signup", "/account", "/account/subscription"] as const;
 
 const MOBILE_HANDOFF_SCHEMES = ["waxwatch:", "waxwatch-dev:"] as const;
 const MOBILE_HANDOFF_HTTPS_DOMAIN = "waxwatch.app";
@@ -39,7 +39,7 @@ export function normalizeRouteReturnTo(value: QueryParamValue): string | null {
   }
 
   const routePath = scalarValue.split("?")[0] ?? scalarValue;
-  return WEB_ONLY_AUTH_ROUTES.includes(routePath as (typeof WEB_ONLY_AUTH_ROUTES)[number])
+  return WEB_ONLY_HANDOFF_ROUTES.includes(routePath as (typeof WEB_ONLY_HANDOFF_ROUTES)[number])
     ? scalarValue
     : null;
 }

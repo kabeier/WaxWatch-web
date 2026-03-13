@@ -25,9 +25,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <h2>Mobile handoff contract</h2>
       <ul>
         <li>
-          <code>return_to</code>: optional web route for account management flows. Allowed values
-          include
-          <code> /login</code>, <code>/signup</code>, <code>/account</code>, and
+          <code>return_to</code>: optional web route for registration/account management flows.
+          Allowed values include <code>/signup</code>, <code>/account</code>, and
           <code> /account/subscription</code>.
         </li>
         <li>
@@ -64,7 +63,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       ) : null}
 
       <p>
-        Account and subscription management are completed on web-only routes before mobile handoff.
+        Registration and subscription/account management are completed on web-only routes before
+        mobile handoff. Routine login stays in the React Native app.
       </p>
     </section>
   );

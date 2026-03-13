@@ -12,6 +12,7 @@ describe("auth handoff helpers", () => {
     expect(normalizeRouteReturnTo("/account/subscription?tab=billing")).toBe(
       "/account/subscription?tab=billing",
     );
+    expect(normalizeRouteReturnTo("/login")).toBeNull();
     expect(normalizeRouteReturnTo("/settings/profile")).toBeNull();
     expect(normalizeRouteReturnTo("https://evil.example")).toBeNull();
     expect(normalizeRouteReturnTo("//evil.example")).toBeNull();
