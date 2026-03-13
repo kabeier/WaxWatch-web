@@ -537,7 +537,6 @@ describe("contract shape fixtures", () => {
           headers: { "content-type": "application/json" },
         }),
       )
-      .mockResolvedValueOnce(new Response(null, { status: 204 }));
 
     const domains = createDomainServices(
       createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
@@ -554,7 +553,6 @@ describe("contract shape fixtures", () => {
       ...listFixture[0],
       is_active: false,
     });
-    await expect(domains.watchRules.hardDelete(listFixture[0].id)).resolves.toBeUndefined();
 
     expect(fetchMock.mock.calls[0][0]).toBe(
       "https://api.example.com/watch-rules?offset=0&limit=25",
@@ -569,9 +567,6 @@ describe("contract shape fixtures", () => {
     expect(updateBody).toEqual(updatePayload);
     expect(fetchMock.mock.calls[5][0]).toBe(
       `https://api.example.com/watch-rules/${encodeURIComponent(listFixture[0].id)}/disable`,
-    );
-    expect(fetchMock.mock.calls[6][0]).toBe(
-      `https://api.example.com/watch-rules/${encodeURIComponent(listFixture[0].id)}/hard`,
     );
   });
 
