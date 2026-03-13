@@ -29,16 +29,17 @@ Do not duplicate these transitions in feature code (SSE controllers, screens, pa
 
 ## Mobile handoff
 
-React Native should open secure web auth/handoff flows for sign-up/login/account/subscription management and resume via validated deep-link callback.
+React Native should open secure web auth/handoff flows for registration/account/subscription management and resume via validated deep-link callback.
+
+Routine sign-in should stay native in the React Native app.
 
 ### Web-only routes
 
-- `/login`
 - `/signup`
 - `/account`
 - `/account/subscription`
 
-RN should route users to those web screens for auth/account/subscription actions.
+RN should route users to those web screens for registration/account/subscription actions.
 
 ### Return URL / deep-link contract
 
