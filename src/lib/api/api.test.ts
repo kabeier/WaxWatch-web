@@ -536,7 +536,7 @@ describe("contract shape fixtures", () => {
           status: 200,
           headers: { "content-type": "application/json" },
         }),
-      )
+      );
 
     const domains = createDomainServices(
       createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
@@ -553,6 +553,7 @@ describe("contract shape fixtures", () => {
       ...listFixture[0],
       is_active: false,
     });
+    expect("hardDelete" in domains.watchRules).toBe(false);
 
     expect(fetchMock.mock.calls[0][0]).toBe(
       "https://api.example.com/watch-rules?offset=0&limit=25",
