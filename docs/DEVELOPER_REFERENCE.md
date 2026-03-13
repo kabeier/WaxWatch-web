@@ -104,6 +104,14 @@ Health endpoints for ALB target group checks:
 
 See: `docs/deploy/aws-ec2.md`
 
+### Proxy trust and forwarded header handling
+
+- `TRUSTED_PROXY_CIDRS` is a comma-separated CIDR allowlist for the immediate ingress source (ALB/reverse proxy).
+- Trust source resolution order: `request.ip` first (platform-provided), otherwise the right-most IP in `x-forwarded-for`.
+- `x-forwarded-for`, `x-forwarded-host`, `x-forwarded-port`, and `x-forwarded-proto` are accepted only when the source is trusted.
+- If the source is untrusted, middleware strips those forwarded headers before downstream processing/logging and emits `message=untrusted_forwarded_headers`.
+- Malformed CIDR entries are ignored (fail-closed), and middleware emits `message=invalid_trusted_proxy_cidrs` listing invalid entries.
+
 ## Contracts (do not invent API)
 
 This repo is contract-driven. These are authoritative:

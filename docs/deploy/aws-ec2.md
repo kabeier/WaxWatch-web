@@ -13,7 +13,10 @@
 
 ## Forwarded Headers and Cookie Security
 
-- AWS ALB injects `X-Forwarded-*`; app middleware preserves and propagates `x-request-id` for correlation.
+- AWS ALB injects `X-Forwarded-*`; middleware accepts these headers **only** when the immediate source IP is in `TRUSTED_PROXY_CIDRS`.
+- Source IP trust resolution is: `request.ip` (platform field) first, otherwise the right-most IP in `x-forwarded-for` (closest hop).
+- When source IP is untrusted, middleware strips `x-forwarded-for`, `x-forwarded-host`, `x-forwarded-port`, and `x-forwarded-proto` before downstream processing/logging and emits a structured warning (`message=untrusted_forwarded_headers`).
+- Malformed CIDR entries in `TRUSTED_PROXY_CIDRS` are ignored (fail-closed) and logged as `message=invalid_trusted_proxy_cidrs`; only valid CIDRs are used for trust checks.
 - Session/auth cookies must be set with:
   - `Secure=true` when `x-forwarded-proto=https`
   - `HttpOnly=true`
@@ -23,10 +26,12 @@
 ## Secrets and Environment Injection
 
 Use either:
+
 1. **SSM Parameter Store** (recommended for standard secret counts), or
 2. **AWS Secrets Manager** (rotation-heavy credentials).
 
 Runtime flow:
+
 1. CI/CD assumes deploy role.
 2. Deploy step fetches secrets by prefix (example: `/waxwatch/prod/web/*`).
 3. Values are injected into instance environment (`/etc/waxwatch/web.env`) via cloud-init/SSM RunCommand.
@@ -49,12 +54,14 @@ Runtime flow:
 ## Incident Readiness / Runbook Alarms
 
 Recommended CloudWatch alarm thresholds:
+
 - ALB `HTTPCode_Target_5XX_Count` > 2% over 5m.
 - ALB `TargetResponseTime` p95 > 1.5s over 5m.
 - `UnHealthyHostCount` >= 1 for 2 consecutive periods.
 - Application log `level=error` burst above baseline.
 
 Response checklist:
+
 1. Confirm `/health` and `/ready` from ALB path.
 2. Check latest deployment verification output.
 3. Inspect structured logs filtered by `requestId`.
