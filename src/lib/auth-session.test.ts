@@ -75,7 +75,10 @@ describe("auth session helpers", () => {
       JSON.stringify({ access_token: "abc123" }),
     );
 
-    await handleAuthorizationFailureWithAdapter(webAuthSessionAdapter, { path: "/me", status: 401 });
+    await handleAuthorizationFailureWithAdapter(webAuthSessionAdapter, {
+      path: "/me",
+      status: 401,
+    });
 
     expect(window.localStorage.getItem("waxwatch.auth.session")).toBeNull();
     expect(redirectSpy).toHaveBeenCalledWith(`${SIGNED_OUT_ROUTE}?reason=reauth-required`);
