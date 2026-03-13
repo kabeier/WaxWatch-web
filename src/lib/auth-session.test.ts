@@ -2,14 +2,15 @@ import { vi } from "vitest";
 import {
   ACCOUNT_REMOVED_ROUTE,
   SIGNED_OUT_ROUTE,
-  clearAuthSession,
-  completeAuthEvent,
-  getSupabaseAccessToken,
-  handleApiAuthorizationFailure,
   resetAuthRedirectHandler,
   resetAuthSessionState,
   setAuthRedirectHandler,
+  webAuthSessionAdapter,
 } from "./auth-session";
+import {
+  completeAuthEventWithAdapter,
+  handleAuthorizationFailureWithAdapter,
+} from "./auth/session-lifecycle";
 
 describe("auth session helpers", () => {
   beforeEach(() => {
@@ -28,45 +29,45 @@ describe("auth session helpers", () => {
       JSON.stringify({ currentSession: { access_token: "abc123" } }),
     );
 
-    expect(getSupabaseAccessToken()).toBe("abc123");
+    expect(webAuthSessionAdapter.getAccessToken()).toBe("abc123");
   });
 
   test("returns null for invalid persisted session", () => {
     window.localStorage.setItem("waxwatch.auth.session", "not-json");
 
-    expect(getSupabaseAccessToken()).toBeNull();
+    expect(webAuthSessionAdapter.getAccessToken()).toBeNull();
   });
 
-  test("clearAuthSession removes persisted auth session", () => {
+  test("clearSession removes persisted auth session", async () => {
     window.localStorage.setItem(
       "waxwatch.auth.session",
       JSON.stringify({ access_token: "abc123" }),
     );
 
-    clearAuthSession();
+    await webAuthSessionAdapter.clearSession();
 
     expect(window.localStorage.getItem("waxwatch.auth.session")).toBeNull();
   });
 
-  test("redirects signed-out events", () => {
+  test("redirects signed-out events", async () => {
     const redirectSpy = vi.fn();
     setAuthRedirectHandler(redirectSpy);
 
-    completeAuthEvent("signed-out");
+    await completeAuthEventWithAdapter(webAuthSessionAdapter, "signed-out", "/auth/logout");
 
     expect(redirectSpy).toHaveBeenCalledWith(`${SIGNED_OUT_ROUTE}?reason=signed-out`);
   });
 
-  test("redirects account-removed events", () => {
+  test("redirects account-removed events", async () => {
     const redirectSpy = vi.fn();
     setAuthRedirectHandler(redirectSpy);
 
-    completeAuthEvent("account-removed");
+    await completeAuthEventWithAdapter(webAuthSessionAdapter, "account-removed", "/account/remove");
 
     expect(redirectSpy).toHaveBeenCalledWith(ACCOUNT_REMOVED_ROUTE);
   });
 
-  test("401/403 handler clears session and redirects to reauth flow", () => {
+  test("401/403 handler clears session and redirects to reauth flow", async () => {
     const redirectSpy = vi.fn();
     setAuthRedirectHandler(redirectSpy);
     window.localStorage.setItem(
@@ -74,7 +75,7 @@ describe("auth session helpers", () => {
       JSON.stringify({ access_token: "abc123" }),
     );
 
-    handleApiAuthorizationFailure({ path: "/me", status: 401 });
+    await handleAuthorizationFailureWithAdapter(webAuthSessionAdapter, { path: "/me", status: 401 });
 
     expect(window.localStorage.getItem("waxwatch.auth.session")).toBeNull();
     expect(redirectSpy).toHaveBeenCalledWith(`${SIGNED_OUT_ROUTE}?reason=reauth-required`);
