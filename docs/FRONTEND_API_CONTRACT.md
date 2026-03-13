@@ -7,13 +7,14 @@ This contract captures **current API behavior** and maps it to intended React su
 ## Changelog
 
 - `2026-03-12.1`
-  - Clarified watch-rules frontend scope: `DELETE /api/watch-rules/{rule_id}/hard` is admin/dev-only and excluded from current web/mobile frontend implementation.
+  - Canonicalized watch-rules frontend scope: `DELETE /api/watch-rules/{rule_id}/hard` is admin/dev-only and out of current user-facing web/mobile frontend scope.
 
 - `2026-03-13.0`
   - Narrowed frontend SDK watch-rule surface to user-facing actions only (`list/get/create/update/remove/disable`).
   - Clarified `DELETE /api/watch-rules/{rule_id}/hard` remains backend admin/dev tooling and is intentionally out of frontend SDK scope.
 
 - `2026-03-12.2`
+  - Updated frontend SDK coverage expectations to include `POST /api/watch-rules/{rule_id}/disable` for current frontend clients; `DELETE /api/watch-rules/{rule_id}/hard` remains admin/dev-only and out of current user-facing web/mobile frontend scope.
   - Added explicit frontend SDK coverage expectation for provider-request summary + admin diagnostics endpoints (`GET /api/provider-requests/summary`, `GET /api/provider-requests/admin`, `GET /api/provider-requests/admin/summary`).
   - Added explicit frontend SDK coverage expectation for outbound eBay redirect lookup endpoint (`GET /api/outbound/ebay/{listing_id}`), including optional `referer` query propagation when clients call through SDK transport.
 
@@ -500,7 +501,8 @@ The API has two watch paradigms; frontend can present both under a single “Ale
 
 **Screens + actions:**
 
-- `AlertsListScreen`: view + paginate + disable (no hard-delete action in current user-facing web/mobile scope).
+- `AlertsListScreen`: view + paginate + disable.
+- **Explicit scope note:** user-facing web/mobile clients should **not** expose hard-delete actions for watch rules (`DELETE /api/watch-rules/{rule_id}/hard`).
 - `AlertEditorScreen`: create/update rule name, sources, polling interval.
 - `query.sources` is validated against the live provider registry; values must be registered+enabled provider keys. Frontend must not submit enum-only/disabled values, and should refresh provider choices from profile integrations or provider-capabilities endpoints.
 - `AlertDetailScreen`: inspect scheduling fields (`last_run_at`, `next_run_at`).
