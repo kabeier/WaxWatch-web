@@ -123,10 +123,6 @@ export function createDomainServices(client: ApiClient) {
       client.request<WatchRule>(`/watch-rules/${encodeURIComponent(watchRuleId)}/disable`, {
         method: "POST",
       }),
-    hardDelete: (watchRuleId: string) =>
-      client.request<void>(`/watch-rules/${encodeURIComponent(watchRuleId)}/hard`, {
-        method: "DELETE",
-      }),
   };
 
   const watchReleases = {

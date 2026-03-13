@@ -1,6 +1,6 @@
 # WaxWatch Frontend API Contract
 
-**Contract version:** `2026-03-12.2`
+**Contract version:** `2026-03-13.0`
 
 This contract captures **current API behavior** and maps it to intended React surfaces so frontend can scaffold screens directly from OpenAPI payloads.
 
@@ -8,6 +8,10 @@ This contract captures **current API behavior** and maps it to intended React su
 
 - `2026-03-12.1`
   - Canonicalized watch-rules frontend scope: `DELETE /api/watch-rules/{rule_id}/hard` is admin/dev-only and out of current user-facing web/mobile frontend scope.
+
+- `2026-03-13.0`
+  - Narrowed frontend SDK watch-rule surface to user-facing actions only (`list/get/create/update/remove/disable`).
+  - Clarified `DELETE /api/watch-rules/{rule_id}/hard` remains backend admin/dev tooling and is intentionally out of frontend SDK scope.
 
 - `2026-03-12.2`
   - Updated frontend SDK coverage expectations to include `POST /api/watch-rules/{rule_id}/disable` for current frontend clients; `DELETE /api/watch-rules/{rule_id}/hard` remains admin/dev-only and out of current user-facing web/mobile frontend scope.
@@ -493,7 +497,7 @@ The API has two watch paradigms; frontend can present both under a single “Ale
 - `PATCH /api/watch-rules/{rule_id}` → edit alert parameters.
 - `DELETE /api/watch-rules/{rule_id}` → soft-disable alert.
 - `POST /api/watch-rules/{rule_id}/disable` → explicit disable action variant.
-- `DELETE /api/watch-rules/{rule_id}/hard` → permanent delete (admin/dev-only; out of current user-facing web/mobile frontend scope).
+- `DELETE /api/watch-rules/{rule_id}/hard` → permanent delete (backend admin/dev tooling; intentionally excluded from frontend SDK/user-facing client surface).
 
 **Screens + actions:**
 
