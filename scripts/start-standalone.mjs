@@ -1,5 +1,5 @@
-import { spawn } from 'node:child_process';
-import { validateEnv } from './env-contract.mjs';
+import { spawn } from "node:child_process";
+import { validateEnv } from "./env-contract.mjs";
 
 function serializeError(error) {
   if (error instanceof Error) {
@@ -15,7 +15,7 @@ function serializeError(error) {
 
 function log(level, message, context = {}) {
   const line = JSON.stringify({ level, message, ...context });
-  if (level === 'error') {
+  if (level === "error") {
     console.error(line);
     return;
   }
@@ -23,19 +23,19 @@ function log(level, message, context = {}) {
   console.log(line);
 }
 
-process.env.NODE_ENV ??= 'production';
-process.env.PORT ??= '4173';
-process.env.HOSTNAME ??= '0.0.0.0';
+process.env.NODE_ENV ??= "production";
+process.env.PORT ??= "4173";
+process.env.HOSTNAME ??= "0.0.0.0";
 
 try {
   validateEnv();
 } catch (error) {
-  log('error', 'startup_validation_failure', serializeError(error));
+  log("error", "startup_validation_failure", serializeError(error));
   process.exit(1);
 }
 
-const child = spawn('node', ['.next/standalone/server.js'], {
-  stdio: 'inherit',
+const child = spawn("node", [".next/standalone/server.js"], {
+  stdio: "inherit",
   env: process.env,
 });
 
@@ -45,39 +45,39 @@ let hasFatalRuntimeFailure = false;
 function shutdown(signal) {
   if (shuttingDown) return;
   shuttingDown = true;
-  log('info', 'shutdown_initiated', { signal });
+  log("info", "shutdown_initiated", { signal });
   child.kill(signal);
 
   setTimeout(() => {
     if (!child.killed) {
-      child.kill('SIGKILL');
+      child.kill("SIGKILL");
     }
   }, 10000).unref();
 }
 
-process.on('SIGINT', () => shutdown('SIGINT'));
-process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
 
-process.on('uncaughtException', (error) => {
+process.on("uncaughtException", (error) => {
   hasFatalRuntimeFailure = true;
   process.exitCode = 1;
-  log('error', 'startup_runtime_failure', serializeError(error));
-  shutdown('SIGTERM');
+  log("error", "startup_runtime_failure", serializeError(error));
+  shutdown("SIGTERM");
 });
 
-process.on('unhandledRejection', (reason) => {
+process.on("unhandledRejection", (reason) => {
   hasFatalRuntimeFailure = true;
   process.exitCode = 1;
-  log('error', 'startup_runtime_failure', serializeError(reason));
-  shutdown('SIGTERM');
+  log("error", "startup_runtime_failure", serializeError(reason));
+  shutdown("SIGTERM");
 });
 
-child.on('error', (error) => {
-  log('error', 'startup_runtime_failure', serializeError(error));
+child.on("error", (error) => {
+  log("error", "startup_runtime_failure", serializeError(error));
   process.exit(1);
 });
 
-child.on('exit', (code, signal) => {
+child.on("exit", (code, signal) => {
   if (hasFatalRuntimeFailure) {
     process.exit(process.exitCode ?? 1);
     return;

@@ -1,15 +1,15 @@
 const requiredEnv = {
-  NODE_ENV: ['development', 'test', 'production'] as const,
-  APP_BASE_URL: 'url',
-  NEXT_PUBLIC_APP_NAME: 'string',
-  NEXT_PUBLIC_RELEASE_VERSION: 'string',
-  NEXT_PUBLIC_SENTRY_DSN: 'string',
-  SENTRY_DSN: 'string',
-  AWS_REGION: 'string',
-  AWS_SECRETS_PREFIX: 'string',
-  SESSION_COOKIE_NAME: 'string',
-  TRUSTED_PROXY_CIDRS: 'string',
-  LOG_LEVEL: ['debug', 'info', 'warn', 'error'] as const
+  NODE_ENV: ["development", "test", "production"] as const,
+  APP_BASE_URL: "url",
+  NEXT_PUBLIC_APP_NAME: "string",
+  NEXT_PUBLIC_RELEASE_VERSION: "string",
+  NEXT_PUBLIC_SENTRY_DSN: "string",
+  SENTRY_DSN: "string",
+  AWS_REGION: "string",
+  AWS_SECRETS_PREFIX: "string",
+  SESSION_COOKIE_NAME: "string",
+  TRUSTED_PROXY_CIDRS: "string",
+  LOG_LEVEL: ["debug", "info", "warn", "error"] as const,
 };
 
 type Env = {
@@ -39,11 +39,11 @@ function readAndValidateEnv(source: NodeJS.ProcessEnv): Env {
     }
 
     if (Array.isArray(rule) && !rule.includes(value as never)) {
-      errors.push(`${key} must be one of: ${rule.join(', ')}`);
+      errors.push(`${key} must be one of: ${rule.join(", ")}`);
       return;
     }
 
-    if (rule === 'url' && !isUrl(value)) {
+    if (rule === "url" && !isUrl(value)) {
       errors.push(`${key} must be a valid URL`);
       return;
     }
@@ -52,7 +52,7 @@ function readAndValidateEnv(source: NodeJS.ProcessEnv): Env {
   });
 
   if (errors.length > 0) {
-    throw new Error(`Invalid environment configuration:\n${errors.join('\n')}`);
+    throw new Error(`Invalid environment configuration:\n${errors.join("\n")}`);
   }
 
   return parsed;

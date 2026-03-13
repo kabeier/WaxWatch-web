@@ -1,10 +1,10 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { relative, resolve } from 'node:path';
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { relative, resolve } from "node:path";
 
-const forbiddenTemplateNames = ['ProjectRainbows', 'projectsparks'];
+const forbiddenTemplateNames = ["ProjectRainbows", "projectsparks"];
 const repoRoot = process.cwd();
-const ignoredDirs = new Set(['.git', 'node_modules', '.next']);
-const ignoredFiles = new Set([resolve(repoRoot, 'scripts/release-checklist.mjs')]);
+const ignoredDirs = new Set([".git", "node_modules", ".next"]);
+const ignoredFiles = new Set([resolve(repoRoot, "scripts/release-checklist.mjs")]);
 
 function listFiles(dir) {
   const files = [];
@@ -35,10 +35,10 @@ function findMatches(token) {
   const matches = [];
 
   for (const filePath of listFiles(repoRoot)) {
-    let content = '';
+    let content = "";
 
     try {
-      content = readFileSync(filePath, 'utf8');
+      content = readFileSync(filePath, "utf8");
     } catch {
       continue;
     }
@@ -47,7 +47,7 @@ function findMatches(token) {
       continue;
     }
 
-    const lines = content.split('\n');
+    const lines = content.split("\n");
     lines.forEach((line, index) => {
       if (line.includes(token)) {
         matches.push(`${relative(repoRoot, filePath)}:${index + 1}:${line}`);
@@ -61,8 +61,10 @@ function findMatches(token) {
 for (const name of forbiddenTemplateNames) {
   const result = findMatches(name);
   if (result.length > 0) {
-    throw new Error(`Template copy cleanup failed. Found leftover token: ${name}\n${result.join('\n')}`);
+    throw new Error(
+      `Template copy cleanup failed. Found leftover token: ${name}\n${result.join("\n")}`,
+    );
   }
 }
 
-console.log('Release checklist naming check passed.');
+console.log("Release checklist naming check passed.");

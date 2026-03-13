@@ -11,6 +11,6 @@ services:
       - bash
       - -lc
       - |
-          node -v
-          npm ci
-          npm run e2e:ci
+        node -v
+        npm ci
+        npm run e2e:ci

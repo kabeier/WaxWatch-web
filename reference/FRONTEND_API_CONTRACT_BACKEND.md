@@ -155,8 +155,8 @@ Response (array). Use the last row to create the next cursor:
 
 ```json
 [
-  {"id": "c7f...", "created_at": "2026-01-20T12:00:05+00:00", "type": "RULE_UPDATED"},
-  {"id": "9a1...", "created_at": "2026-01-20T12:00:05+00:00", "type": "NEW_MATCH"}
+  { "id": "c7f...", "created_at": "2026-01-20T12:00:05+00:00", "type": "RULE_UPDATED" },
+  { "id": "9a1...", "created_at": "2026-01-20T12:00:05+00:00", "type": "NEW_MATCH" }
 ]
 ```
 
@@ -182,7 +182,6 @@ GET /api/events?offset=-1        # 422 validation_error
 GET /api/events?offset=10&cursor=<token>  # 422 (cannot combine)
 GET /api/events?offset=99999     # 200 []
 ```
-
 
 ### 3.3 Rate limiting + client behavior
 
@@ -224,6 +223,7 @@ Frontend guidance: pause automatic retries until `Retry-After` elapses, apply ex
 ## 4.0 Search + Save Alert
 
 ### `POST /api/search`
+
 - **Screen:** `SearchResultsScreen` (search submit + filter changes + pagination).
 - **Action:** Execute listing search against configured providers and render paged aggregated results.
 - **Auth + throttling contract:**
@@ -250,6 +250,7 @@ Frontend guidance: pause automatic retries until `Retry-After` elapses, apply ex
   - Result-row external navigation should use `public_url` for outbound/open-listing actions.
 
 ### `POST /api/search/save-alert`
+
 - **Screen:** `SearchResultsScreen` secondary action (`Save this search`) and `AlertCreateModal`.
 - **Action:** Persist current search criteria as an alert/watch rule.
 - **Auth + throttling contract:**
@@ -270,11 +271,13 @@ Frontend guidance: pause automatic retries until `Retry-After` elapses, apply ex
 ## 4.1 Profile / Account
 
 ### `GET /api/me`
+
 - **Screen:** `SettingsProfileScreen` (initial load).
 - **Action:** Load user profile and integrations summary.
 - **Integrations contract detail:** `integrations[]` only includes providers that are both registered and currently enabled by backend configuration (registry-backed list, not the full DB enum). `integrations[].linked` is derived strictly from whether a row exists in `external_account_links` for the same `user_id` and `provider` (for example, Discogs can be linked while eBay is not). `integrations[].watch_rule_count` is computed independently from `watch_search_rules.query.sources` and must not be used to infer linkage state.
 
 ### `PATCH /api/me`
+
 - **Screen:** `SettingsProfileScreen`.
 - **Action:** Save profile edits (display name, preferences).
 - **Persistence semantics (single source of truth):**
@@ -293,16 +296,19 @@ Frontend guidance: pause automatic retries until `Retry-After` elapses, apply ex
   - Hourly/daily frequency can defer pending notifications after a recent successful send on the same channel.
 
 ### `POST /api/me/logout`
+
 - **Screen:** Account menu/global app shell.
 - **Action:** User clicks **Log out**.
 - **Frontend behavior:** Call endpoint, clear local auth/session, redirect to signed-out route.
 
 ### `DELETE /api/me`
+
 - **Screen:** `DangerZoneAccountScreen`.
 - **Action:** User confirms **Deactivate account**.
 - **Frontend behavior:** Show irreversible warning, then clear session after success.
 
 ### `DELETE /api/me/hard-delete`
+
 - **Screen:** `DangerZoneAccountScreen`.
 - **Action:** User confirms **Permanently delete account**.
 - **Backend behavior contract:**
@@ -316,26 +322,32 @@ Frontend guidance: pause automatic retries until `Retry-After` elapses, apply ex
 ## 4.2 Discogs Integration + Import Lifecycle
 
 ### `POST /api/integrations/discogs/oauth/start`
+
 - **Screen:** `IntegrationsScreen` connect CTA.
 - **Action:** Start OAuth flow, receive `authorize_url`, `state`, selected `scopes`, and expiry metadata.
 
 ### `POST /api/integrations/discogs/oauth/callback`
+
 - **Screen:** `DiscogsOAuthCallbackScreen` route action.
 - **Action:** Exchange callback `code` + `state` for provider token. Backend validates stored state nonce + expiry before linking account.
 
 ### `POST /api/integrations/discogs/connect`
+
 - **Screen:** Internal/admin fallback only.
 - **Action:** Directly store Discogs account/token metadata without OAuth redirect.
 
 ### `GET /api/integrations/discogs/status`
+
 - **Screen:** `IntegrationsScreen`.
 - **Action:** Determine whether to show **Connect**, **Reconnect**, or **Import** CTA. `connected=true` only after OAuth callback has completed and an access token exists.
 
 ### `POST /api/integrations/discogs/disconnect`
+
 - **Screen:** `IntegrationsScreen` disconnect action.
 - **Action:** Revoke provider token (best effort) and remove local link/token metadata.
 
 ### `POST /api/integrations/discogs/import`
+
 - **Screen:** `DiscogsImportScreen`.
 - **Action:** Start import (`wantlist`, `collection`, `both`).
 - **Frontend behavior:** Store returned `job_id` and poll job endpoint.
@@ -343,6 +355,7 @@ Frontend guidance: pause automatic retries until `Retry-After` elapses, apply ex
 - **In-flight dedupe contract:** If a same-scope job is already `pending`/`running`, endpoint returns that existing job (`200`) without redispatching, so clients may receive the same `job_id` across repeated clicks/retries.
 
 ### `GET /api/integrations/discogs/import/{job_id}`
+
 - **Screen:** `DiscogsImportScreen` progress panel.
 - **Action:** Poll import status until terminal state.
 - **Terminal UX:** On `completed` or `failed`, show counts/errors and CTA to review watch items.
@@ -350,6 +363,7 @@ Frontend guidance: pause automatic retries until `Retry-After` elapses, apply ex
 - **Deduping expectation:** Repeated user-triggered refreshes or scheduler ticks may return an existing in-flight/recent job instead of creating a new one. Frontend should tolerate unchanged `job_id` values and continue polling that job.
 
 ### `GET /api/integrations/discogs/imported-items?source={wantlist|collection}&limit={1-100}&offset={>=0}`
+
 - **Screen:** `DiscogsImportedItemsScreen` source tabs (`wantlist`, `collection`).
 - **Action:** Fetch paginated imported items for one source at a time.
 - **Behavior:**
@@ -380,6 +394,7 @@ Frontend guidance: pause automatic retries until `Retry-After` elapses, apply ex
 ```
 
 ### `GET /api/integrations/discogs/imported-items/{watch_release_id}/open-in-discogs?source={wantlist|collection}`
+
 - **Screen:** imported-item row action (`Edit in Discogs`).
 - **Action:** Resolve an explicit Discogs URL for an imported row and source.
 - **Behavior:**
@@ -397,6 +412,7 @@ Frontend guidance: pause automatic retries until `Retry-After` elapses, apply ex
 ```
 
 Lifecycle summary:
+
 1. `status` load
 2. `oauth/start` to create state nonce + redirect URL
 3. Redirect to Discogs auth and return to frontend
@@ -424,12 +440,14 @@ The API has two watch paradigms; frontend can present both under a single “Ale
 - `DELETE /api/watch-rules/{rule_id}/hard` → permanent delete.
 
 **Screens + actions:**
+
 - `AlertsListScreen`: view + paginate + disable/hard-delete.
 - `AlertEditorScreen`: create/update rule name, sources, polling interval.
 - `query.sources` is validated against the live provider registry; values must be registered+enabled provider keys. Frontend must not submit enum-only/disabled values, and should refresh provider choices from profile integrations or provider-capabilities endpoints.
 - `AlertDetailScreen`: inspect scheduling fields (`last_run_at`, `next_run_at`).
 
 **Query validation contract (create + patch):**
+
 - Known query keys and accepted value types:
   - `sources`: required on create; list of provider strings (`discogs`, `ebay`), case-insensitive and normalized to lowercase.
   - `keywords`: optional list of strings; values are trimmed/lowercased and empty/whitespace-only entries are rejected when list is provided.
@@ -482,6 +500,7 @@ The API has two watch paradigms; frontend can present both under a single “Ale
 - `DELETE /api/watch-releases/{watch_release_id}` → disable entry.
 
 **Frontend contract updates (Discogs identity modes):**
+
 - `watch_releases` payloads now include:
   - `discogs_release_id` (required): exact release identity.
   - `discogs_master_id` (optional): Discogs master identity.
@@ -491,6 +510,7 @@ The API has two watch paradigms; frontend can present both under a single “Ale
 - Listing payloads now expose optional `discogs_master_id` alongside `discogs_release_id`.
 
 **Screens + actions:**
+
 - `WatchlistScreen`: list/manage release watches.
 - `WatchlistItemEditor`: set target price, condition, active state, and identity `match_mode`.
 
@@ -499,18 +519,22 @@ The API has two watch paradigms; frontend can present both under a single “Ale
 ## 4.4 Notification Inbox + Realtime
 
 ### `GET /api/notifications?limit=`
+
 - **Screen:** `NotificationInboxScreen`.
 - **Action:** Initial list load / infinite append by increasing limit.
 
 ### `POST /api/notifications/{notification_id}/read`
+
 - **Screen:** `NotificationInboxScreen`.
 - **Action:** **Dismiss notification** / mark as read.
 
 ### `GET /api/notifications/unread-count`
+
 - **Screen:** app header badge.
 - **Action:** Poll for unread count on interval or after read actions.
 
 ### `GET /api/stream/events` (SSE)
+
 - **Screen:** app shell/event bridge.
 - **Action:** Subscribe once per authenticated session; fan out to inbox/badge stores.
 - **SSE event name:** `notification`
@@ -526,6 +550,7 @@ The API has two watch paradigms; frontend can present both under a single “Ale
 ```
 
 Recommended client behavior:
+
 - Append/merge realtime events into inbox cache.
 - Refresh unread badge after incoming realtime payload.
 - Reconnect SSE with exponential backoff on disconnect.
@@ -535,6 +560,7 @@ Recommended client behavior:
 ## 4.5 Outbound Marketplace Redirects
 
 ### `GET /api/outbound/ebay/{listing_id}`
+
 - **Screen/action:** listing card/button CTA such as `View on eBay`.
 - **Auth requirement:** requires `Authorization: Bearer <jwt>` like other user-facing `/api/**` endpoints.
 - **Response behavior:** returns `307 Temporary Redirect` with `Location` set to the affiliate-decorated eBay URL. Frontend should treat this as a navigation endpoint, not JSON data.
@@ -545,6 +571,7 @@ Recommended client behavior:
 - **Side effect (click logging):** on successful redirect path, backend inserts an `outbound_clicks` record with authenticated `user_id`, `listing_id`, provider, and optional `Referer` header value.
 
 Frontend guidance:
+
 - **Open behavior:** invoke from direct user interaction and open in a new tab/window (for example `target="_blank" rel="noopener noreferrer"`) so the app session remains in-place.
 - **Analytics expectations:** frontend may emit a local `outbound_click_attempted` event, but backend click logging is the source of truth for successful outbound redirects.
 - **Retry handling:**
@@ -556,11 +583,13 @@ Frontend guidance:
 ## 4.6 Provider Request Observability (User + Admin)
 
 ### `GET /api/provider-requests`
+
 - **Audience:** Authenticated end user.
 - **Scope:** Returns only the caller's `provider_requests` rows.
 - **Pagination:** Supports shared pagination params (`limit`, `offset`, `cursor`) with stable ordering (`created_at DESC, id DESC`).
 
 ### `GET /api/provider-requests/summary`
+
 - **Audience:** Authenticated end user.
 - **Scope:** Per-provider summary for only the caller's rows.
 - **Response fields:**
@@ -570,6 +599,7 @@ Frontend guidance:
   - `avg_duration_ms`
 
 ### `GET /api/provider-requests/admin`
+
 - **Audience:** Admin-only (claim/role-gated).
 - **Scope:** Cross-user query endpoint for provider request diagnostics.
 - **Authorization contract:** Caller must include admin-capable claims (for example `role=admin`, `user_role=admin`, `app_metadata.roles` containing `admin`, or equivalent admin permission claim).
@@ -587,6 +617,7 @@ Frontend guidance:
 - **Response shape:** Same as user list plus `id` and `user_id` to support cross-user triage views.
 
 ### `GET /api/provider-requests/admin/summary`
+
 - **Audience:** Admin-only (same auth gate as `/admin`).
 - **Scope:** Cross-user summary grouped by `provider`.
 - **Filtering params:** Same filter set as `/api/provider-requests/admin`.
@@ -601,6 +632,7 @@ Frontend guidance:
 ## 5) OpenAPI Example Alignment (frontend scaffolding guidance)
 
 The OpenAPI schema now includes representative examples for:
+
 - Profile read/update and auth-required operations.
 - Discogs connect/status/import lifecycle.
 - Watch-rule and watch-release create/update/list entities.
@@ -608,6 +640,7 @@ The OpenAPI schema now includes representative examples for:
 - Common validation/error envelope.
 
 Frontend teams should generate API clients from OpenAPI and use examples for:
+
 - mocked storybook fixtures
 - e2e happy-path payload contracts
 - typed form defaults for create/edit flows

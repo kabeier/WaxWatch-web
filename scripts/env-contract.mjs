@@ -1,15 +1,15 @@
 const requiredEnv = {
-  NODE_ENV: ['development', 'test', 'production'],
-  APP_BASE_URL: 'url',
-  NEXT_PUBLIC_APP_NAME: 'string',
-  NEXT_PUBLIC_RELEASE_VERSION: 'string',
-  NEXT_PUBLIC_SENTRY_DSN: 'string',
-  SENTRY_DSN: 'string',
-  AWS_REGION: 'string',
-  AWS_SECRETS_PREFIX: 'string',
-  SESSION_COOKIE_NAME: 'string',
-  TRUSTED_PROXY_CIDRS: 'string',
-  LOG_LEVEL: ['debug', 'info', 'warn', 'error']
+  NODE_ENV: ["development", "test", "production"],
+  APP_BASE_URL: "url",
+  NEXT_PUBLIC_APP_NAME: "string",
+  NEXT_PUBLIC_RELEASE_VERSION: "string",
+  NEXT_PUBLIC_SENTRY_DSN: "string",
+  SENTRY_DSN: "string",
+  AWS_REGION: "string",
+  AWS_SECRETS_PREFIX: "string",
+  SESSION_COOKIE_NAME: "string",
+  TRUSTED_PROXY_CIDRS: "string",
+  LOG_LEVEL: ["debug", "info", "warn", "error"],
 };
 
 function isUrl(value) {
@@ -32,29 +32,30 @@ export function validateEnv(source = process.env) {
     }
 
     if (Array.isArray(rule) && !rule.includes(value)) {
-      errors.push(`${key} must be one of: ${rule.join(', ')}`);
+      errors.push(`${key} must be one of: ${rule.join(", ")}`);
     }
 
-    if (rule === 'url' && !isUrl(value)) {
+    if (rule === "url" && !isUrl(value)) {
       errors.push(`${key} must be a valid URL`);
     }
   }
 
   if (errors.length > 0) {
-    throw new Error(`Invalid environment configuration:\n${errors.join('\n')}`);
+    throw new Error(`Invalid environment configuration:\n${errors.join("\n")}`);
   }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   try {
     validateEnv();
-    console.log('Environment contract validation passed.');
+    console.log("Environment contract validation passed.");
   } catch (error) {
-    const context = error instanceof Error
-      ? { errorName: error.name, errorMessage: error.message, stack: error.stack }
-      : { errorMessage: String(error) };
+    const context =
+      error instanceof Error
+        ? { errorName: error.name, errorMessage: error.message, stack: error.stack }
+        : { errorMessage: String(error) };
 
-    console.error(JSON.stringify({ level: 'error', message: 'env_contract_failure', ...context }));
+    console.error(JSON.stringify({ level: "error", message: "env_contract_failure", ...context }));
     process.exit(1);
   }
 }
