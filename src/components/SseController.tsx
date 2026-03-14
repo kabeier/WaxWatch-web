@@ -33,6 +33,8 @@ export default function SseController() {
       streamAbortController = null;
     };
 
+    const hasAccessToken = async () => Boolean(await webAuthSessionAdapter.getAccessToken());
+
     const processStream = async (response: Response) => {
       const reader = response.body?.getReader();
       if (!reader) {
@@ -85,6 +87,12 @@ export default function SseController() {
         return;
       }
 
+      const token = await webAuthSessionAdapter.getAccessToken();
+      if (!token) {
+        stop();
+        return;
+      }
+
       const delayMs = getBackoffDelay(reconnectAttempt);
       reconnectAttempt += 1;
 
@@ -95,7 +103,8 @@ export default function SseController() {
     };
 
     const connect = async () => {
-      if (!active) {
+      const token = await webAuthSessionAdapter.getAccessToken();
+      if (!token || !active) {
         stop();
         return;
       }
@@ -107,8 +116,8 @@ export default function SseController() {
           method: "GET",
           headers: {
             Accept: "text/event-stream",
+            Authorization: `Bearer ${token}`,
           },
-          credentials: "include",
           cache: "no-store",
           signal: streamAbortController.signal,
         });
@@ -137,6 +146,11 @@ export default function SseController() {
           return;
         }
 
+        if (!(await hasAccessToken())) {
+          stop();
+          return;
+        }
+
         await scheduleReconnect();
       } catch {
         if (!active || streamAbortController?.signal.aborted) {
@@ -147,6 +161,11 @@ export default function SseController() {
           endpoint: "/api/stream/events",
           reconnectAttempt,
         });
+
+        if (!(await hasAccessToken())) {
+          stop();
+          return;
+        }
 
         await scheduleReconnect();
       }
