@@ -32,7 +32,7 @@ function isUrl(value: string): boolean {
 }
 
 function isRelativeApiPath(value: string): boolean {
-  return value.startsWith("/");
+  return value.startsWith("/") && !value.startsWith("//");
 }
 
 function isUrlOrPath(value: string): boolean {
@@ -72,7 +72,7 @@ function readAndValidateEnv(source: NodeJS.ProcessEnv): Env {
     }
 
     if (optionalEnv[key] === "url-or-path" && !isUrlOrPath(value)) {
-      errors.push(`${key} must be a valid URL or start with /`);
+      errors.push(`${key} must be a valid URL or a relative path starting with / (not //)`);
       return;
     }
 

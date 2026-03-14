@@ -26,7 +26,7 @@ function isUrl(value) {
 }
 
 function isRelativeApiPath(value) {
-  return value.startsWith("/");
+  return value.startsWith("/") && !value.startsWith("//");
 }
 
 function isUrlOrPath(value) {
@@ -59,7 +59,7 @@ export function validateEnv(source = process.env) {
     }
 
     if (rule === "url-or-path" && !isUrlOrPath(value)) {
-      errors.push(`${key} must be a valid URL or start with /`);
+      errors.push(`${key} must be a valid URL or a relative path starting with / (not //)`);
     }
   }
 
