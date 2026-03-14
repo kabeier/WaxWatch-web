@@ -1,4 +1,4 @@
-import { error as logError } from '@/lib/logger';
+import { error as logError } from "@/lib/logger";
 
 type ServerErrorContext = {
   message?: string;
@@ -9,9 +9,9 @@ type ServerErrorContext = {
   [key: string]: unknown;
 };
 
-const SERVER_ERROR_EVENT_KEYS = new Set(['scope', 'requestId', 'name', 'errorMessage', 'stack']);
+const SERVER_ERROR_EVENT_KEYS = new Set(["scope", "requestId", "name", "errorMessage", "stack"]);
 
-function buildErrorEvent(error: unknown, scope: 'client' | 'server', requestId?: string) {
+function buildErrorEvent(error: unknown, scope: "client" | "server", requestId?: string) {
   const err = error instanceof Error ? error : new Error(String(error));
   return {
     scope,
@@ -24,34 +24,27 @@ function buildErrorEvent(error: unknown, scope: 'client' | 'server', requestId?:
 
 function stripReservedEventKeys(context: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(context).filter(([key]) => !SERVER_ERROR_EVENT_KEYS.has(key))
+    Object.entries(context).filter(([key]) => !SERVER_ERROR_EVENT_KEYS.has(key)),
   );
 }
 
 export function captureClientError(capturedError: unknown): void {
-  const event = buildErrorEvent(capturedError, 'client');
-  logError({ message: 'client_error_event', ...event });
+  const event = buildErrorEvent(capturedError, "client");
+  logError({ message: "client_error_event", ...event });
 }
 
 export function captureServerError(
   capturedError: unknown,
   requestId?: string,
-  context: ServerErrorContext = {}
+  context: ServerErrorContext = {},
 ): void {
-  const {
-    message,
-    path,
-    method,
-    status,
-    durationMs,
-    ...additionalContext
-  } = context;
+  const { message, path, method, status, durationMs, ...additionalContext } = context;
 
-  const event = buildErrorEvent(capturedError, 'server', requestId);
+  const event = buildErrorEvent(capturedError, "server", requestId);
   const safeAdditionalContext = stripReservedEventKeys(additionalContext);
 
   logError({
-    message: message ?? 'server_error_event',
+    message: message ?? "server_error_event",
     ...event,
     path,
     method,

@@ -1,10 +1,15 @@
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type LogLevel = "debug" | "info" | "warn" | "error";
 
-const DEFAULT_LOG_LEVEL: LogLevel = 'info';
+const DEFAULT_LOG_LEVEL: LogLevel = "info";
 
 function resolveLogLevel(): LogLevel {
   const configured = process.env.LOG_LEVEL?.toLowerCase();
-  if (configured === 'debug' || configured === 'info' || configured === 'warn' || configured === 'error') {
+  if (
+    configured === "debug" ||
+    configured === "info" ||
+    configured === "warn" ||
+    configured === "error"
+  ) {
     return configured;
   }
 
@@ -44,15 +49,22 @@ export type LogPayload = {
   [key: string]: unknown;
 };
 
-type LogInput = Omit<LogPayload, 'level'>;
+type LogInput = Omit<LogPayload, "level">;
 
-const REDACTED_VALUE = '[REDACTED]';
-const SENSITIVE_KEYS = new Set(['authorization', 'cookie', 'token', 'password', 'secret', 'set-cookie']);
-const SENSITIVE_SUFFIX_PATTERNS = ['token', 'secret', 'password', 'apikey'];
-const SENSITIVE_EXACT_NORMALIZED_KEYS = new Set(['authorization', 'cookie', 'setcookie']);
+const REDACTED_VALUE = "[REDACTED]";
+const SENSITIVE_KEYS = new Set([
+  "authorization",
+  "cookie",
+  "token",
+  "password",
+  "secret",
+  "set-cookie",
+]);
+const SENSITIVE_SUFFIX_PATTERNS = ["token", "secret", "password", "apikey"];
+const SENSITIVE_EXACT_NORMALIZED_KEYS = new Set(["authorization", "cookie", "setcookie"]);
 
 function normalizeKeyForRedaction(key: string): string {
-  return key.toLowerCase().replace(/[\s_-]/g, '');
+  return key.toLowerCase().replace(/[\s_-]/g, "");
 }
 
 function shouldRedactKey(key: string): boolean {
@@ -66,11 +78,11 @@ function shouldRedactKey(key: string): boolean {
     return true;
   }
 
-  if (normalizedKey.startsWith('authorization')) {
+  if (normalizedKey.startsWith("authorization")) {
     return true;
   }
 
-  if (normalizedKey.startsWith('non')) {
+  if (normalizedKey.startsWith("non")) {
     return false;
   }
 
@@ -86,12 +98,12 @@ function sanitizeForSerialization(value: unknown, seen = new WeakSet<object>()):
     return value.map((item) => sanitizeForSerialization(item, seen));
   }
 
-  if (typeof value !== 'object') {
+  if (typeof value !== "object") {
     return value;
   }
 
   if (seen.has(value as object)) {
-    return '[Circular]';
+    return "[Circular]";
   }
   seen.add(value as object);
 
@@ -116,22 +128,22 @@ function sanitizeForSerialization(value: unknown, seen = new WeakSet<object>()):
 function normalizePayload(payload: LogPayload): LogPayload {
   const normalized: LogPayload = { ...payload };
 
-  if (!normalized.path && typeof normalized.pathname === 'string') {
+  if (!normalized.path && typeof normalized.pathname === "string") {
     normalized.path = normalized.pathname;
   }
 
-  if (normalized.status === undefined && typeof normalized.statusCode === 'number') {
+  if (normalized.status === undefined && typeof normalized.statusCode === "number") {
     normalized.status = normalized.statusCode;
   }
 
-  if (normalized.durationMs === undefined && typeof normalized.elapsedMs === 'number') {
+  if (normalized.durationMs === undefined && typeof normalized.elapsedMs === "number") {
     normalized.durationMs = normalized.elapsedMs;
   }
 
   if (!normalized.requestId) {
-    if (typeof normalized.requestID === 'string') {
+    if (typeof normalized.requestID === "string") {
       normalized.requestId = normalized.requestID;
-    } else if (typeof normalized.request_id === 'string') {
+    } else if (typeof normalized.request_id === "string") {
       normalized.requestId = normalized.request_id;
     }
   }
@@ -158,11 +170,11 @@ function serialize(payload: LogPayload): string {
 function writeLine(payload: LogPayload): void {
   const line = serialize(payload);
 
-  if (payload.level === 'error') {
+  if (payload.level === "error") {
     console.error(line);
     return;
   }
-  if (payload.level === 'warn') {
+  if (payload.level === "warn") {
     console.warn(line);
     return;
   }
@@ -187,16 +199,16 @@ export function createLogger(logLevel: LogLevel) {
   return {
     log,
     debug(payload: LogInput): void {
-      writeAtLevel('debug', payload);
+      writeAtLevel("debug", payload);
     },
     info(payload: LogInput): void {
-      writeAtLevel('info', payload);
+      writeAtLevel("info", payload);
     },
     warn(payload: LogInput): void {
-      writeAtLevel('warn', payload);
+      writeAtLevel("warn", payload);
     },
     error(payload: LogInput): void {
-      writeAtLevel('error', payload);
+      writeAtLevel("error", payload);
     },
   };
 }

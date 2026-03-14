@@ -23,10 +23,12 @@
 ## Secrets and Environment Injection
 
 Use either:
+
 1. **SSM Parameter Store** (recommended for standard secret counts), or
 2. **AWS Secrets Manager** (rotation-heavy credentials).
 
 Runtime flow:
+
 1. CI/CD assumes deploy role.
 2. Deploy step fetches secrets by prefix (example: `/waxwatch/prod/web/*`).
 3. Values are injected into instance environment (`/etc/waxwatch/web.env`) via cloud-init/SSM RunCommand.
@@ -49,12 +51,14 @@ Runtime flow:
 ## Incident Readiness / Runbook Alarms
 
 Recommended CloudWatch alarm thresholds:
+
 - ALB `HTTPCode_Target_5XX_Count` > 2% over 5m.
 - ALB `TargetResponseTime` p95 > 1.5s over 5m.
 - `UnHealthyHostCount` >= 1 for 2 consecutive periods.
 - Application log `level=error` burst above baseline.
 
 Response checklist:
+
 1. Confirm `/health` and `/ready` from ALB path.
 2. Check latest deployment verification output.
 3. Inspect structured logs filtered by `requestId`.

@@ -3,11 +3,11 @@ export type RateLimitMeta = {
 };
 
 function toFiniteNumber(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
     return value;
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const parsed = Number(value);
     if (Number.isFinite(parsed) && parsed >= 0) {
       return parsed;
@@ -17,7 +17,10 @@ function toFiniteNumber(value: unknown): number | undefined {
   return undefined;
 }
 
-export function parseRetryAfter(headerValue: string | null, nowMs = Date.now()): number | undefined {
+export function parseRetryAfter(
+  headerValue: string | null,
+  nowMs = Date.now(),
+): number | undefined {
   if (!headerValue) {
     return undefined;
   }
@@ -37,7 +40,7 @@ export function parseRetryAfter(headerValue: string | null, nowMs = Date.now()):
 }
 
 export function parseRetryAfterFromErrorDetails(details: unknown): number | undefined {
-  if (!details || typeof details !== 'object') {
+  if (!details || typeof details !== "object") {
     return undefined;
   }
 
@@ -47,10 +50,10 @@ export function parseRetryAfterFromErrorDetails(details: unknown): number | unde
 }
 
 export function parseRateLimitMeta(headers: Headers, details?: unknown): RateLimitMeta {
-  const fromHeader = parseRetryAfter(headers.get('Retry-After'));
+  const fromHeader = parseRetryAfter(headers.get("Retry-After"));
   const fromDetails = parseRetryAfterFromErrorDetails(details);
 
   return {
-    retryAfterSeconds: fromHeader ?? fromDetails
+    retryAfterSeconds: fromHeader ?? fromDetails,
   };
 }

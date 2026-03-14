@@ -22,6 +22,7 @@ This document is the “rules of engagement” for human contributors and code a
 7. **Formatting is mandatory for every PR**
    - Run `npm run format` (or targeted `npx prettier --write ...`) before committing.
    - Verify with `npm run format:check` (and `npm run format:check:changed` in CI contexts).
+   - **All AI/code agents must Prettier-format PR changes before submission.**
 
 ## Project approach (Option A)
 

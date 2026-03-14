@@ -1,4 +1,4 @@
-import { parseRateLimitMeta } from './rateLimit';
+import { parseRateLimitMeta } from "./rateLimit";
 
 export type ErrorEnvelope = {
   error?: {
@@ -10,21 +10,21 @@ export type ErrorEnvelope = {
 };
 
 export type ValidationApiError = {
-  kind: 'validation_error';
+  kind: "validation_error";
   message: string;
   status: number;
   details?: unknown;
 };
 
 export type HttpApiError = {
-  kind: 'http_error';
+  kind: "http_error";
   message: string;
   status: number;
   details?: unknown;
 };
 
 export type RateLimitedApiError = {
-  kind: 'rate_limited';
+  kind: "rate_limited";
   message: string;
   status: 429;
   details?: unknown;
@@ -34,23 +34,25 @@ export type RateLimitedApiError = {
 export type ApiError = ValidationApiError | HttpApiError | RateLimitedApiError;
 
 export function isApiError(error: unknown): error is ApiError {
-  if (!error || typeof error !== 'object') {
+  if (!error || typeof error !== "object") {
     return false;
   }
 
   const kind = (error as { kind?: unknown }).kind;
-  return kind === 'validation_error' || kind === 'http_error' || kind === 'rate_limited';
+  return kind === "validation_error" || kind === "http_error" || kind === "rate_limited";
 }
 
-export async function tryParseErrorEnvelope(response: Response): Promise<ErrorEnvelope | undefined> {
-  const contentType = response.headers.get('content-type')?.toLowerCase();
-  if (!contentType?.includes('application/json')) {
+export async function tryParseErrorEnvelope(
+  response: Response,
+): Promise<ErrorEnvelope | undefined> {
+  const contentType = response.headers.get("content-type")?.toLowerCase();
+  if (!contentType?.includes("application/json")) {
     return undefined;
   }
 
   try {
     const parsed = (await response.json()) as unknown;
-    if (!parsed || typeof parsed !== 'object') {
+    if (!parsed || typeof parsed !== "object") {
       return undefined;
     }
 
@@ -61,33 +63,34 @@ export async function tryParseErrorEnvelope(response: Response): Promise<ErrorEn
 }
 
 export function toApiError(response: Response, envelope?: ErrorEnvelope): ApiError {
-  const message = envelope?.error?.message ?? envelope?.message ?? response.statusText ?? 'Request failed';
+  const message =
+    envelope?.error?.message ?? envelope?.message ?? response.statusText ?? "Request failed";
   const details = envelope?.error?.details;
   const errorType = envelope?.error?.type;
 
-  if (response.status === 429 || errorType === 'rate_limited') {
+  if (response.status === 429 || errorType === "rate_limited") {
     return {
-      kind: 'rate_limited',
+      kind: "rate_limited",
       status: 429,
       message,
       details,
-      retryAfterSeconds: parseRateLimitMeta(response.headers, details).retryAfterSeconds
+      retryAfterSeconds: parseRateLimitMeta(response.headers, details).retryAfterSeconds,
     };
   }
 
-  if (response.status === 400 || response.status === 422 || errorType === 'validation_error') {
+  if (response.status === 400 || response.status === 422 || errorType === "validation_error") {
     return {
-      kind: 'validation_error',
+      kind: "validation_error",
       status: response.status,
       message,
-      details
+      details,
     };
   }
 
   return {
-    kind: 'http_error',
+    kind: "http_error",
     status: response.status,
     message,
-    details
+    details,
   };
 }
