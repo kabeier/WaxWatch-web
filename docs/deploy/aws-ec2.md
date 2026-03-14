@@ -39,6 +39,30 @@ Runtime flow:
 4. `docker compose up -d` reads `.env`/`env_file` and starts app.
 5. Startup validation (`scripts/env-contract.mjs`) fails the deploy immediately when required values are missing/malformed.
 
+
+## Content Security Policy (CSP) for Cross-Origin APIs
+
+The app always emits a strict CSP and `connect-src` starts with same-origin (`'self'`).
+
+For deployments where the browser calls a cross-origin API directly:
+
+- Set `CSP_CONNECT_SRC` to a comma-separated list of **absolute origins** (scheme + host + optional port), for example: `https://api.your-backend.example,https://api-failover.your-backend.example`.
+- `NEXT_PUBLIC_API_BASE_URL` is also parsed and its origin is automatically added to `connect-src` when absolute.
+- Validation rules at startup/build time:
+  - No wildcard (`*`) entries.
+  - Origins must be absolute URLs.
+  - Non-local entries must be HTTPS in production.
+  - Local development may use `http://localhost:<port>` / `http://127.0.0.1:<port>`.
+
+Recommended production configuration:
+
+```bash
+NEXT_PUBLIC_API_BASE_URL=https://api.your-backend.example/api
+CSP_CONNECT_SRC=https://api.your-backend.example
+```
+
+If your frontend stays same-origin (recommended default with reverse proxy), leave `CSP_CONNECT_SRC` unset and keep `NEXT_PUBLIC_API_BASE_URL=/api`.
+
 ## Patch and Base Image Cadence
 
 - **AMI patching cadence**: at least monthly (or immediate for critical CVEs).

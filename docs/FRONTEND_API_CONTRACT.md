@@ -6,6 +6,9 @@ This contract captures **current API behavior** and maps it to intended React su
 
 ## Changelog
 
+- `2026-03-14.0`
+  - Added explicit frontend CSP `connect-src` requirements for cross-origin web API usage, including `CSP_CONNECT_SRC` and `NEXT_PUBLIC_API_BASE_URL` origin behavior and production safety constraints.
+
 - `2026-03-13.1`
   - Canonicalized watch-rule deletion scope wording across this contract: `DELETE /api/watch-rules/{rule_id}/hard` is admin/dev-only backend tooling and out of user-facing frontend services scope.
   - Removed contradictory phrasing that implied this route belongs in frontend SDK surface docs.
@@ -137,6 +140,29 @@ Suggested values:
 - **Mobile production:** `https://api.your-backend.example/api`
 
 Implementation note: if web is moved to cross-origin API calls, switch web `API_BASE_URL` to absolute HTTPS and align CORS allowlists accordingly.
+
+### 2.1.1 Web CSP `connect-src` requirements for cross-origin API calls
+
+When the web frontend calls an API on a different origin, the frontend deployment must allow that origin in CSP `connect-src`:
+
+- `connect-src` always includes `'self'`.
+- Add explicit API origins via `CSP_CONNECT_SRC` (comma-separated absolute origins).
+- The origin from `NEXT_PUBLIC_API_BASE_URL` is auto-included when the value is an absolute URL.
+- Validation constraints:
+  - No wildcard (`*`) origins.
+  - Production non-local origins must use `https://`.
+  - Local development may use `http://localhost` / `http://127.0.0.1`.
+
+Examples:
+
+- Same-origin web API (default):
+  - `NEXT_PUBLIC_API_BASE_URL=/api`
+  - `CSP_CONNECT_SRC` unset
+- Cross-origin web API:
+  - `NEXT_PUBLIC_API_BASE_URL=https://api.your-backend.example/api`
+  - `CSP_CONNECT_SRC=https://api.your-backend.example`
+
+Keep this CSP configuration aligned with backend CORS allowlists.
 
 ## 2.2 CORS + auth-header notes for mobile native HTTP clients
 
