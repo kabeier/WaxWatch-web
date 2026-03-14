@@ -65,12 +65,21 @@ function getTrustedConnectOrigins() {
   return [...originSet];
 }
 
+function getTrustedStyleOrigins() {
+  const styleSrcRaw = process.env.CSP_STYLE_SRC ?? "";
+  return styleSrcRaw
+    .split(",")
+    .map((item) => parseConnectOrigin(item, "CSP_STYLE_SRC"))
+    .filter(Boolean);
+}
+
 const connectSrcDirective = ["'self'", ...getTrustedConnectOrigins()].join(" ");
+const styleSrcDirective = ["'self'", ...getTrustedStyleOrigins()].join(" ");
 
 const csp = [
   "default-src 'self'",
   "img-src 'self' data:",
-  "style-src 'self' 'unsafe-inline'",
+  `style-src ${styleSrcDirective}`,
   "script-src 'self'",
   `connect-src ${connectSrcDirective}`,
   "font-src 'self' data:",

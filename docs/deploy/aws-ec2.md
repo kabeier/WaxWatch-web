@@ -42,7 +42,11 @@ Runtime flow:
 
 ## Content Security Policy (CSP) for Cross-Origin APIs
 
-The app always emits a strict CSP and `connect-src` starts with same-origin (`'self'`).
+The app always emits a strict CSP:
+
+- `connect-src` starts with same-origin (`'self'`) and only allows explicit trusted API origins.
+- `style-src` is `'self'` plus optional explicit trusted style origins from `CSP_STYLE_SRC`.
+- `style-src` must never include `'unsafe-inline'` in production. Inline styles are not allowed; move UI styling to stylesheet classes.
 
 For deployments where the browser calls a cross-origin API directly:
 
@@ -59,6 +63,8 @@ Recommended production configuration:
 ```bash
 NEXT_PUBLIC_API_BASE_URL=https://api.your-backend.example/api
 CSP_CONNECT_SRC=https://api.your-backend.example
+# Optional: only if you intentionally load third-party hosted stylesheets
+CSP_STYLE_SRC=https://fonts.googleapis.com
 ```
 
 If your frontend stays same-origin (recommended default with reverse proxy), leave `CSP_CONNECT_SRC` unset and keep `NEXT_PUBLIC_API_BASE_URL=/api`.
@@ -92,3 +98,12 @@ Response checklist:
 3. Inspect structured logs filtered by `requestId`.
 4. Review centralized error events (client + server).
 5. Roll back to prior AMI/image if regression confirmed.
+
+### CSP style exceptions process
+
+If a team needs a new `style-src` allowlist entry:
+
+1. Open a security review ticket with justification, data classification, and owner.
+2. Confirm there is no inline-style dependency (`style=`, CSS-in-JS runtime injection, or library fallback to inline style attributes).
+3. Add only explicit HTTPS origins to `CSP_STYLE_SRC` (no wildcards), deploy to staging, and run `scripts/verify-deployment.mjs` with `VERIFY_ENVIRONMENT=production`.
+4. Document the approved origin and expiry/revisit date in the deployment change record.
