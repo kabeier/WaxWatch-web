@@ -11,7 +11,6 @@ const baseEnv: NodeJS.ProcessEnv = {
   SENTRY_DSN: "https://secret@example.com/1",
   AWS_REGION: "us-east-1",
   AWS_SECRETS_PREFIX: "/waxwatch/local/web",
-  SESSION_COOKIE_NAME: "waxwatch_session",
   TRUSTED_PROXY_CIDRS: "127.0.0.1/32",
   LOG_LEVEL: "debug",
 };

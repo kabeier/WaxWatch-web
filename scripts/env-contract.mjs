@@ -7,7 +7,6 @@ const requiredEnv = {
   SENTRY_DSN: "string",
   AWS_REGION: "string",
   AWS_SECRETS_PREFIX: "string",
-  SESSION_COOKIE_NAME: "string",
   TRUSTED_PROXY_CIDRS: "string",
   LOG_LEVEL: ["debug", "info", "warn", "error"],
 };
