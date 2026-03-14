@@ -39,5 +39,16 @@ Canonical internal references:
 
 ## Local startup
 
+- Copy env template: `cp .env.example .env`
 - Development server: `npm run dev`
 - Production-like local run: `npm run build` then `npm run start`
+
+### API base URL configuration
+
+The web API client reads `NEXT_PUBLIC_API_BASE_URL` and falls back to `/api` when unset.
+
+- **Same-origin (recommended default):** `NEXT_PUBLIC_API_BASE_URL=/api`
+  - Browser requests go through this Next.js app origin (for example `https://app.example.com/api/*`).
+- **Cross-origin API:** set a full URL such as `NEXT_PUBLIC_API_BASE_URL=https://api.example.com`
+  - Browser requests go directly to that API origin.
+  - Ensure CORS and auth/session behavior are configured for cross-origin traffic.

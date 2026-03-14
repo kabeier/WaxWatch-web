@@ -14,6 +14,16 @@ npm run env:check:template
 
 Minimum local values are already provided in `.env.example` (for example: `NODE_ENV=development`, `APP_BASE_URL=http://localhost:3000`, and local-safe placeholders for Sentry/AWS keys). Keep these keys present because `src/config/env.ts` requires all of them at runtime.
 
+`NEXT_PUBLIC_API_BASE_URL` controls which base URL the browser API client uses:
+
+- Same-origin deployment (default): `NEXT_PUBLIC_API_BASE_URL=/api`
+  - Expected for standard Next.js + backend co-hosting/reverse-proxy setups where app and API share an origin.
+- Cross-origin deployment: `NEXT_PUBLIC_API_BASE_URL=https://api.example.com`
+  - Use when frontend and backend are on different origins.
+  - You must configure backend CORS + auth/session behavior for cross-origin browser requests.
+
+If `NEXT_PUBLIC_API_BASE_URL` is omitted, the client explicitly falls back to `/api`.
+
 For production deployments, replace placeholder/template values with environment-specific secrets and infrastructure values (especially `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_SECRETS_PREFIX`, and `TRUSTED_PROXY_CIDRS`).
 
 ### 2) Confirm API contracts before building

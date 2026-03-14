@@ -6,12 +6,16 @@ const runtimeContractPath = resolve(repoRoot, "src/config/env.ts");
 const envExamplePath = resolve(repoRoot, ".env.example");
 const envSamplePath = resolve(repoRoot, ".env.sample");
 
-function getRequiredKeysFromRuntimeContract(filePath) {
-  const source = readFileSync(filePath, "utf8");
-  const contractMatch = source.match(/const\s+requiredEnv\s*=\s*\{([\s\S]*?)\n\};/);
+function getKeysFromRuntimeContractObject(source, objectName, filePath) {
+  const contractMatch = source.match(
+    new RegExp(`const\\s+${objectName}\\s*=\\s*\\{([\\s\\S]*?)\\n\\};`),
+  );
 
   if (!contractMatch) {
-    throw new Error(`Unable to find requiredEnv object in ${filePath}`);
+    if (objectName === "optionalEnv") {
+      return [];
+    }
+    throw new Error(`Unable to find ${objectName} object in ${filePath}`);
   }
 
   const keys = [];
@@ -22,11 +26,23 @@ function getRequiredKeysFromRuntimeContract(filePath) {
     keys.push(match[1]);
   }
 
-  if (keys.length === 0) {
+  return keys;
+}
+
+function getRuntimeContractKeys(filePath) {
+  const source = readFileSync(filePath, "utf8");
+  const requiredKeys = getKeysFromRuntimeContractObject(source, "requiredEnv", filePath);
+  const optionalKeys = getKeysFromRuntimeContractObject(source, "optionalEnv", filePath);
+
+  if (requiredKeys.length === 0) {
     throw new Error(`No environment keys found in requiredEnv object in ${filePath}`);
   }
 
-  return keys;
+  return {
+    requiredKeys,
+    optionalKeys,
+    allowedKeys: [...requiredKeys, ...optionalKeys],
+  };
 }
 
 function getKeysFromTemplate(filePath) {
@@ -49,9 +65,12 @@ function diffKeys(expectedKeys, actualKeys) {
   return { missing, extra };
 }
 
-const requiredKeys = getRequiredKeysFromRuntimeContract(runtimeContractPath);
+const { requiredKeys, optionalKeys, allowedKeys } = getRuntimeContractKeys(runtimeContractPath);
 const envExampleKeys = getKeysFromTemplate(envExamplePath);
-const { missing, extra } = diffKeys(requiredKeys, envExampleKeys);
+const { missing } = diffKeys(requiredKeys, envExampleKeys);
+const allowedKeySet = new Set(allowedKeys);
+const envExampleKeySet = new Set(envExampleKeys);
+const extra = envExampleKeys.filter((key) => !allowedKeySet.has(key));
 
 const errors = [];
 if (missing.length > 0) {
@@ -59,6 +78,14 @@ if (missing.length > 0) {
 }
 if (extra.length > 0) {
   errors.push(`.env.example contains keys not in runtime contract: ${extra.join(", ")}`);
+}
+if (optionalKeys.length > 0) {
+  const missingOptional = optionalKeys.filter((key) => !envExampleKeySet.has(key));
+  if (missingOptional.length > 0) {
+    errors.push(
+      `.env.example is missing optional runtime keys (recommended for discoverability): ${missingOptional.join(", ")}`,
+    );
+  }
 }
 if (existsSync(envSamplePath)) {
   errors.push(
