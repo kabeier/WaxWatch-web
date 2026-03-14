@@ -27,15 +27,18 @@ function parseConnectOrigin(rawValue, sourceLabel, { allowRelative = false } = {
   const isHttps = parsed.protocol === "https:";
   const isLocal = isLocalHostname(parsed.hostname);
   const isProduction = process.env.NODE_ENV === "production";
+  const isLocalHttp = parsed.protocol === "http:" && isLocal;
 
-  if (!isHttps && !(parsed.protocol === "http:" && isLocal)) {
+  if (!isHttps && !isLocalHttp) {
     throw new Error(
       `${sourceLabel} must use https (except local http://localhost development origins). Invalid value: ${value}`,
     );
   }
 
-  if (isProduction && !isLocal && !isHttps) {
-    throw new Error(`${sourceLabel} must use https in production for non-local origins. Invalid value: ${value}`);
+  if (isProduction && isLocalHttp) {
+    throw new Error(
+      `${sourceLabel} must use https in production. Local http://localhost origins are only allowed outside production. Invalid value: ${value}`,
+    );
   }
 
   return parsed.origin;

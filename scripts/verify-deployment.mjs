@@ -87,7 +87,9 @@ function assertConnectSrc(cspHeader) {
   }
 
   if (deploymentMode === "cross-origin" && connectSrcTokens.length <= 1) {
-    throw new Error("Expected cross-origin deployment CSP connect-src to include explicit API origins");
+    throw new Error(
+      "Expected cross-origin deployment CSP connect-src to include explicit API origins",
+    );
   }
 
   if (!["same-origin", "cross-origin"].includes(deploymentMode)) {

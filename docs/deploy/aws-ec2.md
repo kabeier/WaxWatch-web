@@ -39,7 +39,6 @@ Runtime flow:
 4. `docker compose up -d` reads `.env`/`env_file` and starts app.
 5. Startup validation (`scripts/env-contract.mjs`) fails the deploy immediately when required values are missing/malformed.
 
-
 ## Content Security Policy (CSP) for Cross-Origin APIs
 
 The app always emits a strict CSP and `connect-src` starts with same-origin (`'self'`).
