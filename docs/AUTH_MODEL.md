@@ -1,17 +1,22 @@
-# Auth Model (Supabase + Backend API)
+# Auth Model (Web Cookie Sessions + Backend API)
 
 ## Responsibility split
 
 - Supabase owns login + refresh for user sessions.
-- WaxWatch backend authorizes all `/api/**` routes using JWT bearer tokens.
+- **Web** uses server-managed `httpOnly` session cookies for API auth; browser JavaScript does not read bearer tokens from storage.
+- **Mobile/native** continues to use bearer JWTs via secure native storage and transport.
 - The shared API client is the canonical place where auth lifecycle side effects are triggered.
 
 ## Canonical auth lifecycle (web + mobile)
 
 All auth transitions must flow through `createApiClient(..., { authSessionAdapter })` hooks.
 
-1. API client fetches token via `authSessionAdapter.getAccessToken()`.
-2. API client includes `Authorization: Bearer <jwt>`.
+1. API client asks the adapter (or `getJwt`) for auth context.
+   - Web adapter returns `null` token and relies on cookie transport (`credentials: include`).
+   - Mobile (or explicit `getJwt`) supplies bearer JWTs.
+2. API client applies auth transport:
+   - Bearer mode: `Authorization: Bearer <jwt>`.
+   - Cookie mode: sends browser credentials/cookies.
 3. API client routes auth outcomes through adapter hooks:
    - `401/403` → `clearSession` → `emitAuthEvent("reauth-required")` → `redirectToSignedOut("reauth-required")`
    - `POST /me/logout` success → `clearSession` → `emitAuthEvent("signed-out")` → `redirectToSignedOut("signed-out")`
@@ -20,6 +25,21 @@ All auth transitions must flow through `createApiClient(..., { authSessionAdapte
 ### Important rule
 
 Do not duplicate these transitions in feature code (SSE controllers, screens, pages, hooks). Consumers should call shared API/client lifecycle helpers and rely on adapter behavior.
+
+## Web storage strategy and residual risk
+
+### Strategy implemented
+
+- Web no longer reads long-lived access tokens from `localStorage` in `webAuthSessionAdapter.getAccessToken()`.
+- Legacy key cleanup (`waxwatch.auth.session`) is best-effort only during `clearSession()`.
+- Browser API calls and SSE connections use cookie auth (`credentials: include`) instead of JavaScript-managed bearer headers.
+
+### Residual risks and trade-offs
+
+- `httpOnly` cookies reduce token theft risk from XSS because JavaScript cannot read session secrets.
+- XSS can still issue authenticated requests while a session is active; CSP, output encoding, and dependency hygiene remain mandatory.
+- Cookie auth introduces CSRF exposure if endpoints accept ambient cookies without CSRF defenses. Mitigate with `SameSite`, origin/referer checks, and anti-CSRF tokens where needed.
+- Mobile/native bearers remain sensitive and must stay in OS-backed secure storage with short TTL + refresh controls.
 
 ## Frontend requirements
 

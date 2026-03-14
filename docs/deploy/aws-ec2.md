@@ -17,10 +17,11 @@
 - Source IP trust resolution is: `request.ip` (platform field) first, otherwise the right-most IP in `x-forwarded-for` (closest hop).
 - When source IP is untrusted, middleware strips `x-forwarded-for`, `x-forwarded-host`, `x-forwarded-port`, and `x-forwarded-proto` before downstream processing/logging and emits a structured warning (`message=untrusted_forwarded_headers`).
 - Malformed CIDR entries in `TRUSTED_PROXY_CIDRS` are ignored (fail-closed) and logged as `message=invalid_trusted_proxy_cidrs`; only valid CIDRs are used for trust checks.
-- Session/auth cookies must be set with:
+- Web session/auth cookies are the primary browser auth mechanism and must be set with:
   - `Secure=true` when `x-forwarded-proto=https`
   - `HttpOnly=true`
   - `SameSite=Lax` (or `Strict` for admin-only flows)
+- Do not rely on browser `localStorage` bearer tokens for web API authorization; keep bearer usage limited to non-browser clients/mobile SDK flows.
 - Never rely on local instance memory for session state; use external state stores.
 
 ## Secrets and Environment Injection

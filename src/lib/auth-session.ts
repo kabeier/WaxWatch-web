@@ -1,7 +1,7 @@
 import type { AuthEvent, AuthSessionAdapter, SignedOutReason } from "./auth/session-adapter";
-import { info, warn } from "@/lib/logger";
+import { info } from "@/lib/logger";
 
-const AUTH_SESSION_KEY = "waxwatch.auth.session";
+const LEGACY_AUTH_SESSION_KEY = "waxwatch.auth.session";
 
 export const SIGNED_OUT_ROUTE = "/signed-out";
 export const ACCOUNT_REMOVED_ROUTE = "/account-removed";
@@ -13,37 +13,6 @@ let redirectHandler: RedirectHandler = (to) => {
     window.location.assign(to);
   }
 };
-
-type SessionLike = {
-  access_token?: unknown;
-  session?: {
-    access_token?: unknown;
-  };
-  currentSession?: {
-    access_token?: unknown;
-  };
-};
-
-function readPersistedSession(): SessionLike | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const rawSession = window.localStorage.getItem(AUTH_SESSION_KEY);
-  if (!rawSession) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawSession) as SessionLike;
-  } catch {
-    warn({
-      message: "auth_session_parse_failed",
-      scope: "auth",
-    });
-    return null;
-  }
-}
 
 export function setAuthRedirectHandler(handler: RedirectHandler) {
   redirectHandler = handler;
@@ -59,20 +28,14 @@ export function resetAuthRedirectHandler() {
 
 export const webAuthSessionAdapter: AuthSessionAdapter = {
   getAccessToken() {
-    const session = readPersistedSession();
-    if (!session) {
-      return null;
-    }
-
-    const token =
-      session.access_token ?? session.session?.access_token ?? session.currentSession?.access_token;
-
-    return typeof token === "string" && token.length > 0 ? token : null;
+    // Web auth is cookie-backed. Avoid exposing long-lived bearer tokens to JS.
+    return null;
   },
   clearSession() {
     if (typeof window === "undefined") return;
 
-    window.localStorage.removeItem(AUTH_SESSION_KEY);
+    // Best-effort cleanup for legacy localStorage bearer-session persistence.
+    window.localStorage.removeItem(LEGACY_AUTH_SESSION_KEY);
 
     info({
       message: "auth_session_cleared",

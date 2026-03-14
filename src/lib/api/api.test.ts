@@ -175,7 +175,7 @@ describe("api client", () => {
     vi.restoreAllMocks();
   });
 
-  it("adds bearer auth header when an auth adapter is injected", async () => {
+  it("uses cookie-auth transport when the web auth adapter is injected", async () => {
     window.localStorage.setItem(
       "waxwatch.auth.session",
       JSON.stringify({ session: { access_token: "abc123" } }),
@@ -200,7 +200,33 @@ describe("api client", () => {
 
     const requestInit = fetchMock.mock.calls[0][1] as RequestInit;
     const headers = new Headers(requestInit.headers);
+    expect(headers.get("Authorization")).toBeNull();
+    expect(requestInit.credentials).toBe("include");
+  });
+
+  it("prefers bearer auth when getJwt is provided", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+      getJwt: () => "abc123",
+      authSessionAdapter: webAuthSessionAdapter,
+    });
+
+    await client.request("/me");
+
+    const requestInit = fetchMock.mock.calls[0][1] as RequestInit;
+    const headers = new Headers(requestInit.headers);
     expect(headers.get("Authorization")).toBe("Bearer abc123");
+    expect(requestInit.credentials).toBe("same-origin");
   });
 
   it("clears auth state and redirects on 401/403 responses", async () => {
