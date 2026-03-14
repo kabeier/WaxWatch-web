@@ -178,7 +178,7 @@ Status criteria used in this matrix:
 
 | Route                      | Status           | Notes                                                                                                                             |
 | -------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                        | scaffold         | Redirect-only entry route is intentionally minimal; it has no standalone UX-state or route-level test evidence for promotion yet. |
+| `/`                        | scaffold         | Unconditional server redirect entrypoint (`app/page.tsx`) that forwards to `/search`; remains non-production-ready until we add dedicated route-level redirect contract coverage (including destination-regression protection) independent of `/search` implementation details. |
 | `/login`                   | scaffold         | Sign-in shell placeholder for Supabase auth UI.                                                                                   |
 | `/search`                  | production-ready | Full UX states, validation/mutation hardening, cooldown-aware retries, and route-level success/failure tests.                     |
 | `/alerts`                  | production-ready | Full query UX states with retry actions (including cooldown handling) and route-level success/failure tests.                      |
