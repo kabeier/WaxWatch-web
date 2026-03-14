@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { validateEnv } from "../../scripts/env-contract.mjs";
 
-const baseEnv = {
+const baseEnv: NodeJS.ProcessEnv = {
   NODE_ENV: "development",
   APP_BASE_URL: "http://localhost:3000",
   NEXT_PUBLIC_APP_NAME: "WaxWatch",
