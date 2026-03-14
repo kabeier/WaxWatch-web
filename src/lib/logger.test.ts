@@ -87,7 +87,6 @@ describe("logger", () => {
       metrics: {
         tokenCount: 3,
         cookieConsent: true,
-        nonSecret: "visible",
       },
     });
 
@@ -112,6 +111,27 @@ describe("logger", () => {
     const metrics = payload.metrics as Record<string, unknown>;
     expect(metrics.tokenCount).toBe(3);
     expect(metrics.cookieConsent).toBe(true);
-    expect(metrics.nonSecret).toBe("visible");
+  });
+  it("only keeps explicitly safe non* keys visible and redacts sensitive non* variants", () => {
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const logger = createLogger("debug");
+
+    logger.info({
+      message: "non_prefix_handling",
+      nonSecret: "visible",
+      nonSensitive: "visible",
+      nonceToken: "hide",
+      nonprodSecret: "hide",
+      nonAuthorizationToken: "hide",
+    });
+
+    const output = consoleSpy.mock.calls[0][0] as string;
+    const payload = JSON.parse(output) as Record<string, unknown>;
+
+    expect(payload.nonSecret).toBe("visible");
+    expect(payload.nonSensitive).toBe("visible");
+    expect(payload.nonceToken).toBe("[REDACTED]");
+    expect(payload.nonprodSecret).toBe("[REDACTED]");
+    expect(payload.nonAuthorizationToken).toBe("[REDACTED]");
   });
 });
