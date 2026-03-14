@@ -102,6 +102,22 @@ describe("middleware", () => {
     expect(nextArgs.request.headers.get("x-forwarded-proto")).toBe("https");
   });
 
+  it("accepts forwarded headers when trusted proxy is provided as ipv4-mapped ipv6", () => {
+    const request = createRequest(
+      {
+        "x-forwarded-for": "198.51.100.20, ::ffff:10.1.1.1",
+        "x-forwarded-proto": "https",
+      },
+      "::ffff:10.1.1.1",
+    );
+
+    middleware(request as never);
+
+    const nextArgs = nextMock.mock.calls[0][0] as { request: { headers: Headers } };
+    expect(nextArgs.request.headers.get("x-forwarded-for")).toBe("198.51.100.20, ::ffff:10.1.1.1");
+    expect(nextArgs.request.headers.get("x-forwarded-proto")).toBe("https");
+  });
+
   it("ignores forwarded headers from untrusted source and logs warning", () => {
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const request = createRequest(

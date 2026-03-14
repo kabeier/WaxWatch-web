@@ -20,11 +20,18 @@ describe("proxy-trust", () => {
   });
 
   it("reports malformed cidr entries and ignores them", () => {
-    const config = parseTrustedProxyCidrs("10.0.0.0/8,garbage,192.168.0.0/99");
+    const config = parseTrustedProxyCidrs("10.0.0.0/8,10.2.0.0/8foo,garbage,192.168.0.0/99");
 
-    expect(config.invalidCidrs).toEqual(["garbage", "192.168.0.0/99"]);
+    expect(config.invalidCidrs).toEqual(["10.2.0.0/8foo", "garbage", "192.168.0.0/99"]);
     expect(isTrustedProxyIp("10.2.2.2", config)).toBe(true);
     expect(isTrustedProxyIp("192.168.0.1", config)).toBe(false);
+  });
+
+  it("matches ipv4-mapped ipv6 source addresses against ipv4 cidrs", () => {
+    const config = parseTrustedProxyCidrs("10.0.0.0/8");
+
+    expect(isTrustedProxyIp("::ffff:10.1.1.1", config)).toBe(true);
+    expect(isTrustedProxyIp("::ffff:203.0.113.8", config)).toBe(false);
   });
 
   it("extracts immediate proxy ip from platform ip first then forwarded chain", () => {

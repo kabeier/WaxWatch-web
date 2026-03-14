@@ -76,12 +76,22 @@ function normalizeIp(ip: string): string | null {
   const withoutBrackets =
     trimmed.startsWith("[") && trimmed.endsWith("]") ? trimmed.slice(1, -1) : trimmed;
   const withoutZone = withoutBrackets.split("%")[0] ?? withoutBrackets;
+  const mappedIpv4 = withoutZone.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i)?.[1];
+
+  if (mappedIpv4 && isIP(mappedIpv4) === 4) {
+    return mappedIpv4;
+  }
 
   return isIP(withoutZone) ? withoutZone : null;
 }
 
 function parseCidrEntry(entry: string): ParsedCidr | null {
-  const [rawAddress, rawPrefix] = entry.split("/");
+  const cidrParts = entry.split("/");
+  if (cidrParts.length > 2) {
+    return null;
+  }
+
+  const [rawAddress, rawPrefix] = cidrParts;
   const normalizedAddress = normalizeIp(rawAddress ?? "");
 
   if (!normalizedAddress) {
@@ -91,6 +101,10 @@ function parseCidrEntry(entry: string): ParsedCidr | null {
   const version = isIP(normalizedAddress) as 4 | 6;
   const maxBits = bitsForVersion(version);
   const defaultPrefix = maxBits;
+
+  if (rawPrefix !== undefined && !/^\d+$/.test(rawPrefix)) {
+    return null;
+  }
 
   const prefixLength = rawPrefix === undefined ? defaultPrefix : Number.parseInt(rawPrefix, 10);
   if (!Number.isInteger(prefixLength) || prefixLength < 0 || prefixLength > maxBits) {
