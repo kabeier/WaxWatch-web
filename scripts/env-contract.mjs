@@ -12,6 +12,10 @@ const requiredEnv = {
   LOG_LEVEL: ["debug", "info", "warn", "error"],
 };
 
+const optionalEnv = {
+  NEXT_PUBLIC_API_BASE_URL: "url-or-path",
+};
+
 function isUrl(value) {
   try {
     new URL(value);
@@ -19,6 +23,14 @@ function isUrl(value) {
   } catch {
     return false;
   }
+}
+
+function isRelativeApiPath(value) {
+  return value.startsWith("/") && !value.startsWith("//");
+}
+
+function isUrlOrPath(value) {
+  return isUrl(value) || isRelativeApiPath(value);
 }
 
 export function validateEnv(source = process.env) {
@@ -37,6 +49,17 @@ export function validateEnv(source = process.env) {
 
     if (rule === "url" && !isUrl(value)) {
       errors.push(`${key} must be a valid URL`);
+    }
+  }
+
+  for (const [key, rule] of Object.entries(optionalEnv)) {
+    const value = source[key];
+    if (!value) {
+      continue;
+    }
+
+    if (rule === "url-or-path" && !isUrlOrPath(value)) {
+      errors.push(`${key} must be a valid URL or a relative path starting with / (not //)`);
     }
   }
 

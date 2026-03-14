@@ -12,8 +12,14 @@ const requiredEnv = {
   LOG_LEVEL: ["debug", "info", "warn", "error"] as const,
 };
 
+const optionalEnv = {
+  NEXT_PUBLIC_API_BASE_URL: "url-or-path" as const,
+};
+
 type Env = {
   [K in keyof typeof requiredEnv]: string;
+} & {
+  [K in keyof typeof optionalEnv]?: string;
 };
 
 function isUrl(value: string): boolean {
@@ -23,6 +29,14 @@ function isUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+function isRelativeApiPath(value: string): boolean {
+  return value.startsWith("/") && !value.startsWith("//");
+}
+
+function isUrlOrPath(value: string): boolean {
+  return isUrl(value) || isRelativeApiPath(value);
 }
 
 function readAndValidateEnv(source: NodeJS.ProcessEnv): Env {
@@ -45,6 +59,20 @@ function readAndValidateEnv(source: NodeJS.ProcessEnv): Env {
 
     if (rule === "url" && !isUrl(value)) {
       errors.push(`${key} must be a valid URL`);
+      return;
+    }
+
+    parsed[key] = value;
+  });
+
+  (Object.keys(optionalEnv) as Array<keyof typeof optionalEnv>).forEach((key) => {
+    const value = source[key];
+    if (!value) {
+      return;
+    }
+
+    if (optionalEnv[key] === "url-or-path" && !isUrlOrPath(value)) {
+      errors.push(`${key} must be a valid URL or a relative path starting with / (not //)`);
       return;
     }
 

@@ -330,6 +330,26 @@ describe("api client", () => {
     expect(fetchMock.mock.calls[0][0]).toBe("/api/markets?limit=10");
   });
 
+  it("supports configured relative API base paths", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "/backend-api",
+      fetchImpl: fetchMock,
+    });
+
+    await client.request("/markets", undefined, new URLSearchParams([["limit", "10"]]));
+
+    expect(fetchMock.mock.calls[0][0]).toBe("/backend-api/markets?limit=10");
+  });
+
   it("supports protocol-relative API bases without dropping host", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
