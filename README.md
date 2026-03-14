@@ -36,3 +36,8 @@ Canonical internal references:
 - Route status matrix + status definitions: [`docs/DEVELOPER_REFERENCE.md#route-matrix`](docs/DEVELOPER_REFERENCE.md#route-matrix)
 - Route promotion evidence requirements: [`docs/DEVELOPER_REFERENCE.md#route-matrix-status-change-workflow-pr-requirement`](docs/DEVELOPER_REFERENCE.md#route-matrix-status-change-workflow-pr-requirement)
 - Agent/contributor execution rules: [`docs/AGENT_GUIDE.md`](docs/AGENT_GUIDE.md)
+
+## Local startup
+
+- Development server: `npm run dev`
+- Production-like local run: `npm run build` then `npm run start`

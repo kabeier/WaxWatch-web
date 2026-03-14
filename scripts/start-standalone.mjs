@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { validateEnv } from "./env-contract.mjs";
 
 function serializeError(error) {
@@ -34,7 +35,22 @@ try {
   process.exit(1);
 }
 
-const child = spawn("node", [".next/standalone/server.js"], {
+const standaloneServerPath = ".next/standalone/server.js";
+
+if (!existsSync(standaloneServerPath)) {
+  log(
+    "error",
+    "startup_missing_build_artifact",
+    {
+      errorMessage:
+        "Missing .next/standalone/server.js. Run `npm run build` before `npm run start` for a production-like local run.",
+      expectedPath: standaloneServerPath,
+    },
+  );
+  process.exit(1);
+}
+
+const child = spawn("node", [standaloneServerPath], {
   stdio: "inherit",
   env: process.env,
 });
