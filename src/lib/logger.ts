@@ -62,6 +62,7 @@ const SENSITIVE_KEYS = new Set([
 ]);
 const SENSITIVE_SUFFIX_PATTERNS = ["token", "secret", "password", "apikey"];
 const SENSITIVE_EXACT_NORMALIZED_KEYS = new Set(["authorization", "cookie", "setcookie"]);
+const SAFE_EXACT_NORMALIZED_KEYS = new Set(["nonsecret", "nonsensitive"]);
 
 function normalizeKeyForRedaction(key: string): string {
   return key.toLowerCase().replace(/[\s_-]/g, "");
@@ -82,7 +83,7 @@ function shouldRedactKey(key: string): boolean {
     return true;
   }
 
-  if (normalizedKey.startsWith("non")) {
+  if (SAFE_EXACT_NORMALIZED_KEYS.has(normalizedKey)) {
     return false;
   }
 
