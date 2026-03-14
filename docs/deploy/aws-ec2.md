@@ -40,6 +40,17 @@ Runtime flow:
 4. `docker compose up -d` reads `.env`/`env_file` and starts app.
 5. Startup validation (`scripts/env-contract.mjs`) fails the deploy immediately when required values are missing/malformed.
 
+### Readiness threshold environment variable
+
+- `READY_MIN_UPTIME_SECONDS` controls when `GET /ready` can return `200` based on process uptime.
+- Accepted format: a non-negative integer string in seconds (for example: `0`, `5`, `30`).
+- Invalid values fall back safely to `5` seconds, including:
+  - empty strings,
+  - non-numeric values,
+  - `NaN`, `Infinity`, `-Infinity`,
+  - negative values,
+  - decimal values (for example `0.5`).
+
 ## Content Security Policy (CSP) for Cross-Origin APIs
 
 The app always emits a strict CSP:
