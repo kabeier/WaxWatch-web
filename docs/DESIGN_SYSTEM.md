@@ -26,46 +26,46 @@ Run this checklist as soon as official standards are published so migration work
 
 Complete this table before route-by-route migration begins. Every temporary token should map to a canonical token, or be explicitly marked for removal.
 
-| Temporary token            | Canonical token/reference | Migration action | Notes                                 |
-| -------------------------- | ------------------------- | ---------------- | ------------------------------------- |
-| `font.family.sans`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            | Confirm fallbacks + loading strategy. |
-| `font.weight.regular`      | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `font.weight.medium`       | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `font.weight.semibold`     | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `font.weight.bold`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `text.xs`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `text.sm`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `text.base`                | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `text.lg`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `text.xl`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `text.2xl`                 | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `text.3xl`                 | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `space.0`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `space.1`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `space.2`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `space.3`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `space.4`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `space.5`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `space.6`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `space.8`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `space.10`                 | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `space.12`                 | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `space.16`                 | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.bg.canvas`          | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.bg.surface`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.bg.subtle`          | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.fg.default`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.fg.muted`           | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.fg.inverse`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.border.default`     | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.border.muted`       | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.brand.primary`      | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.brand.primaryHover` | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.state.success`      | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.state.warning`      | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.state.error`        | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.state.info`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
-| `color.focus.ring`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`     | `map`            |                                       |
+| Temporary token            | Canonical token/reference                                                                    | Migration action | Notes                                 |
+| -------------------------- | -------------------------------------------------------------------------------------------- | ---------------- | ------------------------------------- |
+| `font.family.sans`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            | Confirm fallbacks + loading strategy. |
+| `font.weight.regular`      | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `font.weight.medium`       | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `font.weight.semibold`     | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `font.weight.bold`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `text.xs`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `text.sm`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `text.base`                | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `text.lg`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `text.xl`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `text.2xl`                 | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `text.3xl`                 | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `space.0`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `space.1`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `space.2`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `space.3`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `space.4`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `space.5`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `space.6`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `space.8`                  | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `space.10`                 | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `space.12`                 | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `space.16`                 | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.bg.canvas`          | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.bg.surface`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.bg.subtle`          | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.fg.default`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.fg.muted`           | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.fg.inverse`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.border.default`     | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.border.muted`       | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.brand.primary`      | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.brand.primaryHover` | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.state.success`      | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.state.warning`      | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.state.error`        | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.state.info`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
+| `color.focus.ring`         | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `map`            |                                       |
 
 ### 3) Affected shared primitives
 
@@ -249,9 +249,9 @@ Use this format for each temporary token/primitive during migration:
 
 Use this table for immediate route/component tracking while official guidelines are being integrated.
 
-| Team/Area | Route or component | Current primitive/token | Canonical target | Owner | Status    | Notes     |
-| --------- | ------------------ | ----------------------- | ---------------- | ----- | --------- | --------- |
-| `TEMPLATE_TEAM`  | `TEMPLATE_ROUTE_OR_FILE`  | `TEMPLATE_TEMPORARY_REFERENCE`       | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `TEMPLATE_OWNER_HANDLE` | `pending` | `TEMPLATE_NOTES` |
+| Team/Area       | Route or component       | Current primitive/token        | Canonical target                                                                             | Owner                   | Status    | Notes            |
+| --------------- | ------------------------ | ------------------------------ | -------------------------------------------------------------------------------------------- | ----------------------- | --------- | ---------------- |
+| `TEMPLATE_TEAM` | `TEMPLATE_ROUTE_OR_FILE` | `TEMPLATE_TEMPORARY_REFERENCE` | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `TEMPLATE_OWNER_HANDLE` | `pending` | `TEMPLATE_NOTES` |
 
 ## Migration execution order (required)
 
@@ -266,14 +266,14 @@ Execute migration in this order and do not skip ahead unless dependencies are co
 
 Track migration work using the template fields from this document: `temporary`, `canonical`, `status`, and `notes`.
 
-| temporary                        | canonical                         | status    | notes                                                                 |
-| -------------------------------- | --------------------------------- | --------- | --------------------------------------------------------------------- |
-| `font.family.sans`               | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`    | `pending` | `Token migration starts in phase 1 (tokens).`                         |
-| `color.brand.primary`            | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`    | `pending` | `Map to official semantic brand token in phase 1.`                    |
-| `StateLoading`                   | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`    | `pending` | `Validate copy/skeleton/a11y as part of phase 2 (shared primitives).` |
-| `AppShell`                       | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`    | `pending` | `Migrate layout/nav shell behavior in phase 2.`                       |
-| `app/(app)/alerts/page.tsx`      | `Pending route-level canonical mapping (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `pending` | `Adopt migrated tokens/primitives in phase 3 (route pages).`          |
-| `DEPRECATED_TEMPORARY_MAPPING` | `N/A`                           | `pending` | `Remove in phase 4 cleanup after route migration completes.`          |
+| temporary                      | canonical                                                                                              | status    | notes                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------ | --------- | --------------------------------------------------------------------- |
+| `font.family.sans`             | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`           | `pending` | `Token migration starts in phase 1 (tokens).`                         |
+| `color.brand.primary`          | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`           | `pending` | `Map to official semantic brand token in phase 1.`                    |
+| `StateLoading`                 | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`           | `pending` | `Validate copy/skeleton/a11y as part of phase 2 (shared primitives).` |
+| `AppShell`                     | `Pending canonical reference (Owner: Design Systems Working Group; Target date: 2026-06-30)`           | `pending` | `Migrate layout/nav shell behavior in phase 2.`                       |
+| `app/(app)/alerts/page.tsx`    | `Pending route-level canonical mapping (Owner: Design Systems Working Group; Target date: 2026-06-30)` | `pending` | `Adopt migrated tokens/primitives in phase 3 (route pages).`          |
+| `DEPRECATED_TEMPORARY_MAPPING` | `N/A`                                                                                                  | `pending` | `Remove in phase 4 cleanup after route migration completes.`          |
 
 ### Token-by-token tracker
 
