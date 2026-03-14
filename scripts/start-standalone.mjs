@@ -38,15 +38,11 @@ try {
 const standaloneServerPath = ".next/standalone/server.js";
 
 if (!existsSync(standaloneServerPath)) {
-  log(
-    "error",
-    "startup_missing_build_artifact",
-    {
-      errorMessage:
-        "Missing .next/standalone/server.js. Run `npm run build` before `npm run start` for a production-like local run.",
-      expectedPath: standaloneServerPath,
-    },
-  );
+  log("error", "startup_missing_build_artifact", {
+    errorMessage:
+      "Missing .next/standalone/server.js. Run `npm run build` before `npm run start` for a production-like local run.",
+    expectedPath: standaloneServerPath,
+  });
   process.exit(1);
 }
 
