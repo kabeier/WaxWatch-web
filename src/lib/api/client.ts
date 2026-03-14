@@ -120,6 +120,7 @@ export function createApiClient(options: ApiClientOptions) {
         method,
         body: requestOptions.body !== undefined ? JSON.stringify(requestOptions.body) : undefined,
         headers,
+        credentials: jwt ? "same-origin" : "include",
         signal: requestOptions.signal,
       });
     } catch (requestError) {
