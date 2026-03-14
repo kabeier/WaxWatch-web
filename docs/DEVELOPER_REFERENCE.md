@@ -26,6 +26,11 @@ Before changing route-level rendering for API-backed screens (`/search`, `/alert
 
 ### 3) Run the app + common contributor commands
 
+Startup sequence:
+
+- Development: `npm run dev`
+- Production-like local run: `npm run build` then `npm run start`
+
 ```bash
 npm run dev
 ```
@@ -33,7 +38,7 @@ npm run dev
 Open: http://localhost:3000
 
 - `npm run build`
-- `npm run start`
+- `npm run start` (requires build artifacts: `.next/standalone`)
 - `npm run test`
 - `npm run lint`
 - `npm run format`
@@ -129,7 +134,7 @@ Validate these paths in CI (or locally) with:
 - `npm run env:check:template` (pre-flight: verifies `.env.example` stays aligned with `src/config/env.ts`)
 - `npm run dev`
 - `npm run build`
-- `npm run start`
+- `npm run start` (requires build artifacts: `.next/standalone`)
 - `npm run test`
 - `npm run lint`
 - `npm run format`
