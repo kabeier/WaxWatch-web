@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -7,7 +8,7 @@ vi.mock("@/lib/error-tracking", () => ({
   captureClientError: vi.fn(),
 }));
 
-function Crash() {
+function Crash(): ReactElement {
   throw new Error("boom");
 }
 
