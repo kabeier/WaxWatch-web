@@ -1,29 +1,5 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
-
-const linkStyle = {
-  marginRight: "var(--space-3)",
-  textDecoration: "none",
-};
-
-const authNoticeStyles: Record<string, CSSProperties> = {
-  "reauth-required": {
-    border: "1px solid var(--color-state-warning)",
-    backgroundColor: "var(--color-bg-subtle)",
-    color: "var(--color-fg-default)",
-    padding: "var(--space-3)",
-    marginBottom: "var(--space-4)",
-    borderRadius: "var(--radius-md)",
-  },
-  "signed-out": {
-    border: "1px solid var(--color-state-success)",
-    backgroundColor: "var(--color-bg-subtle)",
-    color: "var(--color-fg-default)",
-    padding: "var(--space-3)",
-    marginBottom: "var(--space-4)",
-    borderRadius: "var(--radius-md)",
-  },
-};
 
 type AppShellProps = {
   children: ReactNode;
@@ -33,7 +9,7 @@ type AppShellProps = {
 
 export function AppShell({ children, topNav, banner }: AppShellProps) {
   return (
-    <div style={{ padding: "var(--space-6)", fontFamily: "var(--font-family-sans)" }}>
+    <div className="app-shell">
       {topNav}
       {banner}
       <main>{children}</main>
@@ -43,25 +19,25 @@ export function AppShell({ children, topNav, banner }: AppShellProps) {
 
 export function TopNav() {
   return (
-    <header style={{ marginBottom: "var(--space-4)" }}>
+    <header className="top-nav">
       <nav>
-        <Link href="/search" style={linkStyle}>
+        <Link href="/search" className="top-nav-link">
           Search
         </Link>
-        <Link href="/alerts" style={linkStyle}>
+        <Link href="/alerts" className="top-nav-link">
           Alerts
         </Link>
-        <Link href="/watchlist" style={linkStyle}>
+        <Link href="/watchlist" className="top-nav-link">
           Watchlist
         </Link>
-        <Link href="/notifications" style={linkStyle}>
+        <Link href="/notifications" className="top-nav-link">
           Notifications
         </Link>
-        <Link href="/settings/profile" style={linkStyle}>
+        <Link href="/settings/profile" className="top-nav-link">
           Settings
         </Link>
       </nav>
-      <hr style={{ marginTop: "var(--space-3)" }} />
+      <hr className="top-nav-divider" />
     </header>
   );
 }
@@ -85,7 +61,7 @@ export function AuthNotice({ reason }: { reason: string }) {
   }
 
   return (
-    <div aria-live="polite" role="status" style={authNoticeStyles[reason]}>
+    <div aria-live="polite" role="status" className={`auth-notice auth-notice--${reason}`}>
       {notice}
     </div>
   );

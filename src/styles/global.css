@@ -54,3 +54,47 @@ hr {
   border: none;
   border-top: 1px solid var(--border);
 }
+
+.layout-main {
+  padding: var(--space-6);
+  font-family: var(--font-family-sans);
+}
+
+.error-boundary-fallback {
+  padding: var(--space-6);
+  font-family: var(--font-family-sans);
+}
+
+.app-shell {
+  padding: var(--space-6);
+  font-family: var(--font-family-sans);
+}
+
+.top-nav {
+  margin-bottom: var(--space-4);
+}
+
+.top-nav-link {
+  margin-right: var(--space-3);
+  text-decoration: none;
+}
+
+.top-nav-divider {
+  margin-top: var(--space-3);
+}
+
+.auth-notice {
+  background-color: var(--color-bg-subtle);
+  color: var(--color-fg-default);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+.auth-notice--reauth-required {
+  border: 1px solid var(--color-state-warning);
+}
+
+.auth-notice--signed-out {
+  border: 1px solid var(--color-state-success);
+}

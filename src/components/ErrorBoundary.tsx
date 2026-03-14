@@ -5,7 +5,7 @@ import { captureClientError } from "@/lib/error-tracking";
 
 function Fallback() {
   return (
-    <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
+    <main className="error-boundary-fallback">
       <h1>Something went wrong.</h1>
       <p>Please refresh and try again.</p>
     </main>

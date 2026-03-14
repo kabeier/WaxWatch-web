@@ -24,6 +24,19 @@ Minimum local values are already provided in `.env.example` (for example: `NODE_
 
 If `NEXT_PUBLIC_API_BASE_URL` is omitted, the client explicitly falls back to `/api`.
 
+CSP policy baseline for deployments:
+
+- `style-src` allows `'self'` plus optional explicit origins configured through `CSP_STYLE_SRC`.
+- `style-src` must not include `'unsafe-inline'` in production.
+- Inline style attributes should be migrated to CSS classes in `src/styles/global.css` (or scoped stylesheet files) instead of runtime `style={...}` objects.
+- Deployment validation must run with `VERIFY_ENVIRONMENT=production` to enforce the style policy.
+
+CSP style exceptions process:
+
+1. Create a security-review ticket for each new style origin.
+2. Use explicit HTTPS origins only; no wildcard entries.
+3. Add the origin via `CSP_STYLE_SRC`, verify in staging, then record owner + expiry/review date.
+
 For production deployments, replace placeholder/template values with environment-specific secrets and infrastructure values (especially `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_SECRETS_PREFIX`, and `TRUSTED_PROXY_CIDRS`).
 
 ### 2) Confirm API contracts before building

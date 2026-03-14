@@ -2,6 +2,7 @@ const baseUrl = process.env.VERIFY_BASE_URL ?? "http://127.0.0.1:4173";
 const readyTimeoutMs = Number(process.env.READY_TIMEOUT_MS ?? 15000);
 const readyPollIntervalMs = Number(process.env.READY_POLL_INTERVAL_MS ?? 500);
 const deploymentMode = process.env.VERIFY_DEPLOYMENT_MODE ?? "same-origin";
+const verifyEnvironment = process.env.VERIFY_ENVIRONMENT ?? process.env.NODE_ENV ?? "production";
 
 const requiredHeaders = [
   "content-security-policy",
@@ -27,20 +28,19 @@ function serializeError(error) {
   return { errorMessage: String(error) };
 }
 
-function parseConnectSrc(cspHeader) {
+function parseDirectiveTokens(cspHeader, directiveName) {
   const directive = cspHeader
     .split(";")
     .map((part) => part.trim())
-    .find((part) => part.startsWith("connect-src "));
+    .find((part) => part.startsWith(`${directiveName} `));
 
   if (!directive) {
-    throw new Error("CSP header is missing connect-src directive");
+    throw new Error(`CSP header is missing ${directiveName} directive`);
   }
 
-  return directive
-    .replace(/^connect-src\s+/, "")
-    .split(/\s+/)
-    .filter(Boolean);
+  const directiveValue = directive.slice(directiveName.length).trim();
+
+  return directiveValue.split(/\s+/).filter(Boolean);
 }
 
 function getAbsoluteOriginOrNull(value) {
@@ -68,7 +68,7 @@ function expectedConnectOrigins() {
 }
 
 function assertConnectSrc(cspHeader) {
-  const connectSrcTokens = parseConnectSrc(cspHeader);
+  const connectSrcTokens = parseDirectiveTokens(cspHeader, "connect-src");
   const expected = expectedConnectOrigins();
 
   for (const token of expected) {
@@ -94,6 +94,18 @@ function assertConnectSrc(cspHeader) {
 
   if (!["same-origin", "cross-origin"].includes(deploymentMode)) {
     throw new Error(`Unsupported VERIFY_DEPLOYMENT_MODE: ${deploymentMode}`);
+  }
+}
+
+function assertStyleSrc(cspHeader) {
+  const styleSrcTokens = parseDirectiveTokens(cspHeader, "style-src");
+
+  if (!styleSrcTokens.includes("'self'")) {
+    throw new Error("CSP style-src must include 'self'");
+  }
+
+  if (verifyEnvironment === "production" && styleSrcTokens.includes("'unsafe-inline'")) {
+    throw new Error("CSP style-src must not include 'unsafe-inline' in production mode");
   }
 }
 
@@ -137,12 +149,16 @@ async function main() {
     }
   }
 
-  assertConnectSrc(home.headers.get("content-security-policy"));
+  const cspHeader = home.headers.get("content-security-policy");
+  assertConnectSrc(cspHeader);
+  assertStyleSrc(cspHeader);
 
   await assertOk("/health");
   await waitForReady();
 
-  console.log(`Deployment verification passed for ${baseUrl} (mode=${deploymentMode})`);
+  console.log(
+    `Deployment verification passed for ${baseUrl} (mode=${deploymentMode}, env=${verifyEnvironment})`,
+  );
 }
 
 main().catch((error) => {
