@@ -1,9 +1,9 @@
-import { isIP } from "node:net";
-
 const DEFAULT_TRUSTED_PROXY_CIDRS = "127.0.0.1/32,::1/128";
 
+type IpVersion = 4 | 6;
+
 type ParsedCidr = {
-  version: 4 | 6;
+  version: IpVersion;
   network: bigint;
   prefixLength: number;
 };
@@ -15,6 +15,72 @@ export type TrustedProxyConfig = {
 
 const IPV4_BITS = 32;
 const IPV6_BITS = 128;
+
+function isValidIpv4(input: string): boolean {
+  const parts = input.split(".");
+  if (parts.length !== 4) {
+    return false;
+  }
+
+  return parts.every((part) => {
+    if (!/^\d{1,3}$/.test(part)) {
+      return false;
+    }
+
+    const value = Number.parseInt(part, 10);
+    return value >= 0 && value <= 255;
+  });
+}
+
+function isValidIpv6(input: string): boolean {
+  if (!input.includes(":")) {
+    return false;
+  }
+
+  const parts = input.split("::");
+  if (parts.length > 2) {
+    return false;
+  }
+
+  const [head, tail] = parts;
+  const headSegments = head ? head.split(":").filter(Boolean) : [];
+  const tailSegments = tail ? tail.split(":").filter(Boolean) : [];
+
+  const hasIpv4Tail =
+    tailSegments.length > 0 && tailSegments[tailSegments.length - 1]?.includes(".");
+  if (hasIpv4Tail) {
+    const ipv4Tail = tailSegments[tailSegments.length - 1] ?? "";
+    if (!isValidIpv4(ipv4Tail)) {
+      return false;
+    }
+
+    tailSegments.splice(tailSegments.length - 1, 1, "ffff", "ffff");
+  }
+
+  const isValidHexSegment = (segment: string) => /^[0-9a-f]{1,4}$/i.test(segment);
+  if (!headSegments.every(isValidHexSegment) || !tailSegments.every(isValidHexSegment)) {
+    return false;
+  }
+
+  const totalSegments = headSegments.length + tailSegments.length;
+  if (parts.length === 2) {
+    return totalSegments <= 7;
+  }
+
+  return totalSegments === 8;
+}
+
+function getIpVersion(input: string): IpVersion | 0 {
+  if (isValidIpv4(input)) {
+    return 4;
+  }
+
+  if (isValidIpv6(input)) {
+    return 6;
+  }
+
+  return 0;
+}
 
 function parseIpv4ToBigInt(ip: string): bigint {
   const octets = ip.split(".").map((part) => Number.parseInt(part, 10));
@@ -50,11 +116,11 @@ function parseIpv6ToBigInt(ip: string): bigint {
   return expanded.reduce((acc, part) => (acc << 16n) + BigInt(Number.parseInt(part, 16)), 0n);
 }
 
-function bitsForVersion(version: 4 | 6): number {
+function bitsForVersion(version: IpVersion): number {
   return version === 4 ? IPV4_BITS : IPV6_BITS;
 }
 
-function toBigInt(ip: string, version: 4 | 6): bigint {
+function toBigInt(ip: string, version: IpVersion): bigint {
   return version === 4 ? parseIpv4ToBigInt(ip) : parseIpv6ToBigInt(ip);
 }
 
@@ -78,11 +144,11 @@ function normalizeIp(ip: string): string | null {
   const withoutZone = withoutBrackets.split("%")[0] ?? withoutBrackets;
   const mappedIpv4 = withoutZone.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i)?.[1];
 
-  if (mappedIpv4 && isIP(mappedIpv4) === 4) {
+  if (mappedIpv4 && getIpVersion(mappedIpv4) === 4) {
     return mappedIpv4;
   }
 
-  return isIP(withoutZone) ? withoutZone : null;
+  return getIpVersion(withoutZone) ? withoutZone : null;
 }
 
 function parseCidrEntry(entry: string): ParsedCidr | null {
@@ -98,7 +164,11 @@ function parseCidrEntry(entry: string): ParsedCidr | null {
     return null;
   }
 
-  const version = isIP(normalizedAddress) as 4 | 6;
+  const version = getIpVersion(normalizedAddress);
+  if (!version) {
+    return null;
+  }
+
   const maxBits = bitsForVersion(version);
   const defaultPrefix = maxBits;
 
@@ -153,7 +223,11 @@ export function isTrustedProxyIp(
     return false;
   }
 
-  const version = isIP(normalizedIp) as 4 | 6;
+  const version = getIpVersion(normalizedIp);
+  if (!version) {
+    return false;
+  }
+
   const ipValue = toBigInt(normalizedIp, version);
 
   return config.cidrs.some((cidr) => {
