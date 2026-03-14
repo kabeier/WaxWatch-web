@@ -204,7 +204,6 @@ describe("api client", () => {
     expect(requestInit.credentials).toBe("include");
   });
 
-
   it("prefers bearer auth when getJwt is provided", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
