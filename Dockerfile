@@ -2,6 +2,14 @@ FROM node:20-alpine AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Build-time CSP inputs (used by next.config.mjs during standalone build)
+ARG NEXT_PUBLIC_API_BASE_URL=/api
+ARG CSP_CONNECT_SRC=
+ARG CSP_STYLE_SRC=
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV CSP_CONNECT_SRC=$CSP_CONNECT_SRC
+ENV CSP_STYLE_SRC=$CSP_STYLE_SRC
+
 COPY package*.json ./
 RUN npm ci
 

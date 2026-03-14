@@ -53,6 +53,12 @@ Runtime flow:
 
 ## Content Security Policy (CSP) for Cross-Origin APIs
 
+WaxWatch uses a **build-time CSP model** for Next.js standalone output.
+
+- CSP directives are assembled in `next.config.mjs`.
+- `CSP_CONNECT_SRC`, `CSP_STYLE_SRC`, and `NEXT_PUBLIC_API_BASE_URL` are evaluated during `npm run build` and baked into emitted headers.
+- Runtime-only environment changes do not alter CSP unless you rebuild the image/artifact.
+
 The app always emits a strict CSP:
 
 - `connect-src` starts with same-origin (`'self'`) and only allows explicit trusted API origins.
@@ -79,6 +85,11 @@ CSP_STYLE_SRC=https://fonts.googleapis.com
 ```
 
 If your frontend stays same-origin (recommended default with reverse proxy), leave `CSP_CONNECT_SRC` unset and keep `NEXT_PUBLIC_API_BASE_URL=/api`.
+
+Build pipeline requirement for standalone images:
+
+- Provide `CSP_CONNECT_SRC`, `CSP_STYLE_SRC`, and `NEXT_PUBLIC_API_BASE_URL` in CI/CD or Docker build args before `npm run build`.
+- Treat CSP envs as build inputs, not runtime-only knobs.
 
 ## Patch and Base Image Cadence
 
