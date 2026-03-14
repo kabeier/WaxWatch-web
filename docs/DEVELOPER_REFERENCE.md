@@ -52,7 +52,6 @@ Before changing route-level rendering for API-backed screens (`/search`, `/alert
 
 ### 3) Run the app + common contributor commands
 
-
 Startup sequence:
 
 - Development: `npm run dev`
