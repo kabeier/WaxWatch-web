@@ -1,15 +1,7 @@
 import { env } from "@/config/env";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { withApiRequestLogging } from "@/lib/server/request-logging";
-
-function getReadinessThresholdSeconds(): number {
-  const raw = process.env.READY_MIN_UPTIME_SECONDS ?? "5";
-  const parsed = Number(raw);
-  if (Number.isNaN(parsed) || parsed < 0) {
-    return 5;
-  }
-  return parsed;
-}
+import { getReadinessThresholdSeconds } from "@/lib/server/readiness-threshold";
 
 export default withApiRequestLogging(function ready(_req: NextApiRequest, res: NextApiResponse) {
   const readinessThresholdSeconds = getReadinessThresholdSeconds();
