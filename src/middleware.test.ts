@@ -146,6 +146,38 @@ describe("middleware", () => {
     );
   });
 
+  it("strips spoofed x-forwarded-proto from untrusted source", () => {
+    const request = createRequest(
+      {
+        "x-forwarded-for": "198.51.100.20, 203.0.113.10",
+        "x-forwarded-proto": "https",
+      },
+      "203.0.113.10",
+    );
+
+    middleware(request as never);
+
+    const nextArgs = nextMock.mock.calls[0][0] as { request: { headers: Headers } };
+    expect(nextArgs.request.headers.get("x-forwarded-for")).toBeNull();
+    expect(nextArgs.request.headers.get("x-forwarded-proto")).toBeNull();
+  });
+
+  it("preserves x-forwarded-proto when source ip is trusted", () => {
+    const request = createRequest(
+      {
+        "x-forwarded-for": "198.51.100.20, 10.1.1.1",
+        "x-forwarded-proto": "https",
+      },
+      "10.1.1.1",
+    );
+
+    middleware(request as never);
+
+    const nextArgs = nextMock.mock.calls[0][0] as { request: { headers: Headers } };
+    expect(nextArgs.request.headers.get("x-forwarded-for")).toBe("198.51.100.20, 10.1.1.1");
+    expect(nextArgs.request.headers.get("x-forwarded-proto")).toBe("https");
+  });
+
   it("logs malformed cidr configuration and fails closed", async () => {
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     process.env.TRUSTED_PROXY_CIDRS = "not-a-cidr";
