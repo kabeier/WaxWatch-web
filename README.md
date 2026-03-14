@@ -40,8 +40,10 @@ Canonical internal references:
 ## Local startup
 
 - Copy env template: `cp .env.example .env`
+- Install dependencies: `npm install`
+- Validate local env contract: `npm run env:check:template`
 - Development server: `npm run dev`
-- Production-like local run: `npm run build` then `npm run start`
+- Production-like local run: `npm run build` then `npm run start` *(requires build artifacts and full env contract values)*
 
 ### API base URL configuration
 
