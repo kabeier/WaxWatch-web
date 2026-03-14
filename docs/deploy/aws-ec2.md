@@ -18,7 +18,8 @@
 - When source IP is untrusted, middleware strips `x-forwarded-for`, `x-forwarded-host`, `x-forwarded-port`, and `x-forwarded-proto` before downstream processing/logging and emits a structured warning (`message=untrusted_forwarded_headers`).
 - Malformed CIDR entries in `TRUSTED_PROXY_CIDRS` are ignored (fail-closed) and logged as `message=invalid_trusted_proxy_cidrs`; only valid CIDRs are used for trust checks.
 - Web session/auth cookies are the primary browser auth mechanism and must be set with:
-  - `Secure=true` when `x-forwarded-proto=https`
+  - `Secure=true` only when `x-forwarded-proto=https` survived middleware trust checks (trusted proxy source).
+  - `Secure=true` must **not** be enabled from raw forwarded headers on untrusted requests; treat missing/stripped `x-forwarded-proto` as HTTP (fail-closed).
   - `HttpOnly=true`
   - `SameSite=Lax` (or `Strict` for admin-only flows)
 - Do not rely on browser `localStorage` bearer tokens for web API authorization; keep bearer usage limited to non-browser clients/mobile SDK flows.
