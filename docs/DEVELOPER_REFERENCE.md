@@ -24,8 +24,11 @@ Minimum local values are already provided in `.env.example` (for example: `NODE_
 
 If `NEXT_PUBLIC_API_BASE_URL` is omitted, the client explicitly falls back to `/api`.
 
-CSP policy baseline for deployments:
+CSP policy baseline for deployments (canonical model: **build-time**):
 
+- For Next.js standalone output, CSP values from `next.config.mjs` are computed at build time.
+- `CSP_CONNECT_SRC`, `CSP_STYLE_SRC`, and `NEXT_PUBLIC_API_BASE_URL` must be present before `npm run build` when you need non-default CSP/API-origin behavior.
+- Runtime-only env changes do not rewrite emitted CSP headers.
 - `style-src` allows `'self'` plus optional explicit origins configured through `CSP_STYLE_SRC`.
 - `style-src` must not include `'unsafe-inline'` in production.
 - Inline style attributes should be migrated to CSS classes in `src/styles/global.css` (or scoped stylesheet files) instead of runtime `style={...}` objects.
@@ -49,10 +52,12 @@ Before changing route-level rendering for API-backed screens (`/search`, `/alert
 
 ### 3) Run the app + common contributor commands
 
+
 Startup sequence:
 
 - Development: `npm run dev`
 - Production-like local run: `npm run build` then `npm run start`
+  - For standalone CSP validation, export `CSP_CONNECT_SRC`, `CSP_STYLE_SRC`, and `NEXT_PUBLIC_API_BASE_URL` before the build step.
 
 ```bash
 npm run dev

@@ -49,6 +49,13 @@ Canonical internal references:
 
 The web API client reads `NEXT_PUBLIC_API_BASE_URL` and falls back to `/api` when unset.
 
+### CSP + standalone build-time model (canonical)
+
+WaxWatch uses a **build-time CSP model** for Next.js standalone output. CSP directives are assembled in `next.config.mjs`, so `CSP_CONNECT_SRC`, `CSP_STYLE_SRC`, and `NEXT_PUBLIC_API_BASE_URL` are evaluated during `npm run build` and baked into emitted headers.
+
+- Build/CI pipelines must set these variables **before** `npm run build`.
+- Changing these values at container runtime without rebuilding will **not** change the CSP header.
+
 - **Same-origin (recommended default):** `NEXT_PUBLIC_API_BASE_URL=/api`
   - Browser requests go through this Next.js app origin (for example `https://app.example.com/api/*`).
 - **Cross-origin API:** set a full URL such as `NEXT_PUBLIC_API_BASE_URL=https://api.example.com`

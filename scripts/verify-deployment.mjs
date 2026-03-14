@@ -1,3 +1,15 @@
+/**
+ * Deployment verification for security headers + readiness.
+ *
+ * Canonical CSP model in this repo is build-time for Next.js standalone output:
+ * values from NEXT_PUBLIC_API_BASE_URL, CSP_CONNECT_SRC, and CSP_STYLE_SRC are
+ * consumed by next.config.mjs during `npm run build` and then emitted as static
+ * response headers by the built server.
+ *
+ * This script therefore validates header output against that same build-time phase.
+ * If you change those env values, rebuild before running this check; runtime-only
+ * env changes will not alter CSP and can create false assumptions during verification.
+ */
 const baseUrl = process.env.VERIFY_BASE_URL ?? "http://127.0.0.1:4173";
 const readyTimeoutMs = Number(process.env.READY_TIMEOUT_MS ?? 15000);
 const readyPollIntervalMs = Number(process.env.READY_POLL_INTERVAL_MS ?? 500);
@@ -53,6 +65,7 @@ function getAbsoluteOriginOrNull(value) {
 }
 
 function expectedConnectOrigins() {
+  // Mirrors next.config.mjs build-time origin derivation for connect-src expectations.
   const expected = ["'self'"];
   const configuredOrigins = (process.env.CSP_CONNECT_SRC ?? "")
     .split(",")
