@@ -6,17 +6,6 @@ import { queryKeys } from "@/lib/query/keys";
 import { webAuthSessionAdapter } from "@/lib/auth-session";
 import { handleAuthorizationFailureWithAdapter } from "@/lib/auth/session-lifecycle";
 
-vi.mock("@/lib/auth-session", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/auth-session")>("@/lib/auth-session");
-  return {
-    ...actual,
-    webAuthSessionAdapter: {
-      ...actual.webAuthSessionAdapter,
-      getAccessToken: vi.fn(),
-    },
-  };
-});
-
 vi.mock("@/lib/auth/session-lifecycle", async () => {
   const actual = await vi.importActual<typeof import("@/lib/auth/session-lifecycle")>(
     "@/lib/auth/session-lifecycle",
@@ -56,7 +45,6 @@ describe("SseController", () => {
 
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
-    vi.mocked(webAuthSessionAdapter.getAccessToken).mockResolvedValue("jwt-token");
   });
 
   afterEach(() => {
@@ -66,7 +54,7 @@ describe("SseController", () => {
     warnSpy.mockClear();
   });
 
-  it("connects successfully with authenticated bearer header", async () => {
+  it("connects successfully with cookie-backed auth transport", async () => {
     fetchMock.mockResolvedValueOnce(
       createSseResponse('event: notification\ndata: {"ok":true}\n\n'),
     );
@@ -81,8 +69,9 @@ describe("SseController", () => {
     const headers = new Headers(init?.headers);
 
     expect(url).toBe("/api/stream/events");
-    expect(headers.get("Authorization")).toBe("Bearer jwt-token");
+    expect(headers.get("Authorization")).toBeNull();
     expect(headers.get("Accept")).toBe("text/event-stream");
+    expect(init?.credentials).toBe("include");
     expect(init?.signal).toBeInstanceOf(AbortSignal);
 
     await waitFor(() =>
@@ -103,8 +92,8 @@ describe("SseController", () => {
       .mockRejectedValueOnce(new Error("disconnect-2"))
       .mockResolvedValueOnce(createSseResponse("event: message\ndata: recovered\n\n"));
 
-    const setTimeoutSpy = vi.spyOn(window, "setTimeout");
     const queryClient = new QueryClient();
+    const setTimeoutSpy = vi.spyOn(window, "setTimeout");
 
     renderWithClient(queryClient);
 
@@ -133,19 +122,17 @@ describe("SseController", () => {
     );
   });
 
-  it("stops immediately when token is missing", async () => {
+  it("starts a stream request immediately without local token gating", async () => {
     vi.useFakeTimers();
-    vi.mocked(webAuthSessionAdapter.getAccessToken).mockResolvedValue(null);
+    fetchMock.mockResolvedValueOnce(createSseResponse("event: message\ndata: hello\n\n"));
 
-    const setTimeoutSpy = vi.spyOn(window, "setTimeout");
     const queryClient = new QueryClient();
 
     renderWithClient(queryClient);
 
     await vi.runAllTicks();
 
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(setTimeoutSpy).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(handleAuthorizationFailureWithAdapter).not.toHaveBeenCalled();
   });
 
