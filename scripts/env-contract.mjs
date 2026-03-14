@@ -16,6 +16,10 @@ const optionalEnv = {
   NEXT_PUBLIC_API_BASE_URL: "url-or-path",
 };
 
+const placeholderValuePatterns = [/\bexample\b/i, /\bplaceholder\b/i, /\bchangeme\b/i, /\btodo\b/i];
+const localDefaultPatterns = [/\blocal\b/i, /\blocalhost\b/i, /^test$/i, /^development$/i];
+const loopbackCidrs = new Set(["127.0.0.1/32", "::1/128"]);
+
 function isUrl(value) {
   try {
     new URL(value);
@@ -31,6 +35,49 @@ function isRelativeApiPath(value) {
 
 function isUrlOrPath(value) {
   return isUrl(value) || isRelativeApiPath(value);
+}
+
+function hasBlockedPattern(value, patterns) {
+  return patterns.some((pattern) => pattern.test(value));
+}
+
+function isLoopbackOnlyCidrs(value) {
+  const cidrs = value
+    .split(",")
+    .map((cidr) => cidr.trim())
+    .filter(Boolean);
+
+  return cidrs.length > 0 && cidrs.every((cidr) => loopbackCidrs.has(cidr));
+}
+
+function validateProductionOnly(source, errors) {
+  if (source.NODE_ENV !== "production") {
+    return;
+  }
+
+  if (hasBlockedPattern(source.NEXT_PUBLIC_SENTRY_DSN, placeholderValuePatterns)) {
+    errors.push("NEXT_PUBLIC_SENTRY_DSN cannot contain placeholder-like values in production");
+  }
+
+  if (hasBlockedPattern(source.SENTRY_DSN, placeholderValuePatterns)) {
+    errors.push("SENTRY_DSN cannot contain placeholder-like values in production");
+  }
+
+  if (hasBlockedPattern(source.AWS_SECRETS_PREFIX, localDefaultPatterns)) {
+    errors.push("AWS_SECRETS_PREFIX cannot contain local/default markers in production");
+  }
+
+  if (hasBlockedPattern(source.NEXT_PUBLIC_APP_NAME, localDefaultPatterns)) {
+    errors.push("NEXT_PUBLIC_APP_NAME cannot contain local/default markers in production");
+  }
+
+  if (hasBlockedPattern(source.NEXT_PUBLIC_RELEASE_VERSION, localDefaultPatterns)) {
+    errors.push("NEXT_PUBLIC_RELEASE_VERSION cannot contain local/default markers in production");
+  }
+
+  if (source.TRUSTED_PROXY_CIDRS && isLoopbackOnlyCidrs(source.TRUSTED_PROXY_CIDRS)) {
+    errors.push("TRUSTED_PROXY_CIDRS cannot be limited to loopback CIDRs in production");
+  }
 }
 
 export function validateEnv(source = process.env) {
@@ -62,6 +109,8 @@ export function validateEnv(source = process.env) {
       errors.push(`${key} must be a valid URL or a relative path starting with / (not //)`);
     }
   }
+
+  validateProductionOnly(source, errors);
 
   if (errors.length > 0) {
     throw new Error(`Invalid environment configuration:\n${errors.join("\n")}`);
