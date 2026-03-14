@@ -7,15 +7,48 @@ if (!baseRef) {
   process.exit(0);
 }
 
+const remotesOutput = execFileSync("git", ["remote"], { encoding: "utf8" });
+const remotes = remotesOutput
+  .split("\n")
+  .map((remote) => remote.trim())
+  .filter(Boolean);
+
+if (!remotes.includes("origin")) {
+  console.warn(
+    "Skipping test-update contract (origin remote is not configured in this environment).",
+  );
+  process.exit(0);
+}
+
 execFileSync("git", ["fetch", "--no-tags", "--depth=1", "origin", baseRef], {
   stdio: "inherit",
 });
 
-const changedFilesOutput = execFileSync(
-  "git",
-  ["diff", "--name-only", "--diff-filter=AMR", `origin/${baseRef}...HEAD`],
-  { encoding: "utf8" },
-);
+const getChangedFilesOutput = () => {
+  try {
+    return execFileSync(
+      "git",
+      ["diff", "--name-only", "--diff-filter=AMR", `origin/${baseRef}...HEAD`],
+      { encoding: "utf8" },
+    );
+  } catch (error) {
+    const stderr = error?.stderr?.toString?.() ?? "";
+    if (stderr.includes("no merge base")) {
+      console.warn(
+        `No merge base found for origin/${baseRef}...HEAD; falling back to direct diff against origin/${baseRef}.`,
+      );
+      return execFileSync(
+        "git",
+        ["diff", "--name-only", "--diff-filter=AMR", `origin/${baseRef}`, "HEAD"],
+        { encoding: "utf8" },
+      );
+    }
+
+    throw error;
+  }
+};
+
+const changedFilesOutput = getChangedFilesOutput();
 
 const changedFiles = changedFilesOutput
   .split("\n")
