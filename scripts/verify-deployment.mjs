@@ -2,7 +2,7 @@ const baseUrl = process.env.VERIFY_BASE_URL ?? "http://127.0.0.1:4173";
 const readyTimeoutMs = Number(process.env.READY_TIMEOUT_MS ?? 15000);
 const readyPollIntervalMs = Number(process.env.READY_POLL_INTERVAL_MS ?? 500);
 const deploymentMode = process.env.VERIFY_DEPLOYMENT_MODE ?? "same-origin";
-const verifyEnvironment = process.env.VERIFY_ENVIRONMENT ?? process.env.NODE_ENV ?? "development";
+const verifyEnvironment = process.env.VERIFY_ENVIRONMENT ?? process.env.NODE_ENV ?? "production";
 
 const requiredHeaders = [
   "content-security-policy",

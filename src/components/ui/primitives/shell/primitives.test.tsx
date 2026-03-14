@@ -36,6 +36,25 @@ describe("shell primitives", () => {
     expect(screen.getByText("Page content")).toBeInTheDocument();
   });
 
+  it("applies class-based shell and notice styling hooks", () => {
+    const { container, rerender } = render(
+      <AppShell topNav={<TopNav />} banner={<AuthNotice reason="reauth-required" />}>
+        <ContentContainer>
+          <div>Body</div>
+        </ContentContainer>
+      </AppShell>,
+    );
+
+    expect(container.querySelector("div.app-shell")).toBeInTheDocument();
+    expect(container.querySelector("header.top-nav")).toBeInTheDocument();
+    expect(container.querySelector("a.top-nav-link")).toBeInTheDocument();
+    expect(container.querySelector("hr.top-nav-divider")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveClass("auth-notice", "auth-notice--reauth-required");
+
+    rerender(<AuthNotice reason="signed-out" />);
+    expect(screen.getByRole("status")).toHaveClass("auth-notice", "auth-notice--signed-out");
+  });
+
   it("renders auth notices for known reasons only", () => {
     const { rerender } = render(<AuthNotice reason="reauth-required" />);
 
