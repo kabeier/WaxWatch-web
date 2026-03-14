@@ -9,11 +9,15 @@ This app uses Next.js **App Router**.
 
 ## Layout groups
 
-Implemented structure:
+Currently implemented route groups/files:
 
 - `app/(auth)/...` signed-out routes (login and account/session states)
 - `app/(app)/...` authenticated shell routes
-- `app/(app)/admin/...` optional admin routes (feature-flag + admin-claim gated)
+
+Planned/optional route group (not currently in tree):
+
+- `app/(app)/admin/...` admin routes only if introduced later
+  - Must be gated by feature flag + admin claim per `docs/ADMIN_POLICY.md`
 
 ## Route map
 
@@ -53,4 +57,4 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ### Planned
 
-- `/admin/provider-requests` — requires admin claim + feature flag
+- `/admin/provider-requests` — optional future admin route; if implemented, must follow `docs/ADMIN_POLICY.md`
