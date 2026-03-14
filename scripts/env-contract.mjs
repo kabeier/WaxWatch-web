@@ -75,7 +75,7 @@ function validateProductionOnly(source, errors) {
     errors.push("NEXT_PUBLIC_RELEASE_VERSION cannot contain local/default markers in production");
   }
 
-  if (isLoopbackOnlyCidrs(source.TRUSTED_PROXY_CIDRS)) {
+  if (source.TRUSTED_PROXY_CIDRS && isLoopbackOnlyCidrs(source.TRUSTED_PROXY_CIDRS)) {
     errors.push("TRUSTED_PROXY_CIDRS cannot be limited to loopback CIDRs in production");
   }
 }

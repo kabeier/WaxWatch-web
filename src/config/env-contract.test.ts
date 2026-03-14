@@ -64,6 +64,16 @@ describe("validateEnv production-only assertions", () => {
     ).toThrow("Invalid environment configuration:");
   });
 
+  it("reports required TRUSTED_PROXY_CIDRS without crashing in production", () => {
+    expect(() =>
+      validateEnv({
+        ...baseEnv,
+        NODE_ENV: "production",
+        TRUSTED_PROXY_CIDRS: undefined,
+      }),
+    ).toThrow("TRUSTED_PROXY_CIDRS is required");
+  });
+
   it("accepts production-ready values", () => {
     expect(() =>
       validateEnv({
