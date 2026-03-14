@@ -1,10 +1,14 @@
 # WaxWatch Frontend API Contract
 
-**Contract version:** `2026-03-13.0`
+**Contract version:** `2026-03-14.1`
 
 This contract captures **current API behavior** and maps it to intended React surfaces so frontend can scaffold screens directly from OpenAPI payloads.
 
 ## Changelog
+
+- `2026-03-14.1`
+  - Removed backend-internal readiness probe implementation notes from this frontend contract.
+  - Clarified that frontend runtime checks in this repo target only `/health` and `/ready`; backend readiness internals are tracked in `docs/BACKEND_RUNTIME_CHECKS.md` (out of scope for web app).
 
 - `2026-03-14.0`
   - Added explicit frontend CSP `connect-src` requirements for cross-origin web API usage, including `CSP_CONNECT_SRC` and `NEXT_PUBLIC_API_BASE_URL` origin behavior and production safety constraints.
@@ -45,26 +49,9 @@ This contract captures **current API behavior** and maps it to intended React su
   - Clarified provider-request summary error semantics: `error_requests` now includes HTTP failures (`status_code >= 400`) and transport/network failures where `status_code` is null but `error` is non-empty, for both user and admin summary endpoints.
   - Confirmed no request/response schema shape changes; this is an aggregation semantics update for existing fields.
 
-- `2026-03-02.0`
-  - Documented `/readyz` DB readiness timeout enforcement now uses backend-agnostic `_run_with_timeout(...)` wrapping, while keeping Postgres `SET LOCAL statement_timeout` as a secondary safeguard.
-  - Confirmed readiness timeout failures surface explicit reasons (for example `db readiness probe timed out after ...`) and no frontend request/response schema changes were introduced.
 - `2026-03-01.0`
   - Documented watch-rule creation resilience update: `POST /api/watch-rules` now preserves `201` success even if post-commit background backfill enqueue fails; failures are logged for retry/operations follow-up.
   - Confirmed no frontend request/response schema changes (server-side task-dispatch reliability behavior only).
-- `2026-02-28.5`
-  - Clarified `/readyz` DB probe dialect-name normalization to safely handle non-string/missing dialect metadata on lightweight connection/bind doubles while preserving Postgres statement-timeout behavior.
-  - Confirmed no frontend request/response schema changes (operational-readiness behavior only).
-- `2026-02-28.4`
-  - Recorded additional `/readyz` probe compatibility hardening for test doubles that omit transaction helpers (`in_transaction()`/`begin()`), while keeping existing Postgres statement-timeout behavior.
-  - Confirmed this is operational-readiness behavior only with no frontend request/response schema changes.
-- `2026-02-28.3`
-  - Documented additional `/readyz` DB probe compatibility hardening: when a connection does not expose `begin()`, the probe now executes directly instead of raising attribute errors in lightweight doubles.
-  - Confirmed no frontend request/response schema changes (operational-readiness behavior only).
-- `2026-02-28.2`
-  - Synced contract governance for `/readyz` probe hardening: DB dialect detection now supports bind-owned dialect metadata and defensive transaction-state checks for compatibility with SQLAlchemy test doubles.
-  - Confirmed no frontend request/response schema changes (operational behavior only).
-- `2026-02-28.1`
-  - Documented `/readyz` DB probe implementation hardening (in-thread bind/connection handling with Postgres `SET LOCAL statement_timeout`), and clarified this is an operational-readiness behavior change with no frontend request/response schema impact.
 - `2026-02-28.0`
   - Clarified that recent structured-logging and auth/dependency observability hardening changes are server-side telemetry-only updates; frontend request/response envelopes and endpoint semantics remain unchanged.
 - `2026-02-26.2`
