@@ -12,11 +12,20 @@ function generateRequestId(): string {
 
 function getRequestId(req: NextApiRequest): string {
   const requestId = req.headers["x-request-id"];
+
   if (Array.isArray(requestId)) {
-    return requestId[0] ?? generateRequestId();
+    const normalizedRequestId = requestId
+      .map((value) => value.trim())
+      .find((value) => value.length > 0);
+
+    return normalizedRequestId ?? generateRequestId();
   }
 
-  return requestId ?? generateRequestId();
+  const normalizedRequestId = requestId?.trim();
+
+  return normalizedRequestId && normalizedRequestId.length > 0
+    ? normalizedRequestId
+    : generateRequestId();
 }
 
 function getPathname(req: NextApiRequest): string {
