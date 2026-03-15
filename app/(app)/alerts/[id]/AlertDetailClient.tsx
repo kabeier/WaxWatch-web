@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RetryAction } from "@/components/RetryAction";
 import { StateEmpty } from "@/components/StateEmpty";
@@ -25,8 +25,10 @@ export default function AlertDetailClient({ id }: { id: string }) {
   const [draft, setDraft] = useState<{ name?: string; pollInterval?: string; isActive?: boolean }>(
     {},
   );
-  const [deleteRequested, setDeleteRequested] = useState(false);
-  const [deleteSeenPending, setDeleteSeenPending] = useState(false);
+  const deleteRequestRef = useRef<{ requestedId: string | null; sawPending: boolean }>({
+    requestedId: null,
+    sawPending: false,
+  });
 
   useEffect(() => {
     if (updateWatchRuleMutation.data) {
@@ -35,34 +37,29 @@ export default function AlertDetailClient({ id }: { id: string }) {
   }, [retryAlertDetail, updateWatchRuleMutation.data]);
 
   useEffect(() => {
-    if (!deleteRequested) {
+    const deleteRequest = deleteRequestRef.current;
+
+    if (deleteRequest.requestedId !== id) {
+      deleteRequestRef.current = { requestedId: null, sawPending: false };
       return;
     }
 
     if (deleteWatchRuleMutation.isPending) {
-      setDeleteSeenPending(true);
+      deleteRequest.sawPending = true;
       return;
     }
 
     if (deleteWatchRuleMutation.isError) {
-      setDeleteRequested(false);
-      setDeleteSeenPending(false);
+      deleteRequestRef.current = { requestedId: null, sawPending: false };
       return;
     }
 
-    if (deleteSeenPending) {
+    if (deleteRequest.sawPending) {
       router.push("/alerts");
       router.refresh();
-      setDeleteRequested(false);
-      setDeleteSeenPending(false);
+      deleteRequestRef.current = { requestedId: null, sawPending: false };
     }
-  }, [
-    deleteRequested,
-    deleteSeenPending,
-    deleteWatchRuleMutation.isError,
-    deleteWatchRuleMutation.isPending,
-    router,
-  ]);
+  }, [id, deleteWatchRuleMutation.isError, deleteWatchRuleMutation.isPending, router]);
 
   const name = draft.name ?? watchRuleDetailQuery.data?.name ?? "";
   const pollIntervalInput =
@@ -197,7 +194,7 @@ export default function AlertDetailClient({ id }: { id: string }) {
             disabled={isPending}
             onClick={() => {
               if (window.confirm("Delete this alert permanently?")) {
-                setDeleteRequested(true);
+                deleteRequestRef.current = { requestedId: id, sawPending: false };
                 deleteWatchRuleMutation.mutate(undefined);
               }
             }}

@@ -277,6 +277,35 @@ describe("route flow regressions", () => {
     confirmSpy.mockRestore();
   });
 
+  it("does not redirect when alert id changes during an in-flight delete", () => {
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    const { rerender } = render(<AlertDetailClient id="rule-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /delete alert/i }));
+
+    hooksState.deleteWatchRuleMutation = {
+      ...hooksState.deleteWatchRuleMutation,
+      isPending: true,
+      isError: false,
+    };
+    rerender(<AlertDetailClient id="rule-1" />);
+
+    rerender(<AlertDetailClient id="rule-2" />);
+
+    hooksState.deleteWatchRuleMutation = {
+      ...hooksState.deleteWatchRuleMutation,
+      isPending: false,
+      isError: false,
+    };
+    rerender(<AlertDetailClient id="rule-2" />);
+
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockRefresh).not.toHaveBeenCalled();
+
+    confirmSpy.mockRestore();
+  });
+
   it("announces alert update success via status role", () => {
     hooksState.watchRuleDetailQuery = {
       data: {
