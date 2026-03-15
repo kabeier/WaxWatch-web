@@ -10,22 +10,25 @@ function generateRequestId(): string {
   return `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function getRequestId(req: NextApiRequest): string {
+function getRequestId(req: NextApiRequest, res: NextApiResponse): string {
   const requestId = req.headers["x-request-id"];
+  let normalizedRequestId: string | undefined;
 
   if (Array.isArray(requestId)) {
-    const normalizedRequestId = requestId
+    normalizedRequestId = requestId
       .map((value) => value.trim())
       .find((value) => value.length > 0);
-
-    return normalizedRequestId ?? generateRequestId();
+  } else {
+    const trimmedRequestId = requestId?.trim();
+    normalizedRequestId =
+      trimmedRequestId && trimmedRequestId.length > 0 ? trimmedRequestId : undefined;
   }
 
-  const normalizedRequestId = requestId?.trim();
+  const requestIdForRequest = normalizedRequestId ?? generateRequestId();
+  req.headers["x-request-id"] = requestIdForRequest;
+  res.setHeader("x-request-id", requestIdForRequest);
 
-  return normalizedRequestId && normalizedRequestId.length > 0
-    ? normalizedRequestId
-    : generateRequestId();
+  return requestIdForRequest;
 }
 
 function getPathname(req: NextApiRequest): string {
@@ -38,9 +41,7 @@ function getPathname(req: NextApiRequest): string {
 
 export function withApiRequestLogging(handler: NextApiHandler): NextApiHandler {
   return async function requestLoggingHandler(req: NextApiRequest, res: NextApiResponse) {
-    const requestId = getRequestId(req);
-    req.headers["x-request-id"] = requestId;
-    res.setHeader("x-request-id", requestId);
+    const requestId = getRequestId(req, res);
 
     const pathname = getPathname(req);
     const startTime = Date.now();
