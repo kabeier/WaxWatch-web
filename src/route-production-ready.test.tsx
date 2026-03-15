@@ -299,7 +299,7 @@ beforeEach(() => {
     mutate: vi.fn(),
   };
   state.markReadMutation = {
-    data: { ok: true },
+    data: undefined,
     isPending: false,
     isError: false,
     error: null,
@@ -425,13 +425,14 @@ describe("route-level production-ready paths", () => {
       isPending: false,
       isError: false,
       error: null,
-      mutate: vi.fn((_, options?: { onSuccess?: () => void }) => {
-        options?.onSuccess?.();
+      mutate: vi.fn(() => {
+        state.markReadMutation.data = { ok: true };
       }),
     };
-    render(<NotificationsPage />);
+    const { rerender } = render(<NotificationsPage />);
 
     fireEvent.click(screen.getByRole("button", { name: /mark first unread as read/i }));
+    rerender(<NotificationsPage />);
 
     expect(screen.getByText(/success: notification marked as read/i)).toBeInTheDocument();
   });

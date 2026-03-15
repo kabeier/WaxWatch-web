@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import { RetryAction } from "@/components/RetryAction";
 import {
   StateEmpty,
@@ -18,7 +16,6 @@ import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib
 import { routeViewModels } from "@/lib/view-models/routes";
 
 export default function NotificationsPage() {
-  const [didMarkRead, setDidMarkRead] = useState(false);
   const viewModel = routeViewModels.notifications;
   const notificationsQuery = useNotificationsQuery();
   const unreadCountQuery = useUnreadNotificationCountQuery();
@@ -112,18 +109,14 @@ export default function NotificationsPage() {
         disabled={markReadMutation.isPending || !firstUnreadNotificationId}
         onClick={() => {
           if (firstUnreadNotificationId) {
-            setDidMarkRead(false);
-            markReadMutation.mutate(undefined, {
-              onSuccess: () => setDidMarkRead(true),
-              onError: () => setDidMarkRead(false),
-            });
+            markReadMutation.mutate(undefined);
           }
         }}
       >
         {markReadMutation.isPending ? "Marking as read…" : "Mark first unread as read"}
       </button>
 
-      {didMarkRead ? <p role="status">Success: Notification marked as read.</p> : null}
+      {markReadMutation.data ? <p role="status">Success: Notification marked as read.</p> : null}
       {markReadMutation.isError && isRateLimitedError(markReadMutation.error) ? (
         <StateRateLimited
           message="Mark-as-read is temporarily rate limited."
