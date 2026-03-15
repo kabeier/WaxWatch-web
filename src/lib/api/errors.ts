@@ -45,8 +45,8 @@ export function isApiError(error: unknown): error is ApiError {
 export async function tryParseErrorEnvelope(
   response: Response,
 ): Promise<ErrorEnvelope | undefined> {
-  const contentType = response.headers.get("content-type")?.toLowerCase();
-  if (!contentType?.includes("application/json")) {
+  const contentType = response.headers.get("content-type");
+  if (!isJsonLikeContentType(contentType)) {
     return undefined;
   }
 
@@ -60,6 +60,19 @@ export async function tryParseErrorEnvelope(
   } catch {
     return undefined;
   }
+}
+
+function isJsonLikeContentType(contentType: string | null): boolean {
+  if (!contentType) {
+    return false;
+  }
+
+  const mimeType = contentType.toLowerCase().split(";")[0]?.trim();
+  if (!mimeType) {
+    return false;
+  }
+
+  return mimeType === "application/json" || mimeType.endsWith("+json");
 }
 
 export function toApiError(response: Response, envelope?: ErrorEnvelope): ApiError {
