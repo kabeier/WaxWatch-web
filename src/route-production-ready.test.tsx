@@ -420,7 +420,19 @@ describe("route-level production-ready paths", () => {
   });
 
   it("/notifications success", () => {
+    state.markReadMutation = {
+      data: undefined,
+      isPending: false,
+      isError: false,
+      error: null,
+      mutate: vi.fn((_, options?: { onSuccess?: () => void }) => {
+        options?.onSuccess?.();
+      }),
+    };
     render(<NotificationsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /mark first unread as read/i }));
+
     expect(screen.getByText(/success: notification marked as read/i)).toBeInTheDocument();
   });
 
