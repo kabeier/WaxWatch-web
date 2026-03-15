@@ -124,7 +124,8 @@ export function useMarkNotificationReadMutation(notificationId: string) {
   const queryClient = useQueryClient();
 
   return useApiMutation({
-    mutationFn: (_: undefined) => waxwatchApi.notifications.markRead(notificationId),
+    mutationFn: (_: undefined) =>
+      waxwatchApi.notifications.markRead(notificationId).then(() => ({ ok: true as const })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list });
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
