@@ -66,7 +66,8 @@ describe("SseController", () => {
     warnSpy.mockClear();
   });
 
-  it("connects successfully with authenticated bearer header", async () => {
+  it("connects successfully with cookie-backed session when bearer token is missing", async () => {
+    vi.mocked(webAuthSessionAdapter.getAccessToken).mockResolvedValue(null);
     fetchMock.mockResolvedValueOnce(
       createSseResponse('event: notification\ndata: {"ok":true}\n\n'),
     );
@@ -81,8 +82,9 @@ describe("SseController", () => {
     const headers = new Headers(init?.headers);
 
     expect(url).toBe("/api/stream/events");
-    expect(headers.get("Authorization")).toBe("Bearer jwt-token");
+    expect(headers.get("Authorization")).toBeNull();
     expect(headers.get("Accept")).toBe("text/event-stream");
+    expect(init?.credentials).toBe("include");
     expect(init?.signal).toBeInstanceOf(AbortSignal);
 
     await waitFor(() =>
@@ -133,9 +135,11 @@ describe("SseController", () => {
     );
   });
 
-  it("stops immediately when token is missing", async () => {
+  it("reconnects when token is missing and stream disconnects", async () => {
     vi.useFakeTimers();
     vi.mocked(webAuthSessionAdapter.getAccessToken).mockResolvedValue(null);
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    fetchMock.mockRejectedValueOnce(new Error("disconnect")).mockResolvedValueOnce(createSseResponse("event: message\ndata: recovered\n\n"));
 
     const setTimeoutSpy = vi.spyOn(window, "setTimeout");
     const queryClient = new QueryClient();
@@ -143,9 +147,16 @@ describe("SseController", () => {
     renderWithClient(queryClient);
 
     await vi.runAllTicks();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(setTimeoutSpy).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1_000);
+    await vi.runAllTicks();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const firstCallHeaders = new Headers(fetchMock.mock.calls[0][1]?.headers);
+    expect(firstCallHeaders.get("Authorization")).toBeNull();
+    expect(fetchMock.mock.calls[0][1]?.credentials).toBe("include");
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1_000);
     expect(handleAuthorizationFailureWithAdapter).not.toHaveBeenCalled();
   });
 
