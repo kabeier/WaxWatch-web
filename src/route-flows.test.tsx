@@ -217,7 +217,6 @@ describe("route flow regressions", () => {
     ).toBeInTheDocument();
   });
 
-
   it("redirects to alerts after a successful delete mutation", () => {
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
 
