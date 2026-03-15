@@ -51,7 +51,7 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ### Implemented but non-MVP support routes
 
-- `/` — redirect to `/search`
+- `/` — unconditional server redirect entrypoint to `/search`; non-production-ready until dedicated route-level redirect contract coverage (including destination-regression protection) is added independent of `/search` implementation details
 - `/signed-out` — post-logout informational state
 - `/account-removed` — post-account-removal informational state
 
