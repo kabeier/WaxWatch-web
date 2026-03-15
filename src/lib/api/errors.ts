@@ -26,7 +26,7 @@ export type HttpApiError = {
 export type RateLimitedApiError = {
   kind: "rate_limited";
   message: string;
-  status: 429;
+  status: number;
   details?: unknown;
   retryAfterSeconds?: number;
 };
@@ -84,7 +84,7 @@ export function toApiError(response: Response, envelope?: ErrorEnvelope): ApiErr
   if (response.status === 429 || errorType === "rate_limited") {
     return {
       kind: "rate_limited",
-      status: 429,
+      status: response.status,
       message,
       details,
       retryAfterSeconds: parseRateLimitMeta(response.headers, details).retryAfterSeconds,

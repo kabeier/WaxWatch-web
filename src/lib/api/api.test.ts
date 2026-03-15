@@ -594,7 +594,31 @@ describe("error mapping", () => {
 
     expect(parsed.kind).toBe("rate_limited");
     if (parsed.kind === "rate_limited") {
+      expect(parsed.status).toBe(429);
       expect(parsed.retryAfterSeconds).toBe(12);
+    }
+  });
+
+  it("keeps rate_limited kind for non-429 responses when envelope error type is rate_limited", () => {
+    const response = new Response(null, {
+      status: 503,
+      statusText: "Service unavailable",
+      headers: {
+        "Retry-After": "30",
+      },
+    });
+
+    const parsed = toApiError(response, {
+      error: {
+        type: "rate_limited",
+        message: "Please retry later",
+      },
+    });
+
+    expect(parsed.kind).toBe("rate_limited");
+    if (parsed.kind === "rate_limited") {
+      expect(parsed.status).toBe(503);
+      expect(parsed.retryAfterSeconds).toBe(30);
     }
   });
 });
