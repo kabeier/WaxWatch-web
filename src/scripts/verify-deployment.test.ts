@@ -1,9 +1,23 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, symlinkSync, writeFileSync } from "node:fs";
+import { rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   expectedConnectOrigins,
   getAbsoluteOriginOrNull,
+  isDirectExecution,
 } from "../../scripts/verify-deployment.mjs";
+
+const tempDirs = [];
+
+afterEach(async () => {
+  await Promise.all(
+    tempDirs.splice(0).map((directory) => rm(directory, { force: true, recursive: true })),
+  );
+});
 
 describe("getAbsoluteOriginOrNull", () => {
   it("returns null for empty and relative values", () => {
@@ -46,5 +60,24 @@ describe("expectedConnectOrigins", () => {
 
     process.env.NEXT_PUBLIC_API_BASE_URL = originalApiBaseUrl;
     process.env.CSP_CONNECT_SRC = originalConnectSrc;
+  });
+});
+
+describe("isDirectExecution", () => {
+  it("returns false when argv[1] is missing", () => {
+    expect(isDirectExecution(import.meta.url, undefined)).toBe(false);
+  });
+
+  it("supports equivalent realpath targets for symlinked entry paths", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "verify-deployment-test-"));
+    tempDirs.push(tempDir);
+
+    const scriptPath = join(tempDir, "script.mjs");
+    const symlinkPath = join(tempDir, "script-link.mjs");
+
+    writeFileSync(scriptPath, "export const marker = true;\n");
+    symlinkSync(scriptPath, symlinkPath);
+
+    expect(isDirectExecution(pathToFileURL(scriptPath).href, symlinkPath)).toBe(true);
   });
 });

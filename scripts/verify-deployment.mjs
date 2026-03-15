@@ -1,3 +1,6 @@
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 /**
  * Deployment verification for security headers + readiness.
  *
@@ -197,7 +200,19 @@ async function main() {
   );
 }
 
-if (import.meta.url === new URL(process.argv[1], "file:").href) {
+function isDirectExecution(scriptUrl, entryPath) {
+  if (!entryPath) {
+    return false;
+  }
+
+  try {
+    return realpathSync(fileURLToPath(scriptUrl)) === realpathSync(entryPath);
+  } catch {
+    return false;
+  }
+}
+
+if (isDirectExecution(import.meta.url, process.argv[1])) {
   main().catch((error) => {
     console.error(
       JSON.stringify({
@@ -210,4 +225,4 @@ if (import.meta.url === new URL(process.argv[1], "file:").href) {
   });
 }
 
-export { expectedConnectOrigins, getAbsoluteOriginOrNull };
+export { expectedConnectOrigins, getAbsoluteOriginOrNull, isDirectExecution };
