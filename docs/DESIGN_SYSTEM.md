@@ -465,9 +465,11 @@ Track migration work using the template fields from this document: `temporary`, 
   - `status`: `pending`
   - `notes`: `Validate max-widths and horizontal rhythm per breakpoint.`
 
-## Route readiness acceptance criteria (wired -> production-ready)
+## Route readiness acceptance criteria (wired-minimum -> production-ready)
 
-A route can move from `wired` to `production-ready` only when all criteria below pass:
+A route can move from `wired-minimum` to `production-ready` only when all criteria below pass:
+
+> **Status vocabulary source of truth:** Use the canonical route status names and matrix in `docs/DEVELOPER_REFERENCE.md` (**Route matrix**) when updating readiness terminology across docs and PRs.
 
 1. **Canonical token adoption**
    - 100% of route-level typography, spacing, and color usage maps to canonical design tokens (or approved aliases).
