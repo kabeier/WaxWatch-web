@@ -89,7 +89,16 @@ If your frontend stays same-origin (recommended default with reverse proxy), lea
 Build pipeline requirement for standalone images:
 
 - Provide `CSP_CONNECT_SRC`, `CSP_STYLE_SRC`, and `NEXT_PUBLIC_API_BASE_URL` in CI/CD or Docker build args before `npm run build`.
+- Run `npm run prebuild:prod-env` immediately before `npm run build` in the production pipeline.
 - Treat CSP envs as build inputs, not runtime-only knobs.
+  Exact production build step:
+
+```bash
+NODE_ENV=production EXPECT_CROSS_ORIGIN_API=true npm run prebuild:prod-env
+npm run build
+```
+
+For same-origin deployments, omit `EXPECT_CROSS_ORIGIN_API` (or set it to `false`) and keep `NEXT_PUBLIC_API_BASE_URL=/api`.
 
 ## Patch and Base Image Cadence
 
