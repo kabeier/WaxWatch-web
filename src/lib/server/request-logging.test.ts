@@ -70,8 +70,6 @@ describe("withApiRequestLogging", () => {
     vi.restoreAllMocks();
   });
 
-
-
   it("generates requestId when x-request-id header is an empty string", async () => {
     const req = createMockRequest({ "x-request-id": "" });
     const res = createMockResponse();
