@@ -74,6 +74,17 @@ describe("auth handoff helpers", () => {
     expect(expiredUnixMilliseconds.expiresAtEpochMs).toBe(1767311999000);
     expect(expiredUnixMilliseconds.isExpired).toBe(true);
 
+    const zeroEpoch = resolveAuthHandoffContext({
+      handoff: "waxwatch://auth/callback",
+      state: "state-123",
+      nonce: "nonce-123",
+      expires_at: "0",
+    });
+
+    expect(zeroEpoch.expiresAtEpochMs).toBe(0);
+    expect(zeroEpoch.hasRequiredSecurityParams).toBe(true);
+    expect(zeroEpoch.isExpired).toBe(true);
+
     vi.useRealTimers();
   });
 
