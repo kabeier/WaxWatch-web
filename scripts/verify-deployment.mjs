@@ -56,8 +56,7 @@ function parseDirectiveTokens(cspHeader, directiveName) {
 }
 
 function formatOriginErrorHint(sourceName) {
-  const sameOriginHint =
-    "Leave it empty or use a relative path to keep same-origin defaults.";
+  const sameOriginHint = "Leave it empty or use a relative path to keep same-origin defaults.";
 
   if (sourceName === "NEXT_PUBLIC_API_BASE_URL") {
     return `${sameOriginHint} For cross-origin mode, provide an absolute URL origin such as https://api.example.com.`;

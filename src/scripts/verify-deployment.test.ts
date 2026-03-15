@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { expectedConnectOrigins, getAbsoluteOriginOrNull } from "../../scripts/verify-deployment.mjs";
+import {
+  expectedConnectOrigins,
+  getAbsoluteOriginOrNull,
+} from "../../scripts/verify-deployment.mjs";
 
 describe("getAbsoluteOriginOrNull", () => {
   it("returns null for empty and relative values", () => {
