@@ -249,19 +249,5 @@ export function getImmediateProxyIp(request: {
     return platformIp;
   }
 
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (!forwardedFor) {
-    return null;
-  }
-
-  const chain = forwardedFor
-    .split(",")
-    .map((entry) => normalizeIp(entry))
-    .filter((entry): entry is string => entry !== null);
-
-  if (chain.length === 0) {
-    return null;
-  }
-
-  return chain[chain.length - 1] ?? null;
+  return null;
 }

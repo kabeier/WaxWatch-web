@@ -49,7 +49,9 @@ export function middleware(request: NextRequest) {
     const forwardedHeaders = getForwardingHeaders(request);
     const trustedProxyConfig = parseTrustedProxyCidrs(process.env.TRUSTED_PROXY_CIDRS);
     const sourceIp = getImmediateProxyIp(request);
+    const hasPlatformIp = Boolean(sourceIp);
     const trustedForwardingSource = isTrustedProxyIp(sourceIp, trustedProxyConfig);
+    const trustFallbackRejectedMissingPlatformIp = !hasPlatformIp;
 
     requestHeaders.set("x-request-id", requestId);
 
@@ -64,6 +66,7 @@ export function middleware(request: NextRequest) {
           sourceIp,
           trustedProxyCidrs: trustedProxyConfig.cidrs.length,
           forwardedHeaders,
+          trustFallbackRejectedMissingPlatformIp,
         });
       }
     }
