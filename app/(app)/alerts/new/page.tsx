@@ -30,8 +30,7 @@ export default function NewAlertPage() {
     [keywordsInput],
   );
 
-  const keywordValidationMessage =
-    keywords.length < 1 ? "Enter at least one keyword." : null;
+  const keywordValidationMessage = keywords.length < 1 ? "Enter at least one keyword." : null;
 
   const validationMessage = useMemo(() => {
     if (name.trim().length < 1 || name.trim().length > 120) {
@@ -129,7 +128,7 @@ export default function NewAlertPage() {
             onChange={(event) => setKeywordsInput(event.currentTarget.value)}
             disabled={isPending}
             aria-invalid={Boolean(keywordValidationMessage)}
-            aria-describedby={validationMessage ? "new-alert-form-errors" : undefined}
+            aria-describedby={keywordValidationMessage ? "new-alert-form-errors" : undefined}
           />
         </label>
         <label>
