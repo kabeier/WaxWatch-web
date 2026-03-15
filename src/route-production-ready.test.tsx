@@ -36,7 +36,13 @@ const state: {
   watchReleasesQuery: MockQuery;
   meQuery: MockQuery;
   notificationsQuery: MockQuery;
-  unreadCountQuery: { data: unknown; isLoading: boolean; isError: boolean; error: unknown };
+  unreadCountQuery: {
+    data: unknown;
+    isLoading: boolean;
+    isError: boolean;
+    error: unknown;
+    retry: () => void;
+  };
   searchMutation: MockMutation;
   saveSearchAlertMutation: MockMutation;
   createWatchRuleMutation: MockMutation;
@@ -55,7 +61,13 @@ const state: {
   watchReleasesQuery: { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() },
   meQuery: { data: undefined, isLoading: false, isError: false, error: null, retry: vi.fn() },
   notificationsQuery: { data: [], isLoading: false, isError: false, error: null, retry: vi.fn() },
-  unreadCountQuery: { data: { unread_count: 0 }, isLoading: false, isError: false, error: null },
+  unreadCountQuery: {
+    data: { unread_count: 0 },
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: vi.fn(),
+  },
   searchMutation: {
     data: undefined,
     isPending: false,
@@ -221,6 +233,7 @@ beforeEach(() => {
     isLoading: false,
     isError: false,
     error: null,
+    retry: vi.fn(),
   };
   state.searchMutation = {
     data: { items: [{ id: "1" }] },
@@ -387,6 +400,36 @@ describe("route-level production-ready paths", () => {
     state.notificationsQuery = { ...state.notificationsQuery, isError: true, error: apiError };
     render(<NotificationsPage />);
     expect(screen.getByText(/could not load notifications/i)).toBeInTheDocument();
+  });
+
+  it("/notifications unread-count failure does not force zero", () => {
+    state.unreadCountQuery = {
+      ...state.unreadCountQuery,
+      data: undefined,
+      isError: true,
+      error: apiError,
+    };
+    render(<NotificationsPage />);
+    expect(
+      screen.getByText(/unread notifications count is currently unavailable/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/unread notifications: 0\./i)).not.toBeInTheDocument();
+    expect(screen.getByText(/could not load unread notification count/i)).toBeInTheDocument();
+  });
+
+  it("/notifications unread-count rate-limited does not force zero", () => {
+    state.unreadCountQuery = {
+      ...state.unreadCountQuery,
+      data: undefined,
+      isError: true,
+      error: { kind: "rate_limited", message: "slow down", retryAfterSeconds: 30 },
+    };
+    render(<NotificationsPage />);
+    expect(
+      screen.getByText(/unread notifications count is currently unavailable/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/unread notifications: 0\./i)).not.toBeInTheDocument();
+    expect(screen.getByText(/unread count is temporarily rate limited/i)).toBeInTheDocument();
   });
 
   it("/settings/alerts success", () => {

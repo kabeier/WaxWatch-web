@@ -29,8 +29,41 @@ export default function NotificationsPage() {
       <h1>{viewModel.heading}</h1>
       <p>{viewModel.summary}</p>
       <p role="status" aria-live="polite">
-        Status: Unread notifications: {unreadCountQuery.data?.unread_count ?? 0}.
+        Status:{" "}
+        {unreadCountQuery.isLoading
+          ? "Unread notifications count is loading."
+          : unreadCountQuery.isError
+            ? "Unread notifications count is currently unavailable."
+            : unreadCountQuery.data
+              ? `Unread notifications: ${unreadCountQuery.data.unread_count}.`
+              : "Unread notifications count is currently unavailable."}
       </p>
+
+      {unreadCountQuery.isLoading ? (
+        <StateLoading message="Loading unread notification count…" />
+      ) : null}
+      {unreadCountQuery.isError && isRateLimitedError(unreadCountQuery.error) ? (
+        <StateRateLimited
+          title="Unread count is temporarily rate limited"
+          message="Unread count is cooling down. Retry unlocks when the cooldown ends."
+          detail={unreadCountQuery.error.message}
+          retryAfterSeconds={getRetryAfterSeconds(unreadCountQuery.error)}
+          action={
+            <RetryAction
+              label="Retry unread count"
+              retryAfterSeconds={getRetryAfterSeconds(unreadCountQuery.error)}
+              onRetry={() => void unreadCountQuery.retry()}
+            />
+          }
+        />
+      ) : null}
+      {unreadCountQuery.isError && !isRateLimitedError(unreadCountQuery.error) ? (
+        <StateError
+          title="Unread count failed to load"
+          message="Could not load unread notification count."
+          detail={getErrorMessage(unreadCountQuery.error, "Request failed")}
+        />
+      ) : null}
 
       {notificationsQuery.isLoading ? <StateLoading message="Loading notifications…" /> : null}
       {notificationsQuery.isError && isRateLimitedError(notificationsQuery.error) ? (
