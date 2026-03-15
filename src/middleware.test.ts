@@ -89,7 +89,10 @@ describe("middleware", () => {
   it("accepts forwarded headers from trusted proxy source", () => {
     const request = createRequest(
       {
+        forwarded: "for=198.51.100.20;proto=https;host=shop.example",
         "x-forwarded-for": "198.51.100.20, 10.1.1.1",
+        "x-forwarded-host": "shop.example",
+        "x-forwarded-port": "443",
         "x-forwarded-proto": "https",
       },
       "10.1.1.1",
@@ -98,7 +101,12 @@ describe("middleware", () => {
     middleware(request as never);
 
     const nextArgs = nextMock.mock.calls[0][0] as { request: { headers: Headers } };
+    expect(nextArgs.request.headers.get("forwarded")).toBe(
+      "for=198.51.100.20;proto=https;host=shop.example",
+    );
     expect(nextArgs.request.headers.get("x-forwarded-for")).toBe("198.51.100.20, 10.1.1.1");
+    expect(nextArgs.request.headers.get("x-forwarded-host")).toBe("shop.example");
+    expect(nextArgs.request.headers.get("x-forwarded-port")).toBe("443");
     expect(nextArgs.request.headers.get("x-forwarded-proto")).toBe("https");
   });
 
@@ -122,6 +130,7 @@ describe("middleware", () => {
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const request = createRequest(
       {
+        forwarded: "for=198.51.100.20;proto=https;host=evil.example",
         "x-forwarded-for": "198.51.100.20, 203.0.113.10",
         "x-forwarded-host": "evil.example",
       },
@@ -131,6 +140,7 @@ describe("middleware", () => {
     middleware(request as never);
 
     const nextArgs = nextMock.mock.calls[0][0] as { request: { headers: Headers } };
+    expect(nextArgs.request.headers.get("forwarded")).toBeNull();
     expect(nextArgs.request.headers.get("x-forwarded-for")).toBeNull();
     expect(nextArgs.request.headers.get("x-forwarded-host")).toBeNull();
 
@@ -142,6 +152,11 @@ describe("middleware", () => {
         message: "untrusted_forwarded_headers",
         sourceIp: "203.0.113.10",
         scope: "ingress",
+        forwardedHeaders: {
+          forwarded: "for=198.51.100.20;proto=https;host=evil.example",
+          "x-forwarded-for": "198.51.100.20, 203.0.113.10",
+          "x-forwarded-host": "evil.example",
+        },
       }),
     );
   });
@@ -160,6 +175,20 @@ describe("middleware", () => {
     const nextArgs = nextMock.mock.calls[0][0] as { request: { headers: Headers } };
     expect(nextArgs.request.headers.get("x-forwarded-for")).toBeNull();
     expect(nextArgs.request.headers.get("x-forwarded-proto")).toBeNull();
+  });
+
+  it("strips spoofed Forwarded header from untrusted source", () => {
+    const request = createRequest(
+      {
+        forwarded: "for=198.51.100.20;proto=https;host=evil.example",
+      },
+      "203.0.113.10",
+    );
+
+    middleware(request as never);
+
+    const nextArgs = nextMock.mock.calls[0][0] as { request: { headers: Headers } };
+    expect(nextArgs.request.headers.get("forwarded")).toBeNull();
   });
 
   it("preserves x-forwarded-proto when source ip is trusted", () => {

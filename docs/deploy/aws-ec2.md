@@ -13,9 +13,9 @@
 
 ## Forwarded Headers and Cookie Security
 
-- AWS ALB injects `X-Forwarded-*`; middleware accepts these headers **only** when the immediate source IP is in `TRUSTED_PROXY_CIDRS`.
+- AWS ALB injects `X-Forwarded-*`; middleware accepts `Forwarded` and `X-Forwarded-*` headers **only** when the immediate source IP is in `TRUSTED_PROXY_CIDRS`.
 - Source IP trust resolution is: `request.ip` (platform field) first, otherwise the right-most IP in `x-forwarded-for` (closest hop).
-- When source IP is untrusted, middleware strips `x-forwarded-for`, `x-forwarded-host`, `x-forwarded-port`, and `x-forwarded-proto` before downstream processing/logging and emits a structured warning (`message=untrusted_forwarded_headers`).
+- When source IP is untrusted, middleware strips `forwarded`, `x-forwarded-for`, `x-forwarded-host`, `x-forwarded-port`, and `x-forwarded-proto` before downstream processing/logging and emits a structured warning (`message=untrusted_forwarded_headers`).
 - Malformed CIDR entries in `TRUSTED_PROXY_CIDRS` are ignored (fail-closed) and logged as `message=invalid_trusted_proxy_cidrs`; only valid CIDRs are used for trust checks.
 - Web session/auth cookies are the primary browser auth mechanism and must be set with:
   - `Secure=true` only when `x-forwarded-proto=https` survived middleware trust checks (trusted proxy source).

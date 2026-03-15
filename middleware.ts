@@ -9,6 +9,7 @@ import {
 } from "@/lib/server/proxy-trust";
 
 const FORWARDED_HEADERS = [
+  "forwarded",
   "x-forwarded-for",
   "x-forwarded-host",
   "x-forwarded-port",
