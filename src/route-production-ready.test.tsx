@@ -375,6 +375,34 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/could not save new alert/i)).toBeInTheDocument();
   });
 
+  it.each(["", "   ", ",,,", " ,  , "])(
+    "/alerts/new blocks invalid keywords input: %p",
+    (keywordsValue) => {
+      render(<NewAlertPage />);
+
+      const keywordsField = screen.getByLabelText(/keywords \(comma-separated\)/i);
+      fireEvent.change(keywordsField, { target: { value: keywordsValue } });
+      fireEvent.click(screen.getByRole("button", { name: /save new alert/i }));
+
+      expect(screen.getByText(/enter at least one keyword\./i)).toBeInTheDocument();
+      expect(keywordsField).toHaveAttribute("aria-invalid", "true");
+      expect(state.createWatchRuleMutation.mutate).not.toHaveBeenCalled();
+    },
+  );
+
+  it("/alerts/new does not attach keyword error description for non-keyword validation", () => {
+    render(<NewAlertPage />);
+
+    const nameField = screen.getByLabelText(/alert name/i);
+    const keywordsField = screen.getByLabelText(/keywords \(comma-separated\)/i);
+
+    fireEvent.change(nameField, { target: { value: "" } });
+
+    expect(screen.getByText(/name must be between 1 and 120 characters\./i)).toBeInTheDocument();
+    expect(keywordsField).toHaveAttribute("aria-invalid", "false");
+    expect(keywordsField).not.toHaveAttribute("aria-describedby", "new-alert-form-errors");
+  });
+
   it("/alerts/[id] success", () => {
     render(<AlertDetailClient id="rule-1" />);
     expect(screen.getByText(/success: alert updated/i)).toBeInTheDocument();
