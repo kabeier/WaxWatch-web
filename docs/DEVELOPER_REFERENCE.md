@@ -28,6 +28,7 @@ CSP policy baseline for deployments (canonical model: **build-time**):
 
 - For Next.js standalone output, CSP values from `next.config.mjs` are computed at build time.
 - `CSP_CONNECT_SRC`, `CSP_STYLE_SRC`, and `NEXT_PUBLIC_API_BASE_URL` must be present before `npm run build` when you need non-default CSP/API-origin behavior.
+- Run `npm run prebuild:prod-env` as the gate directly before `npm run build`; it reports whether same-origin defaults are accepted or a cross-origin configuration is expected but missing.
 - Runtime-only env changes do not rewrite emitted CSP headers.
 - `style-src` allows `'self'` plus optional explicit origins configured through `CSP_STYLE_SRC`.
 - `style-src` must not include `'unsafe-inline'` in production.
@@ -55,8 +56,9 @@ Before changing route-level rendering for API-backed screens (`/search`, `/alert
 Startup sequence:
 
 - Development: `npm run dev`
-- Production-like local run: `npm run build` then `npm run start`
+- Production-like local run: `npm run prebuild:prod-env && npm run build` then `npm run start`
   - For standalone CSP validation, export `CSP_CONNECT_SRC`, `CSP_STYLE_SRC`, and `NEXT_PUBLIC_API_BASE_URL` before the build step.
+  - Set `EXPECT_CROSS_ORIGIN_API=true` when the deployment is intentionally cross-origin so the prebuild gate fails fast if required values are missing.
 
 ```bash
 npm run dev

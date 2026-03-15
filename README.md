@@ -43,7 +43,7 @@ Canonical internal references:
 - Install dependencies: `npm install`
 - Validate local env contract: `npm run env:check:template`
 - Development server: `npm run dev`
-- Production-like local run: `npm run build` then `npm run start` _(requires build artifacts and full env contract values)_
+- Production-like local run: `npm run prebuild:prod-env && npm run build` then `npm run start` _(requires build artifacts and full env contract values)_
 
 ### API base URL configuration
 
@@ -53,7 +53,7 @@ The web API client reads `NEXT_PUBLIC_API_BASE_URL` and falls back to `/api` whe
 
 WaxWatch uses a **build-time CSP model** for Next.js standalone output. CSP directives are assembled in `next.config.mjs`, so `CSP_CONNECT_SRC`, `CSP_STYLE_SRC`, and `NEXT_PUBLIC_API_BASE_URL` are evaluated during `npm run build` and baked into emitted headers.
 
-- Build/CI pipelines must set these variables **before** `npm run build`.
+- Build/CI pipelines must run `npm run prebuild:prod-env` immediately before `npm run build`.
 - Changing these values at container runtime without rebuilding will **not** change the CSP header.
 
 - **Same-origin (recommended default):** `NEXT_PUBLIC_API_BASE_URL=/api`

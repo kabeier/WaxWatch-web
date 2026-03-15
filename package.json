@@ -24,7 +24,7 @@
     "a11y:smoke": "NODE_ENV=production start-server-and-test start http://127.0.0.1:4173 a11y:smoke:run",
     "bundle:check": "node scripts/check-bundle-budget.mjs",
     "verify:deployment": "node scripts/verify-deployment.mjs",
-    "ci:prod-gates": "npm run test:coverage && npm run build && npm run bundle:check && npm run a11y:smoke && npm run verify:deployment && npm run release:checklist",
+    "ci:prod-gates": "npm run test:coverage && npm run prebuild:prod-env && npm run build && npm run bundle:check && npm run a11y:smoke && npm run verify:deployment && npm run release:checklist",
     "release:checklist": "node scripts/release-checklist.mjs",
     "a11y:smoke:run": "playwright test e2e/a11y.spec.ts",
     "test:contract": "node scripts/require-test-updates.mjs",
@@ -33,7 +33,8 @@
     "contracts:check": "node scripts/check-contract-doc-paths.mjs",
     "docs:route-status-gate": "node scripts/check-route-status-test-updates.mjs",
     "lint:api-core-boundaries": "node scripts/check-api-core-boundaries.mjs",
-    "docs:lint:placeholders": "node scripts/check-doc-placeholders.mjs"
+    "docs:lint:placeholders": "node scripts/check-doc-placeholders.mjs",
+    "prebuild:prod-env": "NODE_ENV=production node scripts/prebuild-standalone-env-gate.mjs"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,md,yml,yaml,css}": [
