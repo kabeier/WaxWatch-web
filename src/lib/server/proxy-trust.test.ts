@@ -34,7 +34,7 @@ describe("proxy-trust", () => {
     expect(isTrustedProxyIp("::ffff:203.0.113.8", config)).toBe(false);
   });
 
-  it("extracts immediate proxy ip from platform ip first then forwarded chain", () => {
+  it("uses only platform ip for immediate proxy source", () => {
     expect(
       getImmediateProxyIp({
         ip: "10.10.10.10",
@@ -46,6 +46,6 @@ describe("proxy-trust", () => {
       getImmediateProxyIp({
         headers: new Headers({ "x-forwarded-for": "198.51.100.1, 203.0.113.5" }),
       }),
-    ).toBe("203.0.113.5");
+    ).toBeNull();
   });
 });

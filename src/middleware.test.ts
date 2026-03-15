@@ -152,10 +152,46 @@ describe("middleware", () => {
         message: "untrusted_forwarded_headers",
         sourceIp: "203.0.113.10",
         scope: "ingress",
+        trustFallbackRejectedMissingPlatformIp: false,
         forwardedHeaders: {
           forwarded: "for=198.51.100.20;proto=https;host=evil.example",
           "x-forwarded-for": "198.51.100.20, 203.0.113.10",
           "x-forwarded-host": "evil.example",
+        },
+      }),
+    );
+  });
+
+  it("strips spoofed forwarding headers when platform ip is missing", () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const request = createRequest({
+      forwarded: "for=198.51.100.20;proto=https;host=evil.example",
+      "x-forwarded-for": "198.51.100.20, 10.1.1.1",
+      "x-forwarded-host": "evil.example",
+      "x-forwarded-proto": "https",
+    });
+
+    middleware(request as never);
+
+    const nextArgs = nextMock.mock.calls[0][0] as { request: { headers: Headers } };
+    expect(nextArgs.request.headers.get("forwarded")).toBeNull();
+    expect(nextArgs.request.headers.get("x-forwarded-for")).toBeNull();
+    expect(nextArgs.request.headers.get("x-forwarded-host")).toBeNull();
+    expect(nextArgs.request.headers.get("x-forwarded-proto")).toBeNull();
+
+    const warningEvents = consoleWarnSpy.mock.calls.map(
+      ([line]) => JSON.parse(String(line)) as Record<string, unknown>,
+    );
+    expect(warningEvents).toContainEqual(
+      expect.objectContaining({
+        message: "untrusted_forwarded_headers",
+        sourceIp: null,
+        trustFallbackRejectedMissingPlatformIp: true,
+        forwardedHeaders: {
+          forwarded: "for=198.51.100.20;proto=https;host=evil.example",
+          "x-forwarded-for": "198.51.100.20, 10.1.1.1",
+          "x-forwarded-host": "evil.example",
+          "x-forwarded-proto": "https",
         },
       }),
     );
