@@ -310,6 +310,88 @@ describe("api client", () => {
     ).resolves.toBeUndefined();
   });
 
+  it("returns undefined for 200 responses with an empty body", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(null, {
+        status: 200,
+        headers: {
+          "content-length": "0",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(
+      client.request<undefined>("/me/logout", { method: "POST" }),
+    ).resolves.toBeUndefined();
+  });
+
+  it("parses 200 JSON responses when content type is JSON", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.request<{ ok: boolean }>("/me")).resolves.toEqual({ ok: true });
+  });
+
+  it("parses 200 JSON responses for +json media types", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ title: "Problem", status: 200 }), {
+        status: 200,
+        headers: {
+          "content-type": "application/problem+json",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.request<{ title: string; status: number }>("/me")).resolves.toEqual({
+      title: "Problem",
+      status: 200,
+    });
+  });
+
+  it("throws a typed error for 200 non-JSON responses with payload", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response("plain text payload", {
+        status: 200,
+        headers: {
+          "content-type": "text/plain",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.request("/me")).rejects.toMatchObject({
+      kind: "unexpected_success_content_type",
+      status: 200,
+      contentType: "text/plain",
+      name: "UnexpectedSuccessContentTypeError",
+    });
+  });
+
   it("supports relative /api base urls for web runtimes", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
