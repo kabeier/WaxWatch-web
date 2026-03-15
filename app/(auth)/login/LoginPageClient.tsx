@@ -7,6 +7,7 @@ import { StateLoading } from "@/components/StateLoading";
 import { StateRateLimited } from "@/components/StateRateLimited";
 import type { AuthHandoffContext } from "@/lib/auth/handoff";
 import { toApiError, tryParseErrorEnvelope } from "@/lib/api/errors";
+import { resolveApiBaseUrl } from "@/lib/query/api";
 
 type LoginPageClientProps = {
   handoff: AuthHandoffContext;
@@ -20,10 +21,25 @@ type UiState =
   | { kind: "error"; message: string }
   | { kind: "rate_limited"; message: string; retryAfterSeconds?: number };
 
+function isHandoffReady(handoff: AuthHandoffContext, nowMs = Date.now()) {
+  if (!handoff.handoffUrl) {
+    return false;
+  }
+
+  if (!handoff.hasRequiredSecurityParams || handoff.expiresAtEpochMs === null) {
+    return false;
+  }
+
+  return nowMs < handoff.expiresAtEpochMs;
+}
+
+function resolveLoginEndpoint() {
+  const baseUrl = resolveApiBaseUrl();
+  return `${baseUrl.replace(/\/$/, "")}/auth/login`;
+}
+
 function resolveSuccessDestination(handoff: AuthHandoffContext): string {
-  const handoffReady = Boolean(
-    handoff.handoffUrl && handoff.hasRequiredSecurityParams && !handoff.isExpired,
-  );
+  const handoffReady = isHandoffReady(handoff);
 
   if (handoffReady && handoff.handoffUrl && handoff.state && handoff.nonce && handoff.expiresAt) {
     const destination = new URL(handoff.handoffUrl);
@@ -46,16 +62,25 @@ export function LoginPageClient({ handoff, fetchImpl = fetch, onRedirect }: Logi
   const [password, setPassword] = useState("");
 
   const handoffBlocked = useMemo(
-    () => Boolean(handoff.handoffUrl && (!handoff.hasRequiredSecurityParams || handoff.isExpired)),
+    () => Boolean(handoff.handoffUrl && !isHandoffReady(handoff)),
     [handoff],
   );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (handoff.handoffUrl && !isHandoffReady(handoff)) {
+      setUiState({
+        kind: "error",
+        message: "This handoff link expired. Request a new secure sign-in handoff.",
+      });
+      return;
+    }
+
     setUiState({ kind: "loading" });
 
     try {
-      const response = await fetchImpl("/auth/login", {
+      const response = await fetchImpl(resolveLoginEndpoint(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -96,6 +121,14 @@ export function LoginPageClient({ handoff, fetchImpl = fetch, onRedirect }: Logi
         setUiState({
           kind: "error",
           message: apiError.message,
+        });
+        return;
+      }
+
+      if (handoff.handoffUrl && !isHandoffReady(handoff)) {
+        setUiState({
+          kind: "error",
+          message: "This handoff link expired. Request a new secure sign-in handoff.",
         });
         return;
       }
