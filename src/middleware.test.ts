@@ -89,7 +89,7 @@ describe("middleware", () => {
   it("accepts forwarded headers from trusted proxy source", () => {
     const request = createRequest(
       {
-        forwarded: 'for=198.51.100.20;proto=https;host=shop.example',
+        forwarded: "for=198.51.100.20;proto=https;host=shop.example",
         "x-forwarded-for": "198.51.100.20, 10.1.1.1",
         "x-forwarded-host": "shop.example",
         "x-forwarded-port": "443",
@@ -130,7 +130,7 @@ describe("middleware", () => {
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const request = createRequest(
       {
-        forwarded: 'for=198.51.100.20;proto=https;host=evil.example',
+        forwarded: "for=198.51.100.20;proto=https;host=evil.example",
         "x-forwarded-for": "198.51.100.20, 203.0.113.10",
         "x-forwarded-host": "evil.example",
       },
@@ -180,7 +180,7 @@ describe("middleware", () => {
   it("strips spoofed Forwarded header from untrusted source", () => {
     const request = createRequest(
       {
-        forwarded: 'for=198.51.100.20;proto=https;host=evil.example',
+        forwarded: "for=198.51.100.20;proto=https;host=evil.example",
       },
       "203.0.113.10",
     );
