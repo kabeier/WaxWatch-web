@@ -352,7 +352,6 @@ describe("api client", () => {
     });
   });
 
-
   it("does not reject successful logout when auth adapter hooks fail", async () => {
     const failingAdapter: AuthSessionAdapter = {
       getAccessToken: () => "abc123",
