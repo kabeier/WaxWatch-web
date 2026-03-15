@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 
 type RetryActionProps = {
   label: string;
@@ -10,6 +10,26 @@ type RetryActionProps = {
   onRetry: () => void;
 };
 
+type RetryActionState = {
+  remainingSeconds: number;
+};
+
+type RetryActionStateUpdate = { type: "reset"; value?: number } | { type: "tick" };
+
+function normalizeSeconds(value?: number): number {
+  return Math.max(0, value ?? 0);
+}
+
+function reducer(state: RetryActionState, update: RetryActionStateUpdate): RetryActionState {
+  if (update.type === "reset") {
+    return { remainingSeconds: normalizeSeconds(update.value) };
+  }
+
+  return {
+    remainingSeconds: state.remainingSeconds <= 1 ? 0 : state.remainingSeconds - 1,
+  };
+}
+
 export function RetryAction({
   label,
   cooldownLabel = "Retry available in",
@@ -17,23 +37,27 @@ export function RetryAction({
   disabled = false,
   onRetry,
 }: RetryActionProps) {
-  const [remainingSeconds, setRemainingSeconds] = useState<number>(() =>
-    Math.max(0, retryAfterSeconds ?? 0),
-  );
+  const [state, dispatch] = useReducer(reducer, {
+    remainingSeconds: normalizeSeconds(retryAfterSeconds),
+  });
 
   useEffect(() => {
-    if (remainingSeconds <= 0) {
+    dispatch({ type: "reset", value: retryAfterSeconds });
+  }, [retryAfterSeconds]);
+
+  useEffect(() => {
+    if (state.remainingSeconds <= 0) {
       return;
     }
 
     const timer = window.setInterval(() => {
-      setRemainingSeconds((current) => (current <= 1 ? 0 : current - 1));
+      dispatch({ type: "tick" });
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [remainingSeconds]);
+  }, [state.remainingSeconds]);
 
-  const isCoolingDown = remainingSeconds > 0;
+  const isCoolingDown = state.remainingSeconds > 0;
 
   return (
     <button
@@ -42,14 +66,14 @@ export function RetryAction({
       onClick={() => {
         if (!isCoolingDown && !disabled) {
           if (retryAfterSeconds && retryAfterSeconds > 0) {
-            setRemainingSeconds(retryAfterSeconds);
+            dispatch({ type: "reset", value: retryAfterSeconds });
           }
 
           onRetry();
         }
       }}
     >
-      {isCoolingDown ? `${cooldownLabel} ${remainingSeconds}s` : label}
+      {isCoolingDown ? `${cooldownLabel} ${state.remainingSeconds}s` : label}
     </button>
   );
 }
