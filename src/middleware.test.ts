@@ -86,9 +86,10 @@ describe("middleware", () => {
     );
   });
 
-
   it("falls back to generated request id when x-request-id is blank", () => {
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue("generated-blank-id");
+    const randomUuidSpy = vi
+      .spyOn(globalThis.crypto, "randomUUID")
+      .mockReturnValue("generated-blank-id");
     const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const request = createRequest({ "x-request-id": "" });
 
@@ -112,7 +113,9 @@ describe("middleware", () => {
   });
 
   it("falls back to generated request id when x-request-id is whitespace", () => {
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue("generated-whitespace-id");
+    const randomUuidSpy = vi
+      .spyOn(globalThis.crypto, "randomUUID")
+      .mockReturnValue("generated-whitespace-id");
     const request = createRequest({ "x-request-id": "   	  " });
 
     const response = middleware(request as never);
@@ -306,7 +309,6 @@ describe("middleware", () => {
       }),
     );
   });
-
 
   it("uses normalized generated request id in middleware failure responses", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
