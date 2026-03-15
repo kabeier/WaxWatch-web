@@ -103,9 +103,7 @@ function normalizeExpiry(value: QueryParamValue): {
     }
 
     const epochMs =
-      numericTimestamp >= EPOCH_MS_SECONDS_THRESHOLD
-        ? numericTimestamp
-        : numericTimestamp * 1000;
+      numericTimestamp >= EPOCH_MS_SECONDS_THRESHOLD ? numericTimestamp : numericTimestamp * 1000;
 
     if (epochMs > MAX_EXPIRY_EPOCH_MS) {
       return { raw: null, epochMs: null };
