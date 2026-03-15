@@ -104,10 +104,20 @@ export function useNotificationsQuery() {
 }
 
 export function useUnreadNotificationCountQuery() {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: queryKeys.notifications.unreadCount,
     queryFn: (): Promise<NotificationUnreadCount> => waxwatchApi.notifications.getUnreadCount(),
   });
+
+  const retry = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
+  }, [queryClient]);
+
+  return {
+    ...query,
+    retry,
+  };
 }
 
 export function useMarkNotificationReadMutation(notificationId: string) {
