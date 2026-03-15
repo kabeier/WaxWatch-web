@@ -19,7 +19,9 @@ describe("RetryAction", () => {
   });
 
   it("updates the countdown when retryAfterSeconds changes", async () => {
-    const { rerender } = render(<RetryAction label="Retry" retryAfterSeconds={5} onRetry={vi.fn()} />);
+    const { rerender } = render(
+      <RetryAction label="Retry" retryAfterSeconds={5} onRetry={vi.fn()} />,
+    );
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(2_000);
@@ -34,7 +36,9 @@ describe("RetryAction", () => {
   });
 
   it("toggles disabled state based on updated countdown", async () => {
-    const { rerender } = render(<RetryAction label="Retry" retryAfterSeconds={1} onRetry={vi.fn()} />);
+    const { rerender } = render(
+      <RetryAction label="Retry" retryAfterSeconds={1} onRetry={vi.fn()} />,
+    );
 
     expect(screen.getByRole("button", { name: "Retry available in 1s" })).toBeDisabled();
 
