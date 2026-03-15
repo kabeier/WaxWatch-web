@@ -70,6 +70,54 @@ describe("withApiRequestLogging", () => {
     vi.restoreAllMocks();
   });
 
+  it("generates requestId when x-request-id header is an empty string", async () => {
+    const req = createMockRequest({ "x-request-id": "" });
+    const res = createMockResponse();
+
+    const handler: NextApiHandler = vi.fn(async () => {
+      res.status(204);
+    });
+
+    await withApiRequestLogging(handler)(req, res as unknown as NextApiResponse);
+
+    const requestId = res.getHeader("x-request-id");
+    expect(requestId).toBeTypeOf("string");
+    expect(requestId).toBeTruthy();
+    expect(requestId).not.toBe("");
+    expect(req.headers["x-request-id"]).toBe(requestId);
+  });
+
+  it("generates requestId when x-request-id header is whitespace", async () => {
+    const req = createMockRequest({ "x-request-id": "   	   " });
+    const res = createMockResponse();
+
+    const handler: NextApiHandler = vi.fn(async () => {
+      res.status(204);
+    });
+
+    await withApiRequestLogging(handler)(req, res as unknown as NextApiResponse);
+
+    const requestId = res.getHeader("x-request-id");
+    expect(requestId).toBeTypeOf("string");
+    expect(requestId).toBeTruthy();
+    expect(requestId).not.toBe("");
+    expect(req.headers["x-request-id"]).toBe(requestId);
+  });
+
+  it("preserves valid x-request-id header after trimming", async () => {
+    const req = createMockRequest({ "x-request-id": "  req-valid  " });
+    const res = createMockResponse();
+
+    const handler: NextApiHandler = vi.fn(async () => {
+      res.status(204);
+    });
+
+    await withApiRequestLogging(handler)(req, res as unknown as NextApiResponse);
+
+    expect(res.getHeader("x-request-id")).toBe("req-valid");
+    expect(req.headers["x-request-id"]).toBe("req-valid");
+  });
+
   it("emits request_start and request_end events with canonical schema fields", async () => {
     const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const req = createMockRequest({ "x-request-id": "req-start-end" });
