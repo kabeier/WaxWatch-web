@@ -119,19 +119,19 @@ describe("logger", () => {
     logger.info({
       message: "non_prefix_handling",
       nonSecret: "visible",
-      nonSensitive: "visible",
       nonceToken: "hide",
       nonprodSecret: "hide",
       nonAuthorizationToken: "hide",
+      nonSensitiveToken: "hide",
     });
 
     const output = consoleSpy.mock.calls[0][0] as string;
     const payload = JSON.parse(output) as Record<string, unknown>;
 
     expect(payload.nonSecret).toBe("visible");
-    expect(payload.nonSensitive).toBe("visible");
     expect(payload.nonceToken).toBe("[REDACTED]");
     expect(payload.nonprodSecret).toBe("[REDACTED]");
     expect(payload.nonAuthorizationToken).toBe("[REDACTED]");
+    expect(payload.nonSensitiveToken).toBe("[REDACTED]");
   });
 });
