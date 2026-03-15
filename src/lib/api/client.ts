@@ -25,6 +25,22 @@ export type RequestOptions<TBody> = {
   signal?: AbortSignal;
 };
 
+export class UnexpectedSuccessContentTypeError extends Error {
+  readonly kind = "unexpected_success_content_type";
+
+  constructor(
+    readonly status: number,
+    readonly method: string,
+    readonly path: string,
+    readonly contentType: string | null,
+  ) {
+    super(
+      `Expected a JSON response for ${method} ${path}, received ${contentType ?? "no content-type"}.`,
+    );
+    this.name = "UnexpectedSuccessContentTypeError";
+  }
+}
+
 function buildUrl(baseUrl: string, path: string, query?: URLSearchParams): string {
   const normalizedPath = path.replace(/^\/+/, "");
   const isProtocolRelativeBaseUrl = baseUrl.startsWith("//");
@@ -204,7 +220,12 @@ export function createApiClient(options: ApiClientOptions) {
       );
     }
 
-    if (response.status === 204) {
+    const contentType = response.headers.get("content-type")?.toLowerCase() ?? null;
+    const contentLength = response.headers.get("content-length");
+    const parsedContentLength = contentLength === null ? undefined : Number(contentLength);
+    const hasKnownEmptyBody = parsedContentLength === 0;
+
+    if (response.status === 204 || hasKnownEmptyBody) {
       info({
         message: "api_request_success",
         scope: "api",
@@ -217,8 +238,37 @@ export function createApiClient(options: ApiClientOptions) {
       return undefined as TResponse;
     }
 
-    try {
-      const parsedResponse = (await response.json()) as TResponse;
+    if (contentType?.includes("application/json")) {
+      try {
+        const parsedResponse = (await response.json()) as TResponse;
+        info({
+          message: "api_request_success",
+          scope: "api",
+          requestId,
+          method,
+          path: normalizedPath,
+          status: response.status,
+          durationMs,
+        });
+        return parsedResponse;
+      } catch (parseError) {
+        logError({
+          message: "api_request_failure",
+          scope: "api",
+          requestId,
+          method,
+          path: normalizedPath,
+          status: response.status,
+          durationMs,
+          failureKind: "response_parse_error",
+          errorMessage: parseError instanceof Error ? parseError.message : String(parseError),
+        });
+        throw parseError;
+      }
+    }
+
+    const textPayload = await response.text();
+    if (textPayload.length === 0) {
       info({
         message: "api_request_success",
         scope: "api",
@@ -228,21 +278,27 @@ export function createApiClient(options: ApiClientOptions) {
         status: response.status,
         durationMs,
       });
-      return parsedResponse;
-    } catch (parseError) {
-      logError({
-        message: "api_request_failure",
-        scope: "api",
-        requestId,
-        method,
-        path: normalizedPath,
-        status: response.status,
-        durationMs,
-        failureKind: "response_parse_error",
-        errorMessage: parseError instanceof Error ? parseError.message : String(parseError),
-      });
-      throw parseError;
+      return undefined as TResponse;
     }
+
+    const contentTypeError = new UnexpectedSuccessContentTypeError(
+      response.status,
+      method,
+      normalizedPath,
+      contentType,
+    );
+    logError({
+      message: "api_request_failure",
+      scope: "api",
+      requestId,
+      method,
+      path: normalizedPath,
+      status: response.status,
+      durationMs,
+      failureKind: contentTypeError.kind,
+      errorMessage: contentTypeError.message,
+    });
+    throw contentTypeError;
   }
 
   return {
