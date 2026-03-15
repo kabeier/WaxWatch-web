@@ -55,13 +55,33 @@ function parseDirectiveTokens(cspHeader, directiveName) {
   return directiveValue.split(/\s+/).filter(Boolean);
 }
 
-function getAbsoluteOriginOrNull(value) {
+function formatOriginErrorHint(sourceName) {
+  const sameOriginHint = "Leave it empty or use a relative path to keep same-origin defaults.";
+
+  if (sourceName === "NEXT_PUBLIC_API_BASE_URL") {
+    return `${sameOriginHint} For cross-origin mode, provide an absolute URL origin such as https://api.example.com.`;
+  }
+
+  if (sourceName === "CSP_CONNECT_SRC" || sourceName.startsWith("CSP_CONNECT_SRC[")) {
+    return `${sameOriginHint} For cross-origin mode, provide only explicit absolute URL origins in CSP_CONNECT_SRC.`;
+  }
+
+  return sameOriginHint;
+}
+
+function getAbsoluteOriginOrNull(value, sourceName = "value") {
   const trimmed = value.trim();
   if (!trimmed || trimmed.startsWith("/")) {
     return null;
   }
 
-  return new URL(trimmed).origin;
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    throw new Error(
+      `Invalid ${sourceName} origin: ${JSON.stringify(trimmed)}. ${formatOriginErrorHint(sourceName)}`,
+    );
+  }
 }
 
 function expectedConnectOrigins() {
@@ -69,10 +89,13 @@ function expectedConnectOrigins() {
   const expected = ["'self'"];
   const configuredOrigins = (process.env.CSP_CONNECT_SRC ?? "")
     .split(",")
-    .map((value) => getAbsoluteOriginOrNull(value))
+    .map((value, index) => getAbsoluteOriginOrNull(value, `CSP_CONNECT_SRC[${index}]`))
     .filter(Boolean);
 
-  const apiOrigin = getAbsoluteOriginOrNull(process.env.NEXT_PUBLIC_API_BASE_URL ?? "");
+  const apiOrigin = getAbsoluteOriginOrNull(
+    process.env.NEXT_PUBLIC_API_BASE_URL ?? "",
+    "NEXT_PUBLIC_API_BASE_URL",
+  );
   if (apiOrigin) {
     configuredOrigins.push(apiOrigin);
   }
@@ -174,13 +197,17 @@ async function main() {
   );
 }
 
-main().catch((error) => {
-  console.error(
-    JSON.stringify({
-      level: "error",
-      message: "verify_deployment_failure",
-      ...serializeError(error),
-    }),
-  );
-  process.exit(1);
-});
+if (import.meta.url === new URL(process.argv[1], "file:").href) {
+  main().catch((error) => {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        message: "verify_deployment_failure",
+        ...serializeError(error),
+      }),
+    );
+    process.exit(1);
+  });
+}
+
+export { expectedConnectOrigins, getAbsoluteOriginOrNull };
