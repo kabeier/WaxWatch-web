@@ -375,6 +375,23 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/could not save new alert/i)).toBeInTheDocument();
   });
 
+  it.each([
+    "",
+    "   ",
+    ",,,",
+    " ,  , ",
+  ])("/alerts/new blocks invalid keywords input: %p", (keywordsValue) => {
+    render(<NewAlertPage />);
+
+    const keywordsField = screen.getByLabelText(/keywords \(comma-separated\)/i);
+    fireEvent.change(keywordsField, { target: { value: keywordsValue } });
+    fireEvent.click(screen.getByRole("button", { name: /save new alert/i }));
+
+    expect(screen.getByText(/enter at least one keyword\./i)).toBeInTheDocument();
+    expect(keywordsField).toHaveAttribute("aria-invalid", "true");
+    expect(state.createWatchRuleMutation.mutate).not.toHaveBeenCalled();
+  });
+
   it("/alerts/[id] success", () => {
     render(<AlertDetailClient id="rule-1" />);
     expect(screen.getByText(/success: alert updated/i)).toBeInTheDocument();

@@ -21,9 +21,25 @@ export default function NewAlertPage() {
   const [isActive, setIsActive] = useState(true);
 
   const pollInterval = Number(pollIntervalInput);
+  const keywords = useMemo(
+    () =>
+      keywordsInput
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    [keywordsInput],
+  );
+
+  const keywordValidationMessage =
+    keywords.length < 1 ? "Enter at least one keyword." : null;
+
   const validationMessage = useMemo(() => {
     if (name.trim().length < 1 || name.trim().length > 120) {
       return "Name must be between 1 and 120 characters.";
+    }
+
+    if (keywordValidationMessage) {
+      return keywordValidationMessage;
     }
 
     if (!Number.isInteger(pollInterval) || pollInterval < 30 || pollInterval > 86400) {
@@ -31,7 +47,7 @@ export default function NewAlertPage() {
     }
 
     return null;
-  }, [name, pollInterval]);
+  }, [keywordValidationMessage, name, pollInterval]);
 
   const isPending = createWatchRuleMutation.isPending;
 
@@ -89,10 +105,7 @@ export default function NewAlertPage() {
           createWatchRuleMutation.mutate({
             name: name.trim(),
             query: {
-              keywords: keywordsInput
-                .split(",")
-                .map((value) => value.trim())
-                .filter(Boolean),
+              keywords,
             },
             poll_interval_seconds: pollInterval,
             is_active: isActive,
@@ -115,7 +128,7 @@ export default function NewAlertPage() {
             value={keywordsInput}
             onChange={(event) => setKeywordsInput(event.currentTarget.value)}
             disabled={isPending}
-            aria-invalid={Boolean(validationMessage)}
+            aria-invalid={Boolean(keywordValidationMessage)}
             aria-describedby={validationMessage ? "new-alert-form-errors" : undefined}
           />
         </label>
