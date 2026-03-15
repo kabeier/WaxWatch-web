@@ -283,6 +283,76 @@ describe("api client", () => {
     await expect(client.request("/me")).rejects.toMatchObject({ status: 401, kind: "http_error" });
   });
 
+  it("parses error envelopes for application/problem+json responses", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ error: { message: "problem payload" } }), {
+        status: 400,
+        statusText: "Bad Request",
+        headers: {
+          "content-type": "application/problem+json",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.request("/me")).rejects.toMatchObject({
+      kind: "validation_error",
+      status: 400,
+      message: "problem payload",
+    });
+  });
+
+  it("parses error envelopes for application/json with charset", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ error: { message: "json charset payload" } }), {
+        status: 422,
+        statusText: "Unprocessable Content",
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.request("/me")).rejects.toMatchObject({
+      kind: "validation_error",
+      status: 422,
+      message: "json charset payload",
+    });
+  });
+
+  it("does not parse non-JSON error envelopes", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ error: { message: "should not be parsed" } }), {
+        status: 400,
+        statusText: "Bad Request",
+        headers: {
+          "content-type": "text/plain",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.request("/me")).rejects.toMatchObject({
+      kind: "validation_error",
+      status: 400,
+      message: "Bad Request",
+    });
+  });
+
+
   it("does not reject successful logout when auth adapter hooks fail", async () => {
     const failingAdapter: AuthSessionAdapter = {
       getAccessToken: () => "abc123",
