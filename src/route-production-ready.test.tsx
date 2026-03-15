@@ -431,7 +431,12 @@ describe("route-level production-ready paths", () => {
     };
     const { rerender } = render(<NotificationsPage />);
 
+    expect(screen.queryByText(/success: notification marked as read/i)).not.toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("button", { name: /mark first unread as read/i }));
+
+    expect(state.markReadMutation.mutate).toHaveBeenCalledWith(undefined);
+
     rerender(<NotificationsPage />);
 
     expect(screen.getByText(/success: notification marked as read/i)).toBeInTheDocument();
