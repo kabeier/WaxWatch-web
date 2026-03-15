@@ -87,19 +87,36 @@ function normalizeExpiry(value: QueryParamValue): {
   raw: string | null;
   epochMs: number | null;
 } {
+  const EPOCH_MS_SECONDS_THRESHOLD = 100_000_000_000;
+  const MAX_EXPIRY_EPOCH_MS = Date.UTC(2100, 0, 1);
+
   const raw = normalizeOpaque(value);
   if (!raw) {
     return { raw: null, epochMs: null };
   }
 
-  const parsed = Date.parse(raw);
-  if (!Number.isNaN(parsed)) {
-    return { raw, epochMs: parsed };
+  const isIntegerNumericString = /^-?\d+$/.test(raw);
+  if (isIntegerNumericString) {
+    const numericTimestamp = Number(raw);
+    if (!Number.isSafeInteger(numericTimestamp) || numericTimestamp < 0) {
+      return { raw: null, epochMs: null };
+    }
+
+    const epochMs =
+      numericTimestamp >= EPOCH_MS_SECONDS_THRESHOLD
+        ? numericTimestamp
+        : numericTimestamp * 1000;
+
+    if (epochMs > MAX_EXPIRY_EPOCH_MS) {
+      return { raw: null, epochMs: null };
+    }
+
+    return { raw, epochMs };
   }
 
-  const unixSeconds = Number(raw);
-  if (Number.isFinite(unixSeconds) && unixSeconds > 0) {
-    return { raw, epochMs: unixSeconds * 1000 };
+  const parsed = Date.parse(raw);
+  if (!Number.isNaN(parsed) && parsed >= 0 && parsed <= MAX_EXPIRY_EPOCH_MS) {
+    return { raw, epochMs: parsed };
   }
 
   return { raw: null, epochMs: null };
