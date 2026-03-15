@@ -139,7 +139,9 @@ describe("SseController", () => {
     vi.useFakeTimers();
     vi.mocked(webAuthSessionAdapter.getAccessToken).mockResolvedValue(null);
     vi.spyOn(Math, "random").mockReturnValue(0);
-    fetchMock.mockRejectedValueOnce(new Error("disconnect")).mockResolvedValueOnce(createSseResponse("event: message\ndata: recovered\n\n"));
+    fetchMock
+      .mockRejectedValueOnce(new Error("disconnect"))
+      .mockResolvedValueOnce(createSseResponse("event: message\ndata: recovered\n\n"));
 
     const setTimeoutSpy = vi.spyOn(window, "setTimeout");
     const queryClient = new QueryClient();
