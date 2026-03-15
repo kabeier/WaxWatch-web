@@ -133,7 +133,10 @@ export function resolveAuthHandoffContext(searchParams: {
   const nonce = normalizeOpaque(searchParams.nonce);
   const expiry = normalizeExpiry(searchParams.expires_at);
 
-  const hasRequiredSecurityParams = state !== null && nonce !== null && expiry.epochMs !== null;
+  const hasState = state !== null;
+  const hasNonce = nonce !== null;
+  const hasExpiry = expiry.epochMs !== null;
+  const hasRequiredSecurityParams = hasState && hasNonce && hasExpiry;
   const isExpired = expiry.epochMs !== null ? Date.now() >= expiry.epochMs : false;
 
   return {
