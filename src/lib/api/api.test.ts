@@ -329,6 +329,30 @@ describe("api client", () => {
     });
   });
 
+  it("parses error envelopes for application/json with uppercase mime type and charset", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ error: { message: "uppercase json charset payload" } }), {
+        status: 422,
+        statusText: "Unprocessable Content",
+        headers: {
+          "content-type": " Application/JSON ; charset=utf-8 ",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.request("/me")).rejects.toMatchObject({
+      kind: "validation_error",
+      status: 422,
+      message: "uppercase json charset payload",
+    });
+  });
+
+
   it("does not parse non-JSON error envelopes", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ error: { message: "should not be parsed" } }), {
