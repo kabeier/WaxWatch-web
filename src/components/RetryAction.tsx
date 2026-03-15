@@ -22,6 +22,10 @@ export function RetryAction({
   );
 
   useEffect(() => {
+    setRemainingSeconds(Math.max(0, retryAfterSeconds ?? 0));
+  }, [retryAfterSeconds]);
+
+  useEffect(() => {
     if (remainingSeconds <= 0) {
       return;
     }
