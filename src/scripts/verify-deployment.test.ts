@@ -11,7 +11,7 @@ import {
   isDirectExecution,
 } from "../../scripts/verify-deployment.mjs";
 
-const tempDirs = [];
+const tempDirs: string[] = [];
 
 afterEach(async () => {
   await Promise.all(
