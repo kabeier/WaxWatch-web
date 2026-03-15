@@ -77,6 +77,19 @@ function isAbortError(error: unknown): boolean {
     : error instanceof Error && error.name === "AbortError";
 }
 
+function isJsonContentType(contentType: string | null): boolean {
+  if (!contentType) {
+    return false;
+  }
+
+  const mimeType = contentType.split(";")[0]?.trim();
+  if (!mimeType) {
+    return false;
+  }
+
+  return mimeType === "application/json" || mimeType.endsWith("+json");
+}
+
 async function getAccessToken(options: ApiClientOptions): Promise<string | null | undefined> {
   if (options.getJwt) {
     return options.getJwt();
@@ -238,7 +251,7 @@ export function createApiClient(options: ApiClientOptions) {
       return undefined as TResponse;
     }
 
-    if (contentType?.includes("application/json")) {
+    if (isJsonContentType(contentType)) {
       try {
         const parsedResponse = (await response.json()) as TResponse;
         info({

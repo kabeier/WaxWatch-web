@@ -348,6 +348,27 @@ describe("api client", () => {
     await expect(client.request<{ ok: boolean }>("/me")).resolves.toEqual({ ok: true });
   });
 
+  it("parses 200 JSON responses for +json media types", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ title: "Problem", status: 200 }), {
+        status: 200,
+        headers: {
+          "content-type": "application/problem+json",
+        },
+      }),
+    );
+
+    const client = createApiClient({
+      baseUrl: "https://api.example.com",
+      fetchImpl: fetchMock,
+    });
+
+    await expect(client.request<{ title: string; status: number }>("/me")).resolves.toEqual({
+      title: "Problem",
+      status: 200,
+    });
+  });
+
   it("throws a typed error for 200 non-JSON responses with payload", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response("plain text payload", {
