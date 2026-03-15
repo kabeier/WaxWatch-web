@@ -67,7 +67,7 @@ function isJsonLikeContentType(contentType: string | null): boolean {
     return false;
   }
 
-  const mimeType = contentType.toLowerCase().split(";")[0]?.trim();
+  const mimeType = contentType.split(";")[0]?.trim().toLowerCase();
   if (!mimeType) {
     return false;
   }
