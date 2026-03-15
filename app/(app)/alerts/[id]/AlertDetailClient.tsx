@@ -25,6 +25,8 @@ export default function AlertDetailClient({ id }: { id: string }) {
   const [draft, setDraft] = useState<{ name?: string; pollInterval?: string; isActive?: boolean }>(
     {},
   );
+  const [deleteRequested, setDeleteRequested] = useState(false);
+  const [deleteSeenPending, setDeleteSeenPending] = useState(false);
 
   useEffect(() => {
     if (updateWatchRuleMutation.data) {
@@ -33,11 +35,34 @@ export default function AlertDetailClient({ id }: { id: string }) {
   }, [retryAlertDetail, updateWatchRuleMutation.data]);
 
   useEffect(() => {
-    if (deleteWatchRuleMutation.data !== undefined && !deleteWatchRuleMutation.isPending) {
+    if (!deleteRequested) {
+      return;
+    }
+
+    if (deleteWatchRuleMutation.isPending) {
+      setDeleteSeenPending(true);
+      return;
+    }
+
+    if (deleteWatchRuleMutation.isError) {
+      setDeleteRequested(false);
+      setDeleteSeenPending(false);
+      return;
+    }
+
+    if (deleteSeenPending) {
       router.push("/alerts");
       router.refresh();
+      setDeleteRequested(false);
+      setDeleteSeenPending(false);
     }
-  }, [deleteWatchRuleMutation.data, deleteWatchRuleMutation.isPending, router]);
+  }, [
+    deleteRequested,
+    deleteSeenPending,
+    deleteWatchRuleMutation.isError,
+    deleteWatchRuleMutation.isPending,
+    router,
+  ]);
 
   const name = draft.name ?? watchRuleDetailQuery.data?.name ?? "";
   const pollIntervalInput =
@@ -172,6 +197,7 @@ export default function AlertDetailClient({ id }: { id: string }) {
             disabled={isPending}
             onClick={() => {
               if (window.confirm("Delete this alert permanently?")) {
+                setDeleteRequested(true);
                 deleteWatchRuleMutation.mutate(undefined);
               }
             }}
