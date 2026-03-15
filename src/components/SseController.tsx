@@ -33,8 +33,6 @@ export default function SseController() {
       streamAbortController = null;
     };
 
-    const hasAccessToken = async () => Boolean(await webAuthSessionAdapter.getAccessToken());
-
     const processStream = async (response: Response) => {
       const reader = response.body?.getReader();
       if (!reader) {
@@ -82,14 +80,8 @@ export default function SseController() {
       }
     };
 
-    const scheduleReconnect = async () => {
+    const scheduleReconnect = () => {
       if (!active || reconnectTimer !== undefined) {
-        return;
-      }
-
-      const token = await webAuthSessionAdapter.getAccessToken();
-      if (!token) {
-        stop();
         return;
       }
 
@@ -103,21 +95,27 @@ export default function SseController() {
     };
 
     const connect = async () => {
-      const token = await webAuthSessionAdapter.getAccessToken();
-      if (!token || !active) {
-        stop();
+      if (!active) {
         return;
       }
+
+      const token = await webAuthSessionAdapter.getAccessToken();
 
       streamAbortController = new AbortController();
 
       try {
+        const headers: HeadersInit = {
+          Accept: "text/event-stream",
+        };
+
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
         const response = await fetch("/api/stream/events", {
           method: "GET",
-          headers: {
-            Accept: "text/event-stream",
-            Authorization: `Bearer ${token}`,
-          },
+          headers,
+          credentials: "include",
           cache: "no-store",
           signal: streamAbortController.signal,
         });
@@ -146,12 +144,7 @@ export default function SseController() {
           return;
         }
 
-        if (!(await hasAccessToken())) {
-          stop();
-          return;
-        }
-
-        await scheduleReconnect();
+        scheduleReconnect();
       } catch {
         if (!active || streamAbortController?.signal.aborted) {
           return;
@@ -162,12 +155,7 @@ export default function SseController() {
           reconnectAttempt,
         });
 
-        if (!(await hasAccessToken())) {
-          stop();
-          return;
-        }
-
-        await scheduleReconnect();
+        scheduleReconnect();
       }
     };
 
