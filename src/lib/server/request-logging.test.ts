@@ -118,7 +118,6 @@ describe("withApiRequestLogging", () => {
     expect(req.headers["x-request-id"]).toBe("req-valid");
   });
 
-
   it("for array headers, uses the first non-empty trimmed x-request-id", async () => {
     const req = createMockRequest({ "x-request-id": ["   ", "  req-array  ", "req-later"] });
     const res = createMockResponse();

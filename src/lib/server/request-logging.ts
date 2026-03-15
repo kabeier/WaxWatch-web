@@ -15,9 +15,7 @@ function getRequestId(req: NextApiRequest, res: NextApiResponse): string {
   let normalizedRequestId: string | undefined;
 
   if (Array.isArray(requestId)) {
-    normalizedRequestId = requestId
-      .map((value) => value.trim())
-      .find((value) => value.length > 0);
+    normalizedRequestId = requestId.map((value) => value.trim()).find((value) => value.length > 0);
   } else {
     const trimmedRequestId = requestId?.trim();
     normalizedRequestId =
