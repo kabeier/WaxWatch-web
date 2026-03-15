@@ -4,17 +4,32 @@ import { captureServerError } from "@/lib/error-tracking";
 
 type RequestLike = Pick<NextApiRequest, "method" | "url" | "headers"> | NextRequest;
 
+function normalizeRequestId(value: string | string[] | null | undefined): string | undefined {
+  if (Array.isArray(value)) {
+    for (const candidate of value) {
+      const normalized = candidate.trim();
+      if (normalized) {
+        return normalized;
+      }
+    }
+
+    return undefined;
+  }
+
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalized = value.trim();
+  return normalized === "" ? undefined : normalized;
+}
+
 function getRequestId(req: RequestLike): string | undefined {
   if ("nextUrl" in req) {
-    return req.headers.get("x-request-id") ?? undefined;
+    return normalizeRequestId(req.headers.get("x-request-id"));
   }
 
-  const requestId = req.headers["x-request-id"];
-  if (Array.isArray(requestId)) {
-    return requestId[0];
-  }
-
-  return requestId;
+  return normalizeRequestId(req.headers["x-request-id"]);
 }
 
 function getPath(req: RequestLike): string {
