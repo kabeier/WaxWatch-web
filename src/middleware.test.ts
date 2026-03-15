@@ -86,6 +86,42 @@ describe("middleware", () => {
     );
   });
 
+
+  it("falls back to generated request id when x-request-id is blank", () => {
+    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue("generated-blank-id");
+    const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const request = createRequest({ "x-request-id": "" });
+
+    const response = middleware(request as never);
+
+    expect(randomUuidSpy).toHaveBeenCalledTimes(1);
+    const nextArgs = nextMock.mock.calls[0][0] as { request: { headers: Headers } };
+    expect(nextArgs.request.headers.get("x-request-id")).toBe("generated-blank-id");
+    expect(response.headers.get("x-request-id")).toBe("generated-blank-id");
+
+    const infoEvents = consoleLogSpy.mock.calls.map(
+      ([line]) => JSON.parse(String(line)) as Record<string, unknown>,
+    );
+    const requestStart = infoEvents.find((entry) => entry.message === "request_start");
+
+    expect(requestStart).toEqual(
+      expect.objectContaining({
+        requestId: "generated-blank-id",
+      }),
+    );
+  });
+
+  it("falls back to generated request id when x-request-id is whitespace", () => {
+    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue("generated-whitespace-id");
+    const request = createRequest({ "x-request-id": "   	  " });
+
+    const response = middleware(request as never);
+
+    expect(randomUuidSpy).toHaveBeenCalledTimes(1);
+    const nextArgs = nextMock.mock.calls[0][0] as { request: { headers: Headers } };
+    expect(nextArgs.request.headers.get("x-request-id")).toBe("generated-whitespace-id");
+    expect(response.headers.get("x-request-id")).toBe("generated-whitespace-id");
+  });
   it("accepts forwarded headers from trusted proxy source", () => {
     const request = createRequest(
       {
@@ -271,6 +307,37 @@ describe("middleware", () => {
     );
   });
 
+
+  it("uses normalized generated request id in middleware failure responses", () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue("generated-error-id");
+    nextMock.mockImplementationOnce(() => {
+      throw new Error("next failure");
+    });
+
+    const request = createRequest({ "x-request-id": "   " });
+
+    const response = middleware(request as never);
+
+    expect(jsonMock).toHaveBeenCalledWith(
+      {
+        error: "Internal Server Error",
+        requestId: "generated-error-id",
+      },
+      { status: 500 },
+    );
+    expect(response.headers.get("x-request-id")).toBe("generated-error-id");
+
+    const errorEvents = consoleErrorSpy.mock.calls.map(
+      ([line]) => JSON.parse(String(line)) as Record<string, unknown>,
+    );
+    expect(errorEvents).toContainEqual(
+      expect.objectContaining({
+        message: "middleware_failure",
+        requestId: "generated-error-id",
+      }),
+    );
+  });
   it("logs middleware_failure and returns 500 with requestId when NextResponse.next throws", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     nextMock.mockImplementationOnce(() => {
