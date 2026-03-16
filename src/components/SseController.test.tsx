@@ -67,6 +67,14 @@ function createChunkedSseResponse(chunks: string[], init?: ResponseInit) {
   });
 }
 
+function createNonSseResponse(body = "ok", init?: ResponseInit) {
+  return new Response(body, {
+    status: 200,
+    headers: { "content-type": "application/json" },
+    ...init,
+  });
+}
+
 describe("SseController", () => {
   const fetchMock = vi.fn<typeof fetch>();
   const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -177,6 +185,34 @@ describe("SseController", () => {
     expect(fetchMock.mock.calls[0][1]?.credentials).toBe("include");
     expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1_000);
     expect(handleAuthorizationFailureWithAdapter).not.toHaveBeenCalled();
+  });
+
+  it("treats 200 non-SSE responses as connection failures and reconnects", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    fetchMock
+      .mockResolvedValueOnce(createNonSseResponse('{"ok":true}'))
+      .mockResolvedValueOnce(createSseResponse("event: message\ndata: recovered\n\n"));
+
+    const setTimeoutSpy = vi.spyOn(window, "setTimeout");
+    const queryClient = new QueryClient();
+
+    renderWithClient(queryClient);
+
+    await vi.runAllTicks();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    await vi.runAllTicks();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[SSE] stream connection failed; scheduling reconnect",
+      expect.objectContaining({
+        endpoint: "/api/stream/events",
+      }),
+    );
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1_000);
   });
 
   it.each([401, 403])(

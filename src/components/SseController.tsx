@@ -8,11 +8,20 @@ import { queryKeys } from "@/lib/query/keys";
 
 const BASE_BACKOFF_MS = 1_000;
 const MAX_BACKOFF_MS = 30_000;
+const SSE_CONTENT_TYPE_PATTERN = /^text\/event-stream(?:\s*;\s*charset\s*=\s*[^;\s]+)?\s*$/i;
 
 function getBackoffDelay(attempt: number) {
   const exponentialDelay = Math.min(MAX_BACKOFF_MS, BASE_BACKOFF_MS * 2 ** attempt);
   const jitter = Math.floor(Math.random() * 300);
   return exponentialDelay + jitter;
+}
+
+function hasValidSseContentType(contentTypeHeader: string | null) {
+  if (!contentTypeHeader) {
+    return false;
+  }
+
+  return SSE_CONTENT_TYPE_PATTERN.test(contentTypeHeader.trim());
 }
 
 export default function SseController() {
@@ -146,6 +155,10 @@ export default function SseController() {
 
         if (!response.ok) {
           throw new Error(`sse_connect_failed_${response.status}`);
+        }
+
+        if (!hasValidSseContentType(response.headers.get("content-type"))) {
+          throw new Error("sse_unexpected_content_type");
         }
 
         reconnectAttempt = 0;
