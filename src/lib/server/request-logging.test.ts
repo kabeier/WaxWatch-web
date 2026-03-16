@@ -118,6 +118,37 @@ describe("withApiRequestLogging", () => {
     expect(req.headers["x-request-id"]).toBe("req-valid");
   });
 
+  it("for array headers, uses the first non-empty trimmed x-request-id", async () => {
+    const req = createMockRequest({ "x-request-id": ["   ", "  req-array  ", "req-later"] });
+    const res = createMockResponse();
+
+    const handler: NextApiHandler = vi.fn(async () => {
+      res.status(204);
+    });
+
+    await withApiRequestLogging(handler)(req, res as unknown as NextApiResponse);
+
+    expect(res.getHeader("x-request-id")).toBe("req-array");
+    expect(req.headers["x-request-id"]).toBe("req-array");
+  });
+
+  it("for array headers, generates requestId when all x-request-id values are empty", async () => {
+    const req = createMockRequest({ "x-request-id": ["   ", "	", ""] });
+    const res = createMockResponse();
+
+    const handler: NextApiHandler = vi.fn(async () => {
+      res.status(204);
+    });
+
+    await withApiRequestLogging(handler)(req, res as unknown as NextApiResponse);
+
+    const requestId = res.getHeader("x-request-id");
+    expect(requestId).toBeTypeOf("string");
+    expect(requestId).toBeTruthy();
+    expect(requestId).not.toBe("");
+    expect(req.headers["x-request-id"]).toBe(requestId);
+  });
+
   it("emits request_start and request_end events with canonical schema fields", async () => {
     const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const req = createMockRequest({ "x-request-id": "req-start-end" });
