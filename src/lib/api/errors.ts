@@ -2,6 +2,7 @@ import { parseRateLimitMeta } from "./rateLimit";
 
 export type ErrorEnvelope = {
   error?: {
+    code?: string;
     type?: string;
     message?: string;
     details?: unknown;
@@ -79,9 +80,9 @@ export function toApiError(response: Response, envelope?: ErrorEnvelope): ApiErr
   const message =
     envelope?.error?.message ?? envelope?.message ?? response.statusText ?? "Request failed";
   const details = envelope?.error?.details;
-  const errorType = envelope?.error?.type;
+  const errorDiscriminator = envelope?.error?.code ?? envelope?.error?.type;
 
-  if (response.status === 429 || errorType === "rate_limited") {
+  if (response.status === 429 || errorDiscriminator === "rate_limited") {
     return {
       kind: "rate_limited",
       status: response.status,
@@ -91,7 +92,11 @@ export function toApiError(response: Response, envelope?: ErrorEnvelope): ApiErr
     };
   }
 
-  if (response.status === 400 || response.status === 422 || errorType === "validation_error") {
+  if (
+    response.status === 400 ||
+    response.status === 422 ||
+    errorDiscriminator === "validation_error"
+  ) {
     return {
       kind: "validation_error",
       status: response.status,
