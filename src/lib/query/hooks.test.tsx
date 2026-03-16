@@ -186,7 +186,9 @@ describe("useApiMutation sequential state", () => {
     const mutationA = createDeferred<{ id: string }>();
     const mutationB = createDeferred<{ id: string }>();
 
-    createWatchRuleMock.mockReturnValueOnce(mutationA.promise).mockReturnValueOnce(mutationB.promise);
+    createWatchRuleMock
+      .mockReturnValueOnce(mutationA.promise)
+      .mockReturnValueOnce(mutationB.promise);
 
     const { invalidateSpy } = renderWithClient(<CreateWatchRuleMutationProbe />);
 
