@@ -10,17 +10,14 @@ import {
 } from "./hooks";
 import { queryKeys } from "./keys";
 
-const {
-  createWatchRuleMock,
-  discogsConnectMock,
-  searchRunMock,
-  updateProfileMock,
-} = vi.hoisted(() => ({
-  searchRunMock: vi.fn(),
-  createWatchRuleMock: vi.fn(),
-  updateProfileMock: vi.fn(),
-  discogsConnectMock: vi.fn(),
-}));
+const { createWatchRuleMock, discogsConnectMock, searchRunMock, updateProfileMock } = vi.hoisted(
+  () => ({
+    searchRunMock: vi.fn(),
+    createWatchRuleMock: vi.fn(),
+    updateProfileMock: vi.fn(),
+    discogsConnectMock: vi.fn(),
+  }),
+);
 
 vi.mock("@/lib/query/api", () => ({
   waxwatchApi: {
@@ -109,7 +106,9 @@ function DiscogsConnectMutationProbe() {
   const mutation = useDiscogsConnectMutation();
 
   return (
-    <button type="button" onClick={() => mutation.mutate("discogs-user")}>mutate-discogs</button>
+    <button type="button" onClick={() => mutation.mutate("discogs-user")}>
+      mutate-discogs
+    </button>
   );
 }
 
