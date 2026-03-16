@@ -6,6 +6,11 @@ This contract captures **current API behavior** and maps it to intended React su
 
 ## Changelog
 
+- `2026-03-16.2`
+  - Harmonized auth wording to platform-specific defaults: web uses cookie/session auth where applicable; mobile/native uses bearer auth.
+  - Added explicit endpoint-level auth exceptions/requirements for `/api/stream/events`, `/api/auth/login`, and `/api/me/*`.
+  - Added a contract-consistency checklist item requiring mirrored auth-mode updates in both frontend/backend contract docs.
+
 - `2026-03-16.1`
   - Added web login endpoint contract for `POST /api/auth/login`, including request body fields used by web/mobile handoff and error-envelope semantics for invalid credentials (`401/403` or `error.code|error.type = invalid_credentials`).
 
@@ -69,7 +74,20 @@ This contract captures **current API behavior** and maps it to intended React su
 
 ## 1) Auth + Session Assumptions
 
-- All user-facing endpoints in this document require `Authorization: Bearer <jwt>`, except web `GET /api/stream/events` SSE which is cookie/session-authenticated (`credentials: include`) and may omit bearer headers.
+- Platform-default auth modes:
+  - **Web (browser):** use cookie/session auth where applicable (`credentials: include`), and do not assume JS-managed long-lived bearer storage is required for all routes.
+  - **Mobile/native:** send `Authorization: Bearer <jwt>` on authenticated endpoints.
+- Endpoint-level auth requirements and exceptions:
+  - `GET /api/stream/events`:
+    - **Web:** cookie/session auth (`credentials: include`) is the canonical mode; bearer header may be omitted.
+    - **Mobile/native:** bearer auth is expected when consuming SSE.
+  - `POST /api/auth/login`:
+    - Login/bootstrap endpoint; does **not** require a pre-existing bearer token.
+    - Web uses this to establish/refresh session state; mobile may use it for token handoff/bootstrap flows.
+  - `/api/me/*` (`GET /api/me`, `PATCH /api/me`, `POST /api/me/logout`, `DELETE /api/me`, `DELETE /api/me/hard-delete`):
+    - Requires authenticated user context on all platforms.
+    - **Web:** authenticated session cookie is acceptable.
+    - **Mobile/native:** bearer token is required.
 - JWT requirements:
   - Verified against configured JWKS.
   - Must contain valid `exp`, `iss`, `aud`, `sub`.
@@ -720,6 +738,11 @@ Enforcement:
 - The check fails when API-facing files changed but `docs/FRONTEND_API_CONTRACT.md` was not updated in the same diff.
 - Local equivalents: `make check-contract-sync` and `make check-openapi-snapshot` (or full `make ci-local`).
 - Snapshot gate: CI runs `python -m scripts.openapi_snapshot --check` and compares `app/main.py` generated schema output to the committed `docs/openapi.snapshot.json` baseline. Update the baseline with `make openapi-snapshot` whenever intentional API schema changes are introduced.
+
+Contract consistency checklist (auth mode drift prevention):
+
+- If auth mode assumptions change (for example cookie/session vs bearer defaults), update both `docs/FRONTEND_API_CONTRACT.md` and `reference/FRONTEND_API_CONTRACT_BACKEND.md` in the same PR.
+- Re-verify endpoint-level exceptions (`/api/stream/events`, `/api/auth/login`, `/api/me/*`) are described identically in both files.
 
 ---
 
