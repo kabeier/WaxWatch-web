@@ -120,10 +120,27 @@ export function LoginPageClient({ handoff, fetchImpl = fetch, onRedirect }: Logi
           return;
         }
 
-        if (response.status === 401 || apiError.kind === "validation_error") {
+        const errorDiscriminator = envelope?.error?.code ?? envelope?.error?.type;
+        const isInvalidCredentialsFailure =
+          response.status === 401 ||
+          response.status === 403 ||
+          errorDiscriminator === "invalid_credentials";
+
+        if (isInvalidCredentialsFailure) {
           setUiState({
             kind: "error",
             message: "Invalid email or password.",
+          });
+          return;
+        }
+
+        if (apiError.kind === "validation_error") {
+          const validationMessage =
+            envelope?.error?.message ?? envelope?.message ?? "Please check the form and try again.";
+
+          setUiState({
+            kind: "error",
+            message: validationMessage,
           });
           return;
         }

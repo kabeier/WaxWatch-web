@@ -69,6 +69,55 @@ describe("Login page", () => {
     });
   });
 
+  it("shows invalid credentials state when login fails with 403", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ error: { message: "forbidden" } }), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }),
+    ) as typeof fetch;
+
+    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "wrong-password" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/invalid email or password/i);
+    });
+  });
+
+  it("shows backend validation message for non-credential 422 validation failures", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: { code: "validation_error", message: "Two-factor token is required." },
+          }),
+          {
+            status: 422,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+    ) as typeof fetch;
+
+    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/two-factor token is required/i);
+    });
+  });
+
   it("prevents submit when a once-valid handoff expires before sign in", async () => {
     let nowMs = Date.parse("2026-01-02T00:00:00.000Z");
     vi.spyOn(Date, "now").mockImplementation(() => nowMs);
