@@ -231,6 +231,26 @@ describe("SseController", () => {
     expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1_000);
   });
 
+
+
+  it("halts reconnect attempts when account-removed auth event is dispatched", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    fetchMock.mockRejectedValue(new Error("disconnect"));
+
+    const setTimeoutSpy = vi.spyOn(window, "setTimeout");
+    const queryClient = new QueryClient();
+    renderWithClient(queryClient);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(setTimeoutSpy).toHaveBeenCalled());
+
+    window.dispatchEvent(new CustomEvent("waxwatch:auth", { detail: "account-removed" }));
+
+    await new Promise((resolve) => setTimeout(resolve, 1_100));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
   it.each([401, 403])(
     "handles auth failure status %s by invoking authorization failure and halting reconnect",
     async (status) => {
