@@ -352,7 +352,6 @@ describe("api client", () => {
     });
   });
 
-
   it("does not parse non-JSON error envelopes", async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ error: { message: "should not be parsed" } }), {
