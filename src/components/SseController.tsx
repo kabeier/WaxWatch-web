@@ -14,20 +14,8 @@ function isSseContentType(contentType: string | null) {
     return false;
   }
 
-  const [mimeType, ...params] = contentType
-    .split(";")
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-
-  if (mimeType?.toLowerCase() !== "text/event-stream") {
-    return false;
-  }
-
-  if (params.length === 0) {
-    return true;
-  }
-
-  return params.every((param) => /^charset\s*=\s*[^;]+$/i.test(param));
+  const [mimeType] = contentType.split(";", 1).map((segment) => segment.trim());
+  return mimeType?.toLowerCase() === "text/event-stream";
 }
 
 function getBackoffDelay(attempt: number) {

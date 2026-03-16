@@ -97,6 +97,30 @@ describe("SseController", () => {
     });
   });
 
+  it("accepts text/event-stream responses with additional MIME parameters", async () => {
+    fetchMock.mockResolvedValueOnce(
+      createSseResponse('event: notification\ndata: {"ok":true}\n\n', {
+        headers: { "content-type": "text/event-stream; charset=utf-8; version=1" },
+      }),
+    );
+
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+    renderWithClient(queryClient);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: queryKeys.notifications.unreadCount,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: queryKeys.notifications.list,
+    });
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
   it("reconnects with exponential backoff + jitter after transient disconnects", async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, "random").mockReturnValueOnce(0.1).mockReturnValueOnce(0.5).mockReturnValue(0);
@@ -199,9 +223,7 @@ describe("SseController", () => {
     renderWithClient(queryClient);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    await waitFor(() =>
-      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1_000),
-    );
+    await waitFor(() => expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1_000));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2), {
       timeout: 2_000,
     });
