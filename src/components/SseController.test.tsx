@@ -231,8 +231,6 @@ describe("SseController", () => {
     expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1_000);
   });
 
-
-
   it("halts reconnect attempts when account-removed auth event is dispatched", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
 
