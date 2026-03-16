@@ -50,6 +50,23 @@ function createSseResponse(payload: string, init?: ResponseInit) {
   });
 }
 
+function createChunkedSseResponse(chunks: string[], init?: ResponseInit) {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(new TextEncoder().encode(chunk));
+      }
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: { "content-type": "text/event-stream" },
+    ...init,
+  });
+}
+
 describe("SseController", () => {
   const fetchMock = vi.fn<typeof fetch>();
   const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);

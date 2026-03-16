@@ -21,16 +21,18 @@ type UiState =
   | { kind: "error"; message: string }
   | { kind: "rate_limited"; message: string; retryAfterSeconds?: number };
 
-function isHandoffReady(handoff: AuthHandoffContext, nowMs = Date.now()) {
+type HandoffState = "valid" | "missing_or_invalid_security_params" | "expired";
+
+function resolveHandoffState(handoff: AuthHandoffContext, nowMs = Date.now()): HandoffState {
   if (!handoff.handoffUrl) {
-    return false;
+    return "valid";
   }
 
   if (!handoff.hasRequiredSecurityParams || handoff.expiresAtEpochMs === null) {
-    return false;
+    return "missing_or_invalid_security_params";
   }
 
-  return nowMs < handoff.expiresAtEpochMs;
+  return nowMs < handoff.expiresAtEpochMs ? "valid" : "expired";
 }
 
 function resolveLoginEndpoint() {
@@ -39,7 +41,7 @@ function resolveLoginEndpoint() {
 }
 
 function resolveSuccessDestination(handoff: AuthHandoffContext): string {
-  const handoffReady = isHandoffReady(handoff);
+  const handoffReady = resolveHandoffState(handoff) === "valid";
 
   if (handoffReady && handoff.handoffUrl && handoff.state && handoff.nonce && handoff.expiresAt) {
     const destination = new URL(handoff.handoffUrl);
@@ -61,15 +63,23 @@ export function LoginPageClient({ handoff, fetchImpl = fetch, onRedirect }: Logi
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handoffBlocked = useMemo(
-    () => Boolean(handoff.handoffUrl && !isHandoffReady(handoff)),
-    [handoff],
-  );
+  const handoffState = useMemo(() => resolveHandoffState(handoff), [handoff]);
+  const handoffBlocked = Boolean(handoff.handoffUrl && handoffState !== "valid");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (handoff.handoffUrl && !isHandoffReady(handoff)) {
+    const submitHandoffState = resolveHandoffState(handoff);
+
+    if (handoff.handoffUrl && submitHandoffState === "missing_or_invalid_security_params") {
+      setUiState({
+        kind: "error",
+        message: "This handoff link is missing required security parameters.",
+      });
+      return;
+    }
+
+    if (handoff.handoffUrl && submitHandoffState === "expired") {
       setUiState({
         kind: "error",
         message: "This handoff link expired. Request a new secure sign-in handoff.",
@@ -125,7 +135,17 @@ export function LoginPageClient({ handoff, fetchImpl = fetch, onRedirect }: Logi
         return;
       }
 
-      if (handoff.handoffUrl && !isHandoffReady(handoff)) {
+      const postSubmitHandoffState = resolveHandoffState(handoff);
+
+      if (handoff.handoffUrl && postSubmitHandoffState === "missing_or_invalid_security_params") {
+        setUiState({
+          kind: "error",
+          message: "This handoff link is missing required security parameters.",
+        });
+        return;
+      }
+
+      if (handoff.handoffUrl && postSubmitHandoffState === "expired") {
         setUiState({
           kind: "error",
           message: "This handoff link expired. Request a new secure sign-in handoff.",
@@ -150,8 +170,16 @@ export function LoginPageClient({ handoff, fetchImpl = fetch, onRedirect }: Logi
       {handoffBlocked ? (
         <StateError
           title="Secure handoff required"
-          message="This handoff link is missing required security parameters."
-          detail="Request a new sign-in handoff from the mobile app and try again."
+          message={
+            handoffState === "expired"
+              ? "This handoff link has expired. Request a new secure sign-in handoff."
+              : "This handoff link is missing required security parameters."
+          }
+          detail={
+            handoffState === "expired"
+              ? "Handoff links are time-limited for security. Request a new sign-in handoff from the mobile app and try again."
+              : "Request a new sign-in handoff from the mobile app and try again."
+          }
         />
       ) : (
         <form onSubmit={handleSubmit}>

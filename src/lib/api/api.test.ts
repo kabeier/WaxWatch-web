@@ -644,6 +644,49 @@ describe("error mapping", () => {
       expect(parsed.retryAfterSeconds).toBe(30);
     }
   });
+
+  it("maps envelope error.code rate_limited to rate_limited errors", () => {
+    const response = new Response(null, {
+      status: 503,
+      statusText: "Service unavailable",
+      headers: {
+        "Retry-After": "9",
+      },
+    });
+
+    const parsed = toApiError(response, {
+      error: {
+        code: "rate_limited",
+        message: "Please retry later",
+      },
+    });
+
+    expect(parsed.kind).toBe("rate_limited");
+    if (parsed.kind === "rate_limited") {
+      expect(parsed.status).toBe(503);
+      expect(parsed.retryAfterSeconds).toBe(9);
+    }
+  });
+
+  it("maps envelope error.code validation_error to validation_error", () => {
+    const response = new Response(null, {
+      status: 500,
+      statusText: "Internal server error",
+    });
+
+    const parsed = toApiError(response, {
+      error: {
+        code: "validation_error",
+        message: "Invalid input",
+      },
+    });
+
+    expect(parsed.kind).toBe("validation_error");
+    if (parsed.kind === "validation_error") {
+      expect(parsed.status).toBe(500);
+      expect(parsed.message).toBe("Invalid input");
+    }
+  });
 });
 
 describe("pagination helpers", () => {

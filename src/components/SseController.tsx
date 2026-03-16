@@ -50,21 +50,27 @@ export default function SseController() {
 
       const decoder = new TextDecoder();
       let buffer = "";
-      let currentEventName = "message";
+      let blockHasNotification = false;
+
+      const finalizeBlock = () => {
+        if (blockHasNotification) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
+          queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list });
+        }
+
+        blockHasNotification = false;
+      };
 
       const flushLine = (rawLine: string) => {
         const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
         if (line.length === 0) {
-          if (currentEventName === "notification") {
-            queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
-            queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list });
-          }
-          currentEventName = "message";
+          finalizeBlock();
           return;
         }
 
         if (line.startsWith("event:")) {
-          currentEventName = line.slice(6).trim() || "message";
+          const eventName = line.slice(6).trim() || "message";
+          blockHasNotification = eventName === "notification";
         }
       };
 
@@ -72,8 +78,13 @@ export default function SseController() {
         const { done, value } = await reader.read();
         if (done) {
           if (buffer.length > 0) {
-            flushLine(buffer);
+            const remainingLines = buffer.split("\n");
+            for (const remainingLine of remainingLines) {
+              flushLine(remainingLine);
+            }
           }
+
+          finalizeBlock();
           return;
         }
 
