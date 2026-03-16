@@ -36,8 +36,12 @@ function resolveHandoffState(handoff: AuthHandoffContext, nowMs = Date.now()): H
 }
 
 function resolveLoginEndpoint() {
-  const baseUrl = resolveApiBaseUrl();
-  return `${baseUrl.replace(/\/$/, "")}/auth/login`;
+  const normalizedBaseUrl = resolveApiBaseUrl().replace(/\/$/, "");
+  if (normalizedBaseUrl.endsWith("/api")) {
+    return `${normalizedBaseUrl}/auth/login`;
+  }
+
+  return `${normalizedBaseUrl}/api/auth/login`;
 }
 
 function resolveSuccessDestination(handoff: AuthHandoffContext): string {

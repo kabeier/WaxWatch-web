@@ -1,10 +1,14 @@
 # WaxWatch Frontend API Contract
 
-**Contract version:** `2026-03-16.0`
+**Contract version:** `2026-03-16.1`
 
 This contract captures **current API behavior** and maps it to intended React surfaces so frontend can scaffold screens directly from OpenAPI payloads.
 
 ## Changelog
+
+- `2026-03-16.1`
+  - Added explicit frontend/backend contract coverage for web login via `POST /api/auth/login`, including request payload fields (`email`, `password`, optional handoff parameters) and expected status handling (`200`, `401`, `422`, `429`).
+  - Aligned login route usage in web login client and tests with the canonical backend path `/api/auth/login`.
 
 - `2026-03-16.0`
   - Canonicalized web SSE auth mode as cookie/session based (`credentials: include`) with an explicit exception to the bearer-header default for `/api/stream/events`.
@@ -271,6 +275,27 @@ Frontend guidance: pause automatic retries until `Retry-After` elapses, apply ex
   - After successful save, frontend can optimistically insert returned `WatchRuleOut` into Alerts state or refetch `GET /api/watch-rules`.
   - Saved searches appear as normal entries in `AlertsListScreen` because they are persisted as watch rules.
   - Subsequent edit/disable/delete flows use the existing `/api/watch-rules/{rule_id}*` endpoints.
+
+## 4.0.1 Web Login
+
+### `POST /api/auth/login`
+
+- **Screen:** `LoginPageClient` (`/login`) and mobile secure-handoff continuation web flow.
+- **Action:** Submit user credentials and optional handoff context to establish a web session (cookie/session transport).
+- **Request body contract:**
+  - `email`: required string email.
+  - `password`: required string.
+  - `return_to`: optional relative allowlisted route for post-login web redirect.
+  - `handoff`: optional mobile deep-link callback URL (`waxwatch://...`, `waxwatch-dev://...`, or allowlisted `https://*.waxwatch.app/...`).
+  - `state`: required when `handoff` is set; CSRF binding value.
+  - `nonce`: required when `handoff` is set; one-time replay-protection value.
+  - `expires_at`: required when `handoff` is set; expiry timestamp for handoff validation.
+- **Response + error handling contract:**
+  - `200`: login success; frontend proceeds to `return_to` or secure-handoff callback completion path.
+  - `401`: invalid credentials envelope; frontend displays invalid-email/password state.
+  - `422`: validation envelope (`code=validation_error`) for malformed payloads/missing required fields.
+  - `429`: throttled envelope (`code=rate_limited`) with `Retry-After` and optional `error.details.retry_after_seconds`; frontend shows temporary rate-limit messaging/backoff.
+
 
 ## 4.1 Profile / Account
 

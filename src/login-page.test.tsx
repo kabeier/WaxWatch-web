@@ -69,6 +69,67 @@ describe("Login page", () => {
     });
   });
 
+
+
+  it("shows invalid credentials state when login fails with validation_error envelope", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: { message: "validation error", code: "validation_error", status: 422 },
+          }),
+          {
+            status: 422,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+    ) as typeof fetch;
+
+    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "wrong-password" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/invalid email or password/i);
+    });
+  });
+
+  it("shows rate-limited state when login fails with rate_limited envelope", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              message: "rate limit exceeded",
+              code: "rate_limited",
+              status: 429,
+              details: { scope: "auth_login", retry_after_seconds: 60 },
+            },
+          }),
+          {
+            status: 429,
+            headers: { "Content-Type": "application/json", "Retry-After": "60" },
+          },
+        ),
+    ) as typeof fetch;
+
+    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/rate limit exceeded/i);
+    });
+  });
+
   it("prevents submit when a once-valid handoff expires before sign in", async () => {
     let nowMs = Date.parse("2026-01-02T00:00:00.000Z");
     vi.spyOn(Date, "now").mockImplementation(() => nowMs);
