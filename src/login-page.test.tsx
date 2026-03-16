@@ -68,6 +68,71 @@ describe("Login page", () => {
       expect(screen.getByRole("alert")).toHaveTextContent(/invalid email or password/i);
     });
   });
+  it("shows invalid credentials state when backend returns validation_error envelope", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              message: "validation error",
+              code: "validation_error",
+              status: 422,
+              details: [{ loc: ["body", "password"], msg: "Field required", type: "missing" }],
+            },
+          }),
+          {
+            status: 422,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+    ) as typeof fetch;
+
+    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "wrong-password" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/invalid email or password/i);
+    });
+  });
+
+  it("shows rate-limited state when backend returns rate_limited envelope", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              message: "Too many sign-in attempts. Try again in 30 seconds.",
+              code: "rate_limited",
+              status: 429,
+              details: { retry_after_seconds: 30, scope: "auth_login" },
+            },
+          }),
+          {
+            status: 429,
+            headers: { "Content-Type": "application/json", "Retry-After": "30" },
+          },
+        ),
+    ) as typeof fetch;
+
+    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/too many sign-in attempts/i);
+      expect(screen.getByRole("alert")).toHaveTextContent(/30 seconds/i);
+    });
+  });
+
 
   it("prevents submit when a once-valid handoff expires before sign in", async () => {
     let nowMs = Date.parse("2026-01-02T00:00:00.000Z");

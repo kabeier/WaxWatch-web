@@ -1,10 +1,14 @@
 # WaxWatch Frontend API Contract
 
-**Contract version:** `2026-03-14.1`
+**Contract version:** `2026-03-16.0`
 
 This contract captures **current API behavior** and maps it to intended React surfaces so frontend can scaffold screens directly from OpenAPI payloads.
 
 ## Changelog
+
+- `2026-03-16.0`
+  - Added explicit web login contract coverage for `POST /api/auth/login`, including request body fields used by handoff sign-in (`email`, `password`, optional `return_to` + handoff security params) and failure semantics (`401`, `422`, `429`) with the standardized `error` envelope.
+  - Clarified frontend auth assumption: web login credential exchange is now a backend API contract surface at `/api/auth/login`.
 
 - `2026-03-14.1`
   - Removed backend-internal readiness probe implementation notes from this frontend contract.
@@ -79,10 +83,30 @@ This contract captures **current API behavior** and maps it to intended React su
   - `sub` must be a UUID (used as `user_id`).
 - Missing/invalid token yields a standardized `error` envelope.
 - Session lifecycle assumptions for React:
-  - Login/token issuance happens outside this API (Supabase/Auth provider).
+  - Web login credential exchange uses `POST /api/auth/login`.
   - `POST /api/me/logout` returns a logout marker payload for client-side/session-provider sign-out orchestration.
   - `DELETE /api/me` deactivates local account state; frontend should then clear session and route to signed-out state.
   - `DELETE /api/me/hard-delete` immediately and permanently deletes the authenticated user record when it exists.
+
+### 1.1 Web login endpoint contract
+
+### `POST /api/auth/login`
+
+- **Screen/action:** `app/(auth)/login` credential submit flow.
+- **Auth requirement:** none (public sign-in route).
+- **Request body:**
+  - `email` (string, required)
+  - `password` (string, required)
+  - `return_to` (string | null, optional)
+  - `handoff` (string | null, optional)
+  - `state` (string | null, optional)
+  - `nonce` (string | null, optional)
+  - `expires_at` (string | null, optional)
+- **Success response:** `200 OK`.
+- **Failure responses:**
+  - `401 Unauthorized` for invalid credentials (standard `error` envelope).
+  - `422 Unprocessable Entity` for request validation failures.
+  - `429 Too Many Requests` for throttled attempts (`error.code = rate_limited`, optional `Retry-After`).
 
 ---
 

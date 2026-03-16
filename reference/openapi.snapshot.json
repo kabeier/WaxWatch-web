@@ -1,6 +1,44 @@
 {
   "components": {
     "schemas": {
+      "ApiError": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          }
+        },
+        "required": [
+          "message",
+          "code",
+          "status"
+        ],
+        "title": "ApiError",
+        "type": "object"
+      },
       "DeactivateAccountResponse": {
         "properties": {
           "deactivated_at": {
@@ -14,7 +52,9 @@
             "type": "boolean"
           }
         },
-        "required": ["deactivated_at"],
+        "required": [
+          "deactivated_at"
+        ],
         "title": "DeactivateAccountResponse",
         "type": "object"
       },
@@ -59,7 +99,9 @@
             "title": "Token Metadata"
           }
         },
-        "required": ["external_user_id"],
+        "required": [
+          "external_user_id"
+        ],
         "title": "DiscogsConnectIn",
         "type": "object"
       },
@@ -89,7 +131,12 @@
             "type": "string"
           }
         },
-        "required": ["provider", "external_user_id", "connected", "connected_at"],
+        "required": [
+          "provider",
+          "external_user_id",
+          "connected",
+          "connected_at"
+        ],
         "title": "DiscogsConnectOut",
         "type": "object"
       },
@@ -115,7 +162,10 @@
             "type": "string"
           }
         },
-        "required": ["provider", "disconnected"],
+        "required": [
+          "provider",
+          "disconnected"
+        ],
         "title": "DiscogsDisconnectOut",
         "type": "object"
       },
@@ -126,7 +176,11 @@
         "properties": {
           "source": {
             "default": "both",
-            "enum": ["wantlist", "collection", "both"],
+            "enum": [
+              "wantlist",
+              "collection",
+              "both"
+            ],
             "title": "Source",
             "type": "string"
           }
@@ -305,12 +359,21 @@
             "type": "integer"
           },
           "source": {
-            "enum": ["wantlist", "collection"],
+            "enum": [
+              "wantlist",
+              "collection"
+            ],
             "title": "Source",
             "type": "string"
           }
         },
-        "required": ["source", "limit", "offset", "count", "items"],
+        "required": [
+          "source",
+          "limit",
+          "offset",
+          "count",
+          "items"
+        ],
         "title": "DiscogsImportedItemListOut",
         "type": "object"
       },
@@ -347,7 +410,10 @@
             "type": "string"
           },
           "source": {
-            "enum": ["wantlist", "collection"],
+            "enum": [
+              "wantlist",
+              "collection"
+            ],
             "title": "Source",
             "type": "string"
           },
@@ -398,7 +464,10 @@
             "type": "string"
           }
         },
-        "required": ["state", "code"],
+        "required": [
+          "state",
+          "code"
+        ],
         "title": "DiscogsOAuthCallbackIn",
         "type": "object"
       },
@@ -450,7 +519,13 @@
             "type": "string"
           }
         },
-        "required": ["provider", "authorize_url", "state", "scopes", "expires_at"],
+        "required": [
+          "provider",
+          "authorize_url",
+          "state",
+          "scopes",
+          "expires_at"
+        ],
         "title": "DiscogsOAuthStartOut",
         "type": "object"
       },
@@ -461,7 +536,10 @@
             "type": "string"
           },
           "source": {
-            "enum": ["wantlist", "collection"],
+            "enum": [
+              "wantlist",
+              "collection"
+            ],
             "title": "Source",
             "type": "string"
           },
@@ -471,7 +549,11 @@
             "type": "string"
           }
         },
-        "required": ["watch_release_id", "source", "open_in_discogs_url"],
+        "required": [
+          "watch_release_id",
+          "source",
+          "open_in_discogs_url"
+        ],
         "title": "DiscogsOpenInDiscogsOut",
         "type": "object"
       },
@@ -521,8 +603,23 @@
             "type": "string"
           }
         },
-        "required": ["connected", "provider"],
+        "required": [
+          "connected",
+          "provider"
+        ],
         "title": "DiscogsStatusOut",
+        "type": "object"
+      },
+      "ErrorEnvelope": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorEnvelope",
         "type": "object"
       },
       "EventOut": {
@@ -657,7 +754,9 @@
             "type": "boolean"
           }
         },
-        "required": ["deleted_at"],
+        "required": [
+          "deleted_at"
+        ],
         "title": "HardDeleteAccountResponse",
         "type": "object"
       },
@@ -678,8 +777,100 @@
             "type": "integer"
           }
         },
-        "required": ["provider"],
+        "required": [
+          "provider"
+        ],
         "title": "IntegrationSummary",
+        "type": "object"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Password"
+          },
+          "return_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return To"
+          },
+          "handoff": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handoff"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "nonce": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nonce"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest",
+        "type": "object"
+      },
+      "LoginSuccess": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true,
+            "title": "Ok"
+          }
+        },
+        "required": [
+          "ok"
+        ],
+        "title": "LoginSuccess",
         "type": "object"
       },
       "LogoutResponse": {
@@ -695,12 +886,17 @@
             "type": "boolean"
           }
         },
-        "required": ["marker"],
+        "required": [
+          "marker"
+        ],
         "title": "LogoutResponse",
         "type": "object"
       },
       "NotificationChannel": {
-        "enum": ["email", "realtime"],
+        "enum": [
+          "email",
+          "realtime"
+        ],
         "title": "NotificationChannel",
         "type": "string"
       },
@@ -804,12 +1000,22 @@
         "type": "object"
       },
       "NotificationStatus": {
-        "enum": ["pending", "sent", "failed"],
+        "enum": [
+          "pending",
+          "sent",
+          "failed"
+        ],
         "title": "NotificationStatus",
         "type": "string"
       },
       "Provider": {
-        "enum": ["discogs", "ebay", "mock", "musicbrainz", "spotify"],
+        "enum": [
+          "discogs",
+          "ebay",
+          "mock",
+          "musicbrainz",
+          "spotify"
+        ],
         "title": "Provider",
         "type": "string"
       },
@@ -1007,7 +1213,12 @@
             "type": "integer"
           }
         },
-        "required": ["provider", "total_requests", "error_requests", "avg_duration_ms"],
+        "required": [
+          "provider",
+          "total_requests",
+          "error_requests",
+          "avg_duration_ms"
+        ],
         "title": "ProviderRequestSummaryOut",
         "type": "object"
       },
@@ -1030,7 +1241,10 @@
             "$ref": "#/components/schemas/SearchQuery"
           }
         },
-        "required": ["name", "query"],
+        "required": [
+          "name",
+          "query"
+        ],
         "title": "SaveSearchAlertRequest",
         "type": "object"
       },
@@ -1170,7 +1384,14 @@
             "type": "integer"
           }
         },
-        "required": ["page", "page_size", "total", "returned", "total_pages", "has_next"],
+        "required": [
+          "page",
+          "page_size",
+          "total",
+          "returned",
+          "total_pages",
+          "has_next"
+        ],
         "title": "SearchPagination",
         "type": "object"
       },
@@ -1278,7 +1499,11 @@
             "type": "array"
           }
         },
-        "required": ["items", "pagination", "providers_searched"],
+        "required": [
+          "items",
+          "pagination",
+          "providers_searched"
+        ],
         "title": "SearchResponse",
         "type": "object"
       },
@@ -1292,7 +1517,9 @@
             "type": "integer"
           }
         },
-        "required": ["unread_count"],
+        "required": [
+          "unread_count"
+        ],
         "title": "UnreadCountOut",
         "type": "object"
       },
@@ -1325,7 +1552,11 @@
           "delivery_frequency": {
             "anyOf": [
               {
-                "enum": ["instant", "hourly", "daily"],
+                "enum": [
+                  "instant",
+                  "hourly",
+                  "daily"
+                ],
                 "type": "string"
               },
               {
@@ -1483,7 +1714,13 @@
             "type": "string"
           }
         },
-        "required": ["id", "email", "is_active", "created_at", "updated_at"],
+        "required": [
+          "id",
+          "email",
+          "is_active",
+          "created_at",
+          "updated_at"
+        ],
         "title": "UserProfileOut",
         "type": "object"
       },
@@ -1561,7 +1798,11 @@
             "type": "string"
           }
         },
-        "required": ["loc", "msg", "type"],
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
         "title": "ValidationError",
         "type": "object"
       },
@@ -1622,7 +1863,10 @@
           },
           "match_mode": {
             "default": "exact_release",
-            "enum": ["exact_release", "master_release"],
+            "enum": [
+              "exact_release",
+              "master_release"
+            ],
             "title": "Match Mode",
             "type": "string"
           },
@@ -1670,7 +1914,10 @@
             "title": "Year"
           }
         },
-        "required": ["discogs_release_id", "title"],
+        "required": [
+          "discogs_release_id",
+          "title"
+        ],
         "title": "WatchReleaseCreate",
         "type": "object"
       },
@@ -1737,7 +1984,10 @@
             "type": "boolean"
           },
           "match_mode": {
-            "enum": ["exact_release", "master_release"],
+            "enum": [
+              "exact_release",
+              "master_release"
+            ],
             "title": "Match Mode",
             "type": "string"
           },
@@ -1879,7 +2129,10 @@
           "match_mode": {
             "anyOf": [
               {
-                "enum": ["exact_release", "master_release"],
+                "enum": [
+                  "exact_release",
+                  "master_release"
+                ],
                 "type": "string"
               },
               {
@@ -1950,7 +2203,9 @@
           "query": {
             "max_price": 40,
             "q": "detroit techno",
-            "sources": ["discogs"]
+            "sources": [
+              "discogs"
+            ]
           }
         },
         "properties": {
@@ -1978,7 +2233,9 @@
             "type": "object"
           }
         },
-        "required": ["name"],
+        "required": [
+          "name"
+        ],
         "title": "WatchRuleCreate",
         "type": "object"
       },
@@ -1994,7 +2251,9 @@
           "query": {
             "max_price": 40,
             "q": "detroit techno",
-            "sources": ["discogs"]
+            "sources": [
+              "discogs"
+            ]
           },
           "updated_at": "2026-01-20T12:00:00+00:00",
           "user_id": "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06"
@@ -2085,7 +2344,9 @@
           "query": {
             "max_price": 30,
             "q": "detroit techno",
-            "sources": ["discogs"]
+            "sources": [
+              "discogs"
+            ]
           }
         },
         "properties": {
@@ -2156,6 +2417,67 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/auth/login": {
+      "post": {
+        "summary": "Web Login",
+        "operationId": "web_login_api_auth_login_post",
+        "tags": [
+          "auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events": {
       "get": {
         "operationId": "list_events_api_events_get",
@@ -2232,7 +2554,9 @@
           }
         ],
         "summary": "List Events",
-        "tags": ["events"]
+        "tags": [
+          "events"
+        ]
       }
     },
     "/api/integrations/discogs/connect": {
@@ -2276,7 +2600,10 @@
           }
         ],
         "summary": "Connect Discogs",
-        "tags": ["integrations", "discogs"]
+        "tags": [
+          "integrations",
+          "discogs"
+        ]
       }
     },
     "/api/integrations/discogs/disconnect": {
@@ -2320,7 +2647,10 @@
           }
         ],
         "summary": "Disconnect Discogs",
-        "tags": ["integrations", "discogs"]
+        "tags": [
+          "integrations",
+          "discogs"
+        ]
       }
     },
     "/api/integrations/discogs/import": {
@@ -2364,7 +2694,10 @@
           }
         ],
         "summary": "Import Discogs",
-        "tags": ["integrations", "discogs"]
+        "tags": [
+          "integrations",
+          "discogs"
+        ]
       }
     },
     "/api/integrations/discogs/import/{job_id}": {
@@ -2410,7 +2743,10 @@
           }
         ],
         "summary": "Get Import Job",
-        "tags": ["integrations", "discogs"]
+        "tags": [
+          "integrations",
+          "discogs"
+        ]
       }
     },
     "/api/integrations/discogs/imported-items": {
@@ -2422,7 +2758,10 @@
             "name": "source",
             "required": true,
             "schema": {
-              "enum": ["wantlist", "collection"],
+              "enum": [
+                "wantlist",
+                "collection"
+              ],
               "title": "Source",
               "type": "string"
             }
@@ -2479,7 +2818,10 @@
           }
         ],
         "summary": "List Imported Discogs Items",
-        "tags": ["integrations", "discogs"]
+        "tags": [
+          "integrations",
+          "discogs"
+        ]
       }
     },
     "/api/integrations/discogs/imported-items/{watch_release_id}/open-in-discogs": {
@@ -2501,7 +2843,10 @@
             "name": "source",
             "required": true,
             "schema": {
-              "enum": ["wantlist", "collection"],
+              "enum": [
+                "wantlist",
+                "collection"
+              ],
               "title": "Source",
               "type": "string"
             }
@@ -2535,7 +2880,10 @@
           }
         ],
         "summary": "Open Imported Item In Discogs",
-        "tags": ["integrations", "discogs"]
+        "tags": [
+          "integrations",
+          "discogs"
+        ]
       }
     },
     "/api/integrations/discogs/oauth/callback": {
@@ -2579,7 +2927,10 @@
           }
         ],
         "summary": "Complete Discogs Oauth",
-        "tags": ["integrations", "discogs"]
+        "tags": [
+          "integrations",
+          "discogs"
+        ]
       }
     },
     "/api/integrations/discogs/oauth/start": {
@@ -2623,7 +2974,10 @@
           }
         ],
         "summary": "Start Discogs Oauth",
-        "tags": ["integrations", "discogs"]
+        "tags": [
+          "integrations",
+          "discogs"
+        ]
       }
     },
     "/api/integrations/discogs/status": {
@@ -2647,7 +3001,10 @@
           }
         ],
         "summary": "Discogs Status",
-        "tags": ["integrations", "discogs"]
+        "tags": [
+          "integrations",
+          "discogs"
+        ]
       }
     },
     "/api/me": {
@@ -2671,7 +3028,9 @@
           }
         ],
         "summary": "Deactivate Me",
-        "tags": ["profile"]
+        "tags": [
+          "profile"
+        ]
       },
       "get": {
         "operationId": "get_me_api_me_get",
@@ -2693,7 +3052,9 @@
           }
         ],
         "summary": "Get Me",
-        "tags": ["profile"]
+        "tags": [
+          "profile"
+        ]
       },
       "patch": {
         "operationId": "patch_me_api_me_patch",
@@ -2735,7 +3096,9 @@
           }
         ],
         "summary": "Patch Me",
-        "tags": ["profile"]
+        "tags": [
+          "profile"
+        ]
       }
     },
     "/api/me/hard-delete": {
@@ -2759,7 +3122,9 @@
           }
         ],
         "summary": "Hard Delete Me",
-        "tags": ["profile"]
+        "tags": [
+          "profile"
+        ]
       }
     },
     "/api/me/logout": {
@@ -2783,7 +3148,9 @@
           }
         ],
         "summary": "Logout Me",
-        "tags": ["profile"]
+        "tags": [
+          "profile"
+        ]
       }
     },
     "/api/notifications": {
@@ -2862,7 +3229,9 @@
           }
         ],
         "summary": "List Notifications",
-        "tags": ["notifications"]
+        "tags": [
+          "notifications"
+        ]
       }
     },
     "/api/notifications/unread-count": {
@@ -2886,7 +3255,9 @@
           }
         ],
         "summary": "Unread Count",
-        "tags": ["notifications"]
+        "tags": [
+          "notifications"
+        ]
       }
     },
     "/api/notifications/{notification_id}/read": {
@@ -2932,7 +3303,9 @@
           }
         ],
         "summary": "Mark Notification Read",
-        "tags": ["notifications"]
+        "tags": [
+          "notifications"
+        ]
       }
     },
     "/api/outbound/ebay/{listing_id}": {
@@ -2992,7 +3365,9 @@
           }
         ],
         "summary": "Redirect Ebay Outbound",
-        "tags": ["outbound"]
+        "tags": [
+          "outbound"
+        ]
       }
     },
     "/api/provider-requests": {
@@ -3071,7 +3446,9 @@
           }
         ],
         "summary": "List Provider Requests",
-        "tags": ["provider-requests"]
+        "tags": [
+          "provider-requests"
+        ]
       }
     },
     "/api/provider-requests/admin": {
@@ -3253,7 +3630,9 @@
           }
         ],
         "summary": "List Provider Requests Admin",
-        "tags": ["provider-requests"]
+        "tags": [
+          "provider-requests"
+        ]
       }
     },
     "/api/provider-requests/admin/summary": {
@@ -3396,7 +3775,9 @@
           }
         ],
         "summary": "Provider Request Summary Admin",
-        "tags": ["provider-requests"]
+        "tags": [
+          "provider-requests"
+        ]
       }
     },
     "/api/provider-requests/summary": {
@@ -3424,7 +3805,9 @@
           }
         ],
         "summary": "Provider Request Summary",
-        "tags": ["provider-requests"]
+        "tags": [
+          "provider-requests"
+        ]
       }
     },
     "/api/search": {
@@ -3468,7 +3851,9 @@
           }
         ],
         "summary": "Search Listings",
-        "tags": ["search"]
+        "tags": [
+          "search"
+        ]
       }
     },
     "/api/search/save-alert": {
@@ -3512,7 +3897,9 @@
           }
         ],
         "summary": "Save Alert",
-        "tags": ["search"]
+        "tags": [
+          "search"
+        ]
       }
     },
     "/api/stream/events": {
@@ -3534,7 +3921,9 @@
           }
         ],
         "summary": "Stream Events",
-        "tags": ["notifications"]
+        "tags": [
+          "notifications"
+        ]
       }
     },
     "/api/watch-releases": {
@@ -3613,7 +4002,9 @@
           }
         ],
         "summary": "List Watch Releases",
-        "tags": ["watch-releases"]
+        "tags": [
+          "watch-releases"
+        ]
       },
       "post": {
         "operationId": "create_watch_release_api_watch_releases_post",
@@ -3655,7 +4046,9 @@
           }
         ],
         "summary": "Create Watch Release",
-        "tags": ["watch-releases"]
+        "tags": [
+          "watch-releases"
+        ]
       }
     },
     "/api/watch-releases/{watch_release_id}": {
@@ -3701,7 +4094,9 @@
           }
         ],
         "summary": "Disable Watch Release",
-        "tags": ["watch-releases"]
+        "tags": [
+          "watch-releases"
+        ]
       },
       "get": {
         "operationId": "get_watch_release_api_watch_releases__watch_release_id__get",
@@ -3745,7 +4140,9 @@
           }
         ],
         "summary": "Get Watch Release",
-        "tags": ["watch-releases"]
+        "tags": [
+          "watch-releases"
+        ]
       },
       "patch": {
         "operationId": "update_watch_release_api_watch_releases__watch_release_id__patch",
@@ -3799,7 +4196,9 @@
           }
         ],
         "summary": "Update Watch Release",
-        "tags": ["watch-releases"]
+        "tags": [
+          "watch-releases"
+        ]
       }
     },
     "/api/watch-rules": {
@@ -3878,7 +4277,9 @@
           }
         ],
         "summary": "List Rules",
-        "tags": ["watch-rules"]
+        "tags": [
+          "watch-rules"
+        ]
       },
       "post": {
         "operationId": "create_rule_api_watch_rules_post",
@@ -3920,7 +4321,9 @@
           }
         ],
         "summary": "Create Rule",
-        "tags": ["watch-rules"]
+        "tags": [
+          "watch-rules"
+        ]
       }
     },
     "/api/watch-rules/{rule_id}": {
@@ -3966,7 +4369,9 @@
           }
         ],
         "summary": "Disable Rule",
-        "tags": ["watch-rules"]
+        "tags": [
+          "watch-rules"
+        ]
       },
       "get": {
         "operationId": "get_rule_api_watch_rules__rule_id__get",
@@ -4010,7 +4415,9 @@
           }
         ],
         "summary": "Get Rule",
-        "tags": ["watch-rules"]
+        "tags": [
+          "watch-rules"
+        ]
       },
       "patch": {
         "operationId": "patch_rule_api_watch_rules__rule_id__patch",
@@ -4064,7 +4471,9 @@
           }
         ],
         "summary": "Patch Rule",
-        "tags": ["watch-rules"]
+        "tags": [
+          "watch-rules"
+        ]
       }
     },
     "/api/watch-rules/{rule_id}/disable": {
@@ -4110,7 +4519,9 @@
           }
         ],
         "summary": "Disable Rule Explicit",
-        "tags": ["watch-rules"]
+        "tags": [
+          "watch-rules"
+        ]
       }
     },
     "/api/watch-rules/{rule_id}/hard": {
@@ -4149,7 +4560,9 @@
           }
         ],
         "summary": "Delete Rule Hard",
-        "tags": ["watch-rules"]
+        "tags": [
+          "watch-rules"
+        ]
       }
     },
     "/healthz": {
@@ -4166,7 +4579,9 @@
           }
         },
         "summary": "Healthz",
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     },
     "/readyz": {
@@ -4183,7 +4598,9 @@
           }
         },
         "summary": "Readyz",
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     }
   }
