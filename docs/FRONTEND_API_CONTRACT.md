@@ -682,6 +682,8 @@ Recommended client behavior:
 - Append/merge realtime events into inbox cache.
 - Refresh unread badge after incoming realtime payload.
 - Reconnect SSE with exponential backoff on disconnect.
+- **Failure behavior (web cookie-mode):** stop reconnect attempts on `401/403`.
+- **Failure behavior (optional bearer adapters):** may also stop reconnect when a required bearer token is unavailable.
 - **Auth exception for web SSE:** for `GET /api/stream/events`, web clients should use cookie/session auth (`credentials: include`) and should not depend on JS-managed bearer tokens.
 - **Non-web compatibility:** mobile/native adapters may still attach a short-lived bearer token where platform auth does not use browser cookies.
 
