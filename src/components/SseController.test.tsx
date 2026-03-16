@@ -181,4 +181,35 @@ describe("SseController", () => {
       expect(warnSpy).not.toHaveBeenCalled();
     },
   );
+
+  it("reconnects when response is 200 but not text/event-stream", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response('{"ok":true}', {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(createSseResponse("event: message\ndata: recovered\n\n"));
+
+    const setTimeoutSpy = vi.spyOn(window, "setTimeout");
+    const queryClient = new QueryClient();
+
+    renderWithClient(queryClient);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1_000),
+    );
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2), {
+      timeout: 2_000,
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[SSE] stream connection failed; scheduling reconnect",
+      expect.objectContaining({
+        endpoint: "/api/stream/events",
+      }),
+    );
+  });
 });
