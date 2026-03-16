@@ -69,8 +69,6 @@ describe("Login page", () => {
     });
   });
 
-
-
   it("shows invalid credentials state when login fails with 403", async () => {
     const fetchMock = vi.fn(
       async () =>
