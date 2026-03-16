@@ -1,16 +1,39 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useSearchMutation } from "./hooks";
+import {
+  useCreateWatchRuleMutation,
+  useDiscogsConnectMutation,
+  useSearchMutation,
+  useUpdateProfileMutation,
+} from "./hooks";
+import { queryKeys } from "./keys";
 
-const { searchRunMock } = vi.hoisted(() => ({
-  searchRunMock: vi.fn(),
-}));
+const { createWatchRuleMock, discogsConnectMock, searchRunMock, updateProfileMock } = vi.hoisted(
+  () => ({
+    searchRunMock: vi.fn(),
+    createWatchRuleMock: vi.fn(),
+    updateProfileMock: vi.fn(),
+    discogsConnectMock: vi.fn(),
+  }),
+);
 
 vi.mock("@/lib/query/api", () => ({
   waxwatchApi: {
     search: {
       run: searchRunMock,
+    },
+    watchRules: {
+      create: createWatchRuleMock,
+    },
+    me: {
+      updateProfile: updateProfileMock,
+    },
+    integrations: {
+      discogs: {
+        connect: discogsConnectMock,
+      },
     },
   },
 }));
@@ -33,6 +56,17 @@ function createDeferred<T>(): Deferred<T> {
   return { promise, resolve, reject };
 }
 
+function renderWithClient(ui: JSX.Element) {
+  const queryClient = new QueryClient();
+  const invalidateSpy = vi
+    .spyOn(queryClient, "invalidateQueries")
+    .mockImplementation(async () => Promise.resolve());
+
+  render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+
+  return { invalidateSpy };
+}
+
 function SearchMutationProbe() {
   const mutation = useSearchMutation();
 
@@ -45,6 +79,36 @@ function SearchMutationProbe() {
       <output data-testid="error">{String(mutation.isError)}</output>
       <output data-testid="data">{mutation.data ? "has-data" : "no-data"}</output>
     </section>
+  );
+}
+
+function CreateWatchRuleMutationProbe() {
+  const mutation = useCreateWatchRuleMutation();
+
+  return (
+    <button type="button" onClick={() => mutation.mutate({ name: "rule" } as never)}>
+      mutate-watch-rule
+    </button>
+  );
+}
+
+function UpdateProfileMutationProbe() {
+  const mutation = useUpdateProfileMutation();
+
+  return (
+    <button type="button" onClick={() => mutation.mutate({ display_name: "name" } as never)}>
+      mutate-profile
+    </button>
+  );
+}
+
+function DiscogsConnectMutationProbe() {
+  const mutation = useDiscogsConnectMutation();
+
+  return (
+    <button type="button" onClick={() => mutation.mutate("discogs-user")}>
+      mutate-discogs
+    </button>
   );
 }
 
@@ -116,5 +180,98 @@ describe("useApiMutation sequential state", () => {
       expect(screen.getByTestId("error").textContent).toBe("true");
       expect(screen.getByTestId("data").textContent).toBe("no-data");
     });
+  });
+
+  it("runs watch-rule success side effects for each successful mutation", async () => {
+    const first = createDeferred<{ id: string }>();
+    const second = createDeferred<{ id: string }>();
+
+    createWatchRuleMock.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+
+    const { invalidateSpy } = renderWithClient(<CreateWatchRuleMutationProbe />);
+
+    fireEvent.click(screen.getByRole("button", { name: "mutate-watch-rule" }));
+    fireEvent.click(screen.getByRole("button", { name: "mutate-watch-rule" }));
+
+    second.resolve({ id: "latest" });
+    first.resolve({ id: "stale" });
+
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledTimes(2);
+    });
+
+    expect(invalidateSpy).toHaveBeenNthCalledWith(1, { queryKey: queryKeys.watchRules.list });
+    expect(invalidateSpy).toHaveBeenNthCalledWith(2, { queryKey: queryKeys.watchRules.list });
+  });
+
+  it("runs watch-rule success side effects when latest mutation fails but older succeeds", async () => {
+    const first = createDeferred<{ id: string }>();
+    const second = createDeferred<{ id: string }>();
+
+    createWatchRuleMock.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+
+    const { invalidateSpy } = renderWithClient(<CreateWatchRuleMutationProbe />);
+
+    fireEvent.click(screen.getByRole("button", { name: "mutate-watch-rule" }));
+    fireEvent.click(screen.getByRole("button", { name: "mutate-watch-rule" }));
+
+    second.reject(new Error("latest failed"));
+    first.resolve({ id: "older-success" });
+
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledTimes(1);
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.watchRules.list });
+  });
+
+  it("runs profile success side effects for each successful mutation", async () => {
+    const first = createDeferred<{ id: string }>();
+    const second = createDeferred<{ id: string }>();
+
+    updateProfileMock.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+
+    const { invalidateSpy } = renderWithClient(<UpdateProfileMutationProbe />);
+
+    fireEvent.click(screen.getByRole("button", { name: "mutate-profile" }));
+    fireEvent.click(screen.getByRole("button", { name: "mutate-profile" }));
+
+    second.resolve({ id: "latest" });
+    first.resolve({ id: "stale" });
+
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledTimes(2);
+    });
+
+    expect(invalidateSpy).toHaveBeenNthCalledWith(1, { queryKey: queryKeys.me });
+    expect(invalidateSpy).toHaveBeenNthCalledWith(2, { queryKey: queryKeys.me });
+  });
+
+  it("runs integration success side effects for each successful mutation", async () => {
+    const first = createDeferred<{ ok: true }>();
+    const second = createDeferred<{ ok: true }>();
+
+    discogsConnectMock.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+
+    const { invalidateSpy } = renderWithClient(<DiscogsConnectMutationProbe />);
+
+    fireEvent.click(screen.getByRole("button", { name: "mutate-discogs" }));
+    fireEvent.click(screen.getByRole("button", { name: "mutate-discogs" }));
+
+    second.resolve({ ok: true });
+    first.resolve({ ok: true });
+
+    await waitFor(() => {
+      expect(invalidateSpy).toHaveBeenCalledTimes(4);
+    });
+
+    expect(invalidateSpy).toHaveBeenNthCalledWith(1, {
+      queryKey: queryKeys.integrations.discogs.status,
+    });
+    expect(invalidateSpy).toHaveBeenNthCalledWith(2, { queryKey: queryKeys.me });
+    expect(invalidateSpy).toHaveBeenNthCalledWith(3, {
+      queryKey: queryKeys.integrations.discogs.status,
+    });
+    expect(invalidateSpy).toHaveBeenNthCalledWith(4, { queryKey: queryKeys.me });
   });
 });
