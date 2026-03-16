@@ -41,7 +41,9 @@ function stripForwardingHeaders(headers: Headers): void {
 }
 
 export function middleware(request: NextRequest) {
-  const requestId = request.headers.get("x-request-id") ?? createRequestId();
+  const rawRequestId = request.headers.get("x-request-id");
+  const normalizedRequestId = rawRequestId?.trim();
+  const requestId = normalizedRequestId ? normalizedRequestId : createRequestId();
 
   try {
     const requestHeaders = new Headers(request.headers);
