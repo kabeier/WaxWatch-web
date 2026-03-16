@@ -198,12 +198,15 @@ function useApiMutation<TInput, TData>(options: {
   });
   const pendingCountRef = useRef(0);
   const latestMutationIdRef = useRef(0);
+  const latestMutationResultRef = useRef<"idle" | "pending" | "success" | "error">("idle");
+  const latestSuccessMutationIdRef = useRef(0);
 
   const mutate = useCallback(
     (input: TInput) => {
       pendingCountRef.current += 1;
       latestMutationIdRef.current += 1;
       const mutationId = latestMutationIdRef.current;
+      latestMutationResultRef.current = "pending";
 
       setState((current) => ({ ...current, isPending: true, isError: false, error: null }));
 
@@ -214,16 +217,24 @@ function useApiMutation<TInput, TData>(options: {
           const isLatest = mutationId === latestMutationIdRef.current;
 
           if (isLatest) {
+            latestMutationResultRef.current = "success";
             setState({
               data,
               error: null,
               isPending: pendingCountRef.current > 0,
               isError: false,
             });
-
-            options.onSuccess?.();
           } else {
             setState((current) => ({ ...current, isPending: pendingCountRef.current > 0 }));
+          }
+
+          const shouldRunSuccessSideEffects =
+            isLatest ||
+            (latestMutationResultRef.current === "error" && mutationId > latestSuccessMutationIdRef.current);
+
+          if (shouldRunSuccessSideEffects) {
+            latestSuccessMutationIdRef.current = mutationId;
+            options.onSuccess?.();
           }
         })
         .catch((error: unknown) => {
@@ -231,6 +242,7 @@ function useApiMutation<TInput, TData>(options: {
           const isLatest = mutationId === latestMutationIdRef.current;
 
           if (isLatest) {
+            latestMutationResultRef.current = "error";
             setState({
               data: undefined,
               error,
