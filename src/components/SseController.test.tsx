@@ -255,18 +255,26 @@ describe("SseController", () => {
   it.each([401, 403])(
     "handles auth failure status %s by invoking authorization failure and halting reconnect",
     async (status) => {
+      vi.useFakeTimers();
       fetchMock.mockResolvedValueOnce(createSseResponse("", { status }));
 
       const queryClient = new QueryClient();
 
       renderWithClient(queryClient);
 
-      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      await vi.runAllTicks();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(0);
+      await vi.runAllTicks();
+
       expect(handleAuthorizationFailureWithAdapter).toHaveBeenCalledWith(webAuthSessionAdapter, {
         path: "/api/stream/events",
         status,
       });
-      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      await vi.advanceTimersByTimeAsync(20);
+      await vi.runAllTicks();
+
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(warnSpy).not.toHaveBeenCalled();
     },
