@@ -226,11 +226,11 @@ function useApiMutation<TInput, TData>(options: {
               isPending: pendingCountRef.current > 0,
               isError: false,
             });
+
+            options.onSuccess?.();
           } else {
             setState((current) => ({ ...current, isPending: pendingCountRef.current > 0 }));
           }
-
-          options.onSuccess?.();
         })
         .catch((error: unknown) => {
           pendingCountRef.current = Math.max(0, pendingCountRef.current - 1);

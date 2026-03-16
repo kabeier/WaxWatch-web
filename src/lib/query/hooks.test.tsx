@@ -182,29 +182,28 @@ describe("useApiMutation sequential state", () => {
     });
   });
 
-  it("runs watch-rule success side effects for each successful mutation", async () => {
-    const first = createDeferred<{ id: string }>();
-    const second = createDeferred<{ id: string }>();
+  it("runs create watch-rule side effects only once when A resolves after B", async () => {
+    const mutationA = createDeferred<{ id: string }>();
+    const mutationB = createDeferred<{ id: string }>();
 
-    createWatchRuleMock.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+    createWatchRuleMock.mockReturnValueOnce(mutationA.promise).mockReturnValueOnce(mutationB.promise);
 
     const { invalidateSpy } = renderWithClient(<CreateWatchRuleMutationProbe />);
 
     fireEvent.click(screen.getByRole("button", { name: "mutate-watch-rule" }));
     fireEvent.click(screen.getByRole("button", { name: "mutate-watch-rule" }));
 
-    second.resolve({ id: "latest" });
-    first.resolve({ id: "stale" });
+    mutationB.resolve({ id: "B" });
+    mutationA.resolve({ id: "A" });
 
     await waitFor(() => {
-      expect(invalidateSpy).toHaveBeenCalledTimes(2);
+      expect(invalidateSpy).toHaveBeenCalledTimes(1);
     });
 
-    expect(invalidateSpy).toHaveBeenNthCalledWith(1, { queryKey: queryKeys.watchRules.list });
-    expect(invalidateSpy).toHaveBeenNthCalledWith(2, { queryKey: queryKeys.watchRules.list });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.watchRules.list });
   });
 
-  it("runs watch-rule success side effects when latest mutation fails but older succeeds", async () => {
+  it("does not run watch-rule success side effects when latest mutation fails and older succeeds", async () => {
     const first = createDeferred<{ id: string }>();
     const second = createDeferred<{ id: string }>();
 
@@ -219,13 +218,11 @@ describe("useApiMutation sequential state", () => {
     first.resolve({ id: "older-success" });
 
     await waitFor(() => {
-      expect(invalidateSpy).toHaveBeenCalledTimes(1);
+      expect(invalidateSpy).toHaveBeenCalledTimes(0);
     });
-
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.watchRules.list });
   });
 
-  it("runs profile success side effects for each successful mutation", async () => {
+  it("runs profile success side effects only for the latest completed mutation", async () => {
     const first = createDeferred<{ id: string }>();
     const second = createDeferred<{ id: string }>();
 
@@ -240,14 +237,13 @@ describe("useApiMutation sequential state", () => {
     first.resolve({ id: "stale" });
 
     await waitFor(() => {
-      expect(invalidateSpy).toHaveBeenCalledTimes(2);
+      expect(invalidateSpy).toHaveBeenCalledTimes(1);
     });
 
-    expect(invalidateSpy).toHaveBeenNthCalledWith(1, { queryKey: queryKeys.me });
-    expect(invalidateSpy).toHaveBeenNthCalledWith(2, { queryKey: queryKeys.me });
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: queryKeys.me });
   });
 
-  it("runs integration success side effects for each successful mutation", async () => {
+  it("runs integration success side effects only for the latest completed mutation", async () => {
     const first = createDeferred<{ ok: true }>();
     const second = createDeferred<{ ok: true }>();
 
@@ -262,16 +258,12 @@ describe("useApiMutation sequential state", () => {
     first.resolve({ ok: true });
 
     await waitFor(() => {
-      expect(invalidateSpy).toHaveBeenCalledTimes(4);
+      expect(invalidateSpy).toHaveBeenCalledTimes(2);
     });
 
     expect(invalidateSpy).toHaveBeenNthCalledWith(1, {
       queryKey: queryKeys.integrations.discogs.status,
     });
     expect(invalidateSpy).toHaveBeenNthCalledWith(2, { queryKey: queryKeys.me });
-    expect(invalidateSpy).toHaveBeenNthCalledWith(3, {
-      queryKey: queryKeys.integrations.discogs.status,
-    });
-    expect(invalidateSpy).toHaveBeenNthCalledWith(4, { queryKey: queryKeys.me });
   });
 });
