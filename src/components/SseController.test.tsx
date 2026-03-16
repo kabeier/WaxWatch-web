@@ -50,6 +50,23 @@ function createSseResponse(payload: string, init?: ResponseInit) {
   });
 }
 
+function createChunkedSseResponse(chunks: string[], init?: ResponseInit) {
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(new TextEncoder().encode(chunk));
+      }
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    status: 200,
+    headers: { "content-type": "text/event-stream" },
+    ...init,
+  });
+}
+
 describe("SseController", () => {
   const fetchMock = vi.fn<typeof fetch>();
   const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -181,4 +198,45 @@ describe("SseController", () => {
       expect(warnSpy).not.toHaveBeenCalled();
     },
   );
+
+  it("processes notification event when stream ends without trailing blank line", async () => {
+    fetchMock.mockResolvedValueOnce(
+      createChunkedSseResponse(["event: notification\n", 'data: {"ok":true}']),
+    );
+
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+    renderWithClient(queryClient);
+
+    await waitFor(() =>
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: queryKeys.notifications.unreadCount,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: queryKeys.notifications.list,
+    });
+  });
+
+  it("keeps behavior for fully-delimited notification events", async () => {
+    fetchMock.mockResolvedValueOnce(
+      createChunkedSseResponse(["event: notification\n", 'data: {"ok":true}\n\n']),
+    );
+
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+    renderWithClient(queryClient);
+
+    await waitFor(() =>
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: queryKeys.notifications.unreadCount,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: queryKeys.notifications.list,
+    });
+    expect(invalidateSpy).toHaveBeenCalledTimes(2);
+  });
 });
