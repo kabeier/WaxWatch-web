@@ -25,7 +25,8 @@ Recommended client behavior:
 
 Failure behavior:
 
-- If the server returns 401/403 or auth is missing, stop reconnect attempts.
+- Web cookie-mode: stop reconnect attempts on `401/403`.
+- Optional bearer adapters: may also stop reconnect when a required bearer token is unavailable.
 
 ## SSE done criteria
 
