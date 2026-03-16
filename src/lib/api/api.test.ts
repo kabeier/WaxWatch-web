@@ -687,7 +687,6 @@ describe("error mapping", () => {
       expect(parsed.message).toBe("Invalid input");
     }
   });
-
 });
 
 describe("pagination helpers", () => {
