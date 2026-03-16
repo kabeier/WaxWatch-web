@@ -81,6 +81,7 @@ describe("auth handoff helpers", () => {
       expires_at: "0",
     });
 
+    expect(zeroEpoch.expiresAt).toBe("0");
     expect(zeroEpoch.expiresAtEpochMs).toBe(0);
     expect(zeroEpoch.hasRequiredSecurityParams).toBe(true);
     expect(zeroEpoch.isExpired).toBe(true);
