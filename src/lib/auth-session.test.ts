@@ -32,6 +32,10 @@ describe("auth session helpers", () => {
     expect(webAuthSessionAdapter.getAccessToken()).toBeNull();
   });
 
+  test("web adapter keeps SSE/API auth cookie-backed by default", () => {
+    expect(webAuthSessionAdapter.getAccessToken()).toBeNull();
+  });
+
   test("clearSession removes legacy persisted auth session", async () => {
     window.localStorage.setItem(
       "waxwatch.auth.session",

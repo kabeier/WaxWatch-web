@@ -1,10 +1,14 @@
 # WaxWatch Frontend API Contract
 
-**Contract version:** `2026-03-02.4`
+**Contract version:** `2026-03-16.0`
 
 This contract captures **current API behavior** and maps it to intended React surfaces so frontend can scaffold screens directly from OpenAPI payloads.
 
 ## Changelog
+
+- `2026-03-16.0`
+  - Canonicalized web SSE auth mode as cookie/session based (`credentials: include`) with an explicit exception to the bearer-header default for `/api/stream/events`.
+  - Clarified that bearer headers remain optional for non-web adapters, while web must not rely on JS-managed long-lived tokens.
 
 - `2026-03-02.4`
   - Structural cleanup only: reordered section `4.6 Provider Request Observability (User + Admin)` to follow `4.5` and keep all `4.x` endpoint contracts before governance/process sections `5/6/7`.
@@ -62,7 +66,7 @@ This contract captures **current API behavior** and maps it to intended React su
 
 ## 1) Auth + Session Assumptions
 
-- All user-facing endpoints in this document require `Authorization: Bearer <jwt>`.
+- All user-facing endpoints in this document require `Authorization: Bearer <jwt>`, except web `GET /api/stream/events` SSE which is cookie/session-authenticated (`credentials: include`) and may omit bearer headers.
 - JWT requirements:
   - Verified against configured JWKS.
   - Must contain valid `exp`, `iss`, `aud`, `sub`.
@@ -554,6 +558,8 @@ Recommended client behavior:
 - Append/merge realtime events into inbox cache.
 - Refresh unread badge after incoming realtime payload.
 - Reconnect SSE with exponential backoff on disconnect.
+- **Auth exception for web SSE:** for `GET /api/stream/events`, web clients should use cookie/session auth (`credentials: include`) and should not depend on JS-managed bearer tokens.
+- **Non-web compatibility:** mobile/native adapters may still attach a short-lived bearer token where platform auth does not use browser cookies.
 
 ---
 

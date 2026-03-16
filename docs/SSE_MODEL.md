@@ -10,8 +10,9 @@ Event name:
 
 Auth:
 
-- Requires `Authorization: Bearer <jwt>` (same as other `/api/**` routes).
-- Because the stream requires auth headers, use a fetch/ReadableStream SSE client instead of native `EventSource`.
+- Canonical web mode is **cookie/session auth** for SSE: send `credentials: include` and do not require an `Authorization` header when using the web adapter.
+- Optional bearer header remains supported for non-web adapters/clients, but web must not depend on JS-managed long-lived tokens.
+- Use a fetch/ReadableStream SSE client (instead of native `EventSource`) so request credentials and headers are explicitly controlled.
 
 Recommended client behavior:
 
@@ -29,7 +30,8 @@ Failure behavior:
 
 Before merging SSE-related changes, verify all of the following:
 
-- [ ] Requests include `Authorization: Bearer <jwt>` and `Accept: text/event-stream`.
+- [ ] Web requests include `credentials: include` and `Accept: text/event-stream`.
+- [ ] Web SSE flow works when `Authorization` header is omitted.
 - [ ] Client maintains a singleton SSE connection per authenticated app session.
 - [ ] Reconnect uses exponential backoff with jitter after disconnects/non-auth transient failures.
 - [ ] Reconnect stops immediately when auth token is missing or server responds with 401/403.

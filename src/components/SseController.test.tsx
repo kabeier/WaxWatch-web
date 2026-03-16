@@ -122,6 +122,22 @@ describe("SseController", () => {
     });
   });
 
+  it("includes bearer header when adapter provides a token", async () => {
+    vi.mocked(webAuthSessionAdapter.getAccessToken).mockResolvedValue("jwt-token");
+    fetchMock.mockResolvedValueOnce(createSseResponse("event: message\ndata: ok\n\n"));
+
+    const queryClient = new QueryClient();
+    renderWithClient(queryClient);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const [, init] = fetchMock.mock.calls[0];
+    const headers = new Headers(init?.headers);
+
+    expect(headers.get("Authorization")).toBe("Bearer jwt-token");
+    expect(headers.get("Accept")).toBe("text/event-stream");
+    expect(init?.credentials).toBe("include");
+  });
+
   it("reconnects with exponential backoff + jitter after transient disconnects", async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, "random").mockReturnValueOnce(0.1).mockReturnValueOnce(0.5).mockReturnValue(0);
