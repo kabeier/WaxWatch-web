@@ -185,7 +185,11 @@ export default function SseController() {
 
     const handleAuthEvent = (event: Event) => {
       const authEvent = event as CustomEvent<string>;
-      if (authEvent.detail === "reauth-required" || authEvent.detail === "signed-out") {
+      if (
+        authEvent.detail === "reauth-required" ||
+        authEvent.detail === "signed-out" ||
+        authEvent.detail === "account-removed"
+      ) {
         stop();
       }
     };
