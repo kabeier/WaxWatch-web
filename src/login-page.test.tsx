@@ -104,7 +104,7 @@ describe("Login page", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("shows secure handoff-required state when handoff params are incomplete", async () => {
+  it("shows missing-params handoff-required state when handoff params are incomplete", async () => {
     const page = await LoginPage({
       searchParams: Promise.resolve({
         handoff: "waxwatch://auth/callback",
@@ -113,7 +113,25 @@ describe("Login page", () => {
 
     render(page);
 
-    expect(screen.getByRole("alert")).toHaveTextContent(/secure handoff required/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
+    expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
+  });
+
+  it("shows expired handoff state when security params are present but expiry has passed", async () => {
+    vi.spyOn(Date, "now").mockImplementation(() => Date.parse("2026-01-02T00:00:02.000Z"));
+
+    const page = await LoginPage({
+      searchParams: Promise.resolve({
+        handoff: "waxwatch://auth/callback",
+        state: "state-123",
+        nonce: "nonce-123",
+        expires_at: "2026-01-02T00:00:01.000Z",
+      }),
+    });
+
+    render(page);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/handoff link has expired/i);
     expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
   });
 });
