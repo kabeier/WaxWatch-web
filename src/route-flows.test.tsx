@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import SearchPage from "../app/(app)/search/page";
 import AlertDetailClient from "../app/(app)/alerts/[id]/AlertDetailClient";
 import AlertSettingsPage from "../app/(app)/settings/alerts/page";
+import ProfileSettingsPage from "../app/(app)/settings/profile/page";
 
 type MockMutation<TInput = unknown, TData = unknown> = {
   data?: TData;
@@ -376,5 +377,90 @@ describe("route flow regressions", () => {
     expect(screen.getByRole("button", { name: /save alert delivery preferences/i })).toBeDisabled();
     expect(screen.getByLabelText(/delivery frequency/i)).toBeDisabled();
     expect(screen.getByLabelText(/notification timezone/i)).toBeDisabled();
+  });
+
+  it("hides stale profile success status while a new save is pending", () => {
+    hooksState.meQuery = {
+      data: {
+        email: "person@example.com",
+        display_name: "Person",
+        preferences: {
+          timezone: "UTC",
+          currency: "USD",
+        },
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    };
+    hooksState.updateProfileMutation = {
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+      mutate: vi.fn(),
+    };
+
+    const { rerender } = render(<ProfileSettingsPage />);
+
+    hooksState.updateProfileMutation = {
+      ...hooksState.updateProfileMutation,
+      data: { id: "saved" },
+      isPending: false,
+      isError: false,
+    };
+    rerender(<ProfileSettingsPage />);
+    expect(screen.getByText(/success: profile settings saved\./i)).toBeInTheDocument();
+
+    hooksState.updateProfileMutation = {
+      ...hooksState.updateProfileMutation,
+      data: undefined,
+      isPending: true,
+      isError: false,
+    };
+    rerender(<ProfileSettingsPage />);
+
+    expect(screen.queryByText(/success: profile settings saved\./i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/saving profile changes…/i).length).toBeGreaterThan(0);
+  });
+
+  it("hides stale alert-settings success status while a new save is pending", () => {
+    hooksState.meQuery = {
+      data: {
+        preferences: {
+          delivery_frequency: "instant",
+          notification_timezone: "UTC",
+          quiet_hours_start: 22,
+          quiet_hours_end: 7,
+          notifications_email: true,
+          notifications_push: false,
+        },
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    };
+
+    const { rerender } = render(<AlertSettingsPage />);
+
+    hooksState.updateProfileMutation = {
+      ...hooksState.updateProfileMutation,
+      data: { id: "saved" },
+      isPending: false,
+      isError: false,
+    };
+    rerender(<AlertSettingsPage />);
+    expect(screen.getByText(/success: alert delivery settings saved\./i)).toBeInTheDocument();
+
+    hooksState.updateProfileMutation = {
+      ...hooksState.updateProfileMutation,
+      data: undefined,
+      isPending: true,
+      isError: false,
+    };
+    rerender(<AlertSettingsPage />);
+
+    expect(screen.queryByText(/success: alert delivery settings saved\./i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/saving delivery settings…/i).length).toBeGreaterThan(0);
   });
 });

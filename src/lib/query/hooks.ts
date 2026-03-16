@@ -205,7 +205,13 @@ function useApiMutation<TInput, TData>(options: {
       latestMutationIdRef.current += 1;
       const mutationId = latestMutationIdRef.current;
 
-      setState((current) => ({ ...current, isPending: true, isError: false, error: null }));
+      setState((current) => ({
+        ...current,
+        data: undefined,
+        isPending: true,
+        isError: false,
+        error: null,
+      }));
 
       void options
         .mutationFn(input)
