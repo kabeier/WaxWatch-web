@@ -113,9 +113,7 @@ describe("Login page", () => {
 
     render(page);
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      /missing required security parameters/i,
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
     expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
   });
 
