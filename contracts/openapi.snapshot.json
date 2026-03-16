@@ -2077,6 +2077,157 @@
         "title": "WatchRuleOut",
         "type": "object"
       },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          },
+          "return_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return To"
+          },
+          "handoff": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handoff"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "nonce": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nonce"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          }
+        },
+        "required": ["email", "password"],
+        "title": "LoginRequest",
+        "type": "object"
+      },
+      "LoginResponse": {
+        "properties": {
+          "success": {
+            "default": true,
+            "title": "Success",
+            "type": "boolean"
+          },
+          "redirect_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redirect To"
+          }
+        },
+        "title": "LoginResponse",
+        "type": "object"
+      },
+      "ErrorEnvelope": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorEnvelopeError"
+          }
+        },
+        "required": ["error"],
+        "title": "ErrorEnvelope",
+        "type": "object"
+      },
+      "ErrorEnvelopeError": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "details": {
+            "title": "Details"
+          }
+        },
+        "required": ["message"],
+        "title": "ErrorEnvelopeError",
+        "type": "object"
+      },
       "WatchRuleUpdate": {
         "example": {
           "is_active": true,
@@ -2156,6 +2307,75 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/auth/login": {
+      "post": {
+        "operationId": "login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Web Login",
+        "tags": ["auth"]
+      }
+    },
     "/api/events": {
       "get": {
         "operationId": "list_events_api_events_get",

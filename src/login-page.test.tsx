@@ -91,6 +91,60 @@ describe("Login page", () => {
     });
   });
 
+  it("shows invalid credentials state when envelope code is invalid_credentials", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: { code: "invalid_credentials", message: "credentials rejected" },
+          }),
+          {
+            status: 422,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+    ) as typeof fetch;
+
+    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "wrong-password" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/invalid email or password/i);
+    });
+  });
+
+  it("shows invalid credentials state when envelope type is invalid_credentials", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: { type: "invalid_credentials", message: "credentials rejected" },
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+    ) as typeof fetch;
+
+    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "wrong-password" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/invalid email or password/i);
+    });
+  });
+
   it("shows backend validation message for non-credential 422 validation failures", async () => {
     const fetchMock = vi.fn(
       async () =>

@@ -6,6 +6,9 @@ This contract captures **current API behavior** and maps it to intended React su
 
 ## Changelog
 
+- `2026-03-16.1`
+  - Added web login endpoint contract for `POST /api/auth/login`, including request body fields used by web/mobile handoff and error-envelope semantics for invalid credentials (`401/403` or `error.code|error.type = invalid_credentials`).
+
 - `2026-03-16.0`
   - Canonicalized web SSE auth mode as cookie/session based (`credentials: include`) with an explicit exception to the bearer-header default for `/api/stream/events`.
   - Clarified that bearer headers remain optional for non-web adapters, while web must not rely on JS-managed long-lived tokens.
@@ -73,7 +76,7 @@ This contract captures **current API behavior** and maps it to intended React su
   - `sub` must be a UUID (used as `user_id`).
 - Missing/invalid token yields a standardized `error` envelope.
 - Session lifecycle assumptions for React:
-  - Login/token issuance happens outside this API (Supabase/Auth provider).
+  - Primary token issuance/session bootstrap may occur outside this API (Supabase/Auth provider), but web login form submit is handled by `POST /api/auth/login`.
   - `POST /api/me/logout` returns a logout marker payload for client-side/session-provider sign-out orchestration.
   - `DELETE /api/me` deactivates local account state; frontend should then clear session and route to signed-out state.
   - `DELETE /api/me/hard-delete` immediately and permanently deletes the authenticated user record when it exists.
@@ -224,7 +227,32 @@ Frontend guidance: pause automatic retries until `Retry-After` elapses, apply ex
 
 ## 4) Endpoint → React Screen + Action Map
 
-## 4.0 Search + Save Alert
+## 4.0 Web Login
+
+### `POST /api/auth/login`
+
+- **Screen:** `LoginPageClient` form submit action.
+- **Request body:**
+
+```json
+{
+  "email": "listener@example.com",
+  "password": "<redacted>",
+  "return_to": "/",
+  "handoff": "waxwatch://auth/callback",
+  "state": "state-123",
+  "nonce": "nonce-123",
+  "expires_at": "2026-01-02T00:00:01.000Z"
+}
+```
+
+- **Success (`200`)**: login accepted; frontend redirects to resolved success destination (`return_to` or handoff callback URL with security params).
+- **Credential failure (`401` or `403`)**: render `Invalid email or password.`
+- **Contracted error-envelope override:** if `error.code` or `error.type` equals `invalid_credentials`, frontend renders `Invalid email or password.` even when status is not `401/403` (for backend compatibility).
+- **Validation failure (`422`)**: frontend shows backend envelope message when present (`error.message`).
+- **Rate limit (`429`)**: frontend shows rate-limited state and uses `Retry-After` / `error.details.retry_after_seconds` when provided.
+
+## 4.1 Search + Save Alert
 
 ### `POST /api/search`
 
