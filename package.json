@@ -37,10 +37,10 @@
     "prebuild:prod-env": "NODE_ENV=production node scripts/prebuild-standalone-env-gate.mjs"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,md,yml,yaml,css}": [
+    "*.{js,jsx,mjs,cjs,ts,tsx,json,md,yml,yaml,css}": [
       "prettier --write"
     ],
-    "*.{js,jsx,ts,tsx}": [
+    "*.{js,jsx,mjs,cjs,ts,tsx}": [
       "eslint --fix"
     ]
   },
