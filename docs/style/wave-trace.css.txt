@@ -1,0 +1,33 @@
+/* src/styles/wave-trace.css */
+
+/* Wrapper must be used inside a relative + overflow-hidden container */
+.ww-wave {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* The SVG is absolutely positioned so we can bottom-bias it */
+.ww-wave__svg {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Alignment */
+.ww-wave--bottom .ww-wave__svg {
+  bottom: 0;
+}
+.ww-wave--center .ww-wave__svg {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Subdued (for background usage behind hero content) */
+.ww-wave--subdued {
+  opacity: 0.28; /* keep within ~0.18–0.35 */
+  filter: saturate(0.95);
+}

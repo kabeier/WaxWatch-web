@@ -1,0 +1,359 @@
+// src/components/WaveTrace.tsx
+import React from "react";
+
+/**
+ * WaxWatch WaveTrace
+ * - Deterministic SVG assets (calm/active/spike)
+ * - Bottom-biased usage: clip via container height + align bottom
+ * - Themeable via CSS variables
+ *
+ * Guardrails:
+ * - Do NOT modify paths ad-hoc in pages. Add new variants here only.
+ * - Do NOT place behind dense tables/forms.
+ */
+
+export type WaveVariant = "calm" | "active" | "spike";
+
+export type WaveTraceProps = {
+  variant?: WaveVariant;
+  /** Aligns the waveform to the bottom of the container */
+  align?: "bottom" | "center";
+  /** If true, uses lower opacity intended for background/hero placement */
+  subdued?: boolean;
+  /** Extra class for sizing/positioning (container controls clipping) */
+  className?: string;
+  /** Inline style (avoid setting colors here; use CSS variables) */
+  style?: React.CSSProperties;
+
+  /**
+   * Optional: override palette via CSS variables at the component level.
+   * If omitted, uses global theme variables.
+   */
+  palette?: Partial<{
+    deep: string;
+    mid: string;
+    amber: string;
+    gold: string;
+  }>;
+
+  /**
+   * Optional: render ghosts (analog persistence). Default true.
+   * For very small header bands, you might set false to keep it crisp.
+   */
+  ghosts?: boolean;
+};
+
+export function WaveTrace({
+  variant = "calm",
+  align = "bottom",
+  subdued = false,
+  className,
+  style,
+  palette,
+  ghosts = true,
+}: WaveTraceProps) {
+  // Apply palette overrides via CSS variables on a wrapper.
+  const paletteStyle: React.CSSProperties | undefined = palette
+    ? {
+        ["--ww-stripe-deep" as any]: palette.deep,
+        ["--ww-stripe-mid" as any]: palette.mid,
+        ["--ww-stripe-amber" as any]: palette.amber,
+        ["--ww-stripe-gold" as any]: palette.gold,
+      }
+    : undefined;
+
+  const combinedStyle: React.CSSProperties = {
+    ...paletteStyle,
+    ...style,
+  };
+
+  // Alignment strategy:
+  // - Parent container defines height and overflow:hidden
+  // - SVG is absolutely positioned and pinned to bottom (default)
+  const wrapperClass = [
+    "ww-wave",
+    `ww-wave--${variant}`,
+    align === "bottom" ? "ww-wave--bottom" : "ww-wave--center",
+    subdued ? "ww-wave--subdued" : "",
+    className ?? "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div className={wrapperClass} style={combinedStyle} aria-hidden="true">
+      {variant === "calm" && <WaveSVGCalm ghosts={ghosts} />}
+      {variant === "active" && <WaveSVGActive ghosts={ghosts} />}
+      {variant === "spike" && <WaveSVGSpike ghosts={ghosts} />}
+    </div>
+  );
+}
+
+/* ---------- SVG Variants (DO NOT EDIT PATHS OUTSIDE THIS FILE) ---------- */
+
+function WaveSVGCalm({ ghosts }: { ghosts: boolean }) {
+  return (
+    <svg
+      className="ww-wave__svg"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 1200 200"
+      preserveAspectRatio="none"
+      role="img"
+      aria-label="WaxWatch wave trace calm"
+    >
+      <defs>
+        <style>{`
+          .cap { fill:none; stroke-linecap:round; stroke-linejoin:round; }
+          .ghost { opacity:0.18; stroke-width:3; }
+          .deep  { stroke:var(--ww-stripe-deep,  #3B1F14);  stroke-width:10; opacity:0.80; }
+          .mid   { stroke:var(--ww-stripe-mid,   #8C3A0F);  stroke-width:8;  opacity:0.84; }
+          .amber { stroke:var(--ww-stripe-amber, #D87A00);  stroke-width:6;  opacity:0.90; }
+          .gold  { stroke:var(--ww-stripe-gold,  #F4B000);  stroke-width:4;  opacity:0.98; }
+        `}</style>
+
+        <filter id="wwGlowDeep" x="-30%" y="-80%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="6" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="wwGlowMid" x="-30%" y="-80%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="5" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="wwGlowAmber" x="-30%" y="-80%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="4" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="wwGlowGold" x="-30%" y="-80%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="3" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {ghosts && (
+        <>
+          <path
+            className="cap ghost"
+            stroke="var(--ww-stripe-amber, #D87A00)"
+            d="M 0 138 C 70 158, 140 118, 210 142 C 280 166, 340 120, 410 138 C 480 156, 560 128, 630 146 C 700 164, 770 122, 840 140 C 910 158, 990 126, 1060 144 C 1130 162, 1175 138, 1200 142"
+          />
+          <path
+            className="cap ghost"
+            stroke="var(--ww-stripe-gold, #F4B000)"
+            d="M 0 142 C 70 160, 145 124, 215 146 C 285 168, 345 124, 415 142 C 485 160, 565 132, 635 148 C 705 164, 775 126, 845 144 C 915 160, 995 132, 1065 148 C 1135 164, 1180 142, 1200 146"
+          />
+        </>
+      )}
+
+      <path
+        filter="url(#wwGlowDeep)"
+        className="cap deep"
+        d="M 0 144 C 80 172, 155 112, 240 148 C 325 184, 380 110, 465 136 C 550 162, 610 120, 690 152 C 770 184, 830 114, 910 140 C 990 166, 1060 118, 1140 150 C 1175 164, 1190 150, 1200 146"
+      />
+      <path
+        filter="url(#wwGlowMid)"
+        className="cap mid"
+        d="M 0 144 C 80 172, 155 112, 240 148 C 325 184, 380 110, 465 136 C 550 162, 610 120, 690 152 C 770 184, 830 114, 910 140 C 990 166, 1060 118, 1140 150 C 1175 164, 1190 150, 1200 146"
+      />
+      <path
+        filter="url(#wwGlowAmber)"
+        className="cap amber"
+        d="M 0 144 C 80 172, 155 112, 240 148 C 325 184, 380 110, 465 136 C 550 162, 610 120, 690 152 C 770 184, 830 114, 910 140 C 990 166, 1060 118, 1140 150 C 1175 164, 1190 150, 1200 146"
+      />
+      <path
+        filter="url(#wwGlowGold)"
+        className="cap gold"
+        d="M 0 144 C 80 172, 155 112, 240 148 C 325 184, 380 110, 465 136 C 550 162, 610 120, 690 152 C 770 184, 830 114, 910 140 C 990 166, 1060 118, 1140 150 C 1175 164, 1190 150, 1200 146"
+      />
+    </svg>
+  );
+}
+
+function WaveSVGActive({ ghosts }: { ghosts: boolean }) {
+  return (
+    <svg
+      className="ww-wave__svg"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 1200 200"
+      preserveAspectRatio="none"
+      role="img"
+      aria-label="WaxWatch wave trace active"
+    >
+      <defs>
+        <style>{`
+          .cap { fill:none; stroke-linecap:round; stroke-linejoin:round; }
+          .ghost { opacity:0.20; stroke-width:4; }
+          .deep  { stroke:var(--ww-stripe-deep,  #3B1F14);  stroke-width:12; opacity:0.82; }
+          .mid   { stroke:var(--ww-stripe-mid,   #8C3A0F);  stroke-width:10; opacity:0.86; }
+          .amber { stroke:var(--ww-stripe-amber, #D87A00);  stroke-width:8;  opacity:0.92; }
+          .gold  { stroke:var(--ww-stripe-gold,  #F4B000);  stroke-width:6;  opacity:0.98; }
+        `}</style>
+
+        <filter id="wwGlowDeep" x="-30%" y="-80%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="7" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="wwGlowMid" x="-30%" y="-80%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="6" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="wwGlowAmber" x="-30%" y="-80%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="5" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="wwGlowGold" x="-30%" y="-80%" width="160%" height="260%">
+          <feGaussianBlur stdDeviation="4" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {ghosts && (
+        <>
+          <path
+            className="cap ghost"
+            stroke="var(--ww-stripe-amber, #D87A00)"
+            d="M 0 132 C 60 170, 140 96, 220 140 C 300 186, 360 90, 440 122 C 520 154, 600 102, 680 144 C 760 186, 820 92, 900 124 C 980 156, 1060 98, 1140 144 C 1175 162, 1190 142, 1200 136"
+          />
+          <path
+            className="cap ghost"
+            stroke="var(--ww-stripe-gold, #F4B000)"
+            d="M 0 136 C 58 172, 138 104, 216 142 C 294 182, 356 98, 434 126 C 512 154, 592 108, 672 148 C 752 186, 814 98, 894 128 C 974 158, 1056 106, 1138 148 C 1174 162, 1190 146, 1200 140"
+          />
+        </>
+      )}
+
+      <path
+        filter="url(#wwGlowDeep)"
+        className="cap deep"
+        d="M 0 138 C 60 190, 145 74, 235 142 C 325 210, 380 62, 470 112 C 560 162, 635 78, 720 152 C 805 224, 860 60, 950 114 C 1040 168, 1110 84, 1185 140 C 1194 148, 1198 146, 1200 140"
+      />
+      <path
+        filter="url(#wwGlowMid)"
+        className="cap mid"
+        d="M 0 138 C 60 190, 145 74, 235 142 C 325 210, 380 62, 470 112 C 560 162, 635 78, 720 152 C 805 224, 860 60, 950 114 C 1040 168, 1110 84, 1185 140 C 1194 148, 1198 146, 1200 140"
+      />
+      <path
+        filter="url(#wwGlowAmber)"
+        className="cap amber"
+        d="M 0 138 C 60 190, 145 74, 235 142 C 325 210, 380 62, 470 112 C 560 162, 635 78, 720 152 C 805 224, 860 60, 950 114 C 1040 168, 1110 84, 1185 140 C 1194 148, 1198 146, 1200 140"
+      />
+      <path
+        filter="url(#wwGlowGold)"
+        className="cap gold"
+        d="M 0 138 C 60 190, 145 74, 235 142 C 325 210, 380 62, 470 112 C 560 162, 635 78, 720 152 C 805 224, 860 60, 950 114 C 1040 168, 1110 84, 1185 140 C 1194 148, 1198 146, 1200 140"
+      />
+    </svg>
+  );
+}
+
+function WaveSVGSpike({ ghosts }: { ghosts: boolean }) {
+  return (
+    <svg
+      className="ww-wave__svg"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 1200 220"
+      preserveAspectRatio="none"
+      role="img"
+      aria-label="WaxWatch wave trace spike"
+    >
+      <defs>
+        <style>{`
+          .cap { fill:none; stroke-linecap:round; stroke-linejoin:round; }
+          .ghost { opacity:0.22; stroke-width:4; }
+          .deep  { stroke:var(--ww-stripe-deep,  #3B1F14);  stroke-width:14; opacity:0.84; }
+          .mid   { stroke:var(--ww-stripe-mid,   #8C3A0F);  stroke-width:12; opacity:0.88; }
+          .amber { stroke:var(--ww-stripe-amber, #D87A00);  stroke-width:10; opacity:0.94; }
+          .gold  { stroke:var(--ww-stripe-gold,  #F4B000);  stroke-width:8;  opacity:1; }
+        `}</style>
+
+        <filter id="wwGlowDeep" x="-30%" y="-90%" width="160%" height="280%">
+          <feGaussianBlur stdDeviation="9" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="wwGlowMid" x="-30%" y="-90%" width="160%" height="280%">
+          <feGaussianBlur stdDeviation="8" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="wwGlowAmber" x="-30%" y="-90%" width="160%" height="280%">
+          <feGaussianBlur stdDeviation="7" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="wwGlowGold" x="-30%" y="-90%" width="160%" height="280%">
+          <feGaussianBlur stdDeviation="6" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {ghosts && (
+        <>
+          <path
+            className="cap ghost"
+            stroke="var(--ww-stripe-amber, #D87A00)"
+            d="M 0 150 C 55 215, 130 50, 210 162 C 290 272, 340 34, 420 126 C 500 218, 570 68, 650 176 C 730 286, 790 28, 870 120 C 950 212, 1030 54, 1110 178 C 1160 212, 1185 170, 1200 160"
+          />
+          <path
+            className="cap ghost"
+            stroke="var(--ww-stripe-gold, #F4B000)"
+            d="M 0 156 C 50 220, 128 62, 202 166 C 276 268, 336 48, 410 132 C 484 216, 558 78, 634 182 C 710 286, 776 44, 852 126 C 928 208, 1010 70, 1092 182 C 1148 214, 1182 176, 1200 166"
+          />
+        </>
+      )}
+
+      <path
+        filter="url(#wwGlowDeep)"
+        className="cap deep"
+        d="M 0 160 C 50 240, 135 18, 230 170 C 325 322, 380 -2, 475 104 C 570 210, 650 20, 740 188 C 830 356, 885 -8, 980 102 C 1075 212, 1140 34, 1188 156 C 1194 170, 1198 168, 1200 166"
+      />
+      <path
+        filter="url(#wwGlowMid)"
+        className="cap mid"
+        d="M 0 160 C 50 240, 135 18, 230 170 C 325 322, 380 -2, 475 104 C 570 210, 650 20, 740 188 C 830 356, 885 -8, 980 102 C 1075 212, 1140 34, 1188 156 C 1194 170, 1198 168, 1200 166"
+      />
+      <path
+        filter="url(#wwGlowAmber)"
+        className="cap amber"
+        d="M 0 160 C 50 240, 135 18, 230 170 C 325 322, 380 -2, 475 104 C 570 210, 650 20, 740 188 C 830 356, 885 -8, 980 102 C 1075 212, 1140 34, 1188 156 C 1194 170, 1198 168, 1200 166"
+      />
+      <path
+        filter="url(#wwGlowGold)"
+        className="cap gold"
+        d="M 0 160 C 50 240, 135 18, 230 170 C 325 322, 380 -2, 475 104 C 570 210, 650 20, 740 188 C 830 356, 885 -8, 980 102 C 1075 212, 1140 34, 1188 156 C 1194 170, 1198 168, 1200 166"
+      />
+    </svg>
+  );
+}

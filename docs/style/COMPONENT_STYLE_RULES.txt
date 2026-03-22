@@ -1,0 +1,92 @@
+COMPONENT STYLE RULES (v1)
+==========================
+
+Purpose
+-------
+Default styling rules for core components so agents don't improvise.
+
+Global radius + spacing (recommended)
+-------------------------------------
+- Cards: radius 14px (soft modern)
+- Inputs/buttons: radius 12px
+- Spacing scale: 4/8/12/16/24/32/48/64 (or Tailwind default)
+- Touch targets: >= 44px
+
+Buttons
+-------
+Primary:
+- bg: var(--ww-button-primary-bg)
+- text: var(--ww-button-primary-text)
+- hover: slight lift + glow (use shadow token)
+- disabled: reduce opacity to 0.6, keep readable contrast
+
+Secondary:
+- bg: transparent
+- border: var(--ww-button-secondary-border)
+- text: var(--ww-button-secondary-text)
+- hover: subtle glow only (no full fill)
+
+Destructive:
+- bg: var(--ww-error) OR transparent w/ error border
+- never use amber/orange for destructive states
+
+Cards
+-----
+Default:
+- bg: var(--ww-card-bg)
+- border: 1px solid var(--ww-card-border)
+- shadow: var(--ww-shadow-soft) OR none (pick global approach)
+- optional glow class for interactive cards only (.ww-card--glow)
+
+Hover:
+- elevate slightly (translateY -1px)
+- apply glow hover shadow
+
+Active/Selected:
+- stronger glow: --ww-glow-active
+- do not change to random accent colors
+
+Inputs
+------
+- bg: var(--ww-input-bg)
+- border: var(--ww-input-border)
+- focus: outline 2px var(--ww-focus-ring)
+- errors: border color var(--ww-error) + helper text
+
+Tables / Dense data
+-------------------
+- Keep backgrounds clean (no waveform behind).
+- Use subtle row dividers (border-subtle).
+- Use zebra rows only if needed, at very low contrast.
+
+Toasts / Notifications
+----------------------
+- Toast background: bg.elevated
+- Toast border: border.subtle
+- Accent: small stripe or gold line only (do not overdecorate)
+- On SSE notification: show toast + update badge
+
+Badges
+------
+Unread count:
+- small pill
+- high contrast with bg
+- use gold/amber as accent, but keep text readable
+
+Dialogs
+-------
+- Elevated surface + strong focus ring
+- Danger zone actions use error token
+
+WaveTrace usage
+---------------
+- Use WaveTrace component only.
+- Header band: calm, ghosts false.
+- Dividers/Hero: active, subdued for backgrounds.
+- Spike: only for rare match-found emphasis.
+
+Do NOT
+------
+- Random gradients
+- Random accent colors
+- Putting waveform behind forms/tables

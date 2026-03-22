@@ -1,0 +1,51 @@
+/* WaxWatch Light Theme (Secondary)
+   Apply on the root element:
+   <html data-theme="light"> ... */
+
+:root[data-theme="light"] {
+  /* Neutrals */
+  --ww-bg-app: #fbf6ef;       /* warm cream */
+  --ww-bg-surface: #fffaf3;   /* paper surface */
+  --ww-bg-elevated: #ffffff;  /* elevated surface */
+  --ww-border-subtle: #e3d6c9;
+
+  /* Text */
+  --ww-text-primary: #1a1411;   /* espresso */
+  --ww-text-secondary: #3a2a22; /* warm brown-gray */
+  --ww-text-muted: #6a5b50;
+
+  /* Waveform palette (same hues; works on light too) */
+  --ww-stripe-deep: #3b1f14;
+  --ww-stripe-mid: #8c3a0f;
+  --ww-stripe-amber: #d87a00;
+  --ww-stripe-gold: #f4b000;
+
+  /* Glows (lighter; keep restrained) */
+  --ww-glow-subtle: rgba(216, 122, 0, 0.10);
+  --ww-glow-hover: rgba(216, 122, 0, 0.16);
+  --ww-glow-active: rgba(216, 122, 0, 0.22);
+
+  /* Focus ring */
+  --ww-focus-ring: rgba(140, 58, 15, 0.32);
+
+  /* Semantic */
+  --ww-success: rgba(216, 122, 0, 0.85);
+  --ww-warning: rgba(140, 58, 15, 0.75);
+  --ww-error: #b53c2f;
+
+  /* Component defaults */
+  --ww-card-bg: var(--ww-bg-surface);
+  --ww-card-border: var(--ww-border-subtle);
+
+  --ww-input-bg: var(--ww-bg-elevated);
+  --ww-input-border: var(--ww-border-subtle);
+
+  --ww-button-primary-bg: var(--ww-stripe-amber);
+  --ww-button-primary-text: #1a1411;
+  --ww-button-secondary-bg: transparent;
+  --ww-button-secondary-text: var(--ww-text-primary);
+  --ww-button-secondary-border: var(--ww-border-subtle);
+
+  /* Elevation shadow (subtle) */
+  --ww-shadow-soft: 0 10px 24px rgba(26, 20, 17, 0.10);
+}

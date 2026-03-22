@@ -1,0 +1,36 @@
+/* WaxWatch Global Base Styles
+   Keep minimal; the design is driven by tokens and components. */
+
+html, body {
+  background: var(--ww-bg-app);
+  color: var(--ww-text-primary);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ww-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Example card baseline */
+.ww-card {
+  background: var(--ww-card-bg);
+  border: 1px solid var(--ww-card-border);
+  border-radius: 14px;
+  box-shadow: var(--ww-shadow-soft);
+}
+
+/* Glow interaction (optional utility) */
+.ww-card--glow {
+  box-shadow: var(--ww-shadow-soft), 0 0 60px var(--ww-glow-subtle);
+}
+.ww-card--glow:hover {
+  box-shadow: var(--ww-shadow-soft), 0 0 70px var(--ww-glow-hover);
+}
+.ww-card--glow.is-active {
+  box-shadow: var(--ww-shadow-soft), 0 0 80px var(--ww-glow-active);
+}

@@ -1,0 +1,76 @@
+WAXWATCH THEME TOKENS (v1)
+==========================
+
+Purpose
+-------
+This token set defines all colors used by the WaxWatch UI.
+Agents MUST use tokens (CSS variables) and MUST NOT introduce ad-hoc colors.
+
+Theme architecture
+------------------
+- Dark mode is primary.
+- Light mode exists for completeness and accessibility.
+- The waveform palette is themeable for reuse in future niches.
+
+How to use
+----------
+- Load the CSS variables globally (e.g. in app root).
+- Use tokens in component CSS (or Tailwind config) via var(--token).
+- For theme switching, change the root attribute: [data-theme="dark|light"].
+
+Non-negotiable rules
+--------------------
+- Do NOT use pure black (#000000) backgrounds in dark theme.
+- Do NOT use pure white (#FFFFFF) for primary text in dark theme.
+- Do NOT use gradients by default.
+- Do NOT introduce blues/purples/cyans as accents.
+- All accent and glow colors derive from the palette and tokens below.
+
+Core palette (WaxWatch default)
+------------------------------
+Waveform palette:
+--ww-stripe-deep  = #3B1F14
+--ww-stripe-mid   = #8C3A0F
+--ww-stripe-amber = #D87A00
+--ww-stripe-gold  = #F4B000
+
+Dark neutrals:
+bg.app        = #1A1411
+bg.surface    = #231A16
+bg.elevated   = #2A1F1A
+border.subtle = #3A2A22
+
+text.primary   = #F4EDE6
+text.secondary = #C7B8AD
+text.muted     = #9C8C80
+
+Glow tokens (use sparingly)
+---------------------------
+glow.subtle = rgba(244,176,0,0.05)
+glow.hover  = rgba(244,176,0,0.10)
+glow.active = rgba(216,122,0,0.18)
+
+Semantic tokens
+---------------
+state.success = derived from stripe.gold at low intensity (avoid green)
+state.warning = derived from stripe.amber
+state.error   = dedicated red token (do not reuse orange)
+focus.ring    = derived from stripe.gold with reduced opacity
+
+Component tokens
+----------------
+button.primary.bg       = stripe.amber
+button.primary.text     = bg.app (dark)
+button.secondary.border = border.subtle
+card.bg                 = bg.surface
+card.border             = border.subtle
+input.bg                = bg.surface
+input.border            = border.subtle
+divider                 = border.subtle
+
+Data visualization tokens (future)
+----------------------------------
+charts.primary     = stripe.gold
+charts.secondary   = stripe.amber
+charts.tertiary    = stripe.mid
+charts.quaternary  = stripe.deep

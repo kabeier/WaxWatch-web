@@ -1,0 +1,75 @@
+TAILWIND TOKEN MAPPING (v1)
+===========================
+
+Goal
+----
+Map WaxWatch CSS variables into Tailwind so components can use semantic classnames
+without hardcoding hex values.
+
+Approach (recommended)
+----------------------
+1) Keep WaxWatch tokens as CSS variables in global CSS.
+2) In tailwind.config.js, reference them via 'hsl(var(--...))' or 'var(--...)'.
+   Since our values are hex / rgba, use 'var(--token)' directly.
+
+Example tailwind.config.js snippet
+----------------------------------
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        ww: {
+          bg: {
+            app: "var(--ww-bg-app)",
+            surface: "var(--ww-bg-surface)",
+            elevated: "var(--ww-bg-elevated)",
+          },
+          border: {
+            subtle: "var(--ww-border-subtle)",
+          },
+          text: {
+            primary: "var(--ww-text-primary)",
+            secondary: "var(--ww-text-secondary)",
+            muted: "var(--ww-text-muted)",
+          },
+          stripe: {
+            deep: "var(--ww-stripe-deep)",
+            mid: "var(--ww-stripe-mid)",
+            amber: "var(--ww-stripe-amber)",
+            gold: "var(--ww-stripe-gold)",
+          },
+          glow: {
+            subtle: "var(--ww-glow-subtle)",
+            hover: "var(--ww-glow-hover)",
+            active: "var(--ww-glow-active)",
+          },
+          semantic: {
+            success: "var(--ww-success)",
+            warning: "var(--ww-warning)",
+            error: "var(--ww-error)",
+          },
+        },
+      },
+      boxShadow: {
+        "ww-soft": "var(--ww-shadow-soft)",
+        "ww-glow-subtle": "0 0 60px var(--ww-glow-subtle)",
+        "ww-glow-hover": "0 0 70px var(--ww-glow-hover)",
+        "ww-glow-active": "0 0 80px var(--ww-glow-active)",
+      },
+      borderRadius: {
+        ww: "14px",
+      },
+    },
+  },
+};
+
+Usage examples
+--------------
+<div className="bg-ww-bg-app text-ww-text-primary">
+<div className="bg-ww-bg-surface border border-ww-border-subtle rounded-ww shadow-ww-soft">
+<button className="bg-ww-stripe-amber text-ww-bg-app shadow-ww-glow-subtle hover:shadow-ww-glow-hover">
+
+Guardrails
+----------
+- Do not add hex colors to Tailwind config for UI; always reference var(--...).
+- If a new token is needed, add it to theme CSS first, then map here.

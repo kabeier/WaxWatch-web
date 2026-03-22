@@ -1,0 +1,58 @@
+WAVETRACE COMPONENT SPEC (v1)
+=============================
+
+Purpose
+-------
+WaveTrace is the ONLY way the waveform trace appears in the app.
+
+Props
+-----
+variant: "calm" | "active" | "spike"
+align: "bottom" | "center" (default: bottom)
+subdued: boolean (default: false)
+ghosts: boolean (default: true)
+palette: optional overrides (deep/mid/amber/gold via CSS variables)
+
+Usage rules
+-----------
+Header band:
+- Use variant="calm"
+- Container height: 26–32px
+- overflow hidden
+- ghosts=false recommended for crisp header
+
+Divider:
+- Use variant="active"
+- Container height: 56–88px
+- overflow hidden
+- ghosts=true allowed
+
+Hero background:
+- Use variant="active" subdued
+- Opacity target (subdued): 0.18–0.35
+- Do NOT place text directly over high contrast wave peaks.
+- Keep hero text on clean surfaces or add a surface layer.
+
+Match found:
+- Use variant="spike" very rarely.
+- Use temporarily (pulse) instead of persistent decoration.
+
+Never:
+- Behind tables
+- Behind forms
+- Full-height backgrounds in app shell
+- Repeated/tiled usage
+
+Theming
+-------
+Default palette uses WaxWatch colors:
+deep  #3B1F14
+mid   #8C3A0F
+amber #D87A00
+gold  #F4B000
+
+Palette should be overridden by setting:
+--ww-stripe-deep
+--ww-stripe-mid
+--ww-stripe-amber
+--ww-stripe-gold

@@ -1,0 +1,152 @@
+WAXWATCH FRONTEND DESIGN GUIDE (v1)
+===================================
+
+Purpose
+-------
+This document defines the styling + UI rules for the WaxWatch frontend.
+It is written to be "agent-proof": implementers must follow tokens, components,
+and guardrails exactly to keep the product visually consistent.
+
+High-level goals
+----------------
+- Retro-forward, strong brand identity.
+- Dark mode is primary.
+- Signature motif: analog oscilloscope / stock-like waveform trace.
+- UI is modern SaaS structure + warm analog vibe.
+- Minimal layout chrome; visual personality comes from waveform + warm glows.
+
+Key visual metaphor
+-------------------
+Layered waveform trace (signal) = vinyl audio + price movement + alert trigger.
+- Data spikes -> peaks
+- Alerts -> pulses
+- Receiver/hi-fi -> analog warmth
+
+Information Architecture (Screens / Routes)
+-------------------------------------------
+Signed-out (marketing):
+- Landing
+- How it works
+- (future) Pricing
+- Auth entry (Supabase hosted UI or provider redirect)
+
+Signed-in (app shell):
+- Dashboard
+- Alerts (Search rules: /api/watch-rules)
+- Watchlist (Release watches: /api/watch-releases)
+- Notifications Inbox (/api/notifications + unread count + SSE)
+- Integrations (Discogs oauth/import lifecycle)
+- Settings
+  - Profile (/api/me GET/PATCH)
+  - Logout (/api/me/logout POST)
+  - Danger Zone Deactivate (/api/me DELETE)
+
+Navigation layout (final)
+-------------------------
+Desktop:
+- Left sidebar + Top utility bar.
+- Sidebar collapses to icon-only at smaller widths.
+- Top utility bar includes notifications badge + avatar menu.
+- Waveform used as a thin header band accent (calm variant).
+
+Mobile:
+- Bottom tab bar (max 5).
+  - Home, Alerts, Watchlist, Notifications, Settings
+
+Theme architecture (themeable)
+------------------------------
+All colors come from tokens / CSS variables. No ad-hoc colors.
+
+Primary mode: DARK
+- Use warm espresso background (never pure black).
+- Use warm off-white text (never pure white).
+- Use the waveform palette for brand accents.
+
+Theme should be swappable for future niches by replacing palette tokens.
+
+Primary stripe palette (WaxWatch default)
+-----------------------------------------
+--ww-stripe-deep  = #3B1F14
+--ww-stripe-mid   = #8C3A0F
+--ww-stripe-amber = #D87A00
+--ww-stripe-gold  = #F4B000
+
+Suggested neutral tokens (recommended)
+--------------------------------------
+bg.app        = #1A1411
+bg.surface    = #231A16
+bg.elevated   = #2A1F1A
+border.subtle = #3A2A22
+
+text.primary   = #F4EDE6
+text.secondary = #C7B8AD
+text.muted     = #9C8C80
+
+Waveform system (signature identity)
+------------------------------------
+We use a "rainbow trace" waveform:
+- One canonical waveform path per variant.
+- Draw it 4 times with stacked strokes (deep->mid->amber->gold).
+- Each has its own glow blur and stroke width.
+- Optional "persistence ghost" traces behind.
+
+Variants (canonical):
+- calm   : header bands, subtle chrome
+- active : dividers, hero accents (often subdued/low opacity)
+- spike  : match-found / special moments ONLY (rare)
+
+Alignment:
+- Bottom-biased. The wave should feel like rising energy.
+
+Placement rules:
+- Approved: header band, dividers, hero accents (subdued), empty states, rare highlight moments.
+- Not allowed: behind dense tables, behind forms, behind long text, tiled backgrounds.
+
+Card glow system
+----------------
+Glows must feel like warm analog backlighting:
+- subtle by default
+- slightly stronger on hover
+- active state uses warm amber/gold accent
+
+Do NOT use cyberpunk colors (blue/cyan/purple) for glows.
+
+Motion rules
+------------
+Motion must be smooth and subtle:
+- 150–250ms transitions
+- ease-in-out
+- no bounce, no overshoot
+- Waveform animation, if any: marketing only, 20–30s slow drift. App shell = static.
+
+API contract alignment
+----------------------
+Errors:
+- validation_error.details => field-level errors
+- http_error => global banner/toast
+
+Pagination:
+- offset paging => "Load more" preferred
+- cursor paging => infinite scroll
+- out-of-range returns [] => show empty state (with waveform empty state asset)
+
+SSE Notifications:
+- Single SSE connection per session
+- Exponential backoff reconnect
+- On event: update inbox cache, refresh unread badge, show toast
+
+Guardrails (non-negotiable)
+---------------------------
+Agents MUST NOT:
+- Add new colors outside tokens
+- Use gradients except those defined globally (default: none)
+- Use pure black backgrounds
+- Use waveform behind forms/tables/dense content
+- Randomize waveform shapes per page/render
+- Overuse spike variant
+
+Agents MUST:
+- Use tokenized colors only
+- Use the WaveTrace component for all waveform usage
+- Keep bottom-bias alignment
+- Maintain consistent spacing scale and radius rules

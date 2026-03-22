@@ -1,0 +1,63 @@
+APP SHELL LAYOUT SPEC (v1)
+=========================
+
+Desktop layout
+--------------
+Structure:
+- Left Sidebar (fixed)
+- Top Utility Bar (fixed)
+- Main Content (scroll)
+
+Sidebar
+-------
+Width:
+- Expanded: 260px
+- Collapsed: 72px (icon-only)
+
+Content:
+- Top: Logo icon + "WaxWatch" wordmark
+- Nav: Dashboard, Alerts, Watchlist, Notifications, Integrations, Settings
+- Bottom: account/status (optional)
+
+Behavior:
+- Collapse at medium widths (e.g. < 1024px) or user toggle
+- Active item: subtle glow background (use --ww-glow-subtle)
+- Hover: glow hover
+
+Top Utility Bar
+---------------
+Height: 56px (recommended)
+Includes:
+- Optional search (future)
+- Notifications badge
+- Avatar menu
+
+Waveform header band:
+- Place directly under Top Bar or integrated at bottom edge
+- Use WaveTrace variant="calm", ghosts=false
+- Height: 26–32px, overflow hidden
+- Align bottom
+
+Mobile layout
+-------------
+- Bottom Tab Bar (fixed), height ~56px
+- Tabs: Home, Alerts, Watchlist, Notifications, Settings
+- WaveTrace accent: thin line at top of viewport optional, calm variant, low height
+
+Scrolling
+---------
+- Sidebar and top bar fixed
+- Main content scroll area should not cause header jitter
+
+Z-index ordering (recommended)
+------------------------------
+- Top bar: 40
+- Sidebar: 30
+- Toasts: 50
+- Modal dialogs: 60
+
+Waveform usage
+--------------
+- Header band uses calm (crisp)
+- Dividers in content use active
+- Avoid spike in navigation chrome
