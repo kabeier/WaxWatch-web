@@ -1,19 +1,4 @@
 :root {
-  /* background + surfaces */
-  --bg: #0b0614;
-  --surface: #140b24;
-
-  /* text */
-  --text: #f2eefc;
-  --muted: #b9b0d6;
-
-  /* accents */
-  --accent: #7c3aed; /* purple */
-  --accent2: #2dd4bf; /* teal */
-
-  /* borders */
-  --border: rgba(255, 255, 255, 0.08);
-
   --font-family-sans: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 
   /* spacing */
@@ -26,33 +11,163 @@
 
   /* radii */
   --radius-md: 6px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
 
-  /* semantic aliases */
-  --color-bg-subtle: var(--surface);
-  --color-fg-default: var(--text);
-  --color-state-warning: #f59e0b;
-  --color-state-success: #22c55e;
+  /* semantic aliases for existing primitives */
+  --color-bg-subtle: var(--ww-bg-surface);
+  --color-fg-default: var(--ww-text-primary);
+  --color-state-warning: var(--ww-warning);
+  --color-state-success: var(--ww-success);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Neutrals */
+  --ww-bg-app: #1a1411;
+  --ww-bg-surface: #231a16;
+  --ww-bg-elevated: #2a1f1a;
+  --ww-border-subtle: #3a2a22;
+
+  /* Text */
+  --ww-text-primary: #f4ede6;
+  --ww-text-secondary: #c7b8ad;
+  --ww-text-muted: #9c8c80;
+
+  /* Waveform palette */
+  --ww-stripe-deep: #3b1f14;
+  --ww-stripe-mid: #8c3a0f;
+  --ww-stripe-amber: #d87a00;
+  --ww-stripe-gold: #f4b000;
+
+  /* Glows */
+  --ww-glow-subtle: rgba(244, 176, 0, 0.05);
+  --ww-glow-hover: rgba(244, 176, 0, 0.1);
+  --ww-glow-active: rgba(216, 122, 0, 0.18);
+
+  /* Focus and semantic states */
+  --ww-focus-ring: rgba(244, 176, 0, 0.38);
+  --ww-success: rgba(244, 176, 0, 0.65);
+  --ww-warning: rgba(216, 122, 0, 0.75);
+  --ww-error: #c84a3a;
+
+  /* Component defaults */
+  --ww-card-bg: var(--ww-bg-surface);
+  --ww-card-border: var(--ww-border-subtle);
+  --ww-input-bg: var(--ww-bg-surface);
+  --ww-input-border: var(--ww-border-subtle);
+  --ww-button-primary-bg: var(--ww-stripe-amber);
+  --ww-button-primary-text: var(--ww-bg-app);
+  --ww-button-secondary-bg: transparent;
+  --ww-button-secondary-text: var(--ww-text-primary);
+  --ww-button-secondary-border: var(--ww-border-subtle);
+
+  /* Shadows */
+  --ww-shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* Neutrals */
+  --ww-bg-app: #fbf6ef;
+  --ww-bg-surface: #fffaf3;
+  --ww-bg-elevated: #ffffff;
+  --ww-border-subtle: #e3d6c9;
+
+  /* Text */
+  --ww-text-primary: #1a1411;
+  --ww-text-secondary: #3a2a22;
+  --ww-text-muted: #6a5b50;
+
+  /* Waveform palette */
+  --ww-stripe-deep: #3b1f14;
+  --ww-stripe-mid: #8c3a0f;
+  --ww-stripe-amber: #d87a00;
+  --ww-stripe-gold: #f4b000;
+
+  /* Glows */
+  --ww-glow-subtle: rgba(216, 122, 0, 0.1);
+  --ww-glow-hover: rgba(216, 122, 0, 0.16);
+  --ww-glow-active: rgba(216, 122, 0, 0.22);
+
+  /* Focus and semantic states */
+  --ww-focus-ring: rgba(140, 58, 15, 0.32);
+  --ww-success: rgba(216, 122, 0, 0.85);
+  --ww-warning: rgba(140, 58, 15, 0.75);
+  --ww-error: #b53c2f;
+
+  /* Component defaults */
+  --ww-card-bg: var(--ww-bg-surface);
+  --ww-card-border: var(--ww-border-subtle);
+  --ww-input-bg: var(--ww-bg-elevated);
+  --ww-input-border: var(--ww-border-subtle);
+  --ww-button-primary-bg: var(--ww-stripe-amber);
+  --ww-button-primary-text: #1a1411;
+  --ww-button-secondary-bg: transparent;
+  --ww-button-secondary-text: var(--ww-text-primary);
+  --ww-button-secondary-border: var(--ww-border-subtle);
+
+  /* Shadows */
+  --ww-shadow-soft: 0 10px 24px rgba(26, 20, 17, 0.1);
+}
+
+:root,
+html,
+body {
+  margin: 0;
+  background: var(--ww-bg-app);
+  color: var(--ww-text-primary);
 }
 
 body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
   font-family: var(--font-family-sans);
   line-height: 1.5;
 }
 
 a {
-  color: var(--accent2);
+  color: inherit;
+  text-decoration: none;
 }
 
 a:hover {
-  color: var(--accent);
+  color: var(--ww-text-secondary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ww-focus-ring);
+  outline-offset: 2px;
 }
 
 hr {
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--ww-border-subtle);
+}
+
+.ww-card {
+  background: var(--ww-card-bg);
+  border: 1px solid var(--ww-card-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--ww-shadow-soft);
+}
+
+.ww-card--glow {
+  box-shadow:
+    var(--ww-shadow-soft),
+    0 0 60px var(--ww-glow-subtle);
+}
+
+.ww-card--glow:hover {
+  box-shadow:
+    var(--ww-shadow-soft),
+    0 0 70px var(--ww-glow-hover);
+}
+
+.ww-card--glow.is-active {
+  box-shadow:
+    var(--ww-shadow-soft),
+    0 0 80px var(--ww-glow-active);
 }
 
 .layout-main {
@@ -75,8 +190,19 @@ hr {
 }
 
 .top-nav-link {
+  display: inline-flex;
+  align-items: center;
   margin-right: var(--space-3);
-  text-decoration: none;
+  color: var(--ww-text-secondary);
+  transition:
+    color 200ms ease-in-out,
+    text-shadow 200ms ease-in-out;
+}
+
+.top-nav-link:hover,
+.top-nav-link:focus-visible {
+  color: var(--ww-text-primary);
+  text-shadow: 0 0 18px var(--ww-glow-subtle);
 }
 
 .top-nav-divider {
@@ -84,11 +210,13 @@ hr {
 }
 
 .auth-notice {
-  background-color: var(--color-bg-subtle);
-  color: var(--color-fg-default);
+  background: var(--ww-card-bg);
+  color: var(--ww-text-primary);
   padding: var(--space-3);
   margin-bottom: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--ww-card-border);
+  box-shadow: var(--ww-shadow-soft);
 }
 
 .auth-notice--reauth-required {
