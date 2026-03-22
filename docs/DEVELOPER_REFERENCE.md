@@ -71,6 +71,7 @@ Open: http://localhost:3000
 - `npm run test`
 - `npm run lint`
 - `npm run format`
+- `npm run format:check`
 
 ### Read this first (in order)
 
@@ -79,6 +80,7 @@ Open: http://localhost:3000
 3. `docs/FRONTEND_API_CONTRACT.md`
 4. `docs/SSE_MODEL.md`
 5. `docs/DESIGN_SYSTEM.md`
+6. `docs/style/README.md` for any UI/layout/theme work
 
 Route maturity/status guidance is canonical in this reference's **Route matrix** section and in `docs/ROUTES.md`.
 
@@ -223,4 +225,4 @@ See `docs/ROUTES.md` and `docs/IA_MAP.md`.
 
 ## Agent work
 
-If you are a code agent, read **docs/AGENT_GUIDE.md** first.
+If you are a code agent, read **docs/AGENT_GUIDE.md** first. For UI/layout/theming tasks, also read **docs/style/README.md** and the relevant `docs/style/*` specs before implementing changes. Before every commit intended for a PR, run Prettier (`npm run format` or targeted `npx prettier --write ...`) and verify with `npm run format:check`; the repository pre-commit hook also runs `lint-staged`.
