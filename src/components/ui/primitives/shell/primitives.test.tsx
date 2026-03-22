@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { __setPathname } from "@/test/mocks/next-navigation";
@@ -28,10 +28,7 @@ describe("shell primitives", () => {
 
     expect(primaryNav).not.toBeNull();
     expect(mobileNav).not.toBeNull();
-    expect(screen.getAllByRole("link", { name: /Dashboard/i })[0]).toHaveAttribute(
-      "href",
-      "/search",
-    );
+    expect(screen.getAllByRole("link", { name: /Search/i })[0]).toHaveAttribute("href", "/search");
     expect(screen.getByRole("link", { name: /Integrations/i })).toHaveAttribute(
       "href",
       "/settings/integrations",
@@ -44,6 +41,10 @@ describe("shell primitives", () => {
       "aria-current",
       "page",
     );
+    expect(within(mobileNav as HTMLElement).getByRole("link", { name: /Home/i })).toHaveAttribute(
+      "href",
+      "/search",
+    );
   });
 
   it("renders app shell composition slots", () => {
@@ -54,6 +55,7 @@ describe("shell primitives", () => {
         sideNav={<div>SideNav</div>}
         headerBand={<div>Band</div>}
         mobileTabBar={<div>Tabs</div>}
+        mobileTabBarVisibility="always"
       >
         <ContentContainer>
           <div>Page content</div>
@@ -76,6 +78,7 @@ describe("shell primitives", () => {
         sideNav={<SideNav />}
         headerBand={<ShellHeaderBand />}
         mobileTabBar={<MobileTabBar />}
+        mobileTabBarVisibility="always"
         banner={<AuthNotice reason="reauth-required" />}
       >
         <ContentContainer>

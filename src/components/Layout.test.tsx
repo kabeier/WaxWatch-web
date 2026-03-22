@@ -15,7 +15,7 @@ describe("Layout", () => {
       </Layout>,
     );
 
-    expect(screen.getAllByRole("link", { name: /Dashboard/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /Search/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /WaxWatch home/i }).length).toBeGreaterThan(0);
     expect(screen.getByRole("main")).toHaveTextContent("Child body");
   });

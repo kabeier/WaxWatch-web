@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import { useEffect, useState, type ComponentPropsWithoutRef, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -18,6 +18,7 @@ type AppShellProps = {
   topNav?: ReactNode;
   sideNav?: ReactNode;
   mobileTabBar?: ReactNode;
+  mobileTabBarVisibility?: "auto" | "always";
   banner?: ReactNode;
   headerBand?: ReactNode;
   variant?: "app" | "auth";
@@ -47,8 +48,8 @@ type ContentContainerProps = ComponentPropsWithoutRef<"section"> & {
 const APP_NAV_ITEMS: ShellNavItem[] = [
   {
     href: "/search",
-    label: "Dashboard",
-    shortLabel: "DB",
+    label: "Search",
+    shortLabel: "SR",
     match: (pathname) => pathname === "/" || pathname.startsWith("/search"),
   },
   { href: "/alerts", label: "Alerts", shortLabel: "AL" },
@@ -69,7 +70,12 @@ const APP_NAV_ITEMS: ShellNavItem[] = [
 ];
 
 const MOBILE_NAV_ITEMS: ShellNavItem[] = [
-  APP_NAV_ITEMS[0],
+  {
+    href: "/search",
+    label: "Home",
+    shortLabel: "HM",
+    match: (pathname) => pathname === "/" || pathname.startsWith("/search"),
+  },
   APP_NAV_ITEMS[1],
   APP_NAV_ITEMS[2],
   APP_NAV_ITEMS[3],
@@ -78,6 +84,39 @@ const MOBILE_NAV_ITEMS: ShellNavItem[] = [
 
 function joinClassNames(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
+}
+
+function useIsMobileViewport() {
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateViewportState = () => {
+      setIsMobileViewport(mediaQuery.matches);
+    };
+
+    updateViewportState();
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", updateViewportState);
+
+      return () => {
+        mediaQuery.removeEventListener("change", updateViewportState);
+      };
+    }
+
+    mediaQuery.addListener(updateViewportState);
+
+    return () => {
+      mediaQuery.removeListener(updateViewportState);
+    };
+  }, []);
+
+  return isMobileViewport;
 }
 
 function isNavItemActive(pathname: string, item: ShellNavItem) {
@@ -138,12 +177,16 @@ export function AppShell({
   topNav,
   sideNav,
   mobileTabBar,
+  mobileTabBarVisibility = "auto",
   banner,
   headerBand,
   variant = "app",
 }: AppShellProps) {
   const hasSidebar = Boolean(sideNav);
   const hasMobileTabs = Boolean(mobileTabBar);
+  const isMobileViewport = useIsMobileViewport();
+  const shouldRenderMobileTabs =
+    hasMobileTabs && (mobileTabBarVisibility === "always" || isMobileViewport);
 
   return (
     <div
@@ -157,7 +200,7 @@ export function AppShell({
       {sideNav ? <div className="app-shell__sidebar">{sideNav}</div> : null}
       {topNav ? <div className="app-shell__topbar">{topNav}</div> : null}
       {headerBand ? <div className="app-shell__header-band">{headerBand}</div> : null}
-      {mobileTabBar ? <div className="app-shell__bottom-tabs">{mobileTabBar}</div> : null}
+      {shouldRenderMobileTabs ? <div className="app-shell__bottom-tabs">{mobileTabBar}</div> : null}
 
       <div className="app-shell__viewport">
         {banner ? <div className="app-shell__banner">{banner}</div> : null}
@@ -182,8 +225,8 @@ export function TopNav({
           <nav className="top-nav__utilities" aria-label={utilityLabel}>
             {utilities ?? (
               <>
-                <ShellUtilityLink href="/notifications" label="Alerts" value="04" />
-                <ShellUtilityLink href="/settings/profile" label="Profile" value="Open" />
+                <ShellUtilityLink href="/notifications" label="Inbox" value="04" />
+                <ShellUtilityLink href="/settings/profile" label="Account" value="Open" />
               </>
             )}
           </nav>
