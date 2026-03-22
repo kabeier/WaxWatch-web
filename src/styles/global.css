@@ -131,8 +131,15 @@ a {
   text-decoration: none;
 }
 
-a:hover {
-  color: var(--ww-text-secondary);
+a:not([class]) {
+  color: var(--ww-stripe-gold);
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.16em;
+}
+
+a:not([class]):hover {
+  color: var(--ww-stripe-amber);
 }
 
 :focus-visible {
