@@ -1,30 +1,61 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { AppShell, AuthNotice, ContentContainer, SideNav, TopNav } from "./primitives";
+import { __setPathname } from "@/test/mocks/next-navigation";
+
+import {
+  AppShell,
+  AuthNotice,
+  ContentContainer,
+  MobileTabBar,
+  ShellHeaderBand,
+  SideNav,
+  TopNav,
+} from "./primitives";
 
 describe("shell primitives", () => {
-  it("renders top navigation links", () => {
-    render(<TopNav />);
-
-    expect(screen.getByRole("link", { name: "Search" })).toHaveAttribute("href", "/search");
-    expect(screen.getByRole("link", { name: "Alerts" })).toHaveAttribute("href", "/alerts");
-    expect(screen.getByRole("link", { name: "Watchlist" })).toHaveAttribute("href", "/watchlist");
-    expect(screen.getByRole("link", { name: "Notifications" })).toHaveAttribute(
-      "href",
-      "/notifications",
+  it("renders desktop and mobile navigation links", () => {
+    __setPathname("/settings/profile");
+    const { container } = render(
+      <>
+        <SideNav />
+        <MobileTabBar />
+      </>,
     );
-    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
+
+    const primaryNav = container.querySelector('nav[aria-label="Primary"]');
+    const mobileNav = container.querySelector('nav[aria-label="Mobile primary"]');
+
+    expect(primaryNav).not.toBeNull();
+    expect(mobileNav).not.toBeNull();
+    expect(screen.getAllByRole("link", { name: /Dashboard/i })[0]).toHaveAttribute(
       "href",
-      "/settings/profile",
+      "/search",
+    );
+    expect(screen.getByRole("link", { name: /Integrations/i })).toHaveAttribute(
+      "href",
+      "/settings/integrations",
+    );
+    expect(screen.getAllByRole("link", { name: /Settings/i })[0]).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getAllByRole("link", { name: /Settings/i })[1]).toHaveAttribute(
+      "aria-current",
+      "page",
     );
   });
 
   it("renders app shell composition slots", () => {
     render(
-      <AppShell banner={<div>Banner</div>} topNav={<div>TopNav</div>}>
+      <AppShell
+        banner={<div>Banner</div>}
+        topNav={<div>TopNav</div>}
+        sideNav={<div>SideNav</div>}
+        headerBand={<div>Band</div>}
+        mobileTabBar={<div>Tabs</div>}
+      >
         <ContentContainer>
-          <SideNav>Side</SideNav>
           <div>Page content</div>
         </ContentContainer>
       </AppShell>,
@@ -32,13 +63,21 @@ describe("shell primitives", () => {
 
     expect(screen.getByText("TopNav")).toBeInTheDocument();
     expect(screen.getByText("Banner")).toBeInTheDocument();
-    expect(screen.getByText("Side")).toBeInTheDocument();
+    expect(screen.getByText("SideNav")).toBeInTheDocument();
+    expect(screen.getByText("Band")).toBeInTheDocument();
+    expect(screen.getByText("Tabs")).toBeInTheDocument();
     expect(screen.getByText("Page content")).toBeInTheDocument();
   });
 
   it("applies class-based shell and notice styling hooks", () => {
     const { container, rerender } = render(
-      <AppShell topNav={<TopNav />} banner={<AuthNotice reason="reauth-required" />}>
+      <AppShell
+        topNav={<TopNav />}
+        sideNav={<SideNav />}
+        headerBand={<ShellHeaderBand />}
+        mobileTabBar={<MobileTabBar />}
+        banner={<AuthNotice reason="reauth-required" />}
+      >
         <ContentContainer>
           <div>Body</div>
         </ContentContainer>
@@ -47,8 +86,9 @@ describe("shell primitives", () => {
 
     expect(container.querySelector("div.app-shell")).toBeInTheDocument();
     expect(container.querySelector("header.top-nav")).toBeInTheDocument();
-    expect(container.querySelector("a.top-nav-link")).toBeInTheDocument();
-    expect(container.querySelector("hr.top-nav-divider")).toBeInTheDocument();
+    expect(container.querySelector("aside.side-nav")).toBeInTheDocument();
+    expect(container.querySelector("div.shell-header-band")).toBeInTheDocument();
+    expect(container.querySelector("nav.mobile-tab-bar")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveClass("auth-notice", "auth-notice--reauth-required");
 
     rerender(<AuthNotice reason="signed-out" />);

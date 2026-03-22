@@ -3,7 +3,15 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-import { AppShell, AuthNotice, ContentContainer, TopNav } from "@/components/ui/primitives/shell";
+import {
+  AppShell,
+  AuthNotice,
+  ContentContainer,
+  MobileTabBar,
+  ShellHeaderBand,
+  SideNav,
+  TopNav,
+} from "@/components/ui/primitives/shell";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -18,12 +26,15 @@ function AuthNoticeFromSearchParams() {
 export default function Layout({ children }: LayoutProps) {
   return (
     <AppShell
+      topNav={<TopNav />}
+      sideNav={<SideNav />}
+      headerBand={<ShellHeaderBand />}
+      mobileTabBar={<MobileTabBar />}
       banner={
         <Suspense fallback={null}>
           <AuthNoticeFromSearchParams />
         </Suspense>
       }
-      topNav={<TopNav />}
     >
       <ContentContainer>{children}</ContentContainer>
     </AppShell>
