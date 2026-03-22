@@ -38,23 +38,69 @@ type RouteOperation = {
 };
 
 type RouteViewModel = {
+  path: string;
+  aliases?: string[];
   heading: string;
   summary: string;
+  navigationLabel?: string;
+  mobileNavigationLabel?: string;
+  section: "app" | "settings" | "auth" | "legacy";
+  parentRoute?: string;
   operations: RouteOperation[];
 };
 
 export const routeViewModels = {
+  dashboard: {
+    path: "/dashboard",
+    aliases: ["/"],
+    heading: "Dashboard",
+    summary:
+      "Start from a signed-in overview, then branch into search, alerts, watchlist, and inbox work.",
+    navigationLabel: "Dashboard",
+    mobileNavigationLabel: "Home",
+    section: "app",
+    operations: [
+      {
+        id: "dashboard-rules",
+        label: "Load watch rules for summary counts",
+        serviceMethod: "watchRules.list",
+      },
+      {
+        id: "dashboard-releases",
+        label: "Load watch releases for recent matches",
+        serviceMethod: "watchReleases.list",
+      },
+      {
+        id: "dashboard-unread",
+        label: "Load unread notification count",
+        serviceMethod: "notifications.getUnreadCount",
+      },
+      {
+        id: "dashboard-notifications",
+        label: "Load recent notifications for activity feed",
+        serviceMethod: "notifications.list",
+      },
+    ],
+  },
   search: {
+    path: "/search",
     heading: "Search",
     summary: "Search listings and save matching queries as alert rules.",
+    navigationLabel: "Search",
+    mobileNavigationLabel: "Search",
+    section: "app",
     operations: [
       { id: "run-search", label: "Run search query", serviceMethod: "search.run" },
       { id: "save-alert", label: "Save query as alert", serviceMethod: "search.saveAlert" },
     ],
   },
   alerts: {
+    path: "/alerts",
     heading: "Alerts",
     summary: "Review watch rules and releases that matched your active rules.",
+    navigationLabel: "Alerts",
+    mobileNavigationLabel: "Alerts",
+    section: "app",
     operations: [
       { id: "list-rules", label: "Load watch rules", serviceMethod: "watchRules.list" },
       { id: "create-rule", label: "Create watch rule", serviceMethod: "watchRules.create" },
@@ -62,8 +108,12 @@ export const routeViewModels = {
     ],
   },
   alertDetail: {
+    path: "/alerts/[id]",
+    aliases: ["/alerts/new"],
     heading: "Alert Detail",
     summary: "Inspect and manage one watch rule and its current matched releases.",
+    section: "app",
+    parentRoute: "alerts",
     operations: [
       { id: "get-rule", label: "Load selected watch rule", serviceMethod: "watchRules.getById" },
       { id: "update-rule", label: "Update watch rule", serviceMethod: "watchRules.update" },
@@ -76,8 +126,12 @@ export const routeViewModels = {
     ],
   },
   watchlist: {
+    path: "/watchlist",
     heading: "Watchlist",
     summary: "Track release matches across all of your saved watch rules.",
+    navigationLabel: "Watchlist",
+    mobileNavigationLabel: "Watchlist",
+    section: "app",
     operations: [
       {
         id: "watchlist-load",
@@ -86,9 +140,28 @@ export const routeViewModels = {
       },
     ],
   },
+  watchlistItem: {
+    path: "/watchlist/[id]",
+    heading: "Watchlist Item",
+    summary:
+      "Inspect one tracked release and prepare for a future dedicated editor when watch-release mutations are added.",
+    section: "app",
+    parentRoute: "watchlist",
+    operations: [
+      {
+        id: "watchlist-item-load",
+        label: "Load selected watch release",
+        serviceMethod: "watchReleases.getById",
+      },
+    ],
+  },
   notifications: {
+    path: "/notifications",
     heading: "Notifications",
     summary: "Review notification feed, unread count, and mark items as read.",
+    navigationLabel: "Notifications",
+    mobileNavigationLabel: "Inbox",
+    section: "app",
     operations: [
       {
         id: "notifications-list",
@@ -107,17 +180,13 @@ export const routeViewModels = {
       },
     ],
   },
-  profile: {
-    heading: "Profile Settings",
-    summary: "Manage profile identity and notification delivery preferences.",
-    operations: [
-      { id: "profile-get", label: "Load profile", serviceMethod: "me.getProfile" },
-      { id: "profile-update", label: "Update profile", serviceMethod: "me.updateProfile" },
-    ],
-  },
   integrations: {
-    heading: "Discogs Integrations",
+    path: "/integrations",
+    aliases: ["/settings/integrations"],
+    heading: "Integrations",
     summary: "Connect Discogs and trigger collection imports into WaxWatch.",
+    navigationLabel: "Integrations",
+    section: "app",
     operations: [
       {
         id: "discogs-status",
@@ -141,4 +210,101 @@ export const routeViewModels = {
       },
     ],
   },
+  settings: {
+    path: "/settings",
+    heading: "Settings",
+    summary:
+      "Use the settings shell to manage profile, delivery preferences, and account-risk actions.",
+    navigationLabel: "Settings",
+    mobileNavigationLabel: "Settings",
+    section: "settings",
+    operations: [{ id: "settings-profile", label: "Load profile", serviceMethod: "me.getProfile" }],
+  },
+  settingsProfile: {
+    path: "/settings/profile",
+    heading: "Profile Settings",
+    summary: "Manage profile identity and notification delivery preferences.",
+    section: "settings",
+    parentRoute: "settings",
+    operations: [
+      { id: "profile-get", label: "Load profile", serviceMethod: "me.getProfile" },
+      { id: "profile-update", label: "Update profile", serviceMethod: "me.updateProfile" },
+    ],
+  },
+  settingsAlerts: {
+    path: "/settings/alerts",
+    heading: "Alert Delivery Settings",
+    summary: "Tune quiet hours, frequency, and other alert delivery preferences.",
+    section: "settings",
+    parentRoute: "settings",
+    operations: [
+      { id: "settings-alerts-get", label: "Load profile", serviceMethod: "me.getProfile" },
+      {
+        id: "settings-alerts-save",
+        label: "Update profile delivery preferences",
+        serviceMethod: "me.updateProfile",
+      },
+    ],
+  },
+  settingsDanger: {
+    path: "/settings/danger",
+    heading: "Danger Zone",
+    summary: "Review irreversible account actions before deactivation or deletion.",
+    section: "settings",
+    parentRoute: "settings",
+    operations: [{ id: "danger-load", label: "Load profile", serviceMethod: "me.getProfile" }],
+  },
+  login: {
+    path: "/login",
+    heading: "Login",
+    summary: "Enter the product through the hosted authentication flow.",
+    section: "auth",
+    operations: [],
+  },
+  signedOut: {
+    path: "/signed-out",
+    heading: "Signed Out",
+    summary: "Confirm that the current session has ended.",
+    section: "auth",
+    operations: [],
+  },
+  accountRemoved: {
+    path: "/account-removed",
+    heading: "Account Removed",
+    summary: "Confirm that the account was deleted and access was revoked.",
+    section: "auth",
+    operations: [],
+  },
+  legacySettingsIntegrations: {
+    path: "/settings/integrations",
+    heading: "Legacy Integrations Redirect",
+    summary: "Backward-compatible redirect to the canonical integrations route.",
+    section: "legacy",
+    parentRoute: "integrations",
+    operations: [],
+  },
 } satisfies Record<string, RouteViewModel>;
+
+export const primaryNavigationRouteKeys = [
+  "dashboard",
+  "search",
+  "alerts",
+  "watchlist",
+  "notifications",
+  "integrations",
+  "settings",
+] as const;
+
+export const mobileNavigationRouteKeys = [
+  "dashboard",
+  "search",
+  "alerts",
+  "watchlist",
+  "settings",
+] as const;
+
+export const settingsNavigationRouteKeys = [
+  "settingsProfile",
+  "settingsAlerts",
+  "settingsDanger",
+] as const;

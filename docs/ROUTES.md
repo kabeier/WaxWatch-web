@@ -2,24 +2,27 @@
 
 This app uses Next.js **App Router**.
 
-## Project decision
+## Canonical route model
 
-- ✅ Decision: migrate to **Next.js App Router now** and treat `app/` as the canonical route tree.
-- Keep `pages/api/*` for API routes only during this phase.
+- `app/` is the single source of truth for route ownership.
+- `/` is a server redirect entrypoint to `/dashboard`.
+- `/dashboard` is the canonical signed-in landing route.
+- `/search` remains a first-class top-level task route for discovery and save-as-alert flows.
+- `/integrations` is the canonical integrations route.
+- `/settings/integrations` exists only as a compatibility redirect to `/integrations`.
+- `/settings` is a real landing/tab-shell route for account and preference pages.
 
 ## Layout groups
 
-Currently implemented route groups/files:
+Implemented route groups/files:
 
-- `app/(auth)/...` signed-out routes (login and account/session states)
+- `app/(auth)/...` signed-out auth/account-state routes
 - `app/(app)/...` authenticated shell routes
 
 Planned/optional route group (not currently in tree):
 
 - `app/(app)/admin/...` admin routes only if introduced later
   - Must be gated by feature flag + admin claim per `docs/ADMIN_POLICY.md`
-
-## Route map
 
 ## Design-system guardrails for all new route work
 
@@ -29,32 +32,66 @@ All new route implementation/migration work must compose shared primitives first
 - Use shell primitives from `src/components/ui/primitives/shell` for route-level layout scaffolding and navigation chrome.
 - Promote any missing visual behavior into shared primitives/tokens before consuming it in route pages.
 
-## Route maturity/status (canonical guidance)
+## Signed-in route inventory
 
-Route maturity definitions and the up-to-date status matrix are maintained in `docs/DEVELOPER_REFERENCE.md` under **Route matrix**.
+### Primary app destinations
 
-When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source.
-
-### MVP routes
-
-- `/login` — Supabase auth UI / sign in flow
+- `/dashboard` — canonical signed-in landing page
 - `/search` — search listings + save search as alert
 - `/alerts` — list alerts (watch rules)
 - `/alerts/new` — create alert
 - `/alerts/[id]` — alert detail/edit
-- `/watchlist` — list/manage release watches
+- `/watchlist` — list/manage tracked releases
+- `/watchlist/[id]` — canonical watchlist item detail/editor shell
 - `/notifications` — inbox + mark read/unread
+- `/integrations` — Discogs connect/import/status
+- `/settings` — settings landing shell
 - `/settings/profile` — profile + preferences
 - `/settings/alerts` — alert delivery settings (quiet hours, frequency)
-- `/settings/integrations` — Discogs connect/import/status
 - `/settings/danger` — deactivate + hard delete
 
-### Implemented but non-MVP support routes
+### Signed-out routes
 
-- `/` — unconditional server redirect entrypoint to `/search`; non-production-ready until dedicated route-level redirect contract coverage (including destination-regression protection) is added independent of `/search` implementation details
+- `/login` — Supabase auth UI / sign in flow
 - `/signed-out` — post-logout informational state
 - `/account-removed` — post-account-removal informational state
 
-### Planned
+### Compatibility redirects
 
+- `/` -> `/dashboard`
+- `/settings/integrations` -> `/integrations`
+
+### Deferred / future surfaces
+
+- Marketing landing
+- How it works
+- Pricing
 - `/admin/provider-requests` — optional future admin route; if implemented, must follow `docs/ADMIN_POLICY.md`
+
+## Navigation model
+
+### Desktop sidebar
+
+1. Dashboard
+2. Search
+3. Alerts
+4. Watchlist
+5. Notifications
+6. Integrations
+7. Settings
+
+### Mobile bottom navigation
+
+1. Home (`/dashboard`)
+2. Search (`/search`)
+3. Alerts (`/alerts`)
+4. Watchlist (`/watchlist`)
+5. Settings (`/settings`)
+
+Notifications remain available via the top utility/inbox affordance.
+
+## Route maturity/status
+
+Route maturity definitions and the up-to-date status matrix are maintained in `docs/DEVELOPER_REFERENCE.md` under **Route matrix**.
+
+When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source.

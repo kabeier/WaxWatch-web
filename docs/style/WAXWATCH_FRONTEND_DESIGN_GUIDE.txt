@@ -1,11 +1,9 @@
-WAXWATCH FRONTEND DESIGN GUIDE (v1)
-===================================
+WAXWATCH FRONTEND DESIGN GUIDE (canonical IA edition)
+====================================================
 
 Purpose
 -------
-This document defines the styling + UI rules for the WaxWatch frontend.
-It is written to be "agent-proof": implementers must follow tokens, components,
-and guardrails exactly to keep the product visually consistent.
+This document defines the styling + UI rules for the WaxWatch frontend and records the canonical navigation model that route work must follow.
 
 High-level goals
 ----------------
@@ -22,36 +20,51 @@ Layered waveform trace (signal) = vinyl audio + price movement + alert trigger.
 - Alerts -> pulses
 - Receiver/hi-fi -> analog warmth
 
-Information Architecture (Screens / Routes)
+Information Architecture (canonical routes)
 -------------------------------------------
-Signed-out (marketing):
+Signed-out (current product scope):
+- Login/auth entry (`/login`)
+- Signed-out confirmation (`/signed-out`)
+- Account removed confirmation (`/account-removed`)
+
+Signed-out (future/deferred marketing):
 - Landing
 - How it works
-- (future) Pricing
-- Auth entry (Supabase hosted UI or provider redirect)
+- Pricing
 
 Signed-in (app shell):
-- Dashboard
-- Alerts (Search rules: /api/watch-rules)
-- Watchlist (Release watches: /api/watch-releases)
-- Notifications Inbox (/api/notifications + unread count + SSE)
-- Integrations (Discogs oauth/import lifecycle)
-- Settings
-  - Profile (/api/me GET/PATCH)
-  - Logout (/api/me/logout POST)
-  - Danger Zone Deactivate (/api/me DELETE)
+- Dashboard (`/dashboard`) — canonical signed-in landing route
+- Search (`/search`) — primary discovery/action route
+- Alerts (`/alerts`)
+- Watchlist (`/watchlist`)
+- Watchlist item (`/watchlist/:id`)
+- Notifications Inbox (`/notifications`)
+- Integrations (`/integrations`)
+- Settings landing (`/settings`)
+  - Profile (`/settings/profile`)
+  - Alert delivery (`/settings/alerts`)
+  - Danger Zone (`/settings/danger`)
+
+Route policy decisions
+----------------------
+- `/` redirects to `/dashboard`.
+- Search is still a first-class top-level route, but it is no longer the landing route.
+- Integrations is a top-level destination at `/integrations`.
+- `/settings/integrations` exists only as a backward-compatible redirect.
+- Settings is a shell/section for account preferences and destructive account actions, not for integrations.
 
 Navigation layout (final)
 -------------------------
 Desktop:
-- Left sidebar + Top utility bar.
-- Sidebar collapses to icon-only at smaller widths.
-- Top utility bar includes notifications badge + avatar menu.
+- Left sidebar + top utility bar.
+- Sidebar items: Dashboard, Search, Alerts, Watchlist, Notifications, Integrations, Settings.
+- Top utility bar includes notifications badge + account entry.
 - Waveform used as a thin header band accent (calm variant).
 
 Mobile:
-- Bottom tab bar (max 5).
-  - Home, Alerts, Watchlist, Notifications, Settings
+- Bottom tab bar capped at five core items.
+- Tabs: Home (Dashboard), Search, Alerts, Watchlist, Settings.
+- Notifications remain reachable from the top utility/inbox affordance.
 
 Theme architecture (themeable)
 ------------------------------

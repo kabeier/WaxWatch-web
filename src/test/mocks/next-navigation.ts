@@ -5,7 +5,7 @@ type NavigationState = {
 
 const state: NavigationState = {
   params: {},
-  pathname: "/search",
+  pathname: "/dashboard",
 };
 
 export function __setSearchParams(params: NavigationState["params"]) {

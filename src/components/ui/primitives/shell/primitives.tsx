@@ -45,42 +45,60 @@ type ContentContainerProps = ComponentPropsWithoutRef<"section"> & {
   width?: "default" | "narrow" | "full";
 };
 
+const DASHBOARD_PATH = "/dashboard";
+const SEARCH_PATH = "/search";
+const ALERTS_PATH = "/alerts";
+const WATCHLIST_PATH = "/watchlist";
+const NOTIFICATIONS_PATH = "/notifications";
+const INTEGRATIONS_PATH = "/integrations";
+const LEGACY_INTEGRATIONS_PATH = "/settings/integrations";
+const SETTINGS_PATH = "/settings";
+const SETTINGS_PROFILE_PATH = "/settings/profile";
+
 const APP_NAV_ITEMS: ShellNavItem[] = [
   {
-    href: "/search",
-    label: "Search",
-    shortLabel: "SR",
-    match: (pathname) => pathname === "/" || pathname.startsWith("/search"),
+    href: DASHBOARD_PATH,
+    label: "Dashboard",
+    shortLabel: "DB",
+    match: (pathname) => pathname === "/" || pathname.startsWith(DASHBOARD_PATH),
   },
-  { href: "/alerts", label: "Alerts", shortLabel: "AL" },
-  { href: "/watchlist", label: "Watchlist", shortLabel: "WL" },
-  { href: "/notifications", label: "Notifications", shortLabel: "NT" },
+  { href: SEARCH_PATH, label: "Search", shortLabel: "SR" },
+  { href: ALERTS_PATH, label: "Alerts", shortLabel: "AL" },
+  { href: WATCHLIST_PATH, label: "Watchlist", shortLabel: "WL" },
+  { href: NOTIFICATIONS_PATH, label: "Notifications", shortLabel: "NT" },
   {
-    href: "/settings/integrations",
+    href: INTEGRATIONS_PATH,
     label: "Integrations",
     shortLabel: "IN",
-    match: (pathname) => pathname.startsWith("/settings/integrations"),
+    match: (pathname) =>
+      pathname.startsWith(INTEGRATIONS_PATH) || pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
   },
   {
-    href: "/settings/profile",
+    href: SETTINGS_PATH,
     label: "Settings",
     shortLabel: "ST",
     match: (pathname) =>
-      pathname.startsWith("/settings") && !pathname.startsWith("/settings/integrations"),
+      pathname.startsWith(SETTINGS_PATH) && !pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
   },
 ];
 
 const MOBILE_NAV_ITEMS: ShellNavItem[] = [
   {
-    href: "/search",
+    href: DASHBOARD_PATH,
     label: "Home",
-    shortLabel: "HM",
-    match: (pathname) => pathname === "/" || pathname.startsWith("/search"),
+    shortLabel: "DB",
+    match: (pathname) => pathname === "/" || pathname.startsWith(DASHBOARD_PATH),
   },
-  APP_NAV_ITEMS[1],
-  APP_NAV_ITEMS[2],
-  APP_NAV_ITEMS[3],
-  APP_NAV_ITEMS[5],
+  { href: SEARCH_PATH, label: "Search", shortLabel: "SR" },
+  { href: ALERTS_PATH, label: "Alerts", shortLabel: "AL" },
+  { href: WATCHLIST_PATH, label: "Watchlist", shortLabel: "WL" },
+  {
+    href: SETTINGS_PATH,
+    label: "Settings",
+    shortLabel: "ST",
+    match: (pathname) =>
+      pathname.startsWith(SETTINGS_PATH) && !pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
+  },
 ];
 
 function joinClassNames(...values: Array<string | false | null | undefined>) {
@@ -128,7 +146,13 @@ function isNavItemActive(pathname: string, item: ShellNavItem) {
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
-function ShellBrand({ href = "/search", label = "WaxWatch" }: { href?: string; label?: string }) {
+function ShellBrand({
+  href = DASHBOARD_PATH,
+  label = "WaxWatch",
+}: {
+  href?: string;
+  label?: string;
+}) {
   return (
     <Link href={href} className="shell-brand" aria-label={`${label} home`}>
       <span className="shell-brand__mark" aria-hidden="true">
@@ -214,7 +238,7 @@ export function AppShell({
 export function TopNav({
   utilities,
   showUtilities = true,
-  brandHref = "/search",
+  brandHref = DASHBOARD_PATH,
   brandLabel = "WaxWatch",
   utilityLabel = "Utilities",
 }: TopNavProps) {
@@ -226,8 +250,8 @@ export function TopNav({
           <nav className="top-nav__utilities" aria-label={utilityLabel}>
             {utilities ?? (
               <>
-                <ShellUtilityLink href="/notifications" label="Inbox" value="04" />
-                <ShellUtilityLink href="/settings/profile" label="Account" value="Open" />
+                <ShellUtilityLink href={NOTIFICATIONS_PATH} label="Inbox" value="04" />
+                <ShellUtilityLink href={SETTINGS_PROFILE_PATH} label="Account" value="Open" />
               </>
             )}
           </nav>

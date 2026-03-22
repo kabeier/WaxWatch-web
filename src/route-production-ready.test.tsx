@@ -8,7 +8,7 @@ import NotificationsPage from "../app/(app)/notifications/page";
 import SearchPage from "../app/(app)/search/page";
 import AlertSettingsPage from "../app/(app)/settings/alerts/page";
 import DangerSettingsPage from "../app/(app)/settings/danger/page";
-import IntegrationSettingsPage from "../app/(app)/settings/integrations/page";
+import IntegrationSettingsPage from "../app/(app)/integrations/page";
 import ProfileSettingsPage from "../app/(app)/settings/profile/page";
 import WatchlistPage from "../app/(app)/watchlist/page";
 
@@ -523,12 +523,12 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/could not load profile/i)).toBeInTheDocument();
   });
 
-  it("/settings/integrations success", () => {
+  it("/integrations success", () => {
     render(<IntegrationSettingsPage />);
     expect(screen.getByText(/discogs connected/i)).toBeInTheDocument();
   });
 
-  it("/settings/integrations connect uses provided discogs user id", () => {
+  it("/integrations connect uses provided discogs user id", () => {
     render(<IntegrationSettingsPage />);
 
     fireEvent.change(screen.getByLabelText(/discogs user id/i), {
@@ -539,7 +539,7 @@ describe("route-level production-ready paths", () => {
     expect(state.discogsConnectMutation.mutate).toHaveBeenCalledWith("discogs_user_2048");
   });
 
-  it("/settings/integrations failure", () => {
+  it("/integrations failure", () => {
     state.discogsStatusQuery = { ...state.discogsStatusQuery, isError: true, error: apiError };
     render(<IntegrationSettingsPage />);
     expect(screen.getByText(/could not load discogs integration status/i)).toBeInTheDocument();

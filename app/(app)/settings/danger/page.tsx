@@ -13,8 +13,10 @@ import {
   useMeQuery,
 } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
+import { routeViewModels } from "@/lib/view-models/routes";
 
 export default function DangerSettingsPage() {
+  const viewModel = routeViewModels.settingsDanger;
   const meQuery = useMeQuery();
   const deactivateMutation = useDeactivateAccountMutation();
   const hardDeleteMutation = useHardDeleteAccountMutation();
@@ -23,8 +25,8 @@ export default function DangerSettingsPage() {
 
   return (
     <section>
-      <h1>Danger Zone</h1>
-      <p>Deactivate or permanently remove your account.</p>
+      <h1>{viewModel.heading}</h1>
+      <p>{viewModel.summary}</p>
       {meQuery.isLoading ? <StateLoading message="Loading account danger-zone options…" /> : null}
       {meQuery.isError && isRateLimitedError(meQuery.error) ? (
         <StateRateLimited

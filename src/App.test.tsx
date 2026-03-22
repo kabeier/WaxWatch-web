@@ -34,6 +34,7 @@ test("renders the app nav links", async () => {
   expect(screen.getByRole("link", { name: /alerts/i })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /watchlist/i })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /notifications/i })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /integrations/i })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /settings/i })).toBeInTheDocument();
 });
 
@@ -61,5 +62,5 @@ test("404 page shows fallback link", () => {
   renderWithProviders(<NotFoundPage />);
 
   expect(screen.getByRole("heading", { name: /404/i })).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /go to search/i })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /go to dashboard/i })).toBeInTheDocument();
 });

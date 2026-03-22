@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
 
-test("root redirects to search", async ({ page }) => {
+test("root redirects to dashboard", async ({ page }) => {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/search$/);
-  await expect(page.getByRole("heading", { name: /^search$/i })).toBeVisible();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("heading", { name: /^dashboard$/i })).toBeVisible();
 });
 
 test("app nav links work", async ({ page }) => {
