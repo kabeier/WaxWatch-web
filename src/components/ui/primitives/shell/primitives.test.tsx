@@ -47,6 +47,17 @@ describe("shell primitives", () => {
     );
   });
 
+  it("keeps integrations as the only active item on integrations routes", () => {
+    __setPathname("/settings/integrations");
+    render(<SideNav />);
+
+    expect(screen.getByRole("link", { name: /Integrations/i })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: /Settings/i })).not.toHaveAttribute("aria-current");
+  });
+
   it("renders app shell composition slots", () => {
     render(
       <AppShell

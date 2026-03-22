@@ -65,7 +65,8 @@ const APP_NAV_ITEMS: ShellNavItem[] = [
     href: "/settings/profile",
     label: "Settings",
     shortLabel: "ST",
-    match: (pathname) => pathname.startsWith("/settings"),
+    match: (pathname) =>
+      pathname.startsWith("/settings") && !pathname.startsWith("/settings/integrations"),
   },
 ];
 
@@ -194,7 +195,7 @@ export function AppShell({
         "app-shell",
         `app-shell--${variant}`,
         hasSidebar && "app-shell--with-sidebar",
-        hasMobileTabs && "app-shell--with-mobile-tabs",
+        shouldRenderMobileTabs && "app-shell--with-mobile-tabs",
       )}
     >
       {sideNav ? <div className="app-shell__sidebar">{sideNav}</div> : null}
