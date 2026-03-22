@@ -13,7 +13,7 @@ import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib
 import { routeViewModels } from "@/lib/view-models/routes";
 
 export default function ProfileSettingsPage() {
-  const viewModel = routeViewModels.profile;
+  const viewModel = routeViewModels.settingsProfile;
   const meQuery = useMeQuery();
   const updateProfileMutation = useUpdateProfileMutation();
   const [draft, setDraft] = useState<{

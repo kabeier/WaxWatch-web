@@ -10,8 +10,10 @@ import {
 } from "@/components/ui/primitives/state";
 import { useMeQuery, useUpdateProfileMutation } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
+import { routeViewModels } from "@/lib/view-models/routes";
 
 export default function AlertSettingsPage() {
+  const viewModel = routeViewModels.settingsAlerts;
   const meQuery = useMeQuery();
   const updateProfileMutation = useUpdateProfileMutation();
   const [draft, setDraft] = useState<{
@@ -62,8 +64,8 @@ export default function AlertSettingsPage() {
 
   return (
     <section>
-      <h1>Alert Delivery Settings</h1>
-      <p>Configure quiet hours, delivery channels, and notification frequency.</p>
+      <h1>{viewModel.heading}</h1>
+      <p>{viewModel.summary}</p>
       {meQuery.isLoading ? <StateLoading message="Loading delivery settings…" /> : null}
       {meQuery.isError && isRateLimitedError(meQuery.error) ? (
         <StateRateLimited

@@ -1,111 +1,87 @@
-WAXWATCH PAGEVIEW SPECIFICATIONS (v1)
-====================================
+WAXWATCH PAGEVIEW SPECIFICATIONS (canonical route model)
+=======================================================
 
 Purpose
 -------
-Defines structure, layout, components, and behavior for each page.
-Agents must follow these specs instead of inventing layouts.
+Defines the canonical information architecture, route ownership, and page-level expectations for the signed-in app and required signed-out surfaces.
 
 ------------------------------------------------------------
 GLOBAL RULES
 ------------------------------------------------------------
 
-- All pages live inside AppShell (sidebar + top bar)
+- Signed-in product pages live inside AppShell (sidebar + top bar + mobile bottom nav).
+- `/` is not a marketing landing page; it is a signed-in entrypoint that redirects to `/dashboard`.
+- Search remains a primary task flow, but the signed-in landing surface is the dashboard.
+- Integrations live at `/integrations`.
+- `/settings/integrations` remains only as a backward-compatible redirect.
+- Settings owns profile, alert-delivery preferences, and danger-zone actions.
+- Signed-out marketing pages mentioned in the design guide remain future/deferred; current signed-out routes are limited to auth/account-state surfaces.
 - Waveform usage must follow strict rules:
   - Header: calm
   - Dividers: active
   - Special moments: spike (rare)
-- Never place waveform behind dense data
-- Use cards as primary grouping unit
+- Never place waveform behind dense data.
+- Use cards as the primary grouping unit.
 
 ------------------------------------------------------------
 1) DASHBOARD
 ------------------------------------------------------------
 
-Route:
+Canonical route:
+/dashboard
+Alias/entrypoint:
 /
-(or /dashboard)
 
 Purpose:
-Quick overview of user activity and system state.
+Quick signed-in overview and launch point into search, alerts, watchlist, notifications, integrations, and settings.
 
 Layout:
-- Top: optional hero band (subdued WaveTrace active)
-- Sections stacked vertically with spacing
+- Top: optional subdued hero/header band
+- Summary + quick-link sections stacked vertically
+- Dashboard may start scaffold-first, but it is the canonical signed-in landing route
 
-Sections:
-
-1. Summary Cards Row
-   - Active Alerts count
-   - Watchlist count
-   - New Matches (last 24h)
-   - Unread Notifications
-   - Each = card + subtle glow
-
-2. Recent Matches (primary content)
-   - Card list
-   - Each card:
-     - Release name
-     - Price
-     - Source (eBay/Discogs)
-     - Time found
-     - CTA: View / Buy
-   - Sorted by newest
-   - Empty state uses WaveTrace small
-
-3. Alerts Snapshot
-   - Small list of most recent rules
-   - CTA: "View all alerts"
-
-4. Activity Feed (optional)
-   - Based on SSE events
-
-Waveform usage:
-- Optional top hero background (active, subdued)
-- Divider between sections
+Recommended sections:
+1. Summary cards row
+2. Recent matches / latest watch-release activity
+3. Alerts snapshot
+4. Notifications snapshot / activity feed
+5. Quick links to Search, Alerts, Integrations, and Settings
 
 ------------------------------------------------------------
-2) ALERTS (SEARCH RULES)
+2) SEARCH
 ------------------------------------------------------------
 
-Route:
+Canonical route:
+/search
+
+Purpose:
+Primary discovery flow for listings and the main entry into creating alert rules.
+
+Layout:
+- Search criteria form
+- Results state region
+- Save-as-alert form
+
+------------------------------------------------------------
+3) ALERTS (SEARCH RULES)
+------------------------------------------------------------
+
+Canonical route:
 /alerts
 
 Purpose:
-Manage search-based alerts.
+Manage search-based alert rules.
 
 Layout:
 - Header with title + "Create Alert" button
-- Tab system:
-  - Search Rules
-  - Release Watchlist
-
-Main content:
-List of rules (cards or table hybrid)
-
-Each rule item:
-- Name
-- Sources (icons)
-- Poll interval
-- Status (active/disabled)
-- Last run / next run
-
-Actions:
-- Edit
-- Disable
-- Delete (hard)
-
-Pagination:
-- limit/offset → Load More button
-
-Empty state:
-- WaveTrace + "No alerts yet"
+- List of rules and related release matches
+- Empty state if no rules exist
 
 ------------------------------------------------------------
-3) ALERT EDITOR
+4) ALERT EDITOR
 ------------------------------------------------------------
 
-Route:
+Canonical routes:
 /alerts/new
 /alerts/:id
 
@@ -113,200 +89,100 @@ Purpose:
 Create or edit alert rules.
 
 Layout:
-- Form card centered (max width ~720px)
-
-Fields:
-- Name
-- Sources (multi-select)
-- Polling interval
-- Filters (future)
-
-Actions:
-- Save
-- Cancel
-- Delete (if editing)
-
-Validation:
-- Map validation_error.details → fields
-
-Waveform:
-- NONE (keep clean)
+- Centered form card (max width ~720px)
+- Save / Cancel / Delete actions
 
 ------------------------------------------------------------
-4) WATCHLIST (RELEASES)
+5) WATCHLIST
 ------------------------------------------------------------
 
-Route:
+Canonical route:
 /watchlist
 
 Purpose:
-Track specific releases.
+Review tracked releases gathered from the user's watch rules and provider imports.
 
 Layout:
-- Similar to Alerts but focused on releases
-
-Each item:
-- Album name
-- Artist
-- Target price
-- Condition
-- Active toggle
-
-Actions:
-- Edit
-- Disable
-- Delete
+- List or cards of watch releases
+- Actions emphasize inspection and navigation to item detail
 
 ------------------------------------------------------------
-5) WATCHLIST ITEM EDITOR
+6) WATCHLIST ITEM DETAIL / EDITOR SHELL
 ------------------------------------------------------------
 
-Route:
+Canonical route:
 /watchlist/:id
 
 Purpose:
-Edit release tracking preferences.
+Provide the canonical item route for one tracked release.
 
-Layout:
-- Same as Alert Editor
-
-Fields:
-- Target price
-- Condition
-- Active toggle
+Current product note:
+- Current API support is read-only on watch releases.
+- This route should exist as the canonical item-detail/editor shell even before dedicated edit mutations arrive.
 
 ------------------------------------------------------------
-6) NOTIFICATIONS INBOX
+7) NOTIFICATIONS INBOX
 ------------------------------------------------------------
 
-Route:
+Canonical route:
 /notifications
 
 Purpose:
-View system events.
+View system events and unread activity.
 
 Layout:
-- Vertical list (infinite scroll or load more)
-
-Each item:
-- Title (e.g. "Match found")
-- Timestamp
-- Linked entity (alert/release)
-- Read/unread state
-
-Actions:
-- Mark as read
-
-Realtime:
-- SSE pushes new items
-- Insert at top
-- Update unread badge
-
-Waveform:
-- NONE in list
-- Optional divider between sections
+- Vertical list with load-more or infinite scroll
+- Mark-read actions
+- SSE inserts new items at the top and updates the unread badge
 
 ------------------------------------------------------------
-7) INTEGRATIONS (DISCOGS)
+8) INTEGRATIONS
 ------------------------------------------------------------
 
-Route:
+Canonical route:
 /integrations
+Legacy alias:
+/settings/integrations -> redirect to /integrations
 
 Purpose:
-Manage external account connections.
+Manage external account connections, especially Discogs.
 
 Sections:
-
-1. Discogs Status Card
-   - Connected / Not connected
-   - CTA: Connect / Reconnect
-
-2. Import Section
-   - Buttons:
-     - Import Wantlist
-     - Import Collection
-   - Shows job status
-
-3. Import Progress
-   - Poll /import/{job_id}
-   - Show:
-     - progress
-     - counts
-     - errors
+1. Connection status
+2. Import actions
+3. Import progress/state
 
 ------------------------------------------------------------
-8) SETTINGS
+9) SETTINGS LANDING / TAB SHELL
 ------------------------------------------------------------
 
-Route:
+Canonical route:
 /settings
 
-Tabs:
-- Profile
-- Account (danger zone)
+Purpose:
+Act as the settings shell landing page and route directory.
 
-Profile:
-- Display name
-- Preferences
+Behavior:
+- Presents links/cards for Profile, Alert Delivery Settings, and Danger Zone
+- Cross-links to top-level Integrations
 
-Account:
-- Logout button
-- Deactivate account (danger zone)
-
-Deactivate flow:
-- Confirmation modal required
-- After success → clear session + redirect
+Child routes:
+- /settings/profile
+- /settings/alerts
+- /settings/danger
 
 ------------------------------------------------------------
-9) APP SHELL (GLOBAL)
+10) SIGNED-OUT SURFACES
 ------------------------------------------------------------
 
-Includes:
-- Sidebar navigation
-- Top bar (notifications + avatar)
+Current canonical signed-out routes:
+- /login
+- /signed-out
+- /account-removed
 
-Notification badge:
-- Poll unread count
-- Update on SSE
+Deferred/future marketing surfaces:
+- Landing
+- How it works
+- Pricing
 
-Toasts:
-- On new match
-- On errors
-
-Waveform:
-- Header band only (calm)
-
-------------------------------------------------------------
-10) EMPTY STATES
-------------------------------------------------------------
-
-Used in:
-- Alerts
-- Watchlist
-- Notifications
-
-Structure:
-- Small WaveTrace (active, reduced size)
-- Message
-- CTA
-
-------------------------------------------------------------
-11) LOADING STATES
-------------------------------------------------------------
-
-- Skeleton loaders for lists
-- Spinner for forms
-- No waveform during loading
-
-------------------------------------------------------------
-12) ERROR STATES
-------------------------------------------------------------
-
-- Global banner for http_error
-- Inline for validation_error
-- Retry CTA where applicable
-
-------------------------------------------------------------
-END OF SPEC
-------------------------------------------------------------
+These marketing pages are not part of the current implemented route inventory and should not be treated as required signed-out routes until product scope formally changes.

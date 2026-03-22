@@ -31,7 +31,7 @@ describe("shell primitives", () => {
     expect(screen.getAllByRole("link", { name: /Search/i })[0]).toHaveAttribute("href", "/search");
     expect(screen.getByRole("link", { name: /Integrations/i })).toHaveAttribute(
       "href",
-      "/settings/integrations",
+      "/integrations",
     );
     expect(screen.getAllByRole("link", { name: /Settings/i })[0]).toHaveAttribute(
       "aria-current",
@@ -43,7 +43,7 @@ describe("shell primitives", () => {
     );
     expect(within(mobileNav as HTMLElement).getByRole("link", { name: /Home/i })).toHaveAttribute(
       "href",
-      "/search",
+      "/dashboard",
     );
   });
 

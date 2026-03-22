@@ -1,6 +1,6 @@
 # WaxWatch Frontend (Next.js)
 
-WaxWatch is a record-price alert web app. Users can search listings across providers, save searches as alerts, manage alerts/watchlist, and receive notifications.
+WaxWatch is a record-price alert web app. Users can land on a dashboard, search listings across providers, save searches as alerts, manage alerts/watchlist, connect integrations, and receive notifications.
 
 ## Developer quickstart (read this first)
 
@@ -49,7 +49,7 @@ For production deployments, replace placeholder/template values with environment
 npm run contracts:check
 ```
 
-Before changing route-level rendering for API-backed screens (`/search`, `/alerts`, `/watchlist`, `/notifications`, `/settings/profile`, `/settings/integrations`), confirm transport shapes in `docs/FRONTEND_API_CONTRACT.md` and align `src/lib/api/domains/*` + query hooks first (contract-first, then UI).
+Before changing route-level rendering for API-backed screens (`/dashboard`, `/search`, `/alerts`, `/watchlist`, `/notifications`, `/integrations`, `/settings/profile`, `/settings/alerts`), confirm transport shapes in `docs/FRONTEND_API_CONTRACT.md` and align `src/lib/api/domains/*` + query hooks first (contract-first, then UI).
 
 ### 3) Run the app + common contributor commands
 
@@ -158,7 +158,7 @@ This repo is contract-driven. These are authoritative:
 Validate these paths in CI (or locally) with:
 
 - `npm run contracts:check`
-- Before changing route-level rendering for API-backed screens (`/search`, `/alerts`, `/watchlist`, `/notifications`, `/settings/profile`, `/settings/integrations`), confirm transport shapes in `docs/FRONTEND_API_CONTRACT.md` and align `src/lib/api/domains/*` + query hooks first (contract-first, then UI).
+- Before changing route-level rendering for API-backed screens (`/dashboard`, `/search`, `/alerts`, `/watchlist`, `/notifications`, `/integrations`, `/settings/profile`, `/settings/alerts`), confirm transport shapes in `docs/FRONTEND_API_CONTRACT.md` and align `src/lib/api/domains/*` + query hooks first (contract-first, then UI).
 
 ## Dev commands (expected)
 
@@ -179,28 +179,37 @@ Status criteria used in this matrix:
 - `scaffold`: route exists, but is still placeholder-first (including synthetic state toggles via URL/search params) and does not yet use real API wiring.
 - `wired-minimum`: route uses real TanStack Query hooks and/or mutations connected to the API client, with baseline form validation and pending/error handling.
 - `production-ready`: route has complete UX polish, robust error/retry flows, accessibility coverage, and automated tests.
+- `redirect`: route exists only to preserve compatibility and immediately forwards to the canonical destination.
+- `planned`: documented future scope only; route is not present in `app/`.
 
-| Route                      | Status           | Notes                                                                                                                                                                                                                                                                           |
-| -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                        | scaffold         | Unconditional server redirect entrypoint (`app/page.tsx`) that forwards to `/search`; remains non-production-ready until we add dedicated route-level redirect contract coverage (including destination-regression protection) independent of `/search` implementation details. |
-| `/login`                   | scaffold         | Sign-in shell placeholder for Supabase auth UI.                                                                                                                                                                                                                                 |
-| `/search`                  | production-ready | Full UX states, validation/mutation hardening, cooldown-aware retries, and route-level success/failure tests.                                                                                                                                                                   |
-| `/alerts`                  | production-ready | Full query UX states with retry actions (including cooldown handling) and route-level success/failure tests.                                                                                                                                                                    |
-| `/alerts/new`              | production-ready | Full setup/create UX states, validation/pending feedback, and route-level success/failure tests.                                                                                                                                                                                |
-| `/alerts/[id]`             | production-ready | Full detail/edit/delete UX states, retry behavior, and route-level success/failure tests.                                                                                                                                                                                       |
-| `/watchlist`               | production-ready | Full loading/empty/error/rate-limited behavior with explicit retry/cooldown actions and route-level tests.                                                                                                                                                                      |
-| `/notifications`           | production-ready | Full feed/mutation UX states, retry/cooldown behavior, and route-level success/failure tests.                                                                                                                                                                                   |
-| `/settings/profile`        | production-ready | Full profile settings UX with validation, pending/disabled controls, cooldown-aware retries, and route tests.                                                                                                                                                                   |
-| `/settings/alerts`         | production-ready | Full settings UX states, validation/pending/success handling, cooldown-aware retries, and route-level tests.                                                                                                                                                                    |
-| `/settings/integrations`   | production-ready | Full Discogs integration UX with retry/cooldown handling and route-level success/failure tests.                                                                                                                                                                                 |
-| `/settings/danger`         | production-ready | Full danger-zone UX states with robust pending/success/error handling and route-level success/failure tests.                                                                                                                                                                    |
-| `/signed-out`              | scaffold         | Static confirmation page exists; no API wiring or production-hardening checks yet.                                                                                                                                                                                              |
-| `/account-removed`         | scaffold         | Static confirmation page exists; no API wiring or production-hardening checks yet.                                                                                                                                                                                              |
-| `/admin/provider-requests` | planned          | Admin-only route; not yet present in `app/`.                                                                                                                                                                                                                                    |
+| Route                      | Status           | Notes                                                                                                         |
+| -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| `/`                        | redirect         | Server entrypoint that forwards to `/dashboard`.                                                              |
+| `/dashboard`               | scaffold         | Canonical signed-in landing route and dashboard shell.                                                        |
+| `/search`                  | production-ready | Full UX states, validation/mutation hardening, cooldown-aware retries, and route-level success/failure tests. |
+| `/alerts`                  | production-ready | Full query UX states with retry actions (including cooldown handling) and route-level success/failure tests.  |
+| `/alerts/new`              | production-ready | Full setup/create UX states, validation/pending feedback, and route-level success/failure tests.              |
+| `/alerts/[id]`             | production-ready | Full detail/edit/delete UX states, retry behavior, and route-level success/failure tests.                     |
+| `/watchlist`               | production-ready | Full loading/empty/error/rate-limited behavior with explicit retry/cooldown actions and route-level tests.    |
+| `/watchlist/[id]`          | scaffold         | Canonical item-detail/editor shell exists, but current watch-release API support is read-only.                |
+| `/notifications`           | production-ready | Full feed/mutation UX states, retry/cooldown behavior, and route-level success/failure tests.                 |
+| `/integrations`            | production-ready | Full Discogs integration UX with retry/cooldown handling and route-level success/failure tests.               |
+| `/settings`                | scaffold         | Settings landing shell that routes users to profile, alert delivery, and danger-zone flows.                   |
+| `/settings/profile`        | production-ready | Full profile settings UX with validation, pending/disabled controls, cooldown-aware retries, and route tests. |
+| `/settings/alerts`         | production-ready | Full settings UX states, validation/pending/success handling, cooldown-aware retries, and route-level tests.  |
+| `/settings/danger`         | production-ready | Full danger-zone UX states with robust pending/success/error handling and route-level success/failure tests.  |
+| `/settings/integrations`   | redirect         | Legacy compatibility route that forwards to `/integrations`.                                                  |
+| `/login`                   | scaffold         | Sign-in shell placeholder for Supabase auth UI.                                                               |
+| `/signed-out`              | scaffold         | Static confirmation page exists; no API wiring or production-hardening checks yet.                            |
+| `/account-removed`         | scaffold         | Static confirmation page exists; no API wiring or production-hardening checks yet.                            |
+| `/admin/provider-requests` | planned          | Admin-only route; not yet present in `app/`.                                                                  |
+| marketing landing          | planned          | Deferred signed-out marketing surface; not part of the current tree.                                          |
+| how it works               | planned          | Deferred signed-out marketing surface; not part of the current tree.                                          |
+| pricing                    | planned          | Deferred signed-out marketing surface; not part of the current tree.                                          |
 
 ### How to pick next work
 
-Prioritize routes marked `scaffold` first, especially routes still driven by synthetic state switches. Converting these to `wired-minimum` (real hooks/mutations through the API client) closes the biggest delivery gap. After that, move `wired-minimum` routes toward `production-ready` by adding end-to-end UX polish, retry behavior, accessibility validation, and automated tests.
+Prioritize routes marked `scaffold` first, especially routes still driven by synthetic state switches or placeholder content. Converting these to `wired-minimum` closes the biggest delivery gap. After that, move `wired-minimum` routes toward `production-ready` by adding end-to-end UX polish, retry behavior, accessibility validation, and automated tests.
 
 ### Route matrix status-change workflow (PR requirement)
 
