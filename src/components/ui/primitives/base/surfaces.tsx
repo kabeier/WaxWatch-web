@@ -56,7 +56,7 @@ export function CardFooter({ className, ...props }: ComponentPropsWithoutRef<"di
   return <div className={joinClassNames("ww-card-base__footer", className)} {...props} />;
 }
 
-type SectionHeaderProps = ComponentPropsWithoutRef<"header"> & {
+type SectionHeaderProps = Omit<ComponentPropsWithoutRef<"header">, "title"> & {
   title: ReactNode;
   description?: ReactNode;
   eyebrow?: ReactNode;

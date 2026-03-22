@@ -5,6 +5,16 @@ import { FormEvent, useMemo, useState } from "react";
 import { StateError } from "@/components/StateError";
 import { StateLoading } from "@/components/StateLoading";
 import { StateRateLimited } from "@/components/StateRateLimited";
+import { EditorShell, PageView, pageViewStyles } from "@/components/page-view/PageView";
+import {
+  Button,
+  CardBody,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  TextInput,
+} from "@/components/ui/primitives/base";
 import type { AuthHandoffContext } from "@/lib/auth/handoff";
 import { toApiError, tryParseErrorEnvelope } from "@/lib/api/errors";
 import { resolveApiBaseUrl } from "@/lib/query/api";
@@ -182,57 +192,87 @@ export function LoginPageClient({ handoff, fetchImpl = fetch, onRedirect }: Logi
   }
 
   return (
-    <section>
-      <h1>Login</h1>
-      {handoffBlocked ? (
-        <StateError
-          title="Secure handoff required"
-          message={
-            handoffState === "expired"
-              ? "This handoff link has expired. Request a new secure sign-in handoff."
-              : "This handoff link is missing required security parameters."
-          }
-          detail={
-            handoffState === "expired"
-              ? "Handoff links are time-limited for security. Request a new sign-in handoff from the mobile app and try again."
-              : "Request a new sign-in handoff from the mobile app and try again."
-          }
-        />
-      ) : (
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            value={email}
-            autoComplete="email"
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
+    <PageView
+      title="Login"
+      description="Enter the product through the hosted authentication flow."
+      eyebrow="Signed out"
+      centered
+      compactWave
+      meta={
+        <span>
+          Authentication pages stay centered and uncluttered; any waveform lives only in the header
+          card.
+        </span>
+      }
+    >
+      <EditorShell>
+        <CardHeader>
+          <CardTitle>Sign in to WaxWatch</CardTitle>
+          <CardDescription>
+            Use your existing credentials, or complete the secure handoff from the mobile app.
+          </CardDescription>
+        </CardHeader>
+        <CardBody className={pageViewStyles.cardStack}>
+          {handoffBlocked ? (
+            <StateError
+              title="Secure handoff required"
+              message={
+                handoffState === "expired"
+                  ? "This handoff link has expired. Request a new secure sign-in handoff."
+                  : "This handoff link is missing required security parameters."
+              }
+              detail={
+                handoffState === "expired"
+                  ? "Handoff links are time-limited for security. Request a new sign-in handoff from the mobile app and try again."
+                  : "Request a new sign-in handoff from the mobile app and try again."
+              }
+            />
+          ) : (
+            <form className={pageViewStyles.formStack} onSubmit={handleSubmit}>
+              <label className={pageViewStyles.labelStack} htmlFor="email">
+                <span className={pageViewStyles.labelText}>Email</span>
+                <TextInput
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={email}
+                  autoComplete="email"
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+              </label>
 
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={password}
-            autoComplete="current-password"
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
+              <label className={pageViewStyles.labelStack} htmlFor="password">
+                <span className={pageViewStyles.labelText}>Password</span>
+                <TextInput
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={password}
+                  autoComplete="current-password"
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+              </label>
 
-          <button type="submit" disabled={uiState.kind === "loading"}>
-            Sign in
-          </button>
-        </form>
-      )}
+              <CardFooter>
+                <Button type="submit" disabled={uiState.kind === "loading"}>
+                  Sign in
+                </Button>
+              </CardFooter>
+            </form>
+          )}
 
-      {uiState.kind === "loading" ? <StateLoading message="Signing you in…" /> : null}
-      {uiState.kind === "error" ? <StateError message={uiState.message} /> : null}
-      {uiState.kind === "rate_limited" ? (
-        <StateRateLimited message={uiState.message} retryAfterSeconds={uiState.retryAfterSeconds} />
-      ) : null}
-    </section>
+          {uiState.kind === "loading" ? <StateLoading message="Signing you in…" /> : null}
+          {uiState.kind === "error" ? <StateError message={uiState.message} /> : null}
+          {uiState.kind === "rate_limited" ? (
+            <StateRateLimited
+              message={uiState.message}
+              retryAfterSeconds={uiState.retryAfterSeconds}
+            />
+          ) : null}
+        </CardBody>
+      </EditorShell>
+    </PageView>
   );
 }

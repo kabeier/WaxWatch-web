@@ -1,7 +1,25 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
+
 import { RetryAction } from "@/components/RetryAction";
+import {
+  ActiveDivider,
+  EditorShell,
+  PageView,
+  pageViewStyles,
+} from "@/components/page-view/PageView";
+import {
+  Button,
+  CardBody,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CheckboxRow,
+  TextInput,
+} from "@/components/ui/primitives/base";
 import {
   StateEmpty,
   StateError,
@@ -51,132 +69,168 @@ export default function NewAlertPage() {
   const isPending = createWatchRuleMutation.isPending;
 
   return (
-    <section>
-      <h1>Create Alert</h1>
-      <p>Create a new alert rule from saved search criteria.</p>
-
-      {meQuery.isLoading ? <StateLoading message="Loading alert preset data…" /> : null}
-      {meQuery.isError && isRateLimitedError(meQuery.error) ? (
-        <StateRateLimited
-          message="Alert setup is rate limited. Retry is available after cooldown."
-          detail={meQuery.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
-          action={
-            <RetryAction
-              label="Retry alert setup load"
+    <PageView
+      title="Create alert"
+      description="Create a new alert rule from saved search criteria."
+      eyebrow="Centered editor"
+      centered
+      compactWave
+      meta={
+        <span>
+          Keep this page visually clean: one centered form card, supporting state cards only when
+          needed.
+        </span>
+      }
+    >
+      <EditorShell>
+        <CardHeader>
+          <CardTitle>Alert rule details</CardTitle>
+          <CardDescription>
+            Define a name, keywords, cadence, and initial activation state.
+          </CardDescription>
+        </CardHeader>
+        <CardBody className={pageViewStyles.cardStack}>
+          {meQuery.isLoading ? <StateLoading message="Loading alert preset data…" /> : null}
+          {meQuery.isError && isRateLimitedError(meQuery.error) ? (
+            <StateRateLimited
+              message="Alert setup is rate limited. Retry is available after cooldown."
+              detail={meQuery.error.message}
               retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
-              onRetry={() => void meQuery.retry()}
+              action={
+                <RetryAction
+                  label="Retry alert setup load"
+                  retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
+                  onRetry={() => void meQuery.retry()}
+                />
+              }
             />
-          }
-        />
-      ) : null}
-      {meQuery.isError && !isRateLimitedError(meQuery.error) ? (
-        <StateError
-          message="Could not load alert setup data."
-          detail={getErrorMessage(meQuery.error, "Request failed")}
-          action={
-            <RetryAction label="Retry alert setup load" onRetry={() => void meQuery.retry()} />
-          }
-        />
-      ) : null}
-      {meQuery.data && (!meQuery.data.integrations || meQuery.data.integrations.length === 0) ? (
-        <StateEmpty message="No provider integrations available for new alerts." />
-      ) : null}
+          ) : null}
+          {meQuery.isError && !isRateLimitedError(meQuery.error) ? (
+            <StateError
+              message="Could not load alert setup data."
+              detail={getErrorMessage(meQuery.error, "Request failed")}
+              action={
+                <RetryAction label="Retry alert setup load" onRetry={() => void meQuery.retry()} />
+              }
+            />
+          ) : null}
+          {meQuery.data &&
+          (!meQuery.data.integrations || meQuery.data.integrations.length === 0) ? (
+            <StateEmpty message="No provider integrations available for new alerts." />
+          ) : null}
 
-      {validationMessage ? (
-        <div id="new-alert-form-errors">
-          <StateError
-            message="Please fix the highlighted validation issues before saving."
-            detail={validationMessage}
-          />
-        </div>
-      ) : null}
+          {validationMessage ? (
+            <div id="new-alert-form-errors">
+              <StateError
+                message="Please fix the highlighted validation issues before saving."
+                detail={validationMessage}
+              />
+            </div>
+          ) : null}
 
-      <form
-        aria-describedby={validationMessage ? "new-alert-form-errors" : undefined}
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (validationMessage) {
-            return;
-          }
-
-          createWatchRuleMutation.mutate({
-            name: name.trim(),
-            query: {
-              keywords,
-            },
-            poll_interval_seconds: pollInterval,
-            is_active: isActive,
-          });
-        }}
-      >
-        <label>
-          Alert name
-          <input
-            value={name}
-            onChange={(event) => setName(event.currentTarget.value)}
-            disabled={isPending}
-            aria-invalid={Boolean(validationMessage)}
+          <form
+            className={pageViewStyles.formStack}
             aria-describedby={validationMessage ? "new-alert-form-errors" : undefined}
-          />
-        </label>
-        <label>
-          Keywords (comma-separated)
-          <input
-            value={keywordsInput}
-            onChange={(event) => setKeywordsInput(event.currentTarget.value)}
-            disabled={isPending}
-            aria-invalid={Boolean(keywordValidationMessage)}
-            aria-describedby={keywordValidationMessage ? "new-alert-form-errors" : undefined}
-          />
-        </label>
-        <label>
-          Poll interval (seconds)
-          <input
-            type="number"
-            min={30}
-            max={86400}
-            value={pollIntervalInput}
-            onChange={(event) => setPollIntervalInput(event.currentTarget.value)}
-            disabled={isPending}
-            aria-invalid={Boolean(validationMessage)}
-            aria-describedby={validationMessage ? "new-alert-form-errors" : undefined}
-          />
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={isActive}
-            onChange={(event) => setIsActive(event.currentTarget.checked)}
-            disabled={isPending}
-          />
-          Active immediately
-        </label>
-        <button type="submit" disabled={Boolean(validationMessage) || isPending}>
-          {isPending ? "Saving new alert…" : "Save new alert"}
-        </button>
-      </form>
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (validationMessage) {
+                return;
+              }
 
-      {createWatchRuleMutation.data ? (
-        <p role="status" aria-live="polite">
-          Success: Alert created.
-        </p>
-      ) : null}
-      {createWatchRuleMutation.isPending ? <StateLoading message="Saving new alert…" /> : null}
-      {createWatchRuleMutation.isError && isRateLimitedError(createWatchRuleMutation.error) ? (
-        <StateRateLimited
-          message="Saving new alerts is temporarily rate limited."
-          detail={createWatchRuleMutation.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(createWatchRuleMutation.error)}
-        />
-      ) : null}
-      {createWatchRuleMutation.isError && !isRateLimitedError(createWatchRuleMutation.error) ? (
-        <StateError
-          message="Could not save new alert."
-          detail={getErrorMessage(createWatchRuleMutation.error, "Request failed")}
-        />
-      ) : null}
-    </section>
+              createWatchRuleMutation.mutate({
+                name: name.trim(),
+                query: {
+                  keywords,
+                },
+                poll_interval_seconds: pollInterval,
+                is_active: isActive,
+              });
+            }}
+          >
+            <label className={pageViewStyles.labelStack} htmlFor="new-alert-name">
+              <span className={pageViewStyles.labelText}>Alert name</span>
+              <TextInput
+                id="new-alert-name"
+                value={name}
+                onChange={(event) => setName(event.currentTarget.value)}
+                disabled={isPending}
+                error={Boolean(validationMessage)}
+                aria-invalid={Boolean(validationMessage)}
+                aria-describedby={validationMessage ? "new-alert-form-errors" : undefined}
+              />
+            </label>
+            <label className={pageViewStyles.labelStack} htmlFor="new-alert-keywords">
+              <span className={pageViewStyles.labelText}>Keywords (comma-separated)</span>
+              <TextInput
+                id="new-alert-keywords"
+                value={keywordsInput}
+                onChange={(event) => setKeywordsInput(event.currentTarget.value)}
+                disabled={isPending}
+                error={Boolean(keywordValidationMessage)}
+                aria-invalid={Boolean(keywordValidationMessage)}
+                aria-describedby={keywordValidationMessage ? "new-alert-form-errors" : undefined}
+              />
+            </label>
+            <label className={pageViewStyles.labelStack} htmlFor="new-alert-poll-interval">
+              <span className={pageViewStyles.labelText}>Poll interval (seconds)</span>
+              <TextInput
+                id="new-alert-poll-interval"
+                type="number"
+                min={30}
+                max={86400}
+                value={pollIntervalInput}
+                onChange={(event) => setPollIntervalInput(event.currentTarget.value)}
+                disabled={isPending}
+                error={Boolean(validationMessage)}
+                aria-invalid={Boolean(validationMessage)}
+                aria-describedby={validationMessage ? "new-alert-form-errors" : undefined}
+              />
+            </label>
+            <CheckboxRow
+              checked={isActive}
+              onChange={(event) => setIsActive(event.currentTarget.checked)}
+              disabled={isPending}
+              helperText="Start matching releases as soon as the rule is saved."
+            >
+              Active immediately
+            </CheckboxRow>
+            <CardFooter>
+              <div className={pageViewStyles.actionRow}>
+                <Link href="/alerts" className={pageViewStyles.listLink}>
+                  Cancel
+                </Link>
+                <Button type="submit" disabled={Boolean(validationMessage) || isPending}>
+                  {isPending ? "Saving new alert…" : "Save new alert"}
+                </Button>
+              </div>
+            </CardFooter>
+          </form>
+        </CardBody>
+        <CardFooter className={pageViewStyles.cardStack}>
+          {createWatchRuleMutation.data ? (
+            <p role="status" aria-live="polite">
+              Success: Alert created.
+            </p>
+          ) : null}
+          {createWatchRuleMutation.isPending ? <StateLoading message="Saving new alert…" /> : null}
+          {createWatchRuleMutation.isError && isRateLimitedError(createWatchRuleMutation.error) ? (
+            <StateRateLimited
+              message="Saving new alerts is temporarily rate limited."
+              detail={createWatchRuleMutation.error.message}
+              retryAfterSeconds={getRetryAfterSeconds(createWatchRuleMutation.error)}
+            />
+          ) : null}
+          {createWatchRuleMutation.isError && !isRateLimitedError(createWatchRuleMutation.error) ? (
+            <StateError
+              message="Could not save new alert."
+              detail={getErrorMessage(createWatchRuleMutation.error, "Request failed")}
+            />
+          ) : null}
+        </CardFooter>
+      </EditorShell>
+
+      <ActiveDivider />
+    </PageView>
   );
 }

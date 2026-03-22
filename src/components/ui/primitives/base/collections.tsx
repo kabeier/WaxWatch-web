@@ -12,7 +12,7 @@ export function ListContainer({ className, dense = false, ...props }: ListProps)
   );
 }
 
-type ListRowProps = ComponentPropsWithoutRef<"div"> & {
+type ListRowProps = Omit<ComponentPropsWithoutRef<"div">, "title"> & {
   interactive?: boolean;
   leading?: ReactNode;
   trailing?: ReactNode;

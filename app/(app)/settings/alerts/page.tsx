@@ -1,7 +1,29 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+
 import { RetryAction } from "@/components/RetryAction";
+import {
+  ActiveDivider,
+  PageCardGroup,
+  PageView,
+  pageViewStyles,
+} from "@/components/page-view/PageView";
+import {
+  Button,
+  Card,
+  CardBody,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CheckboxRow,
+  PageTab,
+  PageTabs,
+  Select,
+  TextInput,
+} from "@/components/ui/primitives/base";
 import {
   StateEmpty,
   StateError,
@@ -14,6 +36,7 @@ import { routeViewModels } from "@/lib/view-models/routes";
 
 export default function AlertSettingsPage() {
   const viewModel = routeViewModels.settingsAlerts;
+  const router = useRouter();
   const meQuery = useMeQuery();
   const updateProfileMutation = useUpdateProfileMutation();
   const [draft, setDraft] = useState<{
@@ -63,184 +86,249 @@ export default function AlertSettingsPage() {
     !isFormReady;
 
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
-      {meQuery.isLoading ? <StateLoading message="Loading delivery settings…" /> : null}
-      {meQuery.isError && isRateLimitedError(meQuery.error) ? (
-        <StateRateLimited
-          message="Settings are temporarily rate limited."
-          detail={meQuery.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
-          action={
-            <RetryAction
-              label="Retry settings load"
-              retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
-              onRetry={() => void meQuery.retry()}
-            />
-          }
-        />
-      ) : null}
-      {meQuery.isError && !isRateLimitedError(meQuery.error) ? (
-        <StateError
-          message="Could not load alert delivery settings."
-          detail={getErrorMessage(meQuery.error, "Request failed")}
-          action={<RetryAction label="Retry settings load" onRetry={() => void meQuery.retry()} />}
-        />
-      ) : null}
-      {meQuery.data && !meQuery.data.preferences ? (
-        <StateEmpty message="No delivery settings configured yet." />
-      ) : null}
-
-      {validationMessage ? (
-        <div id="alert-settings-form-errors">
-          <StateError
-            message="Please fix the highlighted validation issues before saving."
-            detail={validationMessage}
-          />
-        </div>
-      ) : null}
-
-      <form
-        aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (isSaveDisabled || !window.confirm("Save alert-delivery policy changes?")) {
-            return;
-          }
-
-          updateProfileMutation.mutate({
-            preferences: {
-              delivery_frequency: deliveryFrequency as "instant" | "hourly" | "daily",
-              notification_timezone: notificationTimezone.trim(),
-              quiet_hours_start: quietStart,
-              quiet_hours_end: quietEnd,
-              notifications_email: notificationsEmail,
-              notifications_push: notificationsPush,
-            },
-          });
-        }}
-      >
-        <label>
-          Delivery frequency
-          <select
-            value={deliveryFrequency}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, deliveryFrequency: event.currentTarget.value }))
-            }
-            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
-            aria-invalid={Boolean(validationMessage)}
-            aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
-          >
-            <option value="instant">Instant</option>
-            <option value="hourly">Hourly</option>
-            <option value="daily">Daily</option>
-          </select>
-        </label>
-        <label>
-          Notification timezone
-          <input
-            value={notificationTimezone}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                notificationTimezone: event.currentTarget.value,
-              }))
-            }
-            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
-            aria-invalid={Boolean(validationMessage)}
-            aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
-          />
-        </label>
-        <label>
-          Quiet hours start (0-23)
-          <input
-            type="number"
-            min={0}
-            max={23}
-            value={quietStartInput}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, quietStart: event.currentTarget.value }))
-            }
-            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
-            aria-invalid={Boolean(validationMessage)}
-            aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
-          />
-        </label>
-        <label>
-          Quiet hours end (0-23)
-          <input
-            type="number"
-            min={0}
-            max={23}
-            value={quietEndInput}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, quietEnd: event.currentTarget.value }))
-            }
-            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
-            aria-invalid={Boolean(validationMessage)}
-            aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
-          />
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={notificationsEmail}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                notificationsEmail: event.currentTarget.checked,
-              }))
-            }
-            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
-            aria-invalid={Boolean(validationMessage)}
-            aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
-          />
-          Email notifications
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={notificationsPush}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                notificationsPush: event.currentTarget.checked,
-              }))
-            }
-            disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
-          />
-          Push notifications
-        </label>
-
-        <button type="submit" disabled={isSaveDisabled}>
+    <PageView
+      title={viewModel.heading}
+      description={viewModel.summary}
+      eyebrow="Settings"
+      actions={
+        <Button type="submit" form="alert-settings-form" disabled={isSaveDisabled}>
           {updateProfileMutation.isPending
             ? "Saving delivery settings…"
             : "Save alert delivery preferences"}
-        </button>
-      </form>
+        </Button>
+      }
+      tabs={
+        <PageTabs label="Settings sections">
+          <PageTab onClick={() => router.push("/settings/profile")}>Profile</PageTab>
+          <PageTab active onClick={() => router.push("/settings/alerts")}>
+            Alerts
+          </PageTab>
+          <PageTab onClick={() => router.push("/settings/danger")}>Danger zone</PageTab>
+        </PageTabs>
+      }
+      meta={
+        <span>
+          Quiet hours, frequency, and delivery channels are grouped into one policy card with a
+          supporting summary card.
+        </span>
+      }
+    >
+      <PageCardGroup columns="sidebar">
+        <Card padding="lg">
+          <CardHeader>
+            <CardTitle>Delivery policy</CardTitle>
+            <CardDescription>
+              Use grouped controls so alert-delivery edits feel like one coherent policy editor.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.cardStack}>
+            {meQuery.isLoading ? <StateLoading message="Loading delivery settings…" /> : null}
+            {meQuery.isError && isRateLimitedError(meQuery.error) ? (
+              <StateRateLimited
+                message="Settings are temporarily rate limited."
+                detail={meQuery.error.message}
+                retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
+                action={
+                  <RetryAction
+                    label="Retry settings load"
+                    retryAfterSeconds={getRetryAfterSeconds(meQuery.error)}
+                    onRetry={() => void meQuery.retry()}
+                  />
+                }
+              />
+            ) : null}
+            {meQuery.isError && !isRateLimitedError(meQuery.error) ? (
+              <StateError
+                message="Could not load alert delivery settings."
+                detail={getErrorMessage(meQuery.error, "Request failed")}
+                action={
+                  <RetryAction label="Retry settings load" onRetry={() => void meQuery.retry()} />
+                }
+              />
+            ) : null}
+            {meQuery.data && !meQuery.data.preferences ? (
+              <StateEmpty message="No delivery settings configured yet." />
+            ) : null}
 
-      {updateProfileMutation.data ? (
-        <p role="status" aria-live="polite">
-          Success: Alert delivery settings saved.
-        </p>
-      ) : null}
-      {updateProfileMutation.isPending ? (
-        <StateLoading message="Saving delivery settings…" />
-      ) : null}
-      {updateProfileMutation.isError && isRateLimitedError(updateProfileMutation.error) ? (
-        <StateRateLimited
-          message={updateProfileMutation.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(updateProfileMutation.error)}
-        />
-      ) : null}
-      {updateProfileMutation.isError && !isRateLimitedError(updateProfileMutation.error) ? (
-        <StateError
-          message="Could not save alert delivery preferences."
-          detail={getErrorMessage(updateProfileMutation.error, "Request failed")}
-        />
-      ) : null}
-    </section>
+            {validationMessage ? (
+              <div id="alert-settings-form-errors">
+                <StateError
+                  message="Please fix the highlighted validation issues before saving."
+                  detail={validationMessage}
+                />
+              </div>
+            ) : null}
+
+            <form
+              id="alert-settings-form"
+              className={pageViewStyles.formStack}
+              aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
+              noValidate
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (isSaveDisabled || !window.confirm("Save alert-delivery policy changes?")) {
+                  return;
+                }
+
+                updateProfileMutation.mutate({
+                  preferences: {
+                    delivery_frequency: deliveryFrequency as "instant" | "hourly" | "daily",
+                    notification_timezone: notificationTimezone.trim(),
+                    quiet_hours_start: quietStart,
+                    quiet_hours_end: quietEnd,
+                    notifications_email: notificationsEmail,
+                    notifications_push: notificationsPush,
+                  },
+                });
+              }}
+            >
+              <label className={pageViewStyles.labelStack} htmlFor="alert-settings-frequency">
+                <span className={pageViewStyles.labelText}>Delivery frequency</span>
+                <Select
+                  id="alert-settings-frequency"
+                  value={deliveryFrequency}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      deliveryFrequency: event.currentTarget.value,
+                    }))
+                  }
+                  disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+                  error={Boolean(validationMessage)}
+                  aria-invalid={Boolean(validationMessage)}
+                  aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
+                >
+                  <option value="instant">Instant</option>
+                  <option value="hourly">Hourly</option>
+                  <option value="daily">Daily</option>
+                </Select>
+              </label>
+              <label className={pageViewStyles.labelStack} htmlFor="alert-settings-timezone">
+                <span className={pageViewStyles.labelText}>Notification timezone</span>
+                <TextInput
+                  id="alert-settings-timezone"
+                  value={notificationTimezone}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      notificationTimezone: event.currentTarget.value,
+                    }))
+                  }
+                  disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+                  error={Boolean(validationMessage)}
+                  aria-invalid={Boolean(validationMessage)}
+                  aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
+                />
+              </label>
+              <div className={pageViewStyles.formGrid}>
+                <label className={pageViewStyles.labelStack} htmlFor="alert-settings-quiet-start">
+                  <span className={pageViewStyles.labelText}>Quiet hours start (0-23)</span>
+                  <TextInput
+                    id="alert-settings-quiet-start"
+                    type="number"
+                    min={0}
+                    max={23}
+                    value={quietStartInput}
+                    onChange={(event) =>
+                      setDraft((current) => ({ ...current, quietStart: event.currentTarget.value }))
+                    }
+                    disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+                    error={Boolean(validationMessage)}
+                    aria-invalid={Boolean(validationMessage)}
+                    aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
+                  />
+                </label>
+                <label className={pageViewStyles.labelStack} htmlFor="alert-settings-quiet-end">
+                  <span className={pageViewStyles.labelText}>Quiet hours end (0-23)</span>
+                  <TextInput
+                    id="alert-settings-quiet-end"
+                    type="number"
+                    min={0}
+                    max={23}
+                    value={quietEndInput}
+                    onChange={(event) =>
+                      setDraft((current) => ({ ...current, quietEnd: event.currentTarget.value }))
+                    }
+                    disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+                    error={Boolean(validationMessage)}
+                    aria-invalid={Boolean(validationMessage)}
+                    aria-describedby={validationMessage ? "alert-settings-form-errors" : undefined}
+                  />
+                </label>
+              </div>
+              <CheckboxRow
+                checked={notificationsEmail}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    notificationsEmail: event.currentTarget.checked,
+                  }))
+                }
+                disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+              >
+                Email notifications
+              </CheckboxRow>
+              <CheckboxRow
+                checked={notificationsPush}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    notificationsPush: event.currentTarget.checked,
+                  }))
+                }
+                disabled={updateProfileMutation.isPending || meQuery.isLoading || !isFormReady}
+              >
+                Push notifications
+              </CheckboxRow>
+            </form>
+          </CardBody>
+          <CardFooter className={pageViewStyles.cardStack}>
+            {updateProfileMutation.data ? (
+              <p role="status" aria-live="polite">
+                Success: Alert delivery settings saved.
+              </p>
+            ) : null}
+            {updateProfileMutation.isPending ? (
+              <StateLoading message="Saving delivery settings…" />
+            ) : null}
+            {updateProfileMutation.isError && isRateLimitedError(updateProfileMutation.error) ? (
+              <StateRateLimited
+                message={updateProfileMutation.error.message}
+                retryAfterSeconds={getRetryAfterSeconds(updateProfileMutation.error)}
+              />
+            ) : null}
+            {updateProfileMutation.isError && !isRateLimitedError(updateProfileMutation.error) ? (
+              <StateError
+                message="Could not save alert delivery preferences."
+                detail={getErrorMessage(updateProfileMutation.error, "Request failed")}
+              />
+            ) : null}
+          </CardFooter>
+        </Card>
+
+        <Card padding="lg">
+          <CardHeader>
+            <CardTitle>Policy summary</CardTitle>
+            <CardDescription>
+              Show the currently selected cadence and quiet hours in a compact support card.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.copyStack}>
+            <p className={pageViewStyles.mutedText}>Frequency: {deliveryFrequency}</p>
+            <p className={pageViewStyles.mutedText}>
+              Quiet hours: {quietStartInput}:00 → {quietEndInput}:00
+            </p>
+            <p className={pageViewStyles.mutedText}>
+              Channels:{" "}
+              {[notificationsEmail ? "email" : null, notificationsPush ? "push" : null]
+                .filter(Boolean)
+                .join(", ") || "none"}
+            </p>
+          </CardBody>
+        </Card>
+      </PageCardGroup>
+
+      <ActiveDivider />
+    </PageView>
   );
 }

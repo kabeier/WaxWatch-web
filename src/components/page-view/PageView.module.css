@@ -1,0 +1,189 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pageCentered {
+  align-items: center;
+}
+
+.headerCard,
+.editorShell {
+  position: relative;
+  overflow: hidden;
+}
+
+.headerCard {
+  padding-bottom: 1.25rem;
+}
+
+.headerWave {
+  position: relative;
+  height: 3rem;
+  overflow: hidden;
+  opacity: 0.8;
+}
+
+.headerWaveCompact {
+  height: 2.25rem;
+}
+
+.headerWave > :global(.ww-wave) {
+  position: absolute;
+  inset: 0;
+}
+
+.headerMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.headerMeta code {
+  font-size: 0.9rem;
+}
+
+.cardGroup {
+  display: grid;
+  gap: 1rem;
+}
+
+.twoColumn {
+  grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
+}
+
+.twoUp {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.threeUp {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.editorShell {
+  width: min(100%, 45rem);
+}
+
+.editorShell :global(.ww-card-base__footer) {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.formStack,
+.copyStack,
+.metricStack,
+.cardStack,
+.listStack,
+.detailGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.copyStack {
+  gap: 0.75rem;
+}
+
+.formRow,
+.actionRow,
+.tabRow,
+.inlineGroup,
+.badgeRow {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.formRow {
+  align-items: start;
+}
+
+.formGrid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.labelStack {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.labelText {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.helpText,
+.mutedText {
+  color: rgba(245, 245, 245, 0.72);
+  font-size: 0.92rem;
+}
+
+.mutedText {
+  line-height: 1.5;
+}
+
+.metricValue {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.metricLabel {
+  color: rgba(245, 245, 245, 0.72);
+  font-size: 0.9rem;
+}
+
+.sectionWave {
+  position: relative;
+  height: 2.5rem;
+  overflow: hidden;
+  opacity: 0.72;
+}
+
+.sectionWave > :global(.ww-wave) {
+  position: absolute;
+  inset: 0;
+}
+
+.listLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.listLink:hover,
+.listLink:focus-visible {
+  text-decoration: underline;
+}
+
+.listActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.callout {
+  border: 1px solid rgba(244, 176, 0, 0.24);
+  border-radius: 1rem;
+  padding: 0.85rem 1rem;
+  background: rgba(244, 176, 0, 0.08);
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .twoColumn,
+  .twoUp,
+  .threeUp,
+  .formGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
