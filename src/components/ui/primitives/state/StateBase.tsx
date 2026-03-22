@@ -1,14 +1,5 @@
 import { useId, type ReactNode } from "react";
 
-import { Badge, HelperText } from "@/components/ui/primitives/base/feedback";
-import {
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/primitives/base/surfaces";
-
 type StateTone = "loading" | "empty" | "error" | "rate-limited";
 
 type StateBaseProps = {
@@ -50,41 +41,40 @@ export function StateBase({
 }: StateBaseProps) {
   const titleId = useId();
   const descriptionId = useId();
+  const helperToneClass = tone === "rate-limited" ? "ww-helper-text--warning" : undefined;
 
   return (
-    <Card
+    <section
       aria-busy={busy}
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
       aria-live={role === "alert" ? "assertive" : "polite"}
-      className={`ww-state ww-state--${tone}`}
-      padding="lg"
+      className={`ww-card-base ww-card-base--padding-lg ww-state ww-state--${tone}`}
       role={role}
     >
-      <CardHeader className="ww-state__header">
-        <Badge tone={STATE_BADGE_TONE[tone]}>{STATE_BADGE_LABEL[tone]}</Badge>
-        <CardTitle className="ww-state__title" id={titleId}>
+      <div className="ww-card-base__header ww-state__header">
+        <span className={`ww-badge ww-badge--${STATE_BADGE_TONE[tone]}`}>
+          {STATE_BADGE_LABEL[tone]}
+        </span>
+        <h2 className="ww-card-base__title ww-state__title" id={titleId}>
           {title}
-        </CardTitle>
-      </CardHeader>
+        </h2>
+      </div>
 
-      <CardBody className="ww-state__body">
+      <div className="ww-card-base__body ww-state__body">
         <p className="ww-state__message" id={descriptionId}>
           {message}
         </p>
-        {detail ? <HelperText className="ww-state__detail">{detail}</HelperText> : null}
+        {detail ? <p className="ww-helper-text ww-state__detail">{detail}</p> : null}
         {showRetryAfter ? (
-          <HelperText
-            className="ww-state__detail"
-            tone={tone === "rate-limited" ? "warning" : "default"}
-          >
+          <p className={`ww-helper-text ww-state__detail ${helperToneClass ?? ""}`.trim()}>
             Retry-After:{" "}
             {typeof retryAfterSeconds === "number" ? `${retryAfterSeconds}s` : "Not provided"}
-          </HelperText>
+          </p>
         ) : null}
-      </CardBody>
+      </div>
 
-      {action ? <CardFooter className="ww-state__footer">{action}</CardFooter> : null}
+      {action ? <div className="ww-card-base__footer ww-state__footer">{action}</div> : null}
       {busy ? (
         <div className="ww-state__busy" aria-hidden="true">
           <span className="ww-state__busy-dot" />
@@ -92,6 +82,6 @@ export function StateBase({
           <span className="ww-state__busy-dot" />
         </div>
       ) : null}
-    </Card>
+    </section>
   );
 }
