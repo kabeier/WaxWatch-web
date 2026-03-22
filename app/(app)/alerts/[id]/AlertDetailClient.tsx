@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
@@ -24,10 +25,14 @@ export default function AlertDetailClient({ id }: { id: string }) {
   const updateWatchRuleMutation = useUpdateWatchRuleMutation(id);
   const deleteWatchRuleMutation = useDeleteWatchRuleMutation(id);
   const retryAlertDetail = watchRuleDetailQuery.retry;
+  const router = useRouter();
   const [draft, setDraft] = useState<{ name?: string; pollInterval?: string; isActive?: boolean }>(
     {},
   );
-  const deleteRequestRef = useRef(false);
+  const deleteRequestRef = useRef<{ requestedId: string | null; sawPending: boolean }>({
+    requestedId: null,
+    sawPending: false,
+  });
 
   useEffect(() => {
     if (updateWatchRuleMutation.data) {
@@ -36,25 +41,34 @@ export default function AlertDetailClient({ id }: { id: string }) {
   }, [retryAlertDetail, updateWatchRuleMutation.data]);
 
   useEffect(() => {
-    if (
-      !deleteRequestRef.current ||
-      deleteWatchRuleMutation.isPending ||
-      deleteWatchRuleMutation.isError
-    ) {
-      if (deleteWatchRuleMutation.isError) {
-        deleteRequestRef.current = false;
-      }
+    const deleteRequest = deleteRequestRef.current;
+
+    if (deleteRequest.requestedId !== id) {
+      deleteRequestRef.current = { requestedId: null, sawPending: false };
       return;
     }
 
-    if (deleteWatchRuleMutation.data) {
-      window.location.assign("/alerts");
-      deleteRequestRef.current = false;
+    if (deleteWatchRuleMutation.isPending) {
+      deleteRequest.sawPending = true;
+      return;
+    }
+
+    if (deleteWatchRuleMutation.isError) {
+      deleteRequestRef.current = { requestedId: null, sawPending: false };
+      return;
+    }
+
+    if (deleteRequest.sawPending) {
+      router.push("/alerts");
+      router.refresh();
+      deleteRequestRef.current = { requestedId: null, sawPending: false };
     }
   }, [
     deleteWatchRuleMutation.data,
     deleteWatchRuleMutation.isError,
     deleteWatchRuleMutation.isPending,
+    id,
+    router,
   ]);
 
   const name = draft.name ?? watchRuleDetailQuery.data?.name ?? "";
@@ -193,7 +207,7 @@ export default function AlertDetailClient({ id }: { id: string }) {
           disabled={isPending}
           onClick={() => {
             if (window.confirm("Delete this alert permanently?")) {
-              deleteRequestRef.current = true;
+              deleteRequestRef.current = { requestedId: id, sawPending: false };
               deleteWatchRuleMutation.mutate(undefined);
             }
           }}
