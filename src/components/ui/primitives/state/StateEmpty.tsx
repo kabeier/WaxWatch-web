@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import { StateBase } from "./StateBase";
 
@@ -16,6 +16,13 @@ export function StateEmpty({
   action,
 }: StateEmptyProps) {
   return (
-    <StateBase action={action} detail={detail} message={message} role="status" title={title} />
+    <StateBase
+      action={action}
+      detail={detail}
+      message={message}
+      role="status"
+      title={title}
+      tone="empty"
+    />
   );
 }

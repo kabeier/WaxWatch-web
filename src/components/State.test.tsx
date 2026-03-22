@@ -19,7 +19,11 @@ describe("shared state components", () => {
       "aria-busy",
       "true",
     );
-    expect(screen.getByRole("status", { name: /no releases/i })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: /no releases/i })).toHaveClass(
+      "ww-state",
+      "ww-state--empty",
+    );
+    expect(screen.getByText("Loading")).toHaveClass("ww-badge", "ww-badge--accent");
   });
 
   it("renders error detail and action when provided", () => {
@@ -32,8 +36,11 @@ describe("shared state components", () => {
       />,
     );
 
-    expect(screen.getByRole("alert", { name: /search failed/i })).toBeInTheDocument();
-    expect(screen.getByText("Request failed")).toBeInTheDocument();
+    expect(screen.getByRole("alert", { name: /search failed/i })).toHaveClass(
+      "ww-state",
+      "ww-state--error",
+    );
+    expect(screen.getByText("Request failed")).toHaveClass("ww-helper-text");
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 
@@ -41,7 +48,10 @@ describe("shared state components", () => {
     render(<StateRateLimited message="Slow down" retryAfterSeconds={12} />);
 
     expect(screen.getByText("Slow down")).toBeInTheDocument();
-    expect(screen.getByText("Retry-After: 12s")).toBeInTheDocument();
+    expect(screen.getByText("Retry-After: 12s")).toHaveClass(
+      "ww-helper-text",
+      "ww-helper-text--warning",
+    );
   });
 
   it("renders fallback retry-after text when missing", () => {

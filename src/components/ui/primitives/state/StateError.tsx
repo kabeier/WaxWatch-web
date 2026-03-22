@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import { StateBase } from "./StateBase";
 
@@ -15,5 +15,14 @@ export function StateError({
   detail,
   action,
 }: StateErrorProps) {
-  return <StateBase action={action} detail={detail} message={message} role="alert" title={title} />;
+  return (
+    <StateBase
+      action={action}
+      detail={detail}
+      message={message}
+      role="alert"
+      title={title}
+      tone="error"
+    />
+  );
 }
