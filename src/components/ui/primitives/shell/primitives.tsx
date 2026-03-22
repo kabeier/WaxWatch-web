@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { WaveTrace } from "@/components/WaveTrace";
-import { routeViewModels } from "@/lib/view-models/routes";
 
 type ShellNavItem = {
   href: string;
@@ -46,70 +45,60 @@ type ContentContainerProps = ComponentPropsWithoutRef<"section"> & {
   width?: "default" | "narrow" | "full";
 };
 
-const NAV_SHORT_LABELS = {
-  dashboard: "DB",
-  search: "SR",
-  alerts: "AL",
-  watchlist: "WL",
-  notifications: "NT",
-  integrations: "IN",
-  settings: "ST",
-} as const;
-
-function buildNavItem(
-  routeKey: keyof typeof NAV_SHORT_LABELS,
-  options?: {
-    label?: string;
-    match?: (pathname: string) => boolean;
-  },
-): ShellNavItem {
-  const route = routeViewModels[routeKey];
-
-  return {
-    href: route.path,
-    label: options?.label ?? route.navigationLabel ?? route.heading,
-    shortLabel: NAV_SHORT_LABELS[routeKey],
-    match: options?.match,
-  };
-}
+const DASHBOARD_PATH = "/dashboard";
+const SEARCH_PATH = "/search";
+const ALERTS_PATH = "/alerts";
+const WATCHLIST_PATH = "/watchlist";
+const NOTIFICATIONS_PATH = "/notifications";
+const INTEGRATIONS_PATH = "/integrations";
+const LEGACY_INTEGRATIONS_PATH = "/settings/integrations";
+const SETTINGS_PATH = "/settings";
+const SETTINGS_PROFILE_PATH = "/settings/profile";
 
 const APP_NAV_ITEMS: ShellNavItem[] = [
-  buildNavItem("dashboard", {
-    match: (pathname) => pathname === "/" || pathname.startsWith("/dashboard"),
-  }),
-  buildNavItem("search"),
-  buildNavItem("alerts"),
-  buildNavItem("watchlist"),
-  buildNavItem("notifications"),
-  buildNavItem("integrations", {
+  {
+    href: DASHBOARD_PATH,
+    label: "Dashboard",
+    shortLabel: "DB",
+    match: (pathname) => pathname === "/" || pathname.startsWith(DASHBOARD_PATH),
+  },
+  { href: SEARCH_PATH, label: "Search", shortLabel: "SR" },
+  { href: ALERTS_PATH, label: "Alerts", shortLabel: "AL" },
+  { href: WATCHLIST_PATH, label: "Watchlist", shortLabel: "WL" },
+  { href: NOTIFICATIONS_PATH, label: "Notifications", shortLabel: "NT" },
+  {
+    href: INTEGRATIONS_PATH,
+    label: "Integrations",
+    shortLabel: "IN",
     match: (pathname) =>
-      pathname.startsWith("/integrations") || pathname.startsWith("/settings/integrations"),
-  }),
-  buildNavItem("settings", {
+      pathname.startsWith(INTEGRATIONS_PATH) || pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
+  },
+  {
+    href: SETTINGS_PATH,
+    label: "Settings",
+    shortLabel: "ST",
     match: (pathname) =>
-      pathname.startsWith("/settings") && !pathname.startsWith("/settings/integrations"),
-  }),
+      pathname.startsWith(SETTINGS_PATH) && !pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
+  },
 ];
 
 const MOBILE_NAV_ITEMS: ShellNavItem[] = [
-  buildNavItem("dashboard", {
-    label: routeViewModels.dashboard.mobileNavigationLabel ?? routeViewModels.dashboard.heading,
-    match: (pathname) => pathname === "/" || pathname.startsWith("/dashboard"),
-  }),
-  buildNavItem("search", {
-    label: routeViewModels.search.mobileNavigationLabel ?? routeViewModels.search.heading,
-  }),
-  buildNavItem("alerts", {
-    label: routeViewModels.alerts.mobileNavigationLabel ?? routeViewModels.alerts.heading,
-  }),
-  buildNavItem("watchlist", {
-    label: routeViewModels.watchlist.mobileNavigationLabel ?? routeViewModels.watchlist.heading,
-  }),
-  buildNavItem("settings", {
-    label: routeViewModels.settings.mobileNavigationLabel ?? routeViewModels.settings.heading,
+  {
+    href: DASHBOARD_PATH,
+    label: "Home",
+    shortLabel: "DB",
+    match: (pathname) => pathname === "/" || pathname.startsWith(DASHBOARD_PATH),
+  },
+  { href: SEARCH_PATH, label: "Search", shortLabel: "SR" },
+  { href: ALERTS_PATH, label: "Alerts", shortLabel: "AL" },
+  { href: WATCHLIST_PATH, label: "Watchlist", shortLabel: "WL" },
+  {
+    href: SETTINGS_PATH,
+    label: "Settings",
+    shortLabel: "ST",
     match: (pathname) =>
-      pathname.startsWith("/settings") && !pathname.startsWith("/settings/integrations"),
-  }),
+      pathname.startsWith(SETTINGS_PATH) && !pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
+  },
 ];
 
 function joinClassNames(...values: Array<string | false | null | undefined>) {
@@ -158,7 +147,7 @@ function isNavItemActive(pathname: string, item: ShellNavItem) {
 }
 
 function ShellBrand({
-  href = routeViewModels.dashboard.path,
+  href = DASHBOARD_PATH,
   label = "WaxWatch",
 }: {
   href?: string;
@@ -249,7 +238,7 @@ export function AppShell({
 export function TopNav({
   utilities,
   showUtilities = true,
-  brandHref = routeViewModels.dashboard.path,
+  brandHref = DASHBOARD_PATH,
   brandLabel = "WaxWatch",
   utilityLabel = "Utilities",
 }: TopNavProps) {
@@ -261,16 +250,8 @@ export function TopNav({
           <nav className="top-nav__utilities" aria-label={utilityLabel}>
             {utilities ?? (
               <>
-                <ShellUtilityLink
-                  href={routeViewModels.notifications.path}
-                  label="Inbox"
-                  value="04"
-                />
-                <ShellUtilityLink
-                  href={routeViewModels.settingsProfile.path}
-                  label="Account"
-                  value="Open"
-                />
+                <ShellUtilityLink href={NOTIFICATIONS_PATH} label="Inbox" value="04" />
+                <ShellUtilityLink href={SETTINGS_PROFILE_PATH} label="Account" value="Open" />
               </>
             )}
           </nav>
