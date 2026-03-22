@@ -38,7 +38,8 @@ export default function WatchlistPage() {
       ? watchReleasesQuery.error
       : null;
   const isRateLimited = Boolean(rateLimitedError);
-  const activeCount = watchReleasesQuery.data?.filter((release) => release.is_active).length ?? 0;
+  const watchReleases = Array.isArray(watchReleasesQuery.data) ? watchReleasesQuery.data : [];
+  const activeCount = watchReleases.filter((release) => release?.is_active).length;
 
   return (
     <PageView
@@ -70,7 +71,7 @@ export default function WatchlistPage() {
       <PageCardGroup columns="three">
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
-            <div className={pageViewStyles.metricValue}>{watchReleasesQuery.data?.length ?? 0}</div>
+            <div className={pageViewStyles.metricValue}>{watchReleases.length}</div>
             <div className={pageViewStyles.metricLabel}>Tracked releases</div>
           </CardBody>
         </Card>
@@ -83,8 +84,7 @@ export default function WatchlistPage() {
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
             <div className={pageViewStyles.metricValue}>
-              {watchReleasesQuery.data?.filter((release) => release.match_mode === "master_release")
-                .length ?? 0}
+              {watchReleases.filter((release) => release?.match_mode === "master_release").length}
             </div>
             <div className={pageViewStyles.metricLabel}>Master-release matches</div>
           </CardBody>
@@ -129,12 +129,17 @@ export default function WatchlistPage() {
                 }
               />
             ) : null}
-            {watchReleasesQuery.data && watchReleasesQuery.data.length === 0 ? (
+            {watchReleasesQuery.data && watchReleases.length === 0 ? (
               <StateEmpty message="No watchlist releases yet. Add alerts to populate this feed." />
             ) : null}
-            {watchReleasesQuery.data && watchReleasesQuery.data.length > 0 ? (
+            {watchReleasesQuery.data && watchReleases.length > 0 ? (
+              <p role="status" aria-live="polite">
+                Status: Loaded {watchReleases.length} watchlist releases.
+              </p>
+            ) : null}
+            {watchReleasesQuery.data && watchReleases.length > 0 ? (
               <ListContainer>
-                {watchReleasesQuery.data.map((release) => (
+                {watchReleases.map((release) => (
                   <ListRow
                     key={release.id}
                     interactive
@@ -155,7 +160,9 @@ export default function WatchlistPage() {
                         Created {formatDateTime(release.created_at)}
                       </span>
                       <span className={pageViewStyles.mutedText}>
-                        {release.match_mode.replace("_", " ")}
+                        {typeof release.match_mode === "string"
+                          ? release.match_mode.replace(/_/g, " ")
+                          : "Match mode unavailable"}
                       </span>
                       <span className={pageViewStyles.mutedText}>
                         {release.is_active ? "Tracking" : "Inactive"}

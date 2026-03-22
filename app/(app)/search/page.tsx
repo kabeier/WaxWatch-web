@@ -110,6 +110,11 @@ export default function SearchPage() {
     page,
     page_size: pageSize,
   };
+  const searchItems = Array.isArray(searchMutation.data?.items) ? searchMutation.data.items : [];
+  const searchPagination = searchMutation.data?.pagination;
+  const providersSearched = Array.isArray(searchMutation.data?.providers_searched)
+    ? searchMutation.data.providers_searched
+    : [];
 
   return (
     <PageView
@@ -300,12 +305,17 @@ export default function SearchPage() {
                 }
               />
             ) : null}
-            {searchMutation.data && searchMutation.data.items.length === 0 ? (
+            {searchMutation.data && searchItems.length === 0 ? (
               <StateEmpty message="No results matched this query. Adjust keywords or providers and retry." />
             ) : null}
-            {searchMutation.data && searchMutation.data.items.length > 0 ? (
+            {searchMutation.data && searchItems.length > 0 ? (
+              <p role="status" aria-live="polite">
+                Status: Loaded {searchItems.length} search results.
+              </p>
+            ) : null}
+            {searchMutation.data && searchItems.length > 0 ? (
               <div className={pageViewStyles.listStack}>
-                {searchMutation.data.items.map((item) => (
+                {searchItems.map((item) => (
                   <Card key={item.id}>
                     <CardBody className={pageViewStyles.copyStack}>
                       <div className={pageViewStyles.inlineGroup}>
@@ -347,18 +357,18 @@ export default function SearchPage() {
           <CardBody className={pageViewStyles.metricStack}>
             <div>
               <div className={pageViewStyles.metricValue}>
-                {searchMutation.data?.pagination.returned ?? 0}
+                {searchPagination?.returned ?? searchItems.length}
               </div>
               <div className={pageViewStyles.metricLabel}>Listings returned</div>
             </div>
             <div>
               <div className={pageViewStyles.metricValue}>
-                {searchMutation.data?.pagination.total ?? 0}
+                {searchPagination?.total ?? searchItems.length}
               </div>
               <div className={pageViewStyles.metricLabel}>Total matching listings</div>
             </div>
             <p className={pageViewStyles.mutedText}>
-              Providers searched: {formatList(searchMutation.data?.providers_searched)}.
+              Providers searched: {formatList(providersSearched)}.
             </p>
           </CardBody>
         </Card>

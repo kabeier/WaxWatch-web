@@ -35,6 +35,8 @@ export default function AlertsPage() {
   const viewModel = routeViewModels.alerts;
   const watchRulesQuery = useWatchRulesQuery();
   const watchReleasesQuery = useWatchReleasesQuery();
+  const watchRules = Array.isArray(watchRulesQuery.data) ? watchRulesQuery.data : [];
+  const watchReleases = Array.isArray(watchReleasesQuery.data) ? watchReleasesQuery.data : [];
 
   return (
     <PageView
@@ -42,8 +44,12 @@ export default function AlertsPage() {
       description={viewModel.summary}
       eyebrow="Rule management"
       actions={
-        <Link href="/alerts/new" className={pageViewStyles.listLink}>
-          Create alert
+        <Link
+          href="/alerts/new"
+          role="button"
+          className="ww-button ww-button--primary ww-button--md"
+        >
+          Create watch rule
         </Link>
       }
       tabs={
@@ -70,20 +76,20 @@ export default function AlertsPage() {
       <PageCardGroup columns="three">
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
-            <div className={pageViewStyles.metricValue}>{watchRulesQuery.data?.length ?? 0}</div>
+            <div className={pageViewStyles.metricValue}>{watchRules.length}</div>
             <div className={pageViewStyles.metricLabel}>Saved rules</div>
           </CardBody>
         </Card>
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
-            <div className={pageViewStyles.metricValue}>{watchReleasesQuery.data?.length ?? 0}</div>
+            <div className={pageViewStyles.metricValue}>{watchReleases.length}</div>
             <div className={pageViewStyles.metricLabel}>Current matches</div>
           </CardBody>
         </Card>
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
             <div className={pageViewStyles.metricValue}>
-              {watchRulesQuery.data?.filter((rule) => rule.is_active).length ?? 0}
+              {watchRules.filter((rule) => rule?.is_active).length}
             </div>
             <div className={pageViewStyles.metricLabel}>Active rules</div>
           </CardBody>
@@ -133,12 +139,17 @@ export default function AlertsPage() {
                 }
               />
             ) : null}
-            {watchRulesQuery.data && watchRulesQuery.data.length === 0 ? (
+            {watchRulesQuery.data && watchRules.length === 0 ? (
               <StateEmpty message="No watch rules yet. Create one to start matching releases." />
             ) : null}
-            {watchRulesQuery.data && watchRulesQuery.data.length > 0 ? (
+            {watchRulesQuery.data && watchRules.length > 0 ? (
+              <p role="status" aria-live="polite">
+                Status: Loaded {watchRules.length} rules.
+              </p>
+            ) : null}
+            {watchRulesQuery.data && watchRules.length > 0 ? (
               <ListContainer>
-                {watchRulesQuery.data.map((rule) => (
+                {watchRules.map((rule) => (
                   <ListRow
                     key={rule.id}
                     interactive
@@ -147,7 +158,7 @@ export default function AlertsPage() {
                         {rule.name}
                       </Link>
                     }
-                    description={`Runs every ${rule.poll_interval_seconds}s · Keywords: ${formatList(rule.query.keywords as string[] | undefined)}`}
+                    description={`Runs every ${rule.poll_interval_seconds ?? "—"}s · Keywords: ${formatList(rule.query?.keywords as string[] | undefined)}`}
                     trailing={
                       <span className={pageViewStyles.mutedText}>
                         {rule.is_active ? "Active" : "Paused"}
@@ -206,12 +217,12 @@ export default function AlertsPage() {
                 }
               />
             ) : null}
-            {watchReleasesQuery.data && watchReleasesQuery.data.length === 0 ? (
+            {watchReleasesQuery.data && watchReleases.length === 0 ? (
               <StateEmpty message="No matched releases yet. We'll show matches as they arrive." />
             ) : null}
-            {watchReleasesQuery.data && watchReleasesQuery.data.length > 0 ? (
+            {watchReleasesQuery.data && watchReleases.length > 0 ? (
               <ListContainer dense>
-                {watchReleasesQuery.data.slice(0, 6).map((release) => (
+                {watchReleases.slice(0, 6).map((release) => (
                   <ListRow
                     key={release.id}
                     title={
@@ -228,7 +239,9 @@ export default function AlertsPage() {
                   >
                     <div className={pageViewStyles.inlineGroup}>
                       <span className={pageViewStyles.mutedText}>
-                        {release.match_mode.replace("_", " ")}
+                        {typeof release.match_mode === "string"
+                          ? release.match_mode.replace(/_/g, " ")
+                          : "Match mode unavailable"}
                       </span>
                       <span className={pageViewStyles.mutedText}>
                         {release.is_active ? "Tracking" : "Inactive"}

@@ -4,6 +4,10 @@
   gap: 1.5rem;
 }
 
+.page > * {
+  width: 100%;
+}
+
 .pageCentered {
   align-items: center;
 }
@@ -142,6 +146,7 @@
   height: 2.5rem;
   overflow: hidden;
   opacity: 0.72;
+  width: 100%;
 }
 
 .sectionWave > :global(.ww-wave) {

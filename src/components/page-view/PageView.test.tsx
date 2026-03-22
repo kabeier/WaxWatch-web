@@ -56,6 +56,7 @@ describe("page view scaffold", () => {
 describe("page view formatting helpers", () => {
   it("formats fallback, currency, and lists predictably", () => {
     expect(formatDateTime()).toBe("Not scheduled");
+    expect(formatDateTime("2026-01-02T03:04:00.000Z")).toBe("Jan 2, 2026, 3:04 AM");
     expect(formatCurrency(12.5, "USD")).toBe("$12.50");
     expect(formatList(["discogs", undefined, "ebay"])).toBe("discogs, ebay");
     expect(formatList()).toBe("—");

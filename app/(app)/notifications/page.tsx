@@ -38,9 +38,8 @@ export default function NotificationsPage() {
   const viewModel = routeViewModels.notifications;
   const notificationsQuery = useNotificationsQuery();
   const unreadCountQuery = useUnreadNotificationCountQuery();
-  const firstUnreadNotificationId = notificationsQuery.data?.find(
-    (notification) => !notification.is_read,
-  )?.id;
+  const notifications = Array.isArray(notificationsQuery.data) ? notificationsQuery.data : [];
+  const firstUnreadNotificationId = notifications.find((notification) => !notification.is_read)?.id;
   const markReadMutation = useMarkNotificationReadMutation(firstUnreadNotificationId ?? "");
 
   return (
@@ -93,14 +92,14 @@ export default function NotificationsPage() {
         </Card>
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
-            <div className={pageViewStyles.metricValue}>{notificationsQuery.data?.length ?? 0}</div>
+            <div className={pageViewStyles.metricValue}>{notifications.length}</div>
             <div className={pageViewStyles.metricLabel}>Loaded activity items</div>
           </CardBody>
         </Card>
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
             <div className={pageViewStyles.metricValue}>
-              {notificationsQuery.data?.filter((notification) => !notification.is_read).length ?? 0}
+              {notifications.filter((notification) => !notification.is_read).length}
             </div>
             <div className={pageViewStyles.metricLabel}>Unread in current list</div>
           </CardBody>
@@ -143,6 +142,11 @@ export default function NotificationsPage() {
                 message="Could not load unread notification count."
                 detail={getErrorMessage(unreadCountQuery.error, "Request failed")}
               />
+            ) : null}
+            {unreadCountQuery.isError ? (
+              <p role="status" aria-live="polite">
+                Status: Unread notifications count is currently unavailable.
+              </p>
             ) : null}
             {!unreadCountQuery.isLoading && !unreadCountQuery.isError ? (
               <div className={pageViewStyles.callout}>
@@ -207,12 +211,12 @@ export default function NotificationsPage() {
                 }
               />
             ) : null}
-            {notificationsQuery.data && notificationsQuery.data.length === 0 ? (
+            {notificationsQuery.data && notifications.length === 0 ? (
               <StateEmpty message="No notifications yet." />
             ) : null}
-            {notificationsQuery.data && notificationsQuery.data.length > 0 ? (
+            {notificationsQuery.data && notifications.length > 0 ? (
               <ListContainer>
-                {notificationsQuery.data.map((notification) => (
+                {notifications.map((notification) => (
                   <ListRow
                     key={notification.id}
                     title={notification.event_type}
