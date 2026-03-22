@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import { StateBase } from "./StateBase";
 
@@ -26,6 +26,7 @@ export function StateRateLimited({
       role="alert"
       showRetryAfter
       title={title}
+      tone="rate-limited"
     />
   );
 }

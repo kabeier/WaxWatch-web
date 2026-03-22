@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import { StateBase } from "./StateBase";
 
@@ -16,6 +16,14 @@ export function StateLoading({
   action,
 }: StateLoadingProps) {
   return (
-    <StateBase action={action} busy detail={detail} message={message} role="status" title={title} />
+    <StateBase
+      action={action}
+      busy
+      detail={detail}
+      message={message}
+      role="status"
+      title={title}
+      tone="loading"
+    />
   );
 }
