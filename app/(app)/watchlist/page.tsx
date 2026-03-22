@@ -1,92 +1,45 @@
-"use client";
-
-import Link from "next/link";
-
-import { RetryAction } from "@/components/RetryAction";
+import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { ActiveDivider, PageCardGroup, PageView } from "@/components/page-view/PageView";
 import {
-  Button,
   Card,
   CardBody,
   CardDescription,
   CardHeader,
   CardTitle,
-  ListContainer,
-  ListRow,
 } from "@/components/ui/primitives/base";
-import {
-  StateEmpty,
-  StateError,
-  StateLoading,
-  StateRateLimited,
-} from "@/components/ui/primitives/state";
-import { useWatchReleasesQuery } from "@/lib/query/hooks";
-import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
-import { routeViewModels } from "@/lib/view-models/routes";
-import {
-  ActiveDivider,
-  PageCardGroup,
-  PageView,
-  pageViewStyles,
-} from "@/components/page-view/PageView";
-import { formatCurrency, formatDateTime } from "@/components/page-view/format";
+
+import WatchlistMeta from "./WatchlistMeta";
+import WatchlistMetrics from "./WatchlistMetrics";
+import WatchlistRefreshButton from "./WatchlistRefreshButton";
+import WatchlistReleasesPanel from "./WatchlistReleasesPanel";
+
+const watchlistHeading = "Watchlist";
+const watchlistSummary = "Track release matches across all of your saved watch rules.";
+const watchlistItemPath = "/watchlist/[id]";
 
 export default function WatchlistPage() {
-  const viewModel = routeViewModels.watchlist;
-  const watchReleasesQuery = useWatchReleasesQuery();
-  const rateLimitedError =
-    watchReleasesQuery.isError && isRateLimitedError(watchReleasesQuery.error)
-      ? watchReleasesQuery.error
-      : null;
-  const isRateLimited = Boolean(rateLimitedError);
-  const watchReleases = Array.isArray(watchReleasesQuery.data) ? watchReleasesQuery.data : [];
-  const activeCount = watchReleases.filter((release) => release?.is_active).length;
-
   return (
     <PageView
-      title={viewModel.heading}
-      description={viewModel.summary}
+      title={watchlistHeading}
+      description={watchlistSummary}
       eyebrow="Tracked releases"
-      actions={
-        <Button
-          disabled={watchReleasesQuery.isLoading || isRateLimited}
-          onClick={() => {
-            if (!isRateLimited) {
-              void watchReleasesQuery.retry();
-            }
-          }}
-        >
-          Refresh watchlist
-        </Button>
-      }
-      meta={
-        <>
-          <span>
-            Use cards and list rows for inspection-first review instead of a plain stacked status
-            view.
-          </span>
-          <span>{activeCount} active tracked releases</span>
-        </>
-      }
+      actions={<WatchlistRefreshButton />}
+      meta={<WatchlistMeta />}
     >
       <PageCardGroup columns="three">
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
-            <div className={pageViewStyles.metricValue}>{watchReleases.length}</div>
-            <div className={pageViewStyles.metricLabel}>Tracked releases</div>
+            <WatchlistMetrics metric="tracked" />
           </CardBody>
         </Card>
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
-            <div className={pageViewStyles.metricValue}>{activeCount}</div>
-            <div className={pageViewStyles.metricLabel}>Active items</div>
+            <WatchlistMetrics metric="active" />
           </CardBody>
         </Card>
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
-            <div className={pageViewStyles.metricValue}>
-              {watchReleases.filter((release) => release?.match_mode === "master_release").length}
-            </div>
-            <div className={pageViewStyles.metricLabel}>Master-release matches</div>
+            <WatchlistMetrics metric="masterRelease" />
           </CardBody>
         </Card>
       </PageCardGroup>
@@ -102,76 +55,7 @@ export default function WatchlistPage() {
             </CardDescription>
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
-            {watchReleasesQuery.isLoading ? <StateLoading message="Loading watchlist…" /> : null}
-            {rateLimitedError ? (
-              <StateRateLimited
-                message="Watchlist refresh is cooling down due to rate limiting."
-                detail={rateLimitedError.message}
-                retryAfterSeconds={getRetryAfterSeconds(rateLimitedError)}
-                action={
-                  <RetryAction
-                    label="Retry watchlist"
-                    retryAfterSeconds={getRetryAfterSeconds(rateLimitedError)}
-                    onRetry={() => void watchReleasesQuery.retry()}
-                  />
-                }
-              />
-            ) : null}
-            {watchReleasesQuery.isError && !isRateLimitedError(watchReleasesQuery.error) ? (
-              <StateError
-                message="Could not load watchlist."
-                detail={getErrorMessage(watchReleasesQuery.error, "Request failed")}
-                action={
-                  <RetryAction
-                    label="Retry watchlist"
-                    onRetry={() => void watchReleasesQuery.retry()}
-                  />
-                }
-              />
-            ) : null}
-            {watchReleasesQuery.data && watchReleases.length === 0 ? (
-              <StateEmpty message="No watchlist releases yet. Add alerts to populate this feed." />
-            ) : null}
-            {watchReleasesQuery.data && watchReleases.length > 0 ? (
-              <p role="status" aria-live="polite">
-                Status: Loaded {watchReleases.length} watchlist releases.
-              </p>
-            ) : null}
-            {watchReleasesQuery.data && watchReleases.length > 0 ? (
-              <ListContainer>
-                {watchReleases.map((release) => (
-                  <ListRow
-                    key={release.id}
-                    interactive
-                    title={
-                      <Link className={pageViewStyles.listLink} href={`/watchlist/${release.id}`}>
-                        {release.title}
-                      </Link>
-                    }
-                    description={`${release.artist} · ${release.year ?? "Year unknown"}`}
-                    trailing={
-                      <span className={pageViewStyles.mutedText}>
-                        {formatCurrency(release.target_price, release.currency)}
-                      </span>
-                    }
-                  >
-                    <div className={pageViewStyles.inlineGroup}>
-                      <span className={pageViewStyles.mutedText}>
-                        Created {formatDateTime(release.created_at)}
-                      </span>
-                      <span className={pageViewStyles.mutedText}>
-                        {typeof release.match_mode === "string"
-                          ? release.match_mode.replace(/_/g, " ")
-                          : "Match mode unavailable"}
-                      </span>
-                      <span className={pageViewStyles.mutedText}>
-                        {release.is_active ? "Tracking" : "Inactive"}
-                      </span>
-                    </div>
-                  </ListRow>
-                ))}
-              </ListContainer>
-            ) : null}
+            <WatchlistReleasesPanel />
           </CardBody>
         </Card>
 
@@ -185,8 +69,7 @@ export default function WatchlistPage() {
           </CardHeader>
           <CardBody className={pageViewStyles.copyStack}>
             <div className={pageViewStyles.callout}>
-              The canonical item shell already exists at{" "}
-              <code>{routeViewModels.watchlistItem.path}</code>.
+              The canonical item shell already exists at <code>{watchlistItemPath}</code>.
             </div>
             <p className={pageViewStyles.mutedText}>
               Release rows prioritize navigation first, then context such as pricing, match mode,
