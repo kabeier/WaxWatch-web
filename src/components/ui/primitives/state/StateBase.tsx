@@ -1,15 +1,13 @@
-import { useId, type ComponentProps, type ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
+import { Badge, HelperText } from "@/components/ui/primitives/base/feedback";
 import {
-  Badge,
-  Button,
   Card,
   CardBody,
   CardFooter,
   CardHeader,
   CardTitle,
-  HelperText,
-} from "@/components/ui/primitives/base";
+} from "@/components/ui/primitives/base/surfaces";
 
 type StateTone = "loading" | "empty" | "error" | "rate-limited";
 
@@ -95,13 +93,5 @@ export function StateBase({
         </div>
       ) : null}
     </Card>
-  );
-}
-
-export function StateActionButton({ children, ...props }: ComponentProps<typeof Button>) {
-  return (
-    <Button variant="secondary" {...props}>
-      {children}
-    </Button>
   );
 }

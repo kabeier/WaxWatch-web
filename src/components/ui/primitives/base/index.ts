@@ -1,20 +1,12 @@
+export { Button, CheckboxRow, Select, TextInput } from "./controls";
+export { Badge, Banner, HelperText } from "./feedback";
+export { ListContainer, ListRow, PageTab, PageTabs } from "./collections";
 export {
-  Badge,
-  Banner,
-  Button,
   Card,
   CardBody,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-  CheckboxRow,
-  HelperText,
-  ListContainer,
-  ListRow,
-  PageTab,
-  PageTabs,
   SectionHeader,
-  Select,
-  TextInput,
-} from "./primitives";
+} from "./surfaces";
