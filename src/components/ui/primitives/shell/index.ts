@@ -1,1 +1,9 @@
-export { AppShell, AuthNotice, ContentContainer, SideNav, TopNav } from "./primitives";
+export {
+  AppShell,
+  AuthNotice,
+  ContentContainer,
+  MobileTabBar,
+  ShellHeaderBand,
+  SideNav,
+  TopNav,
+} from "./primitives";
