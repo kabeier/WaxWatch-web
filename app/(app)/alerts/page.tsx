@@ -13,8 +13,24 @@ import {
   PageTabs,
 } from "@/components/ui/primitives/base";
 
-import AlertsMetrics from "./AlertsMetrics";
-import AlertsRulesPanel from "./AlertsRulesPanel";
+const AlertsMetricsGrid = dynamic(() => import("./AlertsMetricsGrid"), {
+  loading: () => (
+    <>
+      {Array.from({ length: 3 }, (_, index) => (
+        <Card key={`alerts-metric-loading-${index}`}>
+          <CardBody className={pageViewStyles.metricStack}>
+            <div className={pageViewStyles.metricValue}>—</div>
+            <div className={pageViewStyles.metricLabel}>Loading metrics…</div>
+          </CardBody>
+        </Card>
+      ))}
+    </>
+  ),
+});
+
+const AlertsRulesPanel = dynamic(() => import("./AlertsRulesPanel"), {
+  loading: () => <p className={pageViewStyles.mutedText}>Loading watch rules…</p>,
+});
 
 const AlertsMatchesPanel = dynamic(() => import("./AlertsMatchesPanel"), {
   loading: () => <p className={pageViewStyles.mutedText}>Loading recent release matches…</p>,
@@ -60,21 +76,7 @@ export default function AlertsPage() {
       }
     >
       <PageCardGroup columns="three">
-        <Card>
-          <CardBody className={pageViewStyles.metricStack}>
-            <AlertsMetrics metric="rules" />
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className={pageViewStyles.metricStack}>
-            <AlertsMetrics metric="matches" />
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className={pageViewStyles.metricStack}>
-            <AlertsMetrics metric="activeRules" />
-          </CardBody>
-        </Card>
+        <AlertsMetricsGrid />
       </PageCardGroup>
 
       <ActiveDivider />

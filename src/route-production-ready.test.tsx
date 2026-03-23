@@ -181,11 +181,6 @@ vi.mock("@/lib/query/hooks", () => ({
   useDiscogsConnectMutation: () => state.discogsConnectMutation,
   useDiscogsImportMutation: () => state.discogsImportMutation,
 }));
-vi.mock("../app/(app)/alerts/alertsQueryHooks", () => ({
-  useWatchRulesQuery: () => state.watchRulesQuery,
-  useWatchReleasesQuery: () => state.watchReleasesQuery,
-}));
-
 vi.mock("../app/(app)/alerts/new/newAlertQueryHooks", () => ({
   useMeQuery: () => state.meQuery,
   useCreateWatchRuleMutation: () => state.createWatchRuleMutation,
@@ -365,17 +360,17 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/could not run search/i)).toBeInTheDocument();
   });
 
-  it("/alerts success", () => {
+  it("/alerts success", async () => {
     state.watchRulesQuery.data = [{ id: "r1" }];
     state.watchReleasesQuery.data = [{ id: "w1" }];
     render(<AlertsPage />);
-    expect(screen.getByText(/loaded 1 rules/i)).toBeInTheDocument();
+    expect(await screen.findByText(/loaded 1 rules/i)).toBeInTheDocument();
   });
 
-  it("/alerts failure", () => {
+  it("/alerts failure", async () => {
     state.watchRulesQuery = { ...state.watchRulesQuery, isError: true, error: apiError };
     render(<AlertsPage />);
-    expect(screen.getByText(/could not load watch rules/i)).toBeInTheDocument();
+    expect(await screen.findByText(/could not load watch rules/i)).toBeInTheDocument();
   });
 
   it("/alerts/new success", () => {

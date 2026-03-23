@@ -12,7 +12,7 @@ import {
   StateLoading,
   StateRateLimited,
 } from "@/components/ui/primitives/state";
-import { useWatchReleasesQuery } from "./alertsQueryHooks";
+import { useWatchReleasesQuery } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
 export default function AlertsMatchesPanel() {
