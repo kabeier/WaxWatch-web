@@ -6,13 +6,11 @@ import { useRouter } from "next/navigation";
 
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
-import { Button, CheckboxRow, TextInput } from "@/components/ui/primitives/base";
-import {
-  StateEmpty,
-  StateError,
-  StateLoading,
-  StateRateLimited,
-} from "@/components/ui/primitives/state";
+import { Button, CheckboxRow, TextInput } from "@/components/ui/primitives/base/controls";
+import { StateEmpty } from "@/components/ui/primitives/state/StateEmpty";
+import { StateError } from "@/components/ui/primitives/state/StateError";
+import { StateLoading } from "@/components/ui/primitives/state/StateLoading";
+import { StateRateLimited } from "@/components/ui/primitives/state/StateRateLimited";
 import {
   useDeleteWatchRuleMutation,
   useUpdateWatchRuleMutation,
