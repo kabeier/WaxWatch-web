@@ -94,4 +94,6 @@ Notifications remain available via the top utility/inbox affordance.
 
 Route maturity definitions and the up-to-date status matrix are maintained in `docs/DEVELOPER_REFERENCE.md` under **Route matrix**.
 
-When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source.
+Production-ready route shells currently include `/dashboard`, `/settings`, `/signed-out`, and `/account-removed` in addition to the data-backed app routes already marked ready in `docs/DEVELOPER_REFERENCE.md`.
+
+When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source, and keep this summary aligned when the production-ready route set changes.

@@ -185,7 +185,7 @@ Status criteria used in this matrix:
 | Route                      | Status           | Notes                                                                                                         |
 | -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------- |
 | `/`                        | redirect         | Server entrypoint that forwards to `/dashboard`.                                                              |
-| `/dashboard`               | scaffold         | Canonical signed-in landing route and dashboard shell.                                                        |
+| `/dashboard`               | production-ready | Shared page-view landing shell with tested launch cards and route-model guidance aligned to the final UI.     |
 | `/search`                  | production-ready | Full UX states, validation/mutation hardening, cooldown-aware retries, and route-level success/failure tests. |
 | `/alerts`                  | production-ready | Full query UX states with retry actions (including cooldown handling) and route-level success/failure tests.  |
 | `/alerts/new`              | production-ready | Full setup/create UX states, validation/pending feedback, and route-level success/failure tests.              |
@@ -194,14 +194,14 @@ Status criteria used in this matrix:
 | `/watchlist/[id]`          | scaffold         | Canonical item-detail/editor shell exists, but current watch-release API support is read-only.                |
 | `/notifications`           | production-ready | Full feed/mutation UX states, retry/cooldown behavior, and route-level success/failure tests.                 |
 | `/integrations`            | production-ready | Full Discogs integration UX with retry/cooldown handling and route-level success/failure tests.               |
-| `/settings`                | scaffold         | Settings landing shell that routes users to profile, alert delivery, and danger-zone flows.                   |
+| `/settings`                | production-ready | Shared settings directory shell with tested section cards and integrations handoff aligned to the final UI.   |
 | `/settings/profile`        | production-ready | Full profile settings UX with validation, pending/disabled controls, cooldown-aware retries, and route tests. |
 | `/settings/alerts`         | production-ready | Full settings UX states, validation/pending/success handling, cooldown-aware retries, and route-level tests.  |
 | `/settings/danger`         | production-ready | Full danger-zone UX states with robust pending/success/error handling and route-level success/failure tests.  |
 | `/settings/integrations`   | redirect         | Legacy compatibility route that forwards to `/integrations`.                                                  |
 | `/login`                   | scaffold         | Sign-in shell placeholder for Supabase auth UI.                                                               |
-| `/signed-out`              | scaffold         | Static confirmation page exists; no API wiring or production-hardening checks yet.                            |
-| `/account-removed`         | scaffold         | Static confirmation page exists; no API wiring or production-hardening checks yet.                            |
+| `/signed-out`              | production-ready | Centered account-state confirmation page with preserved login handoff context and route-level coverage.       |
+| `/account-removed`         | production-ready | Centered account-removal confirmation page with preserved login handoff context and route-level coverage.     |
 | `/admin/provider-requests` | planned          | Admin-only route; not yet present in `app/`.                                                                  |
 | marketing landing          | planned          | Deferred signed-out marketing surface; not part of the current tree.                                          |
 | how it works               | planned          | Deferred signed-out marketing surface; not part of the current tree.                                          |
