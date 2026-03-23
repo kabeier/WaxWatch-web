@@ -1,6 +1,6 @@
 "use client";
 
-import { pageViewStyles } from "@/components/page-view/PageView";
+import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { useNotificationsQuery, useUnreadNotificationCountQuery } from "@/lib/query/hooks";
 
 type NotificationsMetric = "unreadCount" | "loadedCount" | "loadedUnreadCount";

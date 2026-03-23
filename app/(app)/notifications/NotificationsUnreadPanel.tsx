@@ -1,7 +1,7 @@
 "use client";
 
 import { RetryAction } from "@/components/RetryAction";
-import { pageViewStyles } from "@/components/page-view/PageView";
+import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { StateError, StateLoading, StateRateLimited } from "@/components/ui/primitives/state";
 import {
   useMarkNotificationReadMutation,

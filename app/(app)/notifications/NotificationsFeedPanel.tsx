@@ -1,7 +1,7 @@
 "use client";
 
 import { RetryAction } from "@/components/RetryAction";
-import { pageViewStyles } from "@/components/page-view/PageView";
+import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { formatDateTime } from "@/components/page-view/format";
 import { ListContainer, ListRow } from "@/components/ui/primitives/base";
 import {
