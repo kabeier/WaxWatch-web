@@ -1,32 +1,59 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { RetryAction } from "@/components/RetryAction";
-import { CardFooter, TextInput } from "@/components/ui/primitives/base";
+import { Button, CardFooter, TextInput } from "@/components/ui/primitives/base";
 import {
   StateEmpty,
   StateError,
   StateLoading,
   StateRateLimited,
 } from "@/components/ui/primitives/state";
+import { useMeQuery, useUpdateProfileMutation } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
-import { useProfileSettingsState } from "./ProfileSettingsState";
+type ProfileDraft = {
+  displayName?: string;
+  timezone?: string;
+  currency?: string;
+};
 
 export default function ProfileSettingsForm() {
-  const {
-    currency,
-    displayName,
-    isFormReady,
-    isRateLimited,
-    isSaveDisabled,
-    meQuery,
-    rateLimitedLoadError,
-    setDraft,
-    timezone,
-    updateProfileMutation,
-    validationMessage,
-  } = useProfileSettingsState();
+  const meQuery = useMeQuery();
+  const updateProfileMutation = useUpdateProfileMutation();
+  const [draft, setDraft] = useState<ProfileDraft>({});
+
+  const displayName = draft.displayName ?? meQuery.data?.display_name ?? "";
+  const timezone = draft.timezone ?? meQuery.data?.preferences?.timezone ?? "UTC";
+  const currency = draft.currency ?? meQuery.data?.preferences?.currency ?? "USD";
+
+  const validationMessage = useMemo(() => {
+    if (displayName.trim().length > 120) {
+      return "Display name must be 120 characters or fewer.";
+    }
+
+    if (!timezone.trim()) {
+      return "Timezone is required.";
+    }
+
+    if (!/^[A-Z]{3}$/.test(currency.trim().toUpperCase())) {
+      return "Currency must be a valid 3-letter ISO code (for example: USD).";
+    }
+
+    return null;
+  }, [currency, displayName, timezone]);
+
+  const isFormReady = Boolean(meQuery.data);
+  const rateLimitedLoadError =
+    meQuery.isError && isRateLimitedError(meQuery.error) ? meQuery.error : null;
+  const isRateLimited = Boolean(rateLimitedLoadError);
+  const isSaveDisabled =
+    !isFormReady ||
+    meQuery.isLoading ||
+    updateProfileMutation.isPending ||
+    Boolean(validationMessage);
 
   const savePayload = {
     display_name: displayName.trim() || null,
@@ -141,6 +168,13 @@ export default function ProfileSettingsForm() {
       </form>
 
       <CardFooter className={pageViewStyles.cardStack}>
+        <Button
+          type="submit"
+          form="profile-settings-form"
+          disabled={isSaveDisabled || isRateLimited}
+        >
+          {updateProfileMutation.isPending ? "Saving profile changes…" : "Save profile changes"}
+        </Button>
         {updateProfileMutation.data ? (
           <p role="status" aria-live="polite">
             Success: Profile settings saved.

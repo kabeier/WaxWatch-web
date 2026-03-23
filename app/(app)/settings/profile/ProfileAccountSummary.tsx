@@ -1,11 +1,10 @@
 "use client";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
-
-import { useProfileSettingsState } from "./ProfileSettingsState";
+import { useMeQuery } from "@/lib/query/hooks";
 
 export default function ProfileAccountSummary() {
-  const { meQuery } = useProfileSettingsState();
+  const meQuery = useMeQuery();
 
   return (
     <>
