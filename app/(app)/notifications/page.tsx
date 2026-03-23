@@ -1,135 +1,89 @@
-"use client";
-
-import { RetryAction } from "@/components/RetryAction";
 import {
-  StateEmpty,
-  StateError,
-  StateLoading,
-  StateRateLimited,
-} from "@/components/ui/primitives/state";
+  ActiveDivider,
+  PageCardGroup,
+  PageView,
+  pageViewStyles,
+} from "@/components/page-view/PageView";
 import {
-  useMarkNotificationReadMutation,
-  useNotificationsQuery,
-  useUnreadNotificationCountQuery,
-} from "@/lib/query/hooks";
-import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
+  Card,
+  CardBody,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  PageTab,
+  PageTabs,
+} from "@/components/ui/primitives/base";
 import { routeViewModels } from "@/lib/view-models/routes";
+
+import NotificationsFeedPanel from "./NotificationsFeedPanel";
+import NotificationsHeaderAction from "./NotificationsHeaderAction";
+import NotificationsMeta from "./NotificationsMeta";
+import NotificationsMetrics from "./NotificationsMetrics";
+import NotificationsUnreadPanel from "./NotificationsUnreadPanel";
 
 export default function NotificationsPage() {
   const viewModel = routeViewModels.notifications;
-  const notificationsQuery = useNotificationsQuery();
-  const unreadCountQuery = useUnreadNotificationCountQuery();
-  const firstUnreadNotificationId = notificationsQuery.data?.find(
-    (notification) => !notification.is_read,
-  )?.id;
-  const markReadMutation = useMarkNotificationReadMutation(firstUnreadNotificationId ?? "");
 
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
-      <p role="status" aria-live="polite">
-        Status:{" "}
-        {unreadCountQuery.isLoading
-          ? "Unread notifications count is loading."
-          : unreadCountQuery.isError
-            ? "Unread notifications count is currently unavailable."
-            : unreadCountQuery.data
-              ? `Unread notifications: ${unreadCountQuery.data.unread_count}.`
-              : "Unread notifications count is currently unavailable."}
-      </p>
+    <PageView
+      title={viewModel.heading}
+      description={viewModel.summary}
+      eyebrow="Inbox"
+      actions={<NotificationsHeaderAction />}
+      tabs={
+        <PageTabs label="Notifications sections">
+          <PageTab active>Unread snapshot</PageTab>
+          <PageTab disabled>All activity</PageTab>
+        </PageTabs>
+      }
+      meta={<NotificationsMeta />}
+    >
+      <PageCardGroup columns="three">
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <NotificationsMetrics metric="unreadCount" />
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <NotificationsMetrics metric="loadedCount" />
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <NotificationsMetrics metric="loadedUnreadCount" />
+          </CardBody>
+        </Card>
+      </PageCardGroup>
 
-      {unreadCountQuery.isLoading ? (
-        <StateLoading message="Loading unread notification count…" />
-      ) : null}
-      {unreadCountQuery.isError && isRateLimitedError(unreadCountQuery.error) ? (
-        <StateRateLimited
-          title="Unread count is temporarily rate limited"
-          message="Unread count is cooling down. Retry unlocks when the cooldown ends."
-          detail={unreadCountQuery.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(unreadCountQuery.error)}
-          action={
-            <RetryAction
-              label="Retry unread count"
-              retryAfterSeconds={getRetryAfterSeconds(unreadCountQuery.error)}
-              onRetry={() => void unreadCountQuery.retry()}
-            />
-          }
-        />
-      ) : null}
-      {unreadCountQuery.isError && !isRateLimitedError(unreadCountQuery.error) ? (
-        <StateError
-          title="Unread count failed to load"
-          message="Could not load unread notification count."
-          detail={getErrorMessage(unreadCountQuery.error, "Request failed")}
-        />
-      ) : null}
+      <ActiveDivider />
 
-      {notificationsQuery.isLoading ? <StateLoading message="Loading notifications…" /> : null}
-      {notificationsQuery.isError && isRateLimitedError(notificationsQuery.error) ? (
-        <StateRateLimited
-          title="Notifications are temporarily rate limited"
-          message="The feed is cooling down. Retry unlocks when the cooldown ends."
-          detail={notificationsQuery.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(notificationsQuery.error)}
-          action={
-            <RetryAction
-              label="Retry notifications feed"
-              retryAfterSeconds={getRetryAfterSeconds(notificationsQuery.error)}
-              onRetry={() => void notificationsQuery.retry()}
-            />
-          }
-        />
-      ) : null}
-      {notificationsQuery.isError && !isRateLimitedError(notificationsQuery.error) ? (
-        <StateError
-          title="Notifications failed to load"
-          message="Could not load notifications."
-          detail={getErrorMessage(notificationsQuery.error, "Request failed")}
-          action={
-            <RetryAction
-              label="Retry notifications feed"
-              onRetry={() => void notificationsQuery.retry()}
-            />
-          }
-        />
-      ) : null}
-      {notificationsQuery.data && notificationsQuery.data.length === 0 ? (
-        <StateEmpty message="No notifications yet." />
-      ) : null}
-      {notificationsQuery.data && notificationsQuery.data.length > 0 ? (
-        <ul>
-          {notificationsQuery.data.map((notification) => (
-            <li key={notification.id}>{notification.event_type}</li>
-          ))}
-        </ul>
-      ) : null}
-      <button
-        type="button"
-        disabled={markReadMutation.isPending || !firstUnreadNotificationId}
-        onClick={() => {
-          if (firstUnreadNotificationId) {
-            markReadMutation.mutate(undefined);
-          }
-        }}
-      >
-        {markReadMutation.isPending ? "Marking as read…" : "Mark first unread as read"}
-      </button>
+      <PageCardGroup columns="sidebar">
+        <Card padding="lg">
+          <CardHeader>
+            <CardTitle>Unread status</CardTitle>
+            <CardDescription>
+              Keep unread summary actions above the feed without turning the entire page into a
+              status stack.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.cardStack}>
+            <NotificationsUnreadPanel />
+          </CardBody>
+        </Card>
 
-      {markReadMutation.data ? <p role="status">Success: Notification marked as read.</p> : null}
-      {markReadMutation.isError && isRateLimitedError(markReadMutation.error) ? (
-        <StateRateLimited
-          message="Mark-as-read is temporarily rate limited."
-          detail={markReadMutation.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(markReadMutation.error)}
-        />
-      ) : null}
-      {markReadMutation.isError && !isRateLimitedError(markReadMutation.error) ? (
-        <StateError
-          message="Could not mark notification as read."
-          detail={getErrorMessage(markReadMutation.error, "Request failed")}
-        />
-      ) : null}
-    </section>
+        <Card padding="lg">
+          <CardHeader>
+            <CardTitle>Notification feed</CardTitle>
+            <CardDescription>
+              Use a vertical list with the newest events at the top and clear read-state treatment.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.cardStack}>
+            <NotificationsFeedPanel />
+          </CardBody>
+        </Card>
+      </PageCardGroup>
+    </PageView>
   );
 }

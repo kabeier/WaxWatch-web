@@ -1,98 +1,123 @@
-"use client";
+import Link from "next/link";
 
-import { RetryAction } from "@/components/RetryAction";
+import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { ActiveDivider, PageCardGroup, PageView } from "@/components/page-view/PageView";
 import {
-  StateEmpty,
-  StateError,
-  StateLoading,
-  StateRateLimited,
-} from "@/components/ui/primitives/state";
-import { useWatchReleasesQuery, useWatchRulesQuery } from "@/lib/query/hooks";
-import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
-import { routeViewModels } from "@/lib/view-models/routes";
+  Card,
+  CardBody,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  PageTab,
+  PageTabs,
+} from "@/components/ui/primitives/base";
+
+import AlertsRulesPanel from "./AlertsRulesPanel";
+
+const alertsHeading = "Alerts";
+const alertsSummary = "Review watch rules and jump to watchlist when releases start matching.";
 
 export default function AlertsPage() {
-  const viewModel = routeViewModels.alerts;
-  const watchRulesQuery = useWatchRulesQuery();
-  const watchReleasesQuery = useWatchReleasesQuery();
-
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
+    <PageView
+      title={alertsHeading}
+      description={alertsSummary}
+      eyebrow="Rule management"
+      actions={
+        <Link
+          href="/alerts/new"
+          role="button"
+          className="ww-button ww-button--primary ww-button--md"
+        >
+          Create watch rule
+        </Link>
+      }
+      tabs={
+        <PageTabs label="Alerts sections">
+          <PageTab active aria-controls="alerts-rules-panel" id="alerts-rules-tab">
+            Rules
+          </PageTab>
+          <PageTab aria-controls="alerts-watchlist-panel" id="alerts-watchlist-tab">
+            Watchlist handoff
+          </PageTab>
+        </PageTabs>
+      }
+      meta={
+        <>
+          <span>
+            Keep alert authoring focused here, then inspect matched releases from the watchlist
+            route.
+          </span>
+          <Link className={pageViewStyles.listLink} href="/watchlist">
+            Open watchlist
+          </Link>
+        </>
+      }
+    >
+      <PageCardGroup columns="three">
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <div className={pageViewStyles.metricValue}>Rules</div>
+            <div className={pageViewStyles.metricLabel}>
+              Create, pause, and review saved watches.
+            </div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <div className={pageViewStyles.metricValue}>Watchlist</div>
+            <div className={pageViewStyles.metricLabel}>
+              Inspect matched releases in the dedicated route.
+            </div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <div className={pageViewStyles.metricValue}>Detail</div>
+            <div className={pageViewStyles.metricLabel}>
+              Edit cadence, naming, and activation per rule.
+            </div>
+          </CardBody>
+        </Card>
+      </PageCardGroup>
 
-      <h2>Watch Rules</h2>
-      {watchRulesQuery.isLoading ? <StateLoading message="Loading watch rules…" /> : null}
-      {watchRulesQuery.isError && isRateLimitedError(watchRulesQuery.error) ? (
-        <StateRateLimited
-          message="Too many watch-rule requests. We'll re-enable retry when cooldown finishes."
-          detail={watchRulesQuery.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(watchRulesQuery.error)}
-          action={
-            <RetryAction
-              label="Retry watch rules"
-              retryAfterSeconds={getRetryAfterSeconds(watchRulesQuery.error)}
-              onRetry={() => void watchRulesQuery.retry()}
-            />
-          }
-        />
-      ) : null}
-      {watchRulesQuery.isError && !isRateLimitedError(watchRulesQuery.error) ? (
-        <StateError
-          message="Could not load watch rules."
-          detail={getErrorMessage(watchRulesQuery.error, "Request failed")}
-          action={
-            <RetryAction label="Retry watch rules" onRetry={() => void watchRulesQuery.retry()} />
-          }
-        />
-      ) : null}
-      {watchRulesQuery.data && watchRulesQuery.data.length === 0 ? (
-        <StateEmpty message="No watch rules yet. Create one to start matching releases." />
-      ) : null}
-      {watchRulesQuery.data && watchRulesQuery.data.length > 0 ? (
-        <p role="status" aria-live="polite">
-          Status: Loaded {watchRulesQuery.data.length} rules.
-        </p>
-      ) : null}
+      <ActiveDivider />
 
-      <h2>Watch Releases</h2>
-      {watchReleasesQuery.isLoading ? <StateLoading message="Loading release matches…" /> : null}
-      {watchReleasesQuery.isError && isRateLimitedError(watchReleasesQuery.error) ? (
-        <StateRateLimited
-          message="Release matches are temporarily rate limited."
-          detail={watchReleasesQuery.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(watchReleasesQuery.error)}
-          action={
-            <RetryAction
-              label="Retry release matches"
-              retryAfterSeconds={getRetryAfterSeconds(watchReleasesQuery.error)}
-              onRetry={() => void watchReleasesQuery.retry()}
-            />
-          }
-        />
-      ) : null}
-      {watchReleasesQuery.isError && !isRateLimitedError(watchReleasesQuery.error) ? (
-        <StateError
-          message="Could not load release matches."
-          detail={getErrorMessage(watchReleasesQuery.error, "Request failed")}
-          action={
-            <RetryAction
-              label="Retry release matches"
-              onRetry={() => void watchReleasesQuery.retry()}
-            />
-          }
-        />
-      ) : null}
-      {watchReleasesQuery.data && watchReleasesQuery.data.length === 0 ? (
-        <StateEmpty message="No matched releases yet. We'll show matches as they arrive." />
-      ) : null}
-      {watchReleasesQuery.data && watchReleasesQuery.data.length > 0 ? (
-        <p role="status" aria-live="polite">
-          Status: Loaded {watchReleasesQuery.data.length} releases.
-        </p>
-      ) : null}
+      <PageCardGroup columns="sidebar">
+        <Card id="alerts-rules-panel" padding="lg">
+          <CardHeader>
+            <CardTitle>Watch rules</CardTitle>
+            <CardDescription>
+              Keep the create action in the header and make the list the primary grouping unit.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.cardStack}>
+            <AlertsRulesPanel />
+          </CardBody>
+        </Card>
 
-      <button type="button">Create watch rule</button>
-    </section>
+        <Card id="alerts-watchlist-panel" padding="lg">
+          <CardHeader>
+            <CardTitle>Matched releases live in watchlist</CardTitle>
+            <CardDescription>
+              The watchlist route is now the single inspection surface for release pricing, match
+              mode, and tracking status.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.copyStack}>
+            <div className={pageViewStyles.callout}>
+              Keep `/alerts` focused on rule authoring and use `/watchlist` for release triage.
+            </div>
+            <p className={pageViewStyles.mutedText}>
+              This keeps the alert shell lighter while preserving the release workflow in its
+              canonical destination.
+            </p>
+            <Link href="/watchlist" className={pageViewStyles.listLink}>
+              Go to watchlist
+            </Link>
+          </CardBody>
+        </Card>
+      </PageCardGroup>
+    </PageView>
   );
 }

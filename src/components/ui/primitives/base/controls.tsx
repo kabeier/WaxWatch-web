@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import type { ChangeEventHandler, ComponentPropsWithoutRef, ReactNode } from "react";
 
 import { joinClassNames } from "./shared";
 
@@ -60,13 +60,13 @@ export function Select({ className, error = false, children, ...props }: SelectP
   );
 }
 
-type CheckboxRowProps = Omit<ComponentPropsWithoutRef<"label">, "children"> & {
+type CheckboxRowProps = Omit<ComponentPropsWithoutRef<"label">, "children" | "onChange"> & {
   checked?: boolean;
   defaultChecked?: boolean;
   disabled?: boolean;
   name?: string;
   value?: string;
-  onChange?: ComponentPropsWithoutRef<"input">["onChange"];
+  onChange?: ChangeEventHandler<HTMLInputElement>;
   helperText?: ReactNode;
   errorText?: ReactNode;
   children: ReactNode;

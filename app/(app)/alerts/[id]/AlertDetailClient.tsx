@@ -1,27 +1,29 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import { RetryAction } from "@/components/RetryAction";
-import { StateEmpty } from "@/components/StateEmpty";
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
+import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { Button, CheckboxRow, TextInput } from "@/components/ui/primitives/base/controls";
+import { StateEmpty } from "@/components/ui/primitives/state/StateEmpty";
+import { StateError } from "@/components/ui/primitives/state/StateError";
+import { StateLoading } from "@/components/ui/primitives/state/StateLoading";
+import { StateRateLimited } from "@/components/ui/primitives/state/StateRateLimited";
 import {
   useDeleteWatchRuleMutation,
   useUpdateWatchRuleMutation,
   useWatchRuleDetailQuery,
-} from "@/lib/query/hooks";
+} from "./alertDetailQueryHooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
-import { routeViewModels } from "@/lib/view-models/routes";
 
 export default function AlertDetailClient({ id }: { id: string }) {
   const watchRuleDetailQuery = useWatchRuleDetailQuery(id);
   const updateWatchRuleMutation = useUpdateWatchRuleMutation(id);
   const deleteWatchRuleMutation = useDeleteWatchRuleMutation(id);
-  const viewModel = routeViewModels.alertDetail;
-  const router = useRouter();
   const retryAlertDetail = watchRuleDetailQuery.retry;
+  const router = useRouter();
   const [draft, setDraft] = useState<{ name?: string; pollInterval?: string; isActive?: boolean }>(
     {},
   );
@@ -59,7 +61,13 @@ export default function AlertDetailClient({ id }: { id: string }) {
       router.refresh();
       deleteRequestRef.current = { requestedId: null, sawPending: false };
     }
-  }, [id, deleteWatchRuleMutation.isError, deleteWatchRuleMutation.isPending, router]);
+  }, [
+    deleteWatchRuleMutation.data,
+    deleteWatchRuleMutation.isError,
+    deleteWatchRuleMutation.isPending,
+    id,
+    router,
+  ]);
 
   const name = draft.name ?? watchRuleDetailQuery.data?.name ?? "";
   const pollIntervalInput =
@@ -80,130 +88,131 @@ export default function AlertDetailClient({ id }: { id: string }) {
 
   const isPending = updateWatchRuleMutation.isPending || deleteWatchRuleMutation.isPending;
 
+  if (watchRuleDetailQuery.isLoading) {
+    return <StateLoading message="Loading alert detail…" />;
+  }
+
+  if (watchRuleDetailQuery.isError && isRateLimitedError(watchRuleDetailQuery.error)) {
+    return (
+      <StateRateLimited
+        message={watchRuleDetailQuery.error.message}
+        retryAfterSeconds={getRetryAfterSeconds(watchRuleDetailQuery.error)}
+        action={
+          <RetryAction
+            label="Retry alert detail load"
+            onRetry={() => watchRuleDetailQuery.retry()}
+          />
+        }
+      />
+    );
+  }
+
+  if (watchRuleDetailQuery.isError) {
+    return (
+      <StateError
+        message="Could not load alert detail."
+        detail={getErrorMessage(watchRuleDetailQuery.error, "Request failed")}
+        action={
+          <RetryAction
+            label="Retry alert detail load"
+            onRetry={() => watchRuleDetailQuery.retry()}
+          />
+        }
+      />
+    );
+  }
+
+  if (!watchRuleDetailQuery.data) {
+    return <StateEmpty message="Alert not found." />;
+  }
+
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
-      <p>
-        Alert id: <code>{id}</code>
-      </p>
+    <form
+      className={pageViewStyles.formStack}
+      aria-describedby={validationMessage ? "alert-detail-form-errors" : undefined}
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (validationMessage) {
+          return;
+        }
 
-      {watchRuleDetailQuery.isLoading ? <StateLoading message="Loading alert detail…" /> : null}
-      {watchRuleDetailQuery.isError && isRateLimitedError(watchRuleDetailQuery.error) ? (
-        <StateRateLimited
-          message={watchRuleDetailQuery.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(watchRuleDetailQuery.error)}
-          action={
-            <RetryAction
-              label="Retry alert detail load"
-              onRetry={() => watchRuleDetailQuery.retry()}
-            />
+        updateWatchRuleMutation.mutate({
+          name: name.trim(),
+          poll_interval_seconds: pollInterval,
+          is_active: isActive,
+        });
+      }}
+    >
+      {validationMessage ? (
+        <div id="alert-detail-form-errors">
+          <StateError
+            message="Please fix the highlighted validation issues before saving."
+            detail={validationMessage}
+          />
+        </div>
+      ) : null}
+      <label className={pageViewStyles.labelStack} htmlFor="alert-detail-name">
+        <span className={pageViewStyles.labelText}>Alert name</span>
+        <TextInput
+          id="alert-detail-name"
+          value={name}
+          onChange={(event) =>
+            setDraft((current) => ({ ...current, name: event.currentTarget.value }))
           }
-        />
-      ) : null}
-      {watchRuleDetailQuery.isError && !isRateLimitedError(watchRuleDetailQuery.error) ? (
-        <StateError
-          message="Could not load alert detail."
-          detail={getErrorMessage(watchRuleDetailQuery.error, "Request failed")}
-          action={
-            <RetryAction
-              label="Retry alert detail load"
-              onRetry={() => watchRuleDetailQuery.retry()}
-            />
-          }
-        />
-      ) : null}
-      {!watchRuleDetailQuery.data &&
-      !watchRuleDetailQuery.isLoading &&
-      !watchRuleDetailQuery.isError ? (
-        <StateEmpty message="Alert not found." />
-      ) : null}
-
-      {watchRuleDetailQuery.data ? (
-        <form
+          disabled={isPending}
+          error={Boolean(validationMessage)}
+          aria-invalid={Boolean(validationMessage)}
           aria-describedby={validationMessage ? "alert-detail-form-errors" : undefined}
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (validationMessage) {
-              return;
+        />
+      </label>
+      <label className={pageViewStyles.labelStack} htmlFor="alert-detail-poll-interval">
+        <span className={pageViewStyles.labelText}>Poll interval (seconds)</span>
+        <TextInput
+          id="alert-detail-poll-interval"
+          type="number"
+          min={30}
+          max={86400}
+          value={pollIntervalInput}
+          onChange={(event) =>
+            setDraft((current) => ({ ...current, pollInterval: event.currentTarget.value }))
+          }
+          disabled={isPending}
+          error={Boolean(validationMessage)}
+          aria-invalid={Boolean(validationMessage)}
+          aria-describedby={validationMessage ? "alert-detail-form-errors" : undefined}
+        />
+      </label>
+      <CheckboxRow
+        checked={isActive}
+        onChange={(event) =>
+          setDraft((current) => ({ ...current, isActive: event.currentTarget.checked }))
+        }
+        disabled={isPending}
+        helperText="Paused alerts stay editable without participating in matching runs."
+      >
+        Alert active
+      </CheckboxRow>
+      <div className={pageViewStyles.actionRow}>
+        <Link href="/alerts" className={pageViewStyles.listLink}>
+          Cancel
+        </Link>
+        <Button type="submit" disabled={Boolean(validationMessage) || isPending}>
+          {updateWatchRuleMutation.isPending ? "Saving alert updates…" : "Save alert updates"}
+        </Button>
+        <Button
+          variant="destructive"
+          disabled={isPending}
+          onClick={() => {
+            if (window.confirm("Delete this alert permanently?")) {
+              deleteRequestRef.current = { requestedId: id, sawPending: false };
+              deleteWatchRuleMutation.mutate(undefined);
             }
-
-            updateWatchRuleMutation.mutate({
-              name: name.trim(),
-              poll_interval_seconds: pollInterval,
-              is_active: isActive,
-            });
           }}
         >
-          <p>
-            Current status: {isActive ? "active" : "paused"}
-            {updateWatchRuleMutation.isPending ? " (saving…)" : ""}
-          </p>
-          {validationMessage ? (
-            <div id="alert-detail-form-errors">
-              <StateError
-                message="Please fix the highlighted validation issues before saving."
-                detail={validationMessage}
-              />
-            </div>
-          ) : null}
-          <label>
-            Alert name
-            <input
-              value={name}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, name: event.currentTarget.value }))
-              }
-              disabled={isPending}
-              aria-invalid={Boolean(validationMessage)}
-              aria-describedby={validationMessage ? "alert-detail-form-errors" : undefined}
-            />
-          </label>
-          <label>
-            Poll interval (seconds)
-            <input
-              type="number"
-              min={30}
-              max={86400}
-              value={pollIntervalInput}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, pollInterval: event.currentTarget.value }))
-              }
-              disabled={isPending}
-              aria-invalid={Boolean(validationMessage)}
-              aria-describedby={validationMessage ? "alert-detail-form-errors" : undefined}
-            />
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, isActive: event.currentTarget.checked }))
-              }
-              disabled={isPending}
-            />
-            Alert active
-          </label>
-          <button type="submit" disabled={Boolean(validationMessage) || isPending}>
-            {updateWatchRuleMutation.isPending ? "Saving alert updates…" : "Save alert updates"}
-          </button>
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => {
-              if (window.confirm("Delete this alert permanently?")) {
-                deleteRequestRef.current = { requestedId: id, sawPending: false };
-                deleteWatchRuleMutation.mutate(undefined);
-              }
-            }}
-          >
-            {deleteWatchRuleMutation.isPending ? "Deleting alert…" : "Delete alert"}
-          </button>
-        </form>
-      ) : null}
-
+          {deleteWatchRuleMutation.isPending ? "Deleting alert…" : "Delete alert"}
+        </Button>
+      </div>
       {updateWatchRuleMutation.data ? (
         <p role="status" aria-live="polite">
           Success: Alert updated.
@@ -237,14 +246,6 @@ export default function AlertDetailClient({ id }: { id: string }) {
           detail={getErrorMessage(deleteWatchRuleMutation.error, "Request failed")}
         />
       ) : null}
-
-      <ul>
-        {viewModel.operations.map((operation) => (
-          <li key={operation.id}>
-            {operation.label}: <code>{operation.serviceMethod}</code>
-          </li>
-        ))}
-      </ul>
-    </section>
+    </form>
   );
 }

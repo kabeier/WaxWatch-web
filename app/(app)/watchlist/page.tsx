@@ -1,72 +1,83 @@
-"use client";
-
-import { RetryAction } from "@/components/RetryAction";
+import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { ActiveDivider, PageCardGroup, PageView } from "@/components/page-view/PageView";
 import {
-  StateEmpty,
-  StateError,
-  StateLoading,
-  StateRateLimited,
-} from "@/components/ui/primitives/state";
-import { useWatchReleasesQuery } from "@/lib/query/hooks";
-import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
-import { routeViewModels } from "@/lib/view-models/routes";
+  Card,
+  CardBody,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/primitives/base";
+
+import WatchlistMeta from "./WatchlistMeta";
+import WatchlistMetrics from "./WatchlistMetrics";
+import WatchlistRefreshButton from "./WatchlistRefreshButton";
+import WatchlistReleasesPanel from "./WatchlistReleasesPanel";
+
+const watchlistHeading = "Watchlist";
+const watchlistSummary = "Track release matches across all of your saved watch rules.";
+const watchlistItemPath = "/watchlist/[id]";
 
 export default function WatchlistPage() {
-  const viewModel = routeViewModels.watchlist;
-  const watchReleasesQuery = useWatchReleasesQuery();
-  const rateLimitedError =
-    watchReleasesQuery.isError && isRateLimitedError(watchReleasesQuery.error)
-      ? watchReleasesQuery.error
-      : null;
-  const isRateLimited = Boolean(rateLimitedError);
-
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
-      {watchReleasesQuery.isLoading ? <StateLoading message="Loading watchlist…" /> : null}
-      {rateLimitedError ? (
-        <StateRateLimited
-          message="Watchlist refresh is cooling down due to rate limiting."
-          detail={rateLimitedError.message}
-          retryAfterSeconds={getRetryAfterSeconds(rateLimitedError)}
-          action={
-            <RetryAction
-              label="Retry watchlist"
-              retryAfterSeconds={getRetryAfterSeconds(rateLimitedError)}
-              onRetry={() => void watchReleasesQuery.retry()}
-            />
-          }
-        />
-      ) : null}
-      {watchReleasesQuery.isError && !isRateLimitedError(watchReleasesQuery.error) ? (
-        <StateError
-          message="Could not load watchlist."
-          detail={getErrorMessage(watchReleasesQuery.error, "Request failed")}
-          action={
-            <RetryAction label="Retry watchlist" onRetry={() => void watchReleasesQuery.retry()} />
-          }
-        />
-      ) : null}
-      {watchReleasesQuery.data && watchReleasesQuery.data.length === 0 ? (
-        <StateEmpty message="No watchlist releases yet. Add alerts to populate this feed." />
-      ) : null}
-      {watchReleasesQuery.data && watchReleasesQuery.data.length > 0 ? (
-        <p role="status" aria-live="polite">
-          Status: Loaded {watchReleasesQuery.data.length} watchlist releases.
-        </p>
-      ) : null}
-      <button
-        type="button"
-        disabled={watchReleasesQuery.isLoading || isRateLimited}
-        onClick={() => {
-          if (!isRateLimited) {
-            void watchReleasesQuery.retry();
-          }
-        }}
-      >
-        Refresh watchlist
-      </button>
-    </section>
+    <PageView
+      title={watchlistHeading}
+      description={watchlistSummary}
+      eyebrow="Tracked releases"
+      actions={<WatchlistRefreshButton />}
+      meta={<WatchlistMeta />}
+    >
+      <PageCardGroup columns="three">
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <WatchlistMetrics metric="tracked" />
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <WatchlistMetrics metric="active" />
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <WatchlistMetrics metric="masterRelease" />
+          </CardBody>
+        </Card>
+      </PageCardGroup>
+
+      <ActiveDivider />
+
+      <PageCardGroup columns="sidebar">
+        <Card padding="lg">
+          <CardHeader>
+            <CardTitle>Watch releases</CardTitle>
+            <CardDescription>
+              Actions emphasize inspection and navigation into the canonical item shell.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.cardStack}>
+            <WatchlistReleasesPanel />
+          </CardBody>
+        </Card>
+
+        <Card padding="lg">
+          <CardHeader>
+            <CardTitle>Inspection guidance</CardTitle>
+            <CardDescription>
+              Keep the main watchlist dense enough for scanning, then move detail work into the item
+              route.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.copyStack}>
+            <div className={pageViewStyles.callout}>
+              The canonical item shell already exists at <code>{watchlistItemPath}</code>.
+            </div>
+            <p className={pageViewStyles.mutedText}>
+              Release rows prioritize navigation first, then context such as pricing, match mode,
+              and tracking status.
+            </p>
+          </CardBody>
+        </Card>
+      </PageCardGroup>
+    </PageView>
   );
 }

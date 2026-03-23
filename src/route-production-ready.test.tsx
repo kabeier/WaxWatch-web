@@ -182,6 +182,34 @@ vi.mock("@/lib/query/hooks", () => ({
   useDiscogsImportMutation: () => state.discogsImportMutation,
 }));
 
+vi.mock("../app/(app)/search/searchQueryHooks", () => ({
+  useSearchMutation: () => state.searchMutation,
+  useSaveSearchAlertMutation: () => state.saveSearchAlertMutation,
+}));
+
+vi.mock("../app/(app)/settings/profile/profileQueryHooks", () => ({
+  useMeQuery: () => state.meQuery,
+  useUpdateProfileMutation: () => state.updateProfileMutation,
+}));
+
+vi.mock("../app/(app)/alerts/alertsQueryHooks", () => ({
+  useWatchRulesQuery: () => state.watchRulesQuery,
+}));
+vi.mock("../app/(app)/alerts/new/newAlertQueryHooks", () => ({
+  useMeQuery: () => state.meQuery,
+  useCreateWatchRuleMutation: () => state.createWatchRuleMutation,
+}));
+
+vi.mock("../app/(app)/alerts/[id]/alertDetailQueryHooks", () => ({
+  useWatchRuleDetailQuery: () => state.watchRuleDetailQuery,
+  useUpdateWatchRuleMutation: () => state.updateWatchRuleMutation,
+  useDeleteWatchRuleMutation: () => state.deleteWatchRuleMutation,
+}));
+
+vi.mock("../app/(app)/watchlist/watchlistQueryHooks", () => ({
+  useWatchReleasesQuery: () => state.watchReleasesQuery,
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
 }));
@@ -348,7 +376,6 @@ describe("route-level production-ready paths", () => {
 
   it("/alerts success", () => {
     state.watchRulesQuery.data = [{ id: "r1" }];
-    state.watchReleasesQuery.data = [{ id: "w1" }];
     render(<AlertsPage />);
     expect(screen.getByText(/loaded 1 rules/i)).toBeInTheDocument();
   });
