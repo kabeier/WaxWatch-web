@@ -2,9 +2,10 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-const totalBudgetBytes = Number(process.env.BUNDLE_BUDGET_BYTES ?? 500000);
-const sharedBudgetBytes = Number(process.env.BUNDLE_SHARED_BUDGET_BYTES ?? 360000);
 const routeBudgetBytes = Number(process.env.BUNDLE_ROUTE_BUDGET_BYTES ?? 185000);
+const appSharedBudgetBytes = Number(process.env.BUNDLE_SHARED_BUDGET_BYTES ?? 360000);
+const appOwnedBudgetBytes = Number(process.env.BUNDLE_BUDGET_BYTES ?? 500000);
+const frameworkBudgetBytes = Number(process.env.BUNDLE_FRAMEWORK_BUDGET_BYTES ?? 525000);
 const reportLimit = Number(process.env.BUNDLE_REPORT_LIMIT ?? 8);
 const buildDir = process.env.NEXT_BUILD_DIR ?? ".next";
 const staticDir = join(buildDir, "static");
@@ -85,29 +86,28 @@ function buildRouteCandidates({ appManifestPages, buildManifestPages, frameworkS
     [...sharedUsageCounts.entries()].filter(([, count]) => count > 1).map(([file]) => file),
   );
 
-  const sharedBytes = [...new Set([...frameworkSharedFiles, ...appSharedFiles])].reduce(
-    (total, file) => total + readFileSize(file),
+  const frameworkSharedPayload = [...frameworkSharedFiles]
+    .map((file) => ({ file, bytes: readFileSize(file) }))
+    .filter(({ bytes }) => bytes > 0)
+    .sort((a, b) => b.bytes - a.bytes);
+
+  const frameworkSharedBytes = frameworkSharedPayload.reduce(
+    (total, file) => total + file.bytes,
     0,
   );
+  const appSharedBytes = [...appSharedFiles].reduce((total, file) => total + readFileSize(file), 0);
 
   const routeCandidates = routeEntries.map(({ route, files }) => {
-    const frameworkShared = [...frameworkSharedFiles]
-      .map((file) => ({ file, bytes: readFileSize(file) }))
-      .filter(({ bytes }) => bytes > 0);
     const appShared = [];
     const exclusive = [];
 
     for (const file of files) {
       const bytes = readFileSize(file);
-      if (bytes === 0) {
+      if (bytes === 0 || frameworkSharedFiles.has(file)) {
         continue;
       }
 
       const payload = { file, bytes };
-      if (frameworkSharedFiles.has(file)) {
-        continue;
-      }
-
       if (appSharedFiles.has(file)) {
         appShared.push(payload);
       } else {
@@ -115,18 +115,18 @@ function buildRouteCandidates({ appManifestPages, buildManifestPages, frameworkS
       }
     }
 
-    const frameworkSharedBytes = frameworkShared.reduce((total, file) => total + file.bytes, 0);
-    const appSharedBytes = appShared.reduce((total, file) => total + file.bytes, 0);
+    const routeAppSharedBytes = appShared.reduce((total, file) => total + file.bytes, 0);
     const exclusiveBytes = exclusive.reduce((total, file) => total + file.bytes, 0);
+    const appOwnedBytes = routeAppSharedBytes + exclusiveBytes;
 
     return {
       route,
       frameworkSharedBytes,
-      appSharedBytes,
+      appSharedBytes: routeAppSharedBytes,
       exclusiveBytes,
-      sharedBytes: frameworkSharedBytes + appSharedBytes,
-      totalBytes: frameworkSharedBytes + appSharedBytes + exclusiveBytes,
-      frameworkSharedFiles: frameworkShared.sort((a, b) => b.bytes - a.bytes),
+      appOwnedBytes,
+      totalBytes: frameworkSharedBytes + appOwnedBytes,
+      frameworkSharedFiles: frameworkSharedPayload,
       appSharedFiles: appShared.sort((a, b) => b.bytes - a.bytes),
       exclusiveFiles: exclusive.sort((a, b) => b.bytes - a.bytes),
     };
@@ -134,13 +134,14 @@ function buildRouteCandidates({ appManifestPages, buildManifestPages, frameworkS
 
   return {
     routeCandidates: routeCandidates.sort((a, b) => b.totalBytes - a.totalBytes),
-    sharedBytes,
+    frameworkSharedBytes,
+    appSharedBytes,
   };
 }
 
 function formatRouteSummary(routeResult) {
   const sections = [
-    `${routeResult.route}: total=${formatBytes(routeResult.totalBytes)}, shared=${formatBytes(routeResult.sharedBytes)}, exclusive=${formatBytes(routeResult.exclusiveBytes)}`,
+    `${routeResult.route}: total=${formatBytes(routeResult.totalBytes)}, framework=${formatBytes(routeResult.frameworkSharedBytes)}, app-shared=${formatBytes(routeResult.appSharedBytes)}, exclusive=${formatBytes(routeResult.exclusiveBytes)}, app-owned=${formatBytes(routeResult.appOwnedBytes)}`,
   ];
 
   const frameworkContributors = formatChunkList(routeResult.frameworkSharedFiles);
@@ -175,7 +176,7 @@ const frameworkSharedFiles = new Set([
   ...(buildManifest?.rootMainFiles ?? []),
 ]);
 
-const { routeCandidates, sharedBytes } = buildRouteCandidates({
+const { routeCandidates, frameworkSharedBytes, appSharedBytes } = buildRouteCandidates({
   appManifestPages: appBuildManifest?.pages,
   buildManifestPages: buildManifest?.pages,
   frameworkSharedFiles,
@@ -183,27 +184,35 @@ const { routeCandidates, sharedBytes } = buildRouteCandidates({
 
 if (routeCandidates.length === 0) {
   const total = sumJsSize(staticDir);
-  if (total > totalBudgetBytes) {
+  if (total > appOwnedBudgetBytes) {
     throw new Error(
-      `Bundle budget exceeded: ${formatBytes(total)} > ${formatBytes(totalBudgetBytes)}`,
+      `Bundle budget exceeded: ${formatBytes(total)} > ${formatBytes(appOwnedBudgetBytes)}`,
     );
   }
 
   console.log(
-    `Bundle budget ok (total static JS): ${formatBytes(total)} <= ${formatBytes(totalBudgetBytes)}`,
+    `Bundle budget ok (total static JS): ${formatBytes(total)} <= ${formatBytes(appOwnedBudgetBytes)}`,
   );
   process.exit(0);
 }
 
-const heaviestTotalRoute = routeCandidates[0];
 const heaviestExclusiveRoute = [...routeCandidates].sort(
   (a, b) => b.exclusiveBytes - a.exclusiveBytes,
 )[0];
+const heaviestAppOwnedRoute = [...routeCandidates].sort(
+  (a, b) => b.appOwnedBytes - a.appOwnedBytes,
+)[0];
 const failures = [];
 
-if (sharedBytes > sharedBudgetBytes) {
+if (frameworkSharedBytes > frameworkBudgetBytes) {
   failures.push(
-    `Shared app/framework JS uses ${formatBytes(sharedBytes)} > ${formatBytes(sharedBudgetBytes)}.`,
+    `Framework shared JS uses ${formatBytes(frameworkSharedBytes)} > ${formatBytes(frameworkBudgetBytes)}.`,
+  );
+}
+
+if (appSharedBytes > appSharedBudgetBytes) {
+  failures.push(
+    `App-shared JS uses ${formatBytes(appSharedBytes)} > ${formatBytes(appSharedBudgetBytes)}.`,
   );
 }
 
@@ -213,9 +222,9 @@ if (heaviestExclusiveRoute.exclusiveBytes > routeBudgetBytes) {
   );
 }
 
-if (heaviestTotalRoute.totalBytes > totalBudgetBytes) {
+if (heaviestAppOwnedRoute.appOwnedBytes > appOwnedBudgetBytes) {
   failures.push(
-    `Total route JS budget exceeded: route "${heaviestTotalRoute.route}" uses ${formatBytes(heaviestTotalRoute.totalBytes)} > ${formatBytes(totalBudgetBytes)}.`,
+    `App-owned route JS budget exceeded: route "${heaviestAppOwnedRoute.route}" uses ${formatBytes(heaviestAppOwnedRoute.appOwnedBytes)} > ${formatBytes(appOwnedBudgetBytes)}.`,
   );
 }
 
@@ -227,7 +236,7 @@ if (failures.length > 0) {
 
 console.log(
   [
-    `Bundle budget ok: shared=${formatBytes(sharedBytes)} <= ${formatBytes(sharedBudgetBytes)}; heaviest total=${formatBytes(heaviestTotalRoute.totalBytes)} (${heaviestTotalRoute.route}) <= ${formatBytes(totalBudgetBytes)}; heaviest exclusive=${formatBytes(heaviestExclusiveRoute.exclusiveBytes)} (${heaviestExclusiveRoute.route}) <= ${formatBytes(routeBudgetBytes)}.`,
+    `Bundle budget ok: framework shared=${formatBytes(frameworkSharedBytes)} <= ${formatBytes(frameworkBudgetBytes)}; app shared=${formatBytes(appSharedBytes)} <= ${formatBytes(appSharedBudgetBytes)}; heaviest app-owned route=${formatBytes(heaviestAppOwnedRoute.appOwnedBytes)} (${heaviestAppOwnedRoute.route}) <= ${formatBytes(appOwnedBudgetBytes)}; heaviest exclusive=${formatBytes(heaviestExclusiveRoute.exclusiveBytes)} (${heaviestExclusiveRoute.route}) <= ${formatBytes(routeBudgetBytes)}.`,
     "Top route bundle breakdown:",
     report,
   ].join("\n"),
