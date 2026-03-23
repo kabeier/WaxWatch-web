@@ -1,3 +1,4 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
@@ -12,9 +13,12 @@ import {
   PageTabs,
 } from "@/components/ui/primitives/base";
 
-import AlertsMatchesPanel from "./AlertsMatchesPanel";
 import AlertsMetrics from "./AlertsMetrics";
 import AlertsRulesPanel from "./AlertsRulesPanel";
+
+const AlertsMatchesPanel = dynamic(() => import("./AlertsMatchesPanel"), {
+  loading: () => <p className={pageViewStyles.mutedText}>Loading recent release matches…</p>,
+});
 
 const alertsHeading = "Alerts";
 const alertsSummary = "Review watch rules and releases that matched your active rules.";
