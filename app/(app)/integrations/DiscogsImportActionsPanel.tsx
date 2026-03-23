@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { RetryAction } from "@/components/RetryAction";
-import { pageViewStyles } from "@/components/page-view/PageView";
+import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { Button, CardFooter, TextInput } from "@/components/ui/primitives/base";
 import { StateEmpty, StateError, StateRateLimited } from "@/components/ui/primitives/state";
 import {
