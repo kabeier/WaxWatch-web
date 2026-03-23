@@ -182,6 +182,11 @@ vi.mock("@/lib/query/hooks", () => ({
   useDiscogsImportMutation: () => state.discogsImportMutation,
 }));
 
+vi.mock("../app/(app)/search/searchQueryHooks", () => ({
+  useSearchMutation: () => state.searchMutation,
+  useSaveSearchAlertMutation: () => state.saveSearchAlertMutation,
+}));
+
 vi.mock("../app/(app)/settings/profile/profileQueryHooks", () => ({
   useMeQuery: () => state.meQuery,
   useUpdateProfileMutation: () => state.updateProfileMutation,

@@ -109,6 +109,11 @@ vi.mock("@/lib/query/hooks", () => ({
   useUpdateProfileMutation: () => hooksState.updateProfileMutation,
 }));
 
+vi.mock("../app/(app)/search/searchQueryHooks", () => ({
+  useSearchMutation: () => hooksState.searchMutation,
+  useSaveSearchAlertMutation: () => hooksState.saveAlertMutation,
+}));
+
 vi.mock("../app/(app)/alerts/[id]/alertDetailQueryHooks", () => ({
   useWatchRuleDetailQuery: () => ({ ...hooksState.watchRuleDetailQuery }),
   useUpdateWatchRuleMutation: () => hooksState.updateWatchRuleMutation,
