@@ -1,13 +1,13 @@
 import { Suspense } from "react";
 
+import AppShellSideNav from "@/components/AppShellSideNav";
+import AppShellTopNav from "@/components/AppShellTopNav";
 import LayoutAuthNotice from "@/components/LayoutAuthNotice";
 import {
   AppShell,
   ContentContainer,
   MobileTabBar,
   ShellHeaderBand,
-  SideNav,
-  TopNav,
 } from "@/components/ui/primitives/shell";
 
 type LayoutProps = {
@@ -17,8 +17,8 @@ type LayoutProps = {
 export default function Layout({ children }: LayoutProps) {
   return (
     <AppShell
-      topNav={<TopNav />}
-      sideNav={<SideNav />}
+      topNav={<AppShellTopNav />}
+      sideNav={<AppShellSideNav />}
       headerBand={<ShellHeaderBand />}
       mobileTabBar={<MobileTabBar />}
       banner={
