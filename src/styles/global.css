@@ -298,10 +298,6 @@ hr {
   padding-left: calc(var(--app-shell-sidebar-width) + var(--space-6));
 }
 
-.app-shell--with-mobile-tabs .app-shell__viewport {
-  padding-bottom: calc(var(--app-shell-bottom-nav-height) + var(--space-6));
-}
-
 .app-shell--auth .app-shell__viewport {
   display: flex;
   align-items: flex-start;
@@ -666,7 +662,7 @@ hr {
     );
   }
 
-  .app-shell--with-mobile-tabs .app-shell__viewport {
+  .app-shell__bottom-tabs ~ .app-shell__viewport {
     padding-bottom: calc(var(--app-shell-bottom-nav-height) + var(--space-4));
   }
 

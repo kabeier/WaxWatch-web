@@ -1,10 +1,10 @@
 import Layout from "@/components/Layout";
-import SseController from "@/components/SseController";
+import SseControllerBootstrap from "@/components/SseControllerBootstrap";
 
 export default function AppGroupLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <SseController />
+      <SseControllerBootstrap />
       <Layout>{children}</Layout>
     </>
   );

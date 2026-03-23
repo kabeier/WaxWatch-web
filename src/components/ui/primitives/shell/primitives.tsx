@@ -1,19 +1,12 @@
-"use client";
-
-import { useEffect, useState, type ComponentPropsWithoutRef, type ReactNode } from "react";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 import { WaveTrace } from "@/components/WaveTrace";
 
-type ShellNavItem = {
-  href: string;
-  label: string;
-  shortLabel: string;
-  match?: (pathname: string) => boolean;
-};
+import { ShellNavLink, ShellUtilityLink, type ShellNavItem } from "./ShellNavLink";
+import MobileOnlySlot from "./MobileOnlySlot";
 
-type AppShellProps = {
+export type AppShellProps = {
   children: ReactNode;
   topNav?: ReactNode;
   sideNav?: ReactNode;
@@ -24,7 +17,7 @@ type AppShellProps = {
   variant?: "app" | "auth";
 };
 
-type TopNavProps = {
+export type TopNavProps = {
   utilities?: ReactNode;
   showUtilities?: boolean;
   brandHref?: string;
@@ -32,16 +25,16 @@ type TopNavProps = {
   utilityLabel?: string;
 };
 
-type SideNavProps = {
+export type SideNavProps = {
   items?: ShellNavItem[];
   footer?: ReactNode;
 };
 
-type MobileTabBarProps = {
+export type MobileTabBarProps = {
   items?: ShellNavItem[];
 };
 
-type ContentContainerProps = ComponentPropsWithoutRef<"section"> & {
+export type ContentContainerProps = ComponentPropsWithoutRef<"section"> & {
   width?: "default" | "narrow" | "full";
 };
 
@@ -51,7 +44,6 @@ const ALERTS_PATH = "/alerts";
 const WATCHLIST_PATH = "/watchlist";
 const NOTIFICATIONS_PATH = "/notifications";
 const INTEGRATIONS_PATH = "/integrations";
-const LEGACY_INTEGRATIONS_PATH = "/settings/integrations";
 const SETTINGS_PATH = "/settings";
 const SETTINGS_PROFILE_PATH = "/settings/profile";
 
@@ -60,7 +52,7 @@ const APP_NAV_ITEMS: ShellNavItem[] = [
     href: DASHBOARD_PATH,
     label: "Dashboard",
     shortLabel: "DB",
-    match: (pathname) => pathname === "/" || pathname.startsWith(DASHBOARD_PATH),
+    matchMode: "dashboard",
   },
   { href: SEARCH_PATH, label: "Search", shortLabel: "SR" },
   { href: ALERTS_PATH, label: "Alerts", shortLabel: "AL" },
@@ -70,15 +62,13 @@ const APP_NAV_ITEMS: ShellNavItem[] = [
     href: INTEGRATIONS_PATH,
     label: "Integrations",
     shortLabel: "IN",
-    match: (pathname) =>
-      pathname.startsWith(INTEGRATIONS_PATH) || pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
+    matchMode: "integrations-with-legacy",
   },
   {
     href: SETTINGS_PATH,
     label: "Settings",
     shortLabel: "ST",
-    match: (pathname) =>
-      pathname.startsWith(SETTINGS_PATH) && !pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
+    matchMode: "settings-without-legacy",
   },
 ];
 
@@ -87,7 +77,7 @@ const MOBILE_NAV_ITEMS: ShellNavItem[] = [
     href: DASHBOARD_PATH,
     label: "Home",
     shortLabel: "DB",
-    match: (pathname) => pathname === "/" || pathname.startsWith(DASHBOARD_PATH),
+    matchMode: "dashboard",
   },
   { href: SEARCH_PATH, label: "Search", shortLabel: "SR" },
   { href: ALERTS_PATH, label: "Alerts", shortLabel: "AL" },
@@ -96,54 +86,12 @@ const MOBILE_NAV_ITEMS: ShellNavItem[] = [
     href: SETTINGS_PATH,
     label: "Settings",
     shortLabel: "ST",
-    match: (pathname) =>
-      pathname.startsWith(SETTINGS_PATH) && !pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
+    matchMode: "settings-without-legacy",
   },
 ];
 
 function joinClassNames(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
-}
-
-function useIsMobileViewport() {
-  const [isMobileViewport, setIsMobileViewport] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
-    const updateViewportState = () => {
-      setIsMobileViewport(mediaQuery.matches);
-    };
-
-    updateViewportState();
-
-    if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", updateViewportState);
-
-      return () => {
-        mediaQuery.removeEventListener("change", updateViewportState);
-      };
-    }
-
-    mediaQuery.addListener(updateViewportState);
-
-    return () => {
-      mediaQuery.removeListener(updateViewportState);
-    };
-  }, []);
-
-  return isMobileViewport;
-}
-
-function isNavItemActive(pathname: string, item: ShellNavItem) {
-  if (item.match) {
-    return item.match(pathname);
-  }
-
-  return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
 function ShellBrand({
@@ -163,40 +111,6 @@ function ShellBrand({
   );
 }
 
-function ShellNavLink({ item, className }: { item: ShellNavItem; className?: string }) {
-  const pathname = usePathname() ?? "/";
-  const isActive = isNavItemActive(pathname, item);
-
-  return (
-    <Link
-      href={item.href}
-      aria-current={isActive ? "page" : undefined}
-      className={joinClassNames("shell-nav-link", isActive && "shell-nav-link--active", className)}
-    >
-      <span className="shell-nav-link__icon" aria-hidden="true">
-        {item.shortLabel}
-      </span>
-      <span className="shell-nav-link__label">{item.label}</span>
-    </Link>
-  );
-}
-
-function ShellUtilityLink({ href, label, value }: { href: string; label: string; value: string }) {
-  const pathname = usePathname() ?? "/";
-  const isActive = pathname === href || pathname.startsWith(`${href}/`);
-
-  return (
-    <Link
-      href={href}
-      aria-current={isActive ? "page" : undefined}
-      className={joinClassNames("top-nav__utility", isActive && "top-nav__utility--active")}
-    >
-      <span className="top-nav__utility-label">{label}</span>
-      <span className="top-nav__utility-value">{value}</span>
-    </Link>
-  );
-}
-
 export function AppShell({
   children,
   topNav,
@@ -209,9 +123,6 @@ export function AppShell({
 }: AppShellProps) {
   const hasSidebar = Boolean(sideNav);
   const hasMobileTabs = Boolean(mobileTabBar);
-  const isMobileViewport = useIsMobileViewport();
-  const shouldRenderMobileTabs =
-    hasMobileTabs && (mobileTabBarVisibility === "always" || isMobileViewport);
 
   return (
     <div
@@ -219,13 +130,16 @@ export function AppShell({
         "app-shell",
         `app-shell--${variant}`,
         hasSidebar && "app-shell--with-sidebar",
-        shouldRenderMobileTabs && "app-shell--with-mobile-tabs",
       )}
     >
       {sideNav ? <div className="app-shell__sidebar">{sideNav}</div> : null}
       {topNav ? <div className="app-shell__topbar">{topNav}</div> : null}
       {headerBand ? <div className="app-shell__header-band">{headerBand}</div> : null}
-      {shouldRenderMobileTabs ? <div className="app-shell__bottom-tabs">{mobileTabBar}</div> : null}
+      {hasMobileTabs ? (
+        <MobileOnlySlot visibility={mobileTabBarVisibility}>
+          <div className="app-shell__bottom-tabs">{mobileTabBar}</div>
+        </MobileOnlySlot>
+      ) : null}
 
       <div className="app-shell__viewport">
         {banner ? <div className="app-shell__banner">{banner}</div> : null}

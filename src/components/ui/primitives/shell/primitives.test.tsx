@@ -58,6 +58,19 @@ describe("shell primitives", () => {
     expect(screen.getByRole("link", { name: /Settings/i })).not.toHaveAttribute("aria-current");
   });
 
+  it("does not render mobile tabs in auto mode without a mobile viewport", () => {
+    const { container } = render(
+      <AppShell mobileTabBar={<MobileTabBar />} topNav={<TopNav />}>
+        <ContentContainer>
+          <div>Page content</div>
+        </ContentContainer>
+      </AppShell>,
+    );
+
+    expect(container.querySelector("div.app-shell__bottom-tabs")).not.toBeInTheDocument();
+    expect(container.querySelector("nav.mobile-tab-bar")).not.toBeInTheDocument();
+  });
+
   it("renders app shell composition slots", () => {
     render(
       <AppShell
