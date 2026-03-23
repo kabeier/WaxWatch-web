@@ -44,7 +44,6 @@ const ALERTS_PATH = "/alerts";
 const WATCHLIST_PATH = "/watchlist";
 const NOTIFICATIONS_PATH = "/notifications";
 const INTEGRATIONS_PATH = "/integrations";
-const LEGACY_INTEGRATIONS_PATH = "/settings/integrations";
 const SETTINGS_PATH = "/settings";
 const SETTINGS_PROFILE_PATH = "/settings/profile";
 
@@ -53,7 +52,7 @@ const APP_NAV_ITEMS: ShellNavItem[] = [
     href: DASHBOARD_PATH,
     label: "Dashboard",
     shortLabel: "DB",
-    match: (pathname) => pathname === "/" || pathname.startsWith(DASHBOARD_PATH),
+    matchMode: "dashboard",
   },
   { href: SEARCH_PATH, label: "Search", shortLabel: "SR" },
   { href: ALERTS_PATH, label: "Alerts", shortLabel: "AL" },
@@ -63,15 +62,13 @@ const APP_NAV_ITEMS: ShellNavItem[] = [
     href: INTEGRATIONS_PATH,
     label: "Integrations",
     shortLabel: "IN",
-    match: (pathname) =>
-      pathname.startsWith(INTEGRATIONS_PATH) || pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
+    matchMode: "integrations-with-legacy",
   },
   {
     href: SETTINGS_PATH,
     label: "Settings",
     shortLabel: "ST",
-    match: (pathname) =>
-      pathname.startsWith(SETTINGS_PATH) && !pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
+    matchMode: "settings-without-legacy",
   },
 ];
 
@@ -80,7 +77,7 @@ const MOBILE_NAV_ITEMS: ShellNavItem[] = [
     href: DASHBOARD_PATH,
     label: "Home",
     shortLabel: "DB",
-    match: (pathname) => pathname === "/" || pathname.startsWith(DASHBOARD_PATH),
+    matchMode: "dashboard",
   },
   { href: SEARCH_PATH, label: "Search", shortLabel: "SR" },
   { href: ALERTS_PATH, label: "Alerts", shortLabel: "AL" },
@@ -89,8 +86,7 @@ const MOBILE_NAV_ITEMS: ShellNavItem[] = [
     href: SETTINGS_PATH,
     label: "Settings",
     shortLabel: "ST",
-    match: (pathname) =>
-      pathname.startsWith(SETTINGS_PATH) && !pathname.startsWith(LEGACY_INTEGRATIONS_PATH),
+    matchMode: "settings-without-legacy",
   },
 ];
 
@@ -127,8 +123,6 @@ export function AppShell({
 }: AppShellProps) {
   const hasSidebar = Boolean(sideNav);
   const hasMobileTabs = Boolean(mobileTabBar);
-  const shouldReserveMobileTabSpace =
-    hasMobileTabs && (mobileTabBarVisibility === "always" || mobileTabBarVisibility === "auto");
 
   return (
     <div
@@ -136,7 +130,6 @@ export function AppShell({
         "app-shell",
         `app-shell--${variant}`,
         hasSidebar && "app-shell--with-sidebar",
-        shouldReserveMobileTabSpace && "app-shell--with-mobile-tabs",
       )}
     >
       {sideNav ? <div className="app-shell__sidebar">{sideNav}</div> : null}

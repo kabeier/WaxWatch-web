@@ -67,7 +67,6 @@ describe("shell primitives", () => {
       </AppShell>,
     );
 
-    expect(container.querySelector("div.app-shell--with-mobile-tabs")).toBeInTheDocument();
     expect(container.querySelector("div.app-shell__bottom-tabs")).not.toBeInTheDocument();
     expect(container.querySelector("nav.mobile-tab-bar")).not.toBeInTheDocument();
   });

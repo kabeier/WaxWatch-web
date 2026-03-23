@@ -91,7 +91,9 @@ function buildRouteCandidates({ appManifestPages, buildManifestPages, frameworkS
   );
 
   const routeCandidates = routeEntries.map(({ route, files }) => {
-    const frameworkShared = [];
+    const frameworkShared = [...frameworkSharedFiles]
+      .map((file) => ({ file, bytes: readFileSize(file) }))
+      .filter(({ bytes }) => bytes > 0);
     const appShared = [];
     const exclusive = [];
 
@@ -103,8 +105,10 @@ function buildRouteCandidates({ appManifestPages, buildManifestPages, frameworkS
 
       const payload = { file, bytes };
       if (frameworkSharedFiles.has(file)) {
-        frameworkShared.push(payload);
-      } else if (appSharedFiles.has(file)) {
+        continue;
+      }
+
+      if (appSharedFiles.has(file)) {
         appShared.push(payload);
       } else {
         exclusive.push(payload);

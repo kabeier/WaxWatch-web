@@ -3,11 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+export type ShellNavItemMatchMode =
+  | "default"
+  | "dashboard"
+  | "integrations-with-legacy"
+  | "settings-without-legacy";
+
 export type ShellNavItem = {
   href: string;
   label: string;
   shortLabel: string;
-  match?: (pathname: string) => boolean;
+  matchMode?: ShellNavItemMatchMode;
 };
 
 function joinClassNames(...values: Array<string | false | null | undefined>) {
@@ -15,11 +21,16 @@ function joinClassNames(...values: Array<string | false | null | undefined>) {
 }
 
 function isNavItemActive(pathname: string, item: ShellNavItem) {
-  if (item.match) {
-    return item.match(pathname);
+  switch (item.matchMode) {
+    case "dashboard":
+      return pathname === "/" || pathname.startsWith(item.href);
+    case "integrations-with-legacy":
+      return pathname.startsWith(item.href) || pathname.startsWith("/settings/integrations");
+    case "settings-without-legacy":
+      return pathname.startsWith(item.href) && !pathname.startsWith("/settings/integrations");
+    default:
+      return pathname === item.href || pathname.startsWith(`${item.href}/`);
   }
-
-  return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
 export function ShellNavLink({ item, className }: { item: ShellNavItem; className?: string }) {
