@@ -1,11 +1,8 @@
-"use client";
-
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 
+import LayoutAuthNotice from "@/components/LayoutAuthNotice";
 import {
   AppShell,
-  AuthNotice,
   ContentContainer,
   MobileTabBar,
   ShellHeaderBand,
@@ -17,12 +14,6 @@ type LayoutProps = {
   children: React.ReactNode;
 };
 
-function AuthNoticeFromSearchParams() {
-  const searchParams = useSearchParams();
-
-  return <AuthNotice reason={searchParams?.get("reason") ?? ""} />;
-}
-
 export default function Layout({ children }: LayoutProps) {
   return (
     <AppShell
@@ -32,7 +23,7 @@ export default function Layout({ children }: LayoutProps) {
       mobileTabBar={<MobileTabBar />}
       banner={
         <Suspense fallback={null}>
-          <AuthNoticeFromSearchParams />
+          <LayoutAuthNotice />
         </Suspense>
       }
     >
