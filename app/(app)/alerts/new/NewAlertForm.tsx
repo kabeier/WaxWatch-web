@@ -5,14 +5,13 @@ import { useMemo, useState } from "react";
 
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
-import { Button, CardFooter, CheckboxRow, TextInput } from "@/components/ui/primitives/base";
-import {
-  StateEmpty,
-  StateError,
-  StateLoading,
-  StateRateLimited,
-} from "@/components/ui/primitives/state";
-import { useCreateWatchRuleMutation, useMeQuery } from "@/lib/query/hooks";
+import { Button, CheckboxRow, TextInput } from "@/components/ui/primitives/base/controls";
+import { CardFooter } from "@/components/ui/primitives/base/surfaces";
+import { StateEmpty } from "@/components/ui/primitives/state/StateEmpty";
+import { StateError } from "@/components/ui/primitives/state/StateError";
+import { StateLoading } from "@/components/ui/primitives/state/StateLoading";
+import { StateRateLimited } from "@/components/ui/primitives/state/StateRateLimited";
+import { useCreateWatchRuleMutation, useMeQuery } from "./newAlertQueryHooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
 export default function NewAlertForm() {

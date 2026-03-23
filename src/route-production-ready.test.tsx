@@ -186,6 +186,11 @@ vi.mock("../app/(app)/alerts/alertsQueryHooks", () => ({
   useWatchReleasesQuery: () => state.watchReleasesQuery,
 }));
 
+vi.mock("../app/(app)/alerts/new/newAlertQueryHooks", () => ({
+  useMeQuery: () => state.meQuery,
+  useCreateWatchRuleMutation: () => state.createWatchRuleMutation,
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
 }));
