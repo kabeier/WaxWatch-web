@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/primitives/base";
-import { useWatchReleasesQuery } from "@/lib/query/hooks";
+import { useWatchReleasesQuery } from "./watchlistQueryHooks";
 import { isRateLimitedError } from "@/lib/query/state";
 
 export default function WatchlistRefreshButton() {

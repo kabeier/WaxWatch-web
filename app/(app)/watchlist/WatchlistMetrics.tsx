@@ -1,7 +1,7 @@
 "use client";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
-import { useWatchReleasesQuery } from "@/lib/query/hooks";
+import { useWatchReleasesQuery } from "./watchlistQueryHooks";
 
 type WatchlistMetricProps = {
   metric: "tracked" | "active" | "masterRelease";

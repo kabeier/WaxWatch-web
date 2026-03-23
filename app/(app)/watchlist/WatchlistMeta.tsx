@@ -1,6 +1,6 @@
 "use client";
 
-import { useWatchReleasesQuery } from "@/lib/query/hooks";
+import { useWatchReleasesQuery } from "./watchlistQueryHooks";
 
 export default function WatchlistMeta() {
   const watchReleasesQuery = useWatchReleasesQuery();
