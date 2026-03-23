@@ -4,6 +4,7 @@ import Link from "next/link";
 import { WaveTrace } from "@/components/WaveTrace";
 
 import { ShellNavLink, ShellUtilityLink, type ShellNavItem } from "./ShellNavLink";
+import MobileOnlySlot from "./MobileOnlySlot";
 
 export type AppShellProps = {
   children: ReactNode;
@@ -141,7 +142,11 @@ export function AppShell({
       {sideNav ? <div className="app-shell__sidebar">{sideNav}</div> : null}
       {topNav ? <div className="app-shell__topbar">{topNav}</div> : null}
       {headerBand ? <div className="app-shell__header-band">{headerBand}</div> : null}
-      {hasMobileTabs ? <div className="app-shell__bottom-tabs">{mobileTabBar}</div> : null}
+      {hasMobileTabs ? (
+        <MobileOnlySlot visibility={mobileTabBarVisibility}>
+          <div className="app-shell__bottom-tabs">{mobileTabBar}</div>
+        </MobileOnlySlot>
+      ) : null}
 
       <div className="app-shell__viewport">
         {banner ? <div className="app-shell__banner">{banner}</div> : null}
