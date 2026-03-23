@@ -1,4 +1,3 @@
-import dynamic from "next/dynamic";
 import Link from "next/link";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
@@ -13,31 +12,10 @@ import {
   PageTabs,
 } from "@/components/ui/primitives/base";
 
-const AlertsMetricsGrid = dynamic(() => import("./AlertsMetricsGrid"), {
-  loading: () => (
-    <>
-      {Array.from({ length: 3 }, (_, index) => (
-        <Card key={`alerts-metric-loading-${index}`}>
-          <CardBody className={pageViewStyles.metricStack}>
-            <div className={pageViewStyles.metricValue}>—</div>
-            <div className={pageViewStyles.metricLabel}>Loading metrics…</div>
-          </CardBody>
-        </Card>
-      ))}
-    </>
-  ),
-});
-
-const AlertsRulesPanel = dynamic(() => import("./AlertsRulesPanel"), {
-  loading: () => <p className={pageViewStyles.mutedText}>Loading watch rules…</p>,
-});
-
-const AlertsMatchesPanel = dynamic(() => import("./AlertsMatchesPanel"), {
-  loading: () => <p className={pageViewStyles.mutedText}>Loading recent release matches…</p>,
-});
+import AlertsRulesPanel from "./AlertsRulesPanel";
 
 const alertsHeading = "Alerts";
-const alertsSummary = "Review watch rules and releases that matched your active rules.";
+const alertsSummary = "Review watch rules and jump to watchlist when releases start matching.";
 
 export default function AlertsPage() {
   return (
@@ -59,24 +37,48 @@ export default function AlertsPage() {
           <PageTab active aria-controls="alerts-rules-panel" id="alerts-rules-tab">
             Rules
           </PageTab>
-          <PageTab aria-controls="alerts-matches-panel" id="alerts-matches-tab" disabled>
-            Matches
+          <PageTab aria-controls="alerts-watchlist-panel" id="alerts-watchlist-tab">
+            Watchlist handoff
           </PageTab>
         </PageTabs>
       }
       meta={
         <>
           <span>
-            Manage watch rules and related release matches from the same shell-level surface.
+            Keep alert authoring focused here, then inspect matched releases from the watchlist
+            route.
           </span>
-          <Link className={pageViewStyles.listLink} href="/alerts/new">
-            Open the centered alert editor
+          <Link className={pageViewStyles.listLink} href="/watchlist">
+            Open watchlist
           </Link>
         </>
       }
     >
       <PageCardGroup columns="three">
-        <AlertsMetricsGrid />
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <div className={pageViewStyles.metricValue}>Rules</div>
+            <div className={pageViewStyles.metricLabel}>
+              Create, pause, and review saved watches.
+            </div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <div className={pageViewStyles.metricValue}>Watchlist</div>
+            <div className={pageViewStyles.metricLabel}>
+              Inspect matched releases in the dedicated route.
+            </div>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardBody className={pageViewStyles.metricStack}>
+            <div className={pageViewStyles.metricValue}>Detail</div>
+            <div className={pageViewStyles.metricLabel}>
+              Edit cadence, naming, and activation per rule.
+            </div>
+          </CardBody>
+        </Card>
       </PageCardGroup>
 
       <ActiveDivider />
@@ -94,15 +96,25 @@ export default function AlertsPage() {
           </CardBody>
         </Card>
 
-        <Card id="alerts-matches-panel" padding="lg">
+        <Card id="alerts-watchlist-panel" padding="lg">
           <CardHeader>
-            <CardTitle>Recent release matches</CardTitle>
+            <CardTitle>Matched releases live in watchlist</CardTitle>
             <CardDescription>
-              Related matches stay adjacent to rules instead of floating below on the page.
+              The watchlist route is now the single inspection surface for release pricing, match
+              mode, and tracking status.
             </CardDescription>
           </CardHeader>
-          <CardBody className={pageViewStyles.cardStack}>
-            <AlertsMatchesPanel />
+          <CardBody className={pageViewStyles.copyStack}>
+            <div className={pageViewStyles.callout}>
+              Keep `/alerts` focused on rule authoring and use `/watchlist` for release triage.
+            </div>
+            <p className={pageViewStyles.mutedText}>
+              This keeps the alert shell lighter while preserving the release workflow in its
+              canonical destination.
+            </p>
+            <Link href="/watchlist" className={pageViewStyles.listLink}>
+              Go to watchlist
+            </Link>
           </CardBody>
         </Card>
       </PageCardGroup>

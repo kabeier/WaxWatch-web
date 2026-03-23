@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 
-import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
-import { formatDateTime, formatList } from "@/components/page-view/format";
-import { ListContainer, ListRow } from "@/components/ui/primitives/base";
-import {
-  StateEmpty,
-  StateError,
-  StateLoading,
-  StateRateLimited,
-} from "@/components/ui/primitives/state";
-import { useWatchRulesQuery } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
+
+import { useWatchRulesQuery } from "./alertsQueryHooks";
+
+function formatKeywords(values?: Array<string | number | null | undefined>) {
+  const filtered =
+    values?.filter(
+      (value): value is string | number =>
+        value !== null && value !== undefined && `${value}`.trim().length > 0,
+    ) ?? [];
+
+  return filtered.length > 0 ? filtered.join(", ") : "—";
+}
 
 export default function AlertsRulesPanel() {
   const watchRulesQuery = useWatchRulesQuery();
@@ -26,67 +28,65 @@ export default function AlertsRulesPanel() {
           Create alert
         </Link>
       </div>
-      {watchRulesQuery.isLoading ? <StateLoading message="Loading watch rules…" /> : null}
-      {watchRulesQuery.isError && isRateLimitedError(watchRulesQuery.error) ? (
-        <StateRateLimited
-          message="Too many watch-rule requests. We'll re-enable retry when cooldown finishes."
-          detail={watchRulesQuery.error.message}
-          retryAfterSeconds={getRetryAfterSeconds(watchRulesQuery.error)}
-          action={
-            <RetryAction
-              label="Retry watch rules"
-              retryAfterSeconds={getRetryAfterSeconds(watchRulesQuery.error)}
-              onRetry={() => void watchRulesQuery.retry()}
-            />
-          }
-        />
+
+      {watchRulesQuery.isLoading ? <p>Loading watch rules…</p> : null}
+
+      {watchRulesQuery.isError ? (
+        <div role="alert" className={pageViewStyles.copyStack}>
+          <p>
+            {isRateLimitedError(watchRulesQuery.error)
+              ? "Too many watch-rule requests. We'll re-enable retry when cooldown finishes."
+              : "Could not load watch rules."}
+          </p>
+          <p className={pageViewStyles.mutedText}>
+            {getErrorMessage(watchRulesQuery.error, "Request failed")}
+          </p>
+          {isRateLimitedError(watchRulesQuery.error) ? (
+            <p className={pageViewStyles.mutedText}>
+              Retry after about {getRetryAfterSeconds(watchRulesQuery.error)} seconds.
+            </p>
+          ) : null}
+          <button
+            type="button"
+            className="ww-button ww-button--secondary ww-button--sm"
+            onClick={() => void watchRulesQuery.retry()}
+          >
+            Retry watch rules
+          </button>
+        </div>
       ) : null}
-      {watchRulesQuery.isError && !isRateLimitedError(watchRulesQuery.error) ? (
-        <StateError
-          message="Could not load watch rules."
-          detail={getErrorMessage(watchRulesQuery.error, "Request failed")}
-          action={
-            <RetryAction label="Retry watch rules" onRetry={() => void watchRulesQuery.retry()} />
-          }
-        />
-      ) : null}
+
       {watchRulesQuery.data && watchRules.length === 0 ? (
-        <StateEmpty message="No watch rules yet. Create one to start matching releases." />
+        <p>No watch rules yet. Create one to start matching releases.</p>
       ) : null}
+
       {watchRulesQuery.data && watchRules.length > 0 ? (
         <p role="status" aria-live="polite">
           Status: Loaded {watchRules.length} rules.
         </p>
       ) : null}
+
       {watchRulesQuery.data && watchRules.length > 0 ? (
-        <ListContainer>
+        <ul className={pageViewStyles.cardStack}>
           {watchRules.map((rule) => (
-            <ListRow
-              key={rule.id}
-              interactive
-              title={
-                <Link className={pageViewStyles.listLink} href={`/alerts/${rule.id}`}>
-                  {rule.name}
-                </Link>
-              }
-              description={`Runs every ${rule.poll_interval_seconds ?? "—"}s · Keywords: ${formatList(rule.query?.keywords)}`}
-              trailing={
+            <li key={rule.id}>
+              <Link className={pageViewStyles.listLink} href={`/alerts/${rule.id}`}>
+                {rule.name}
+              </Link>
+              <div className={pageViewStyles.inlineGroup}>
+                <span className={pageViewStyles.mutedText}>
+                  Every {rule.poll_interval_seconds ?? "—"}s
+                </span>
+                <span className={pageViewStyles.mutedText}>
+                  Keywords {formatKeywords(rule.query?.keywords)}
+                </span>
                 <span className={pageViewStyles.mutedText}>
                   {rule.is_active ? "Active" : "Paused"}
                 </span>
-              }
-            >
-              <div className={pageViewStyles.inlineGroup}>
-                <span className={pageViewStyles.mutedText}>
-                  Next run {formatDateTime(rule.next_run_at)}
-                </span>
-                <span className={pageViewStyles.mutedText}>
-                  Last run {formatDateTime(rule.last_run_at)}
-                </span>
               </div>
-            </ListRow>
+            </li>
           ))}
-        </ListContainer>
+        </ul>
       ) : null}
     </>
   );
