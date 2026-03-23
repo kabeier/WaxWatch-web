@@ -191,6 +191,12 @@ vi.mock("../app/(app)/alerts/new/newAlertQueryHooks", () => ({
   useCreateWatchRuleMutation: () => state.createWatchRuleMutation,
 }));
 
+vi.mock("../app/(app)/alerts/[id]/alertDetailQueryHooks", () => ({
+  useWatchRuleDetailQuery: () => state.watchRuleDetailQuery,
+  useUpdateWatchRuleMutation: () => state.updateWatchRuleMutation,
+  useDeleteWatchRuleMutation: () => state.deleteWatchRuleMutation,
+}));
+
 vi.mock("../app/(app)/watchlist/watchlistQueryHooks", () => ({
   useWatchReleasesQuery: () => state.watchReleasesQuery,
 }));

@@ -15,7 +15,7 @@ import {
   useDeleteWatchRuleMutation,
   useUpdateWatchRuleMutation,
   useWatchRuleDetailQuery,
-} from "@/lib/query/hooks";
+} from "./alertDetailQueryHooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
 export default function AlertDetailClient({ id }: { id: string }) {

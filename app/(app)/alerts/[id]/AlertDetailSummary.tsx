@@ -2,7 +2,7 @@
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { formatDateTime, formatList } from "@/components/page-view/format";
-import { useWatchRuleDetailQuery } from "@/lib/query/hooks";
+import { useWatchRuleDetailQuery } from "./alertDetailQueryHooks";
 
 type AlertDetailSummaryProps = {
   id: string;

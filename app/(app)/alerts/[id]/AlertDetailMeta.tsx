@@ -1,6 +1,6 @@
 "use client";
 
-import { useWatchRuleDetailQuery } from "@/lib/query/hooks";
+import { useWatchRuleDetailQuery } from "./alertDetailQueryHooks";
 
 export default function AlertDetailMeta({ id }: { id: string }) {
   const watchRuleDetailQuery = useWatchRuleDetailQuery(id);
