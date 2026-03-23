@@ -1,44 +1,100 @@
 import Link from "next/link";
 
+import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { ActiveDivider, PageCardGroup, PageView } from "@/components/page-view/PageView";
+import {
+  Card,
+  CardBody,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/primitives/base";
 import { routeViewModels, settingsNavigationRouteKeys } from "@/lib/view-models/routes";
 
 export default function SettingsLandingPage() {
   const viewModel = routeViewModels.settings;
 
   return (
-    <section>
-      <h1>{viewModel.heading}</h1>
-      <p>{viewModel.summary}</p>
+    <PageView
+      title={viewModel.heading}
+      description={viewModel.summary}
+      eyebrow="Settings shell"
+      actions={
+        <Link
+          href={routeViewModels.integrations.path}
+          className="ww-button ww-button--secondary ww-button--md"
+        >
+          Open integrations
+        </Link>
+      }
+      meta={
+        <span>
+          Keep account preferences grouped here and send service-specific work to the top-level
+          integrations route.
+        </span>
+      }
+    >
+      <PageCardGroup columns="three" aria-label="Settings sections">
+        {settingsNavigationRouteKeys.map((routeKey) => {
+          const route = routeViewModels[routeKey];
 
-      <section aria-labelledby="settings-sections-title">
-        <h2 id="settings-sections-title">Sections</h2>
-        <ul>
-          {settingsNavigationRouteKeys.map((routeKey) => {
-            const route = routeViewModels[routeKey];
+          return (
+            <Card key={route.path} padding="lg">
+              <CardHeader>
+                <CardTitle>{route.heading}</CardTitle>
+                <CardDescription>{route.summary}</CardDescription>
+              </CardHeader>
+              <CardBody className={pageViewStyles.copyStack}>
+                <Link className={pageViewStyles.listLink} href={route.path}>
+                  Open {route.heading}
+                </Link>
+              </CardBody>
+            </Card>
+          );
+        })}
+      </PageCardGroup>
 
-            return (
-              <li key={route.path}>
-                <article>
-                  <h3>{route.heading}</h3>
-                  <p>{route.summary}</p>
-                  <Link href={route.path}>Open {route.heading}</Link>
-                </article>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+      <ActiveDivider />
 
-      <section aria-labelledby="settings-integrations-title">
-        <h2 id="settings-integrations-title">Integrations</h2>
-        <p>
-          Integrations are now modeled as a top-level app destination. Existing
-          <code> /settings/integrations</code> requests redirect to{" "}
-          <code>{routeViewModels.integrations.path}</code>
-          for backward compatibility.
-        </p>
-        <Link href={routeViewModels.integrations.path}>Open integrations</Link>
-      </section>
-    </section>
+      <PageCardGroup columns="sidebar">
+        <Card id="settings-overview" padding="lg">
+          <CardHeader>
+            <CardTitle>Section overview</CardTitle>
+            <CardDescription>
+              Use the settings landing page as the directory for identity, delivery, and risk
+              actions.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.copyStack}>
+            <p className={pageViewStyles.mutedText}>
+              The route stays lightweight by pointing users into dedicated child pages instead of
+              stacking all controls into one long form.
+            </p>
+            <div className={pageViewStyles.callout}>
+              Settings owns profile, alert delivery preferences, and danger-zone actions.
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card id="settings-integrations" padding="lg">
+          <CardHeader>
+            <CardTitle>Integrations redirect</CardTitle>
+            <CardDescription>
+              Preserve compatibility while keeping the service-management experience at its own
+              top-level destination.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.copyStack}>
+            <p className={pageViewStyles.mutedText}>
+              Existing <code>/settings/integrations</code> requests redirect to{" "}
+              <code>{routeViewModels.integrations.path}</code> for backward compatibility.
+            </p>
+            <Link className={pageViewStyles.listLink} href={routeViewModels.integrations.path}>
+              Open integrations
+            </Link>
+          </CardBody>
+        </Card>
+      </PageCardGroup>
+    </PageView>
   );
 }
