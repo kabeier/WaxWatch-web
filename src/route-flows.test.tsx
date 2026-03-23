@@ -115,6 +115,11 @@ vi.mock("../app/(app)/alerts/[id]/alertDetailQueryHooks", () => ({
   useDeleteWatchRuleMutation: () => hooksState.deleteWatchRuleMutation,
 }));
 
+vi.mock("../app/(app)/settings/profile/profileQueryHooks", () => ({
+  useMeQuery: () => hooksState.meQuery,
+  useUpdateProfileMutation: () => hooksState.updateProfileMutation,
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,

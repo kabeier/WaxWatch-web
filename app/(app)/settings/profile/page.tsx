@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/primitives/base";
 
-import ProfileAccountSummary from "./ProfileAccountSummary";
 import ProfileSettingsForm from "./ProfileSettingsForm";
 import ProfileSettingsTabs from "./ProfileSettingsTabs";
 
@@ -50,11 +49,18 @@ export default function ProfileSettingsPage() {
           <CardHeader>
             <CardTitle>Account summary</CardTitle>
             <CardDescription>
-              Secondary account context stays in a supporting card beside the main form.
+              Keep account context lightweight here and move service-specific work into the route
+              that owns it.
             </CardDescription>
           </CardHeader>
           <CardBody className={pageViewStyles.copyStack}>
-            <ProfileAccountSummary />
+            <p className={pageViewStyles.mutedText}>
+              Update your display name, timezone, and currency from the primary form card.
+            </p>
+            <p className={pageViewStyles.mutedText}>
+              Notification delivery belongs under alert settings, and third-party connections stay
+              in integrations.
+            </p>
           </CardBody>
         </Card>
       </PageCardGroup>
