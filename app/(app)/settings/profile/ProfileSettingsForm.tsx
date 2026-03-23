@@ -4,13 +4,12 @@ import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { RetryAction } from "@/components/RetryAction";
-import { Button, CardFooter, TextInput } from "@/components/ui/primitives/base";
-import {
-  StateEmpty,
-  StateError,
-  StateLoading,
-  StateRateLimited,
-} from "@/components/ui/primitives/state";
+import { Button, TextInput } from "@/components/ui/primitives/base/controls";
+import { CardFooter } from "@/components/ui/primitives/base/surfaces";
+import { StateEmpty } from "@/components/ui/primitives/state/StateEmpty";
+import { StateError } from "@/components/ui/primitives/state/StateError";
+import { StateLoading } from "@/components/ui/primitives/state/StateLoading";
+import { StateRateLimited } from "@/components/ui/primitives/state/StateRateLimited";
 import { useMeQuery, useUpdateProfileMutation } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
