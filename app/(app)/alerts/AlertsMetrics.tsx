@@ -1,7 +1,7 @@
 "use client";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
-import { useWatchReleasesQuery, useWatchRulesQuery } from "@/lib/query/hooks";
+import { useWatchReleasesQuery, useWatchRulesQuery } from "./alertsQueryHooks";
 
 type AlertsMetricProps = {
   metric: "rules" | "matches" | "activeRules";

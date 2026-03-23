@@ -181,6 +181,10 @@ vi.mock("@/lib/query/hooks", () => ({
   useDiscogsConnectMutation: () => state.discogsConnectMutation,
   useDiscogsImportMutation: () => state.discogsImportMutation,
 }));
+vi.mock("../app/(app)/alerts/alertsQueryHooks", () => ({
+  useWatchRulesQuery: () => state.watchRulesQuery,
+  useWatchReleasesQuery: () => state.watchReleasesQuery,
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
