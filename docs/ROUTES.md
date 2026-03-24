@@ -36,30 +36,30 @@ All new route implementation/migration work must compose shared primitives first
 
 ### Primary app destinations
 
-- `/dashboard` — canonical signed-in landing page
+- `/dashboard` — canonical signed-in landing page with live metrics/previews for alerts, watchlist matches, and notifications
 - `/search` — search listings + save search as alert
 - `/alerts` — list alerts (watch rules)
 - `/alerts/new` — create alert
 - `/alerts/[id]` — alert detail/edit
 - `/watchlist` — list/manage tracked releases
-- `/watchlist/[id]` — canonical watchlist item detail + editor route
+- `/watchlist/[id]` — canonical watchlist item detail/editor with inline validation and confirmed disable flow
 - `/notifications` — inbox + mark read/unread
 - `/integrations` — Discogs connect/import/status
 - `/settings` — settings landing shell
 - `/settings/profile` — profile + preferences
 - `/settings/alerts` — alert delivery settings (quiet hours, frequency)
-- `/settings/danger` — deactivate + hard delete
+- `/settings/danger` — two-card danger zone for deactivate + permanent delete with explicit confirmation dialogs
 
 ### Signed-out routes
 
-- `/login` — first-party credential sign-in with optional secure mobile handoff context
+- `/login` — first-party credential sign-in with secure handoff validation and cooldown-aware rate-limit errors
 - `/signed-out` — post-logout informational state
 - `/account-removed` — post-account-removal informational state
 
 ### Compatibility redirects
 
 - `/` -> `/dashboard`
-- `/settings/integrations` -> `/integrations`
+- `/settings/integrations` -> `/integrations` (immediate compatibility redirect; no dedicated page UI)
 
 ### Deferred / future surfaces
 
@@ -95,6 +95,6 @@ Users reach Search from in-route links/CTAs (for example Dashboard quick actions
 
 Route maturity definitions and the up-to-date status matrix are maintained in `docs/DEVELOPER_REFERENCE.md` under **Route matrix**.
 
-Production-ready route shells currently include `/dashboard`, `/settings`, `/watchlist/[id]`, `/login`, `/signed-out`, and `/account-removed`; data-backed production-ready routes include `/search` and `/settings/profile` alongside the other routes marked ready in `docs/DEVELOPER_REFERENCE.md`.
+Production-ready routes include fully data-backed surfaces such as `/dashboard`, `/watchlist/[id]`, `/search`, `/settings/profile`, and `/settings/danger`, plus account-state/auth pages like `/login`, `/signed-out`, and `/account-removed` (see the canonical matrix in `docs/DEVELOPER_REFERENCE.md`).
 
 When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source, and keep this summary aligned when the production-ready route set changes.
