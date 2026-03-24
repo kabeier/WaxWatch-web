@@ -46,6 +46,7 @@ export function StateBase({
   return (
     <section
       aria-busy={busy}
+      aria-atomic="true"
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
       aria-live={role === "alert" ? "assertive" : "polite"}

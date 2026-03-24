@@ -89,17 +89,25 @@ export default function WatchlistItemClient({ id }: { id: string }) {
     if (targetPriceInput.trim().length > 0) {
       const targetPrice = Number(targetPriceInput);
       if (!Number.isFinite(targetPrice) || targetPrice < 0) {
-        return "Target price must be empty or a number greater than or equal to 0.";
+        return {
+          field: "targetPrice" as const,
+          message: "Target price must be empty or a number greater than or equal to 0.",
+        };
       }
     }
 
     const normalizedMinCondition = minCondition.trim();
     if (normalizedMinCondition.length > 30) {
-      return "Minimum condition must be 30 characters or fewer.";
+      return {
+        field: "minCondition" as const,
+        message: "Minimum condition must be 30 characters or fewer.",
+      };
     }
 
     return null;
   }, [minCondition, targetPriceInput]);
+  const validationField = validationMessage?.field;
+  const validationText = validationMessage?.message;
 
   const isPending = updateWatchReleaseMutation.isPending || disableWatchReleaseMutation.isPending;
 
@@ -144,11 +152,11 @@ export default function WatchlistItemClient({ id }: { id: string }) {
   return (
     <form
       className={pageViewStyles.formStack}
-      aria-describedby={validationMessage ? "watchlist-item-form-errors" : undefined}
+      aria-describedby={validationText ? "watchlist-item-form-errors" : undefined}
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        if (validationMessage) {
+        if (validationText) {
           return;
         }
 
@@ -165,11 +173,11 @@ export default function WatchlistItemClient({ id }: { id: string }) {
         });
       }}
     >
-      {validationMessage ? (
+      {validationText ? (
         <div id="watchlist-item-form-errors">
           <StateError
             message="Please fix the highlighted validation issues before saving."
-            detail={validationMessage}
+            detail={validationText}
           />
         </div>
       ) : null}
@@ -186,9 +194,11 @@ export default function WatchlistItemClient({ id }: { id: string }) {
             setDraft((current) => ({ ...current, targetPrice: event.currentTarget.value }))
           }
           disabled={isPending}
-          error={Boolean(validationMessage)}
-          aria-invalid={Boolean(validationMessage)}
-          aria-describedby={validationMessage ? "watchlist-item-form-errors" : undefined}
+          error={validationField === "targetPrice"}
+          aria-invalid={validationField === "targetPrice"}
+          aria-describedby={
+            validationField === "targetPrice" ? "watchlist-item-form-errors" : undefined
+          }
         />
       </label>
 
@@ -201,9 +211,11 @@ export default function WatchlistItemClient({ id }: { id: string }) {
             setDraft((current) => ({ ...current, minCondition: event.currentTarget.value }))
           }
           disabled={isPending}
-          error={Boolean(validationMessage)}
-          aria-invalid={Boolean(validationMessage)}
-          aria-describedby={validationMessage ? "watchlist-item-form-errors" : undefined}
+          error={validationField === "minCondition"}
+          aria-invalid={validationField === "minCondition"}
+          aria-describedby={
+            validationField === "minCondition" ? "watchlist-item-form-errors" : undefined
+          }
         />
       </label>
 
@@ -240,7 +252,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
         <Link href="/watchlist" className={pageViewStyles.listLink}>
           Cancel
         </Link>
-        <Button type="submit" disabled={Boolean(validationMessage) || isPending}>
+        <Button type="submit" disabled={Boolean(validationText) || isPending}>
           {updateWatchReleaseMutation.isPending
             ? "Saving watchlist updates…"
             : "Save watchlist updates"}
