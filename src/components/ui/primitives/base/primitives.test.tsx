@@ -5,6 +5,7 @@ import {
   Badge,
   Banner,
   Button,
+  ButtonLink,
   Card,
   CardBody,
   CardDescription,
@@ -32,6 +33,9 @@ describe("base ui primitives", () => {
           description="Monitor recent drops"
           actions={<Button>Refresh</Button>}
         />
+        <ButtonLink href="/watchlist" variant="secondary" size="sm">
+          Open watchlist
+        </ButtonLink>
         <Card interactive selected aria-label="Release card">
           <CardHeader>
             <CardTitle>Inbox Vinyl</CardTitle>
@@ -45,6 +49,11 @@ describe("base ui primitives", () => {
 
     expect(screen.getByRole("heading", { name: "Tracked releases" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Refresh" })).toHaveClass("ww-button");
+    expect(screen.getByRole("link", { name: "Open watchlist" })).toHaveClass(
+      "ww-button",
+      "ww-button--secondary",
+      "ww-button--sm",
+    );
     expect(screen.getByRole("region", { name: "Release card" })).toHaveClass(
       "ww-card-base",
       "ww-card-base--interactive",
