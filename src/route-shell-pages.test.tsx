@@ -403,9 +403,12 @@ describe("route shell pages", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /disable watchlist item/i }));
     fireEvent.click(
-      within(screen.getByRole("dialog", { name: /disable watchlist item/i })).getByRole("button", {
-        name: /^disable watchlist item$/i,
-      }),
+      within(screen.getByRole("alertdialog", { name: /disable watchlist item/i })).getByRole(
+        "button",
+        {
+          name: /^disable watchlist item$/i,
+        },
+      ),
     );
     expect(disableWatchReleaseMutate).toHaveBeenCalledWith(undefined);
 
@@ -435,9 +438,12 @@ describe("route shell pages", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /disable watchlist item/i }));
     fireEvent.click(
-      within(screen.getByRole("dialog", { name: /disable watchlist item/i })).getByRole("button", {
-        name: /^disable watchlist item$/i,
-      }),
+      within(screen.getByRole("alertdialog", { name: /disable watchlist item/i })).getByRole(
+        "button",
+        {
+          name: /^disable watchlist item$/i,
+        },
+      ),
     );
 
     disableState.isPending = true;
