@@ -39,6 +39,7 @@ import type {
   SearchRequest,
   SearchResponse,
   WatchRelease,
+  WatchReleaseUpdate,
   WatchReleasesListParams,
   WatchRule,
   WatchRuleCreate,
@@ -132,6 +133,18 @@ export function createDomainServices(client: ApiClient) {
     },
     getById: (watchReleaseId: string) =>
       client.request<WatchRelease>(`/watch-releases/${encodeURIComponent(watchReleaseId)}`),
+    update: (watchReleaseId: string, input: WatchReleaseUpdate) =>
+      client.request<WatchRelease, WatchReleaseUpdate>(
+        `/watch-releases/${encodeURIComponent(watchReleaseId)}`,
+        {
+          method: "PATCH",
+          body: input,
+        },
+      ),
+    remove: (watchReleaseId: string) =>
+      client.request<WatchRelease>(`/watch-releases/${encodeURIComponent(watchReleaseId)}`, {
+        method: "DELETE",
+      }),
     listByWatchRule: (watchRuleId: string, params: WatchReleasesListParams = {}) => {
       const query = appendCursorOrOffsetPagination(new URLSearchParams(), params);
       query.set("watch_rule_id", watchRuleId);

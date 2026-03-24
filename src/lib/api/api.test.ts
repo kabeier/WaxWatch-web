@@ -22,6 +22,7 @@ import type {
   ProviderRequestSummary,
   SearchResponse,
   WatchRelease,
+  WatchReleaseUpdate,
   WatchRule,
 } from "./domains/types";
 import { toApiError } from "./errors";
@@ -994,6 +995,66 @@ describe("contract shape fixtures", () => {
     expect(fetchMock.mock.calls[0][0]).toBe(
       "https://api.example.com/watch-releases?cursor=next-page&limit=25",
     );
+  });
+
+  it("matches watch-release detail/update/disable contract behavior", async () => {
+    const fixture: WatchRelease = watchReleaseListFixture[0];
+    const updatePayload: WatchReleaseUpdate = {
+      target_price: 32,
+      min_condition: "NM",
+      match_mode: "master_release",
+      is_active: true,
+    };
+
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(fixture), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ...fixture, ...updatePayload }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ...fixture, is_active: false }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+
+    const domains = createDomainServices(
+      createApiClient({ baseUrl: "https://api.example.com", fetchImpl: fetchMock }),
+    );
+
+    await expect(domains.watchReleases.getById(fixture.id)).resolves.toEqual(fixture);
+    await expect(domains.watchReleases.update(fixture.id, updatePayload)).resolves.toEqual({
+      ...fixture,
+      ...updatePayload,
+    });
+    await expect(domains.watchReleases.remove(fixture.id)).resolves.toEqual({
+      ...fixture,
+      is_active: false,
+    });
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://api.example.com/watch-releases/${encodeURIComponent(fixture.id)}`,
+    );
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      `https://api.example.com/watch-releases/${encodeURIComponent(fixture.id)}`,
+    );
+    expect(fetchMock.mock.calls[2][0]).toBe(
+      `https://api.example.com/watch-releases/${encodeURIComponent(fixture.id)}`,
+    );
+    expect((fetchMock.mock.calls[1][1] as RequestInit).method).toBe("PATCH");
+    expect(JSON.parse(String((fetchMock.mock.calls[1][1] as RequestInit).body))).toEqual(
+      updatePayload,
+    );
+    expect((fetchMock.mock.calls[2][1] as RequestInit).method).toBe("DELETE");
   });
 
   it("matches notifications list/unread-count/read contract shapes", async () => {

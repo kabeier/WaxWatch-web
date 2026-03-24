@@ -14,16 +14,24 @@ function Crash(): ReactElement {
 
 describe("ErrorBoundary", () => {
   it("renders fallback UI with class-based styling", () => {
-    render(
-      <ErrorBoundary>
-        <Crash />
-      </ErrorBoundary>,
-    );
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const stderrWriteSpy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
 
-    const fallbackMain = screen
-      .getByRole("heading", { name: "Something went wrong." })
-      .closest("main");
-    expect(fallbackMain).toHaveClass("error-boundary-fallback");
-    expect(screen.getByText("Please refresh and try again.")).toBeInTheDocument();
+    try {
+      render(
+        <ErrorBoundary>
+          <Crash />
+        </ErrorBoundary>,
+      );
+
+      const fallbackMain = screen
+        .getByRole("heading", { name: "Something went wrong." })
+        .closest("main");
+      expect(fallbackMain).toHaveClass("error-boundary-fallback");
+      expect(screen.getByText("Please refresh and try again.")).toBeInTheDocument();
+    } finally {
+      stderrWriteSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+    }
   });
 });

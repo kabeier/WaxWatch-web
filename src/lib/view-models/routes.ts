@@ -143,8 +143,7 @@ export const routeViewModels = {
   watchlistItem: {
     path: "/watchlist/[id]",
     heading: "Watchlist Item",
-    summary:
-      "Inspect one tracked release and prepare for a future dedicated editor when watch-release mutations are added.",
+    summary: "Inspect and edit one tracked release in the canonical watchlist item editor.",
     section: "app",
     parentRoute: "watchlist",
     operations: [
@@ -152,6 +151,16 @@ export const routeViewModels = {
         id: "watchlist-item-load",
         label: "Load selected watch release",
         serviceMethod: "watchReleases.getById",
+      },
+      {
+        id: "watchlist-item-update",
+        label: "Update tracked release settings",
+        serviceMethod: "watchReleases.update",
+      },
+      {
+        id: "watchlist-item-disable",
+        label: "Disable tracked release",
+        serviceMethod: "watchReleases.remove",
       },
     ],
   },
@@ -257,7 +266,8 @@ export const routeViewModels = {
   login: {
     path: "/login",
     heading: "Login",
-    summary: "Enter the product through the hosted authentication flow.",
+    summary:
+      "Sign in with first-party WaxWatch credentials, with optional secure mobile handoff context.",
     section: "auth",
     operations: [],
   },

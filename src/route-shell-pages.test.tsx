@@ -4,9 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Notification, WatchRelease, WatchRule } from "@/lib/api/domains/types";
 
 import AccountRemovedPage from "../app/(auth)/account-removed/page";
+import LoginPage from "../app/(auth)/login/page";
 import SignedOutPage from "../app/(auth)/signed-out/page";
 import DashboardPage from "../app/(app)/dashboard/page";
 import SettingsLandingPage from "../app/(app)/settings/page";
+import WatchlistItemPage from "../app/(app)/watchlist/[id]/page";
 
 const dashboardFixtures = {
   notifications: [
@@ -81,6 +83,29 @@ const previewHookMocks = vi.hoisted(() => ({
     error: null,
     retry: vi.fn(),
   })),
+  watchlistDetail: vi.fn(() => ({
+    data: dashboardFixtures.releases[0],
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: vi.fn(),
+  })),
+  updateWatchRelease: vi.fn(() => ({
+    mutate: vi.fn(),
+    data: undefined,
+    error: null,
+    isPending: false,
+    isError: false,
+  })),
+  disableWatchRelease: vi.fn(() => ({
+    mutate: vi.fn(),
+    data: undefined,
+    error: null,
+    isPending: false,
+    isError: false,
+  })),
+  routerPush: vi.fn(),
+  routerRefresh: vi.fn(),
 }));
 
 vi.mock("@/lib/query/hooks", () => ({
@@ -89,6 +114,24 @@ vi.mock("@/lib/query/hooks", () => ({
   useDashboardWatchReleasesPreviewQuery: previewHookMocks.releases,
   useDashboardWatchRulesPreviewQuery: previewHookMocks.rules,
 }));
+
+vi.mock("../app/(app)/watchlist/[id]/watchlistItemQueryHooks", () => ({
+  useWatchReleaseDetailQuery: previewHookMocks.watchlistDetail,
+  useUpdateWatchReleaseMutation: previewHookMocks.updateWatchRelease,
+  useDisableWatchReleaseMutation: previewHookMocks.disableWatchRelease,
+}));
+
+vi.mock("next/navigation", async () => {
+  const actual = await vi.importActual("next/navigation");
+
+  return {
+    ...actual,
+    useRouter: () => ({
+      push: previewHookMocks.routerPush,
+      refresh: previewHookMocks.routerRefresh,
+    }),
+  };
+});
 
 describe("route shell pages", () => {
   beforeEach(() => {
@@ -164,5 +207,32 @@ describe("route shell pages", () => {
       "href",
       expect.stringContaining("/login?"),
     );
+  });
+
+  it("renders login as first-party credential sign in", async () => {
+    const page = await LoginPage({
+      searchParams: Promise.resolve({}),
+    });
+
+    render(page);
+
+    expect(screen.getByRole("heading", { name: "Login", level: 1 })).toBeInTheDocument();
+    expect(screen.getByText(/sign in with your waxwatch credentials/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+  });
+
+  it("renders watchlist item editor route with editable controls", async () => {
+    const page = await WatchlistItemPage({
+      params: Promise.resolve({ id: "release-1" }),
+    });
+
+    render(page);
+
+    expect(screen.getByRole("heading", { name: "Watchlist Item", level: 1 })).toBeInTheDocument();
+    expect(screen.getByLabelText(/target price/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/minimum condition/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/match mode/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /save watchlist updates/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /disable watchlist item/i })).toBeInTheDocument();
   });
 });
