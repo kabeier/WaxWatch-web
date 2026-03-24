@@ -92,19 +92,27 @@ export default function SearchWorkbench() {
     return errors;
   }, [alertName, pollInterval]);
 
-  const searchPageHasError =
-    !Number.isInteger(page) ||
-    page < 1 ||
-    !Number.isInteger(pageSize) ||
-    pageSize < 1 ||
-    pageSize > 100;
-  const saveAlertHasError =
-    alertName.trim().length < 1 ||
-    alertName.trim().length > 120 ||
-    !Number.isInteger(pollInterval) ||
-    pollInterval < 30 ||
-    pollInterval > 86400;
   const isBusy = searchMutation.isPending || saveAlertMutation.isPending;
+  const keywordError =
+    parseCsv(keywordsInput).length === 0 ? "Enter at least one keyword to run a search." : null;
+  const providerError =
+    parseCsv(providersInput).length === 0 ? "Enter at least one provider to run a search." : null;
+  const pageError =
+    !Number.isInteger(page) || page < 1
+      ? "Page must be an integer greater than or equal to 1."
+      : null;
+  const pageSizeError =
+    !Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100
+      ? "Page size must be an integer between 1 and 100."
+      : null;
+  const alertNameError =
+    alertName.trim().length < 1 || alertName.trim().length > 120
+      ? "Alert name must be between 1 and 120 characters."
+      : null;
+  const pollIntervalError =
+    !Number.isInteger(pollInterval) || pollInterval < 30 || pollInterval > 86400
+      ? "Poll interval must be an integer between 30 and 86400 seconds."
+      : null;
 
   const queryPayload: SearchRequest = {
     keywords: parseCsv(keywordsInput),
@@ -160,7 +168,14 @@ export default function SearchWorkbench() {
             value={keywordsInput}
             onChange={(event) => setKeywordsInput(event.currentTarget.value)}
             disabled={isBusy}
+            aria-invalid={Boolean(keywordError)}
+            aria-describedby={keywordError ? "search-keywords-error" : undefined}
           />
+          {keywordError ? (
+            <p className={pageViewStyles.helpText} id="search-keywords-error">
+              {keywordError}
+            </p>
+          ) : null}
         </label>
         <label className={pageViewStyles.labelStack} htmlFor="search-providers">
           <span className={pageViewStyles.labelText}>Providers (comma-separated)</span>
@@ -169,7 +184,14 @@ export default function SearchWorkbench() {
             value={providersInput}
             onChange={(event) => setProvidersInput(event.currentTarget.value)}
             disabled={isBusy}
+            aria-invalid={Boolean(providerError)}
+            aria-describedby={providerError ? "search-providers-error" : undefined}
           />
+          {providerError ? (
+            <p className={pageViewStyles.helpText} id="search-providers-error">
+              {providerError}
+            </p>
+          ) : null}
         </label>
         <div className={pageViewStyles.formGrid}>
           <label className={pageViewStyles.labelStack} htmlFor="search-page">
@@ -181,9 +203,14 @@ export default function SearchWorkbench() {
               value={pageInput}
               onChange={(event) => setPageInput(event.currentTarget.value)}
               disabled={isBusy}
-              aria-invalid={searchPageHasError}
-              aria-describedby={searchPageHasError ? "search-form-errors" : undefined}
+              aria-invalid={Boolean(pageError)}
+              aria-describedby={pageError ? "search-page-error" : undefined}
             />
+            {pageError ? (
+              <p className={pageViewStyles.helpText} id="search-page-error">
+                {pageError}
+              </p>
+            ) : null}
           </label>
           <label className={pageViewStyles.labelStack} htmlFor="search-page-size">
             <span className={pageViewStyles.labelText}>Page size</span>
@@ -195,9 +222,14 @@ export default function SearchWorkbench() {
               value={pageSizeInput}
               onChange={(event) => setPageSizeInput(event.currentTarget.value)}
               disabled={isBusy}
-              aria-invalid={searchPageHasError}
-              aria-describedby={searchPageHasError ? "search-form-errors" : undefined}
+              aria-invalid={Boolean(pageSizeError)}
+              aria-describedby={pageSizeError ? "search-page-size-error" : undefined}
             />
+            {pageSizeError ? (
+              <p className={pageViewStyles.helpText} id="search-page-size-error">
+                {pageSizeError}
+              </p>
+            ) : null}
           </label>
         </div>
         <Button type="submit" disabled={isBusy || searchErrors.length > 0}>
@@ -327,9 +359,14 @@ export default function SearchWorkbench() {
               value={alertName}
               onChange={(event) => setAlertName(event.currentTarget.value)}
               disabled={isBusy}
-              aria-invalid={saveAlertHasError}
-              aria-describedby={saveAlertHasError ? "save-alert-errors" : undefined}
+              aria-invalid={Boolean(alertNameError)}
+              aria-describedby={alertNameError ? "save-alert-name-error" : undefined}
             />
+            {alertNameError ? (
+              <p className={pageViewStyles.helpText} id="save-alert-name-error">
+                {alertNameError}
+              </p>
+            ) : null}
           </label>
           <label className={pageViewStyles.labelStack} htmlFor="save-alert-poll-interval">
             <span className={pageViewStyles.labelText}>Poll interval (seconds)</span>
@@ -341,9 +378,14 @@ export default function SearchWorkbench() {
               value={pollIntervalInput}
               onChange={(event) => setPollIntervalInput(event.currentTarget.value)}
               disabled={isBusy}
-              aria-invalid={saveAlertHasError}
-              aria-describedby={saveAlertHasError ? "save-alert-errors" : undefined}
+              aria-invalid={Boolean(pollIntervalError)}
+              aria-describedby={pollIntervalError ? "save-alert-poll-interval-error" : undefined}
             />
+            {pollIntervalError ? (
+              <p className={pageViewStyles.helpText} id="save-alert-poll-interval-error">
+                {pollIntervalError}
+              </p>
+            ) : null}
           </label>
         </div>
         <p className={pageViewStyles.helpText}>

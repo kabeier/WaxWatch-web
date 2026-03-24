@@ -227,11 +227,11 @@ describe("route flow regressions", () => {
   it("associates search form field errors with invalid controls", () => {
     render(<SearchPage />);
 
-    fireEvent.change(screen.getByLabelText(/^page$/i), { target: { value: "0" } });
+    const pageInput = screen.getByRole("spinbutton", { name: /^page$/i });
+    fireEvent.change(pageInput, { target: { value: "0" } });
 
-    const pageInput = screen.getByLabelText(/^page$/i);
     expect(pageInput).toHaveAttribute("aria-invalid", "true");
-    expect(pageInput).toHaveAttribute("aria-describedby", "search-form-errors");
+    expect(pageInput).toHaveAttribute("aria-describedby", "search-page-error");
     expect(
       screen.getByText(/please fix search validation issues before submitting/i),
     ).toBeInTheDocument();
@@ -486,6 +486,30 @@ describe("route flow regressions", () => {
       screen.getByText(/profile requests are temporarily rate limited\./i),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /retry profile load/i })).toBeInTheDocument();
+  });
+
+  it("marks only the invalid profile field with invalid semantics", () => {
+    hooksState.meQuery = {
+      data: {
+        email: "person@example.com",
+        display_name: "Person",
+        preferences: {
+          timezone: "UTC",
+          currency: "USD",
+        },
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    };
+
+    render(<ProfileSettingsPage />);
+
+    fireEvent.change(screen.getByLabelText(/preferred currency/i), { target: { value: "US" } });
+
+    expect(screen.getByLabelText(/preferred currency/i)).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText(/display name/i)).toHaveAttribute("aria-invalid", "false");
+    expect(screen.getByLabelText(/timezone/i)).toHaveAttribute("aria-invalid", "false");
   });
 
   it("hides stale alert-settings success status while a new save is pending", () => {

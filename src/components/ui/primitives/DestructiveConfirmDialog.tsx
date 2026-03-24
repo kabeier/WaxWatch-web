@@ -89,7 +89,7 @@ export function DestructiveConfirmDialog({
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      if (previousActiveElement instanceof HTMLElement) {
+      if (previousActiveElement instanceof HTMLElement && previousActiveElement.isConnected) {
         previousActiveElement.focus();
       }
     };
