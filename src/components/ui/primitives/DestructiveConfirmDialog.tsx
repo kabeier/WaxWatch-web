@@ -64,6 +64,8 @@ export function DestructiveConfirmDialog({
       );
 
       if (!focusableNodes || focusableNodes.length === 0) {
+        event.preventDefault();
+        dialogRef.current?.focus();
         return;
       }
 
