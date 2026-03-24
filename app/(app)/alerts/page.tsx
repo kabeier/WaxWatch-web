@@ -25,6 +25,8 @@ export default function AlertsPage() {
       description={alertsSummary}
       eyebrow="Rule management"
       actions={
+        // Keep button semantics for the header CTA so route-level accessibility
+        // contracts and automation continue to query this control by button role.
         <ButtonLink href="/alerts/new" role="button">
           Create watch rule
         </ButtonLink>
