@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import process from "node:process";
 
 const baseRef = process.env.GITHUB_BASE_REF;
 
@@ -16,12 +17,31 @@ try {
   process.exit(0);
 }
 
-const diffRange = `origin/${baseRef}...HEAD`;
+const compareRef = `origin/${baseRef}`;
+const threeDotDiffRange = `${compareRef}...HEAD`;
+const twoDotDiffRange = `${compareRef}..HEAD`;
 const ROUTE_STATUS_DOC = "docs/DEVELOPER_REFERENCE.md";
-const changedFilesOutput = execFileSync(
-  "git",
-  ["diff", "--name-only", "--diff-filter=AMR", diffRange],
-  { encoding: "utf8" },
+const getDiffOutput = (argsForThreeDot, argsForTwoDot) => {
+  try {
+    return execFileSync("git", argsForThreeDot, { encoding: "utf8" });
+  } catch (error) {
+    const stderr =
+      error && typeof error === "object" && "stderr" in error ? String(error.stderr ?? "") : "";
+    if (!stderr.includes("no merge base")) {
+      throw error;
+    }
+
+    console.log(
+      `No merge base found for ${threeDotDiffRange}; falling back to ${twoDotDiffRange} diff.`,
+    );
+
+    return execFileSync("git", argsForTwoDot, { encoding: "utf8" });
+  }
+};
+
+const changedFilesOutput = getDiffOutput(
+  ["diff", "--name-only", "--diff-filter=AMR", threeDotDiffRange],
+  ["diff", "--name-only", "--diff-filter=AMR", twoDotDiffRange],
 );
 
 const changedFiles = changedFilesOutput
@@ -34,9 +54,10 @@ if (!changedFiles.includes(ROUTE_STATUS_DOC)) {
   process.exit(0);
 }
 
-const routeStatusDocDiff = execFileSync("git", ["diff", "-U0", diffRange, "--", ROUTE_STATUS_DOC], {
-  encoding: "utf8",
-});
+const routeStatusDocDiff = getDiffOutput(
+  ["diff", "-U0", threeDotDiffRange, "--", ROUTE_STATUS_DOC],
+  ["diff", "-U0", twoDotDiffRange, "--", ROUTE_STATUS_DOC],
+);
 
 const addedProductionReadyRoutes = new Set();
 const removedStatusesByRoute = new Map();
