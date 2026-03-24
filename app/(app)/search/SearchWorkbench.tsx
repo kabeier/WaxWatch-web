@@ -4,6 +4,12 @@ import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { Button, TextInput } from "@/components/ui/primitives/base";
+import {
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/ui/primitives/state";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import type { SearchRequest } from "@/lib/api/domains/types";
 
@@ -124,9 +130,12 @@ export default function SearchWorkbench() {
       </div>
 
       {searchErrors.length > 0 ? (
-        <div id="search-form-errors" role="alert">
-          <p>Please fix search validation issues before submitting.</p>
-          <p className={pageViewStyles.mutedText}>{searchErrors.join(" ")}</p>
+        <div id="search-form-errors">
+          <StateError
+            title="Search validation issue"
+            message="Please fix search validation issues before submitting."
+            detail={searchErrors.join(" ")}
+          />
         </div>
       ) : null}
 
@@ -196,37 +205,53 @@ export default function SearchWorkbench() {
         </Button>
       </form>
 
-      {searchMutation.isPending ? <p>Loading search results…</p> : null}
-      {searchMutation.isError ? (
-        <div role="alert" className={pageViewStyles.copyStack}>
-          <p>
-            {isRateLimitedError(searchMutation.error)
-              ? "Search is temporarily rate limited."
-              : "Could not run search."}
-          </p>
-          <p className={pageViewStyles.mutedText}>
-            {isRateLimitedError(searchMutation.error)
-              ? `Retry after about ${getRetryAfterSeconds(searchMutation.error)} seconds.`
-              : getErrorMessage(searchMutation.error, "Request failed")}
-          </p>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            disabled={searchErrors.length > 0 || saveAlertMutation.isPending}
-            onClick={() => {
-              if (searchErrors.length === 0) {
-                setLastSubmittedQuery(queryPayload);
-                searchMutation.mutate(queryPayload);
-              }
-            }}
-          >
-            Retry search
-          </Button>
-        </div>
+      {searchMutation.isPending ? <StateLoading message="Loading search results…" /> : null}
+      {searchMutation.isError && isRateLimitedError(searchMutation.error) ? (
+        <StateRateLimited
+          message="Search is temporarily rate limited."
+          retryAfterSeconds={getRetryAfterSeconds(searchMutation.error)}
+          action={
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={searchErrors.length > 0 || saveAlertMutation.isPending}
+              onClick={() => {
+                if (searchErrors.length === 0) {
+                  setLastSubmittedQuery(queryPayload);
+                  searchMutation.mutate(queryPayload);
+                }
+              }}
+            >
+              Retry search
+            </Button>
+          }
+        />
+      ) : null}
+      {searchMutation.isError && !isRateLimitedError(searchMutation.error) ? (
+        <StateError
+          message="Could not run search."
+          detail={getErrorMessage(searchMutation.error, "Request failed")}
+          action={
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={searchErrors.length > 0 || saveAlertMutation.isPending}
+              onClick={() => {
+                if (searchErrors.length === 0) {
+                  setLastSubmittedQuery(queryPayload);
+                  searchMutation.mutate(queryPayload);
+                }
+              }}
+            >
+              Retry search
+            </Button>
+          }
+        />
       ) : null}
       {searchMutation.data && searchItems.length === 0 ? (
-        <p>No results matched this query. Adjust keywords or providers and retry.</p>
+        <StateEmpty message="No results matched this query. Adjust keywords or providers and retry." />
       ) : null}
       {searchMutation.data && searchItems.length > 0 ? (
         <>
@@ -267,9 +292,12 @@ export default function SearchWorkbench() {
       ) : null}
 
       {saveAlertErrors.length > 0 ? (
-        <div id="save-alert-errors" role="alert">
-          <p>Please fix save-alert validation issues before submitting.</p>
-          <p className={pageViewStyles.mutedText}>{saveAlertErrors.join(" ")}</p>
+        <div id="save-alert-errors">
+          <StateError
+            title="Save-alert validation issue"
+            message="Please fix save-alert validation issues before submitting."
+            detail={saveAlertErrors.join(" ")}
+          />
         </div>
       ) : null}
 
@@ -336,18 +364,18 @@ export default function SearchWorkbench() {
           Success: Alert saved from search.
         </p>
       ) : null}
-      {saveAlertMutation.isPending ? <p>Saving alert…</p> : null}
-      {saveAlertMutation.isError ? (
-        <div role="alert">
-          <p>
-            {isRateLimitedError(saveAlertMutation.error)
-              ? "Saving alerts is temporarily rate limited."
-              : "Could not save alert."}
-          </p>
-          <p className={pageViewStyles.mutedText}>
-            {getErrorMessage(saveAlertMutation.error, "Request failed")}
-          </p>
-        </div>
+      {saveAlertMutation.isPending ? <StateLoading message="Saving alert…" /> : null}
+      {saveAlertMutation.isError && isRateLimitedError(saveAlertMutation.error) ? (
+        <StateRateLimited
+          message="Saving alerts is temporarily rate limited."
+          retryAfterSeconds={getRetryAfterSeconds(saveAlertMutation.error)}
+        />
+      ) : null}
+      {saveAlertMutation.isError && !isRateLimitedError(saveAlertMutation.error) ? (
+        <StateError
+          message="Could not save alert."
+          detail={getErrorMessage(saveAlertMutation.error, "Request failed")}
+        />
       ) : null}
     </div>
   );

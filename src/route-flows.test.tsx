@@ -28,6 +28,7 @@ type HookState = {
     isLoading: boolean;
     isError: boolean;
     error: unknown;
+    retry?: () => void;
   };
   searchMutation: MockMutation;
   saveAlertMutation: MockMutation;
@@ -49,6 +50,7 @@ const hooksState: HookState = {
     isLoading: false,
     isError: false,
     error: null,
+    retry: mockRetry,
   },
   searchMutation: {
     data: undefined,
@@ -140,6 +142,7 @@ describe("route flow regressions", () => {
       isLoading: false,
       isError: false,
       error: null,
+      retry: mockRetry,
     };
     hooksState.searchMutation = {
       data: undefined,
@@ -231,6 +234,23 @@ describe("route flow regressions", () => {
     expect(pageInput).toHaveAttribute("aria-describedby", "search-form-errors");
     expect(
       screen.getByText(/please fix search validation issues before submitting/i),
+    ).toBeInTheDocument();
+  });
+
+  it("renders shared empty state when search returns no results", () => {
+    hooksState.searchMutation = {
+      ...hooksState.searchMutation,
+      data: {
+        items: [],
+        providers_searched: ["discogs"],
+        pagination: { returned: 0, total: 0 },
+      },
+    };
+
+    render(<SearchPage />);
+
+    expect(
+      screen.getByText(/no results matched this query\. adjust keywords or providers and retry\./i),
     ).toBeInTheDocument();
   });
 
@@ -444,6 +464,28 @@ describe("route flow regressions", () => {
 
     expect(screen.queryByText(/success: profile settings saved\./i)).not.toBeInTheDocument();
     expect(screen.getAllByText(/saving profile changes…/i).length).toBeGreaterThan(0);
+  });
+
+  it("renders shared rate-limited state for profile load failures", () => {
+    hooksState.meQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: {
+        kind: "rate_limited",
+        status: 429,
+        message: "Too many requests",
+        retryAfterSeconds: 60,
+      },
+      retry: mockRetry,
+    };
+
+    render(<ProfileSettingsPage />);
+
+    expect(
+      screen.getByText(/profile requests are temporarily rate limited\./i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry profile load/i })).toBeInTheDocument();
   });
 
   it("hides stale alert-settings success status while a new save is pending", () => {
