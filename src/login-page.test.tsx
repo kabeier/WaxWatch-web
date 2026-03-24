@@ -172,6 +172,28 @@ describe("Login page", () => {
     });
   });
 
+  it("surfaces generic API error messaging for non-rate-limited failures", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ error: { message: "Service unavailable." } }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }),
+    ) as typeof fetch;
+
+    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/service unavailable\./i);
+    });
+  });
+
   it("prevents submit when a once-valid handoff expires before sign in", async () => {
     let nowMs = Date.parse("2026-01-02T00:00:00.000Z");
     vi.spyOn(Date, "now").mockImplementation(() => nowMs);
@@ -205,6 +227,38 @@ describe("Login page", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/handoff link expired/i);
 
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("blocks post-login redirect when handoff security params become invalid mid-submit", async () => {
+    const handoff = {
+      returnTo: null,
+      handoffUrl: "waxwatch://auth/callback",
+      state: "state-123",
+      nonce: "nonce-123",
+      expiresAt: "4102444800",
+      expiresAtEpochMs: 4102444800000,
+      isExpired: false,
+      hasRequiredSecurityParams: true,
+    };
+    const fetchMock = vi.fn(async () => {
+      handoff.hasRequiredSecurityParams = false;
+      handoff.expiresAtEpochMs = null;
+      return new Response(null, { status: 200 });
+    }) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(<LoginPageClient handoff={handoff} fetchImpl={fetchMock} onRedirect={onRedirect} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
+    });
+    expect(onRedirect).not.toHaveBeenCalled();
   });
 
   it("shows missing-params handoff-required state when handoff params are incomplete", async () => {

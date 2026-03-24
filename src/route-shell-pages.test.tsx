@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Notification, WatchRelease, WatchRule } from "@/lib/api/domains/types";
@@ -9,6 +9,7 @@ import SignedOutPage from "../app/(auth)/signed-out/page";
 import DashboardPage from "../app/(app)/dashboard/page";
 import SettingsLandingPage from "../app/(app)/settings/page";
 import WatchlistItemPage from "../app/(app)/watchlist/[id]/page";
+import WatchlistItemClient from "../app/(app)/watchlist/[id]/WatchlistItemClient";
 
 const dashboardFixtures = {
   notifications: [
@@ -91,19 +92,21 @@ const previewHookMocks = vi.hoisted(() => ({
     retry: vi.fn(),
   })),
   updateWatchRelease: vi.fn(() => ({
-    mutate: vi.fn(),
+    mutate: previewHookMocks.updateWatchReleaseMutate,
     data: undefined,
     error: null,
     isPending: false,
     isError: false,
   })),
   disableWatchRelease: vi.fn(() => ({
-    mutate: vi.fn(),
+    mutate: previewHookMocks.disableWatchReleaseMutate,
     data: undefined,
     error: null,
     isPending: false,
     isError: false,
   })),
+  updateWatchReleaseMutate: vi.fn(),
+  disableWatchReleaseMutate: vi.fn(),
   routerPush: vi.fn(),
   routerRefresh: vi.fn(),
 }));
@@ -136,6 +139,51 @@ vi.mock("next/navigation", async () => {
 describe("route shell pages", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    previewHookMocks.notifications.mockImplementation(() => ({
+      data: dashboardFixtures.notifications,
+      isLoading: false,
+      error: null,
+      retry: vi.fn(),
+    }));
+    previewHookMocks.unreadCount.mockImplementation(() => ({
+      data: { unread_count: 1 },
+      isLoading: false,
+      error: null,
+      retry: vi.fn(),
+    }));
+    previewHookMocks.releases.mockImplementation(() => ({
+      data: dashboardFixtures.releases,
+      isLoading: false,
+      error: null,
+      retry: vi.fn(),
+    }));
+    previewHookMocks.rules.mockImplementation(() => ({
+      data: dashboardFixtures.rules,
+      isLoading: false,
+      error: null,
+      retry: vi.fn(),
+    }));
+    previewHookMocks.watchlistDetail.mockImplementation(() => ({
+      data: dashboardFixtures.releases[0],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    }));
+    previewHookMocks.updateWatchRelease.mockImplementation(() => ({
+      mutate: previewHookMocks.updateWatchReleaseMutate,
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+    }));
+    previewHookMocks.disableWatchRelease.mockImplementation(() => ({
+      mutate: previewHookMocks.disableWatchReleaseMutate,
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+    }));
   });
 
   it("renders dashboard with live summary cards and activity sections", () => {
@@ -234,5 +282,151 @@ describe("route shell pages", () => {
     expect(screen.getByLabelText(/match mode/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /save watchlist updates/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /disable watchlist item/i })).toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      "notifications",
+      () => previewHookMocks.notifications,
+      /notifications failed to load/i,
+      /retry notifications/i,
+    ],
+    [
+      "recent matches",
+      () => previewHookMocks.releases,
+      /recent matches are temporarily rate limited/i,
+      /retry/i,
+    ],
+    [
+      "watch rules",
+      () => previewHookMocks.rules,
+      /watch rules failed to load/i,
+      /retry watch rules/i,
+    ],
+  ])(
+    "renders dashboard fallback query states for %s panel",
+    (_panelName, hookFactory, expectedMessage, retryLabel) => {
+      const hook = hookFactory();
+      hook.mockReturnValueOnce({
+        data: undefined,
+        isLoading: false,
+        error: expectedMessage.source.includes("temporarily rate limited")
+          ? { kind: "rate_limited", message: "Slow down", retryAfterSeconds: 30 }
+          : { kind: "unknown_error", message: "boom" },
+        retry: vi.fn(),
+      });
+
+      render(<DashboardPage />);
+
+      expect(screen.getByText(expectedMessage)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: retryLabel })).toBeInTheDocument();
+    },
+  );
+
+  it("renders dashboard empty summary labels and unread-count fallback label", () => {
+    previewHookMocks.notifications.mockReturnValueOnce({
+      data: [],
+      isLoading: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    previewHookMocks.releases.mockReturnValueOnce({
+      data: [],
+      isLoading: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    previewHookMocks.rules.mockReturnValueOnce({
+      data: [],
+      isLoading: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    previewHookMocks.unreadCount.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "unavailable" },
+      retry: vi.fn(),
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByText("Unread count unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Watch rules ready to create")).toBeInTheDocument();
+    expect(screen.getByText("Recent matches will appear here")).toBeInTheDocument();
+  });
+
+  it("prevents invalid watchlist item editor saves and surfaces validation guidance", async () => {
+    render(<WatchlistItemClient id="release-1" />);
+
+    const targetPriceField = screen.getByLabelText(/target price/i);
+    fireEvent.change(targetPriceField, { target: { value: "-1" } });
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+
+    expect(
+      screen.getByText(/please fix the highlighted validation issues before saving\./i),
+    ).toBeInTheDocument();
+    expect(previewHookMocks.updateWatchReleaseMutate).not.toHaveBeenCalled();
+  });
+
+  it("keeps watchlist route in place when disable mutation fails", () => {
+    const disableState = {
+      mutate: previewHookMocks.disableWatchReleaseMutate,
+      data: undefined,
+      error: null as unknown,
+      isPending: false,
+      isError: false,
+    };
+    previewHookMocks.disableWatchRelease.mockImplementation(() => disableState);
+
+    const { rerender } = render(<WatchlistItemClient id="release-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /disable watchlist item/i }));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: /disable watchlist item/i })).getByRole("button", {
+        name: /^disable watchlist item$/i,
+      }),
+    );
+    expect(previewHookMocks.disableWatchReleaseMutate).toHaveBeenCalledWith(undefined);
+
+    disableState.isPending = true;
+    rerender(<WatchlistItemClient id="release-1" />);
+    disableState.isPending = false;
+    disableState.isError = true;
+    disableState.error = { kind: "unknown_error", message: "Disable failed" };
+    rerender(<WatchlistItemClient id="release-1" />);
+
+    expect(screen.getByText(/could not disable watchlist item\./i)).toBeInTheDocument();
+    expect(previewHookMocks.routerPush).not.toHaveBeenCalled();
+    expect(previewHookMocks.routerRefresh).not.toHaveBeenCalled();
+  });
+
+  it("navigates back to watchlist after disable succeeds post-pending", () => {
+    const disableState = {
+      mutate: previewHookMocks.disableWatchReleaseMutate,
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+    };
+    previewHookMocks.disableWatchRelease.mockImplementation(() => disableState);
+
+    const { rerender } = render(<WatchlistItemClient id="release-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /disable watchlist item/i }));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: /disable watchlist item/i })).getByRole("button", {
+        name: /^disable watchlist item$/i,
+      }),
+    );
+
+    disableState.isPending = true;
+    rerender(<WatchlistItemClient id="release-1" />);
+    disableState.isPending = false;
+    rerender(<WatchlistItemClient id="release-1" />);
+
+    expect(previewHookMocks.routerPush).toHaveBeenCalledWith("/watchlist");
+    expect(previewHookMocks.routerRefresh).toHaveBeenCalledTimes(1);
   });
 });
