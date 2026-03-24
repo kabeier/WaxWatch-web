@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
@@ -36,14 +37,39 @@ import type { Notification, WatchRelease, WatchRule } from "@/lib/api/domains/ty
 const DASHBOARD_NOTIFICATION_LIMIT = 4;
 const DASHBOARD_RELEASE_LIMIT = 5;
 const DASHBOARD_RULE_LIMIT = 4;
+const DASHBOARD_LOADING_ROW_COUNT = 3;
 
-function sortByNewest<TItem extends { created_at?: string; updated_at?: string }>(items: TItem[]) {
-  return [...items].sort((left, right) => {
-    const leftDate = Date.parse(left.updated_at ?? left.created_at ?? "");
-    const rightDate = Date.parse(right.updated_at ?? right.created_at ?? "");
+function toTimestamp(value?: string) {
+  if (!value) {
+    return Number.NEGATIVE_INFINITY;
+  }
 
-    return rightDate - leftDate;
-  });
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
+}
+
+function sortByNewest<
+  TItem extends { id?: string | number; created_at?: string; updated_at?: string },
+>(items: TItem[]) {
+  return items
+    .map((item, index) => ({
+      item,
+      index,
+      timestamp: toTimestamp(item.updated_at ?? item.created_at),
+      idKey: item.id === undefined ? "" : String(item.id),
+    }))
+    .sort((left, right) => {
+      if (right.timestamp !== left.timestamp) {
+        return right.timestamp - left.timestamp;
+      }
+
+      if (left.idKey !== right.idKey) {
+        return left.idKey.localeCompare(right.idKey);
+      }
+
+      return left.index - right.index;
+    })
+    .map(({ item }) => item);
 }
 
 function formatKeywords(values?: Array<string | number | null | undefined>) {
@@ -69,15 +95,13 @@ function DashboardQueryState({
   title,
   error,
   onRetry,
-  loadingMessage,
 }: {
   title: string;
   error: unknown;
   onRetry: () => void;
-  loadingMessage: string;
 }) {
   if (!error) {
-    return <StateLoading message={loadingMessage} />;
+    return <DashboardListLoadingState title={title} />;
   }
 
   if (isRateLimitedError(error)) {
@@ -108,6 +132,31 @@ function DashboardQueryState({
   );
 }
 
+function DashboardListLoadingState({ title }: { title: string }) {
+  return (
+    <>
+      <StateLoading message={`Loading ${title.toLowerCase()}…`} />
+      <ListContainer dense aria-hidden>
+        {Array.from({ length: DASHBOARD_LOADING_ROW_COUNT }, (_, index) => (
+          <ListRow
+            key={`loading-${title}-${index}`}
+            title={<span className={pageViewStyles.rowTextTruncate}>Loading…</span>}
+            description={
+              <span className={pageViewStyles.rowTextTruncate}>Preparing preview row</span>
+            }
+            trailing={<span className={pageViewStyles.mutedText}>…</span>}
+          >
+            <div className={pageViewStyles.rowMeta}>
+              <span className={pageViewStyles.mutedText}>Fetching summary</span>
+              <span className={pageViewStyles.mutedText}>Refreshing timeline</span>
+            </div>
+          </ListRow>
+        ))}
+      </ListContainer>
+    </>
+  );
+}
+
 function DashboardNotificationsPanel({
   notifications,
   isLoading,
@@ -120,25 +169,11 @@ function DashboardNotificationsPanel({
   onRetry: () => void;
 }) {
   if (isLoading) {
-    return (
-      <DashboardQueryState
-        title="Notifications"
-        error={null}
-        onRetry={onRetry}
-        loadingMessage="Loading notifications…"
-      />
-    );
+    return <DashboardQueryState title="Notifications" error={null} onRetry={onRetry} />;
   }
 
   if (error) {
-    return (
-      <DashboardQueryState
-        title="Notifications"
-        error={error}
-        onRetry={onRetry}
-        loadingMessage="Loading notifications…"
-      />
-    );
+    return <DashboardQueryState title="Notifications" error={error} onRetry={onRetry} />;
   }
 
   if (notifications.length === 0) {
@@ -151,14 +186,18 @@ function DashboardNotificationsPanel({
         <ListRow
           key={notification.id}
           title={notification.event_type}
-          description={`${notification.channel} · ${notification.status}`}
+          description={
+            <span className={pageViewStyles.rowTextTruncate}>
+              {notification.channel} · {notification.status}
+            </span>
+          }
           trailing={
             <span className={pageViewStyles.mutedText}>
               {notification.is_read ? "Read" : "Unread"}
             </span>
           }
         >
-          <div className={pageViewStyles.inlineGroup}>
+          <div className={pageViewStyles.rowMeta}>
             <span className={pageViewStyles.mutedText}>
               Created {formatDateTime(notification.created_at)}
             </span>
@@ -186,25 +225,11 @@ function DashboardMatchesPanel({
   onRetry: () => void;
 }) {
   if (isLoading) {
-    return (
-      <DashboardQueryState
-        title="Recent matches"
-        error={null}
-        onRetry={onRetry}
-        loadingMessage="Loading recent matches…"
-      />
-    );
+    return <DashboardQueryState title="Recent matches" error={null} onRetry={onRetry} />;
   }
 
   if (error) {
-    return (
-      <DashboardQueryState
-        title="Recent matches"
-        error={error}
-        onRetry={onRetry}
-        loadingMessage="Loading recent matches…"
-      />
-    );
+    return <DashboardQueryState title="Recent matches" error={error} onRetry={onRetry} />;
   }
 
   if (releases.length === 0) {
@@ -221,17 +246,22 @@ function DashboardMatchesPanel({
               className={pageViewStyles.listLink}
               href={`${routeViewModels.watchlist.path}/${release.id}`}
             >
-              {release.title}
+              <span className={pageViewStyles.rowTextTruncate}>{release.title}</span>
             </Link>
           }
-          description={`${release.artist} · ${release.match_mode === "master_release" ? "Master release" : "Exact release"}`}
+          description={
+            <span className={pageViewStyles.rowTextTruncate}>
+              {release.artist} ·{" "}
+              {release.match_mode === "master_release" ? "Master release" : "Exact release"}
+            </span>
+          }
           trailing={
             <span className={pageViewStyles.mutedText}>
               {release.is_active ? "Active" : "Paused"}
             </span>
           }
         >
-          <div className={pageViewStyles.inlineGroup}>
+          <div className={pageViewStyles.rowMeta}>
             <span className={pageViewStyles.mutedText}>
               {release.target_price !== null
                 ? `${release.currency} ${release.target_price}`
@@ -259,25 +289,11 @@ function DashboardRulesPanel({
   onRetry: () => void;
 }) {
   if (isLoading) {
-    return (
-      <DashboardQueryState
-        title="Watch rules"
-        error={null}
-        onRetry={onRetry}
-        loadingMessage="Loading watch rules…"
-      />
-    );
+    return <DashboardQueryState title="Watch rules" error={null} onRetry={onRetry} />;
   }
 
   if (error) {
-    return (
-      <DashboardQueryState
-        title="Watch rules"
-        error={error}
-        onRetry={onRetry}
-        loadingMessage="Loading watch rules…"
-      />
-    );
+    return <DashboardQueryState title="Watch rules" error={error} onRetry={onRetry} />;
   }
 
   if (rules.length === 0) {
@@ -294,15 +310,19 @@ function DashboardRulesPanel({
               className={pageViewStyles.listLink}
               href={`${routeViewModels.alerts.path}/${rule.id}`}
             >
-              {rule.name}
+              <span className={pageViewStyles.rowTextTruncate}>{rule.name}</span>
             </Link>
           }
-          description={formatKeywords(rule.query?.keywords)}
+          description={
+            <span className={pageViewStyles.rowTextTruncate}>
+              {formatKeywords(rule.query?.keywords)}
+            </span>
+          }
           trailing={
             <span className={pageViewStyles.mutedText}>{rule.is_active ? "Active" : "Paused"}</span>
           }
         >
-          <div className={pageViewStyles.inlineGroup}>
+          <div className={pageViewStyles.rowMeta}>
             <span className={pageViewStyles.mutedText}>Every {rule.poll_interval_seconds}s</span>
             <span className={pageViewStyles.mutedText}>
               {rule.next_run_at
@@ -323,16 +343,40 @@ export default function DashboardClientContent() {
   const notificationsQuery = useDashboardNotificationsPreviewQuery(DASHBOARD_NOTIFICATION_LIMIT);
   const unreadCountQuery = useUnreadNotificationCountQuery();
 
-  const watchRules = Array.isArray(watchRulesQuery.data) ? watchRulesQuery.data : [];
-  const watchReleases = Array.isArray(watchReleasesQuery.data) ? watchReleasesQuery.data : [];
-  const notifications = Array.isArray(notificationsQuery.data) ? notificationsQuery.data : [];
+  const watchRules = useMemo(
+    () => (Array.isArray(watchRulesQuery.data) ? watchRulesQuery.data : []),
+    [watchRulesQuery.data],
+  );
+  const watchReleases = useMemo(
+    () => (Array.isArray(watchReleasesQuery.data) ? watchReleasesQuery.data : []),
+    [watchReleasesQuery.data],
+  );
+  const notifications = useMemo(
+    () => (Array.isArray(notificationsQuery.data) ? notificationsQuery.data : []),
+    [notificationsQuery.data],
+  );
 
-  const recentNotifications = sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT);
-  const recentMatches = sortByNewest(watchReleases).slice(0, DASHBOARD_RELEASE_LIMIT);
-  const recentRules = sortByNewest(watchRules).slice(0, DASHBOARD_RULE_LIMIT);
+  const recentNotifications = useMemo(
+    () => sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT),
+    [notifications],
+  );
+  const recentMatches = useMemo(
+    () => sortByNewest(watchReleases).slice(0, DASHBOARD_RELEASE_LIMIT),
+    [watchReleases],
+  );
+  const recentRules = useMemo(
+    () => sortByNewest(watchRules).slice(0, DASHBOARD_RULE_LIMIT),
+    [watchRules],
+  );
 
-  const activeRuleCount = watchRules.filter((rule) => rule.is_active).length;
-  const activeMatchCount = watchReleases.filter((release) => release.is_active).length;
+  const activeRuleCount = useMemo(
+    () => watchRules.reduce((count, rule) => count + (rule.is_active ? 1 : 0), 0),
+    [watchRules],
+  );
+  const activeMatchCount = useMemo(
+    () => watchReleases.reduce((count, release) => count + (release.is_active ? 1 : 0), 0),
+    [watchReleases],
+  );
   const unreadCountValue = unreadCountQuery.isLoading
     ? "…"
     : unreadCountQuery.isError
