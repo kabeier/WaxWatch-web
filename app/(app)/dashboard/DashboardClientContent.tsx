@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
@@ -95,6 +95,25 @@ function DashboardMetric({ value, label }: { value: number | string; label: stri
   );
 }
 
+function DashboardListDescription({ children }: { children: ReactNode }) {
+  return <span className="ww-list-row__text-truncate">{children}</span>;
+}
+
+function DashboardListMeta({ values }: { values: string[] }) {
+  return (
+    <div className="ww-list-row__meta">
+      {values.map((value, index) => (
+        <span
+          key={`${value}-${index}`}
+          className={`ww-list-row__text-truncate ${pageViewStyles.mutedText}`}
+        >
+          {value}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function DashboardQueryState({
   title,
   error,
@@ -184,7 +203,8 @@ function DashboardNotificationsPanel({
   error: unknown;
   onRetry: () => void;
 }) {
-  if (isLoading) {
+  const isLoadingInitial = isLoading && notifications.length === 0;
+  if (isLoadingInitial) {
     return <DashboardQueryState title="Notifications" error={null} onRetry={onRetry} />;
   }
 
@@ -202,15 +222,15 @@ function DashboardNotificationsPanel({
   }
 
   return (
-    <ListContainer>
+    <ListContainer dense>
       {notifications.map((notification) => (
         <ListRow
           key={notification.id}
           title={notification.event_type}
           description={
-            <span className="ww-list-row__text-truncate">
+            <DashboardListDescription>
               {notification.channel} · {notification.status}
-            </span>
+            </DashboardListDescription>
           }
           trailing={
             <span className={pageViewStyles.mutedText}>
@@ -218,16 +238,14 @@ function DashboardNotificationsPanel({
             </span>
           }
         >
-          <div className="ww-list-row__meta">
-            <span className={pageViewStyles.mutedText}>
-              Created {formatDateTime(notification.created_at)}
-            </span>
-            <span className={pageViewStyles.mutedText}>
-              {notification.read_at
+          <DashboardListMeta
+            values={[
+              `Created ${formatDateTime(notification.created_at)}`,
+              notification.read_at
                 ? `Read ${formatDateTime(notification.read_at)}`
-                : "Pending review"}
-            </span>
-          </div>
+                : "Pending review",
+            ]}
+          />
         </ListRow>
       ))}
     </ListContainer>
@@ -245,7 +263,8 @@ function DashboardMatchesPanel({
   error: unknown;
   onRetry: () => void;
 }) {
-  if (isLoading) {
+  const isLoadingInitial = isLoading && releases.length === 0;
+  if (isLoadingInitial) {
     return <DashboardQueryState title="Recent matches" error={null} onRetry={onRetry} />;
   }
 
@@ -263,7 +282,7 @@ function DashboardMatchesPanel({
   }
 
   return (
-    <ListContainer>
+    <ListContainer dense>
       {releases.map((release) => (
         <ListRow
           key={release.id}
@@ -276,10 +295,10 @@ function DashboardMatchesPanel({
             </Link>
           }
           description={
-            <span className="ww-list-row__text-truncate">
+            <DashboardListDescription>
               {release.artist} ·{" "}
               {release.match_mode === "master_release" ? "Master release" : "Exact release"}
-            </span>
+            </DashboardListDescription>
           }
           trailing={
             <span className={pageViewStyles.mutedText}>
@@ -287,16 +306,14 @@ function DashboardMatchesPanel({
             </span>
           }
         >
-          <div className="ww-list-row__meta">
-            <span className={pageViewStyles.mutedText}>
-              {release.target_price !== null
+          <DashboardListMeta
+            values={[
+              release.target_price !== null
                 ? `${release.currency} ${release.target_price}`
-                : "No target price"}
-            </span>
-            <span className={pageViewStyles.mutedText}>
-              Updated {formatDateTime(release.updated_at)}
-            </span>
-          </div>
+                : "No target price",
+              `Updated ${formatDateTime(release.updated_at)}`,
+            ]}
+          />
         </ListRow>
       ))}
     </ListContainer>
@@ -314,7 +331,8 @@ function DashboardRulesPanel({
   error: unknown;
   onRetry: () => void;
 }) {
-  if (isLoading) {
+  const isLoadingInitial = isLoading && rules.length === 0;
+  if (isLoadingInitial) {
     return <DashboardQueryState title="Watch rules" error={null} onRetry={onRetry} />;
   }
 
@@ -332,7 +350,7 @@ function DashboardRulesPanel({
   }
 
   return (
-    <ListContainer>
+    <ListContainer dense>
       {rules.map((rule) => (
         <ListRow
           key={rule.id}
@@ -345,22 +363,22 @@ function DashboardRulesPanel({
             </Link>
           }
           description={
-            <span className="ww-list-row__text-truncate">
+            <DashboardListDescription>
               {formatKeywords(rule.query?.keywords)}
-            </span>
+            </DashboardListDescription>
           }
           trailing={
             <span className={pageViewStyles.mutedText}>{rule.is_active ? "Active" : "Paused"}</span>
           }
         >
-          <div className="ww-list-row__meta">
-            <span className={pageViewStyles.mutedText}>Every {rule.poll_interval_seconds}s</span>
-            <span className={pageViewStyles.mutedText}>
-              {rule.next_run_at
+          <DashboardListMeta
+            values={[
+              `Every ${rule.poll_interval_seconds}s`,
+              rule.next_run_at
                 ? `Next run ${formatDateTime(rule.next_run_at)}`
-                : "Schedule pending"}
-            </span>
-          </div>
+                : "Schedule pending",
+            ]}
+          />
         </ListRow>
       ))}
     </ListContainer>
@@ -387,9 +405,10 @@ export default function DashboardClientContent() {
     [watchReleasesQuery.data],
   );
 
-  const recentNotifications = useMemo(() => {
-    return sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT);
-  }, [notifications]);
+  const recentNotifications = useMemo(
+    () => sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT),
+    [notifications],
+  );
   const watchRulesSummary = useMemo(() => {
     const recentRules = sortByNewest(watchRules).slice(0, DASHBOARD_RULE_LIMIT);
     const activeRuleCount = watchRules.reduce((count, rule) => count + (rule.is_active ? 1 : 0), 0);
@@ -411,14 +430,17 @@ export default function DashboardClientContent() {
       totalReleaseCount: watchReleases.length,
     };
   }, [watchReleases]);
-  const unreadCountValue = unreadCountQuery.isLoading
-    ? "…"
-    : unreadCountQuery.isError
-      ? "—"
-      : (unreadCountQuery.data?.unread_count ?? 0);
-  const unreadCountLabel = unreadCountQuery.isError
-    ? "Unread count unavailable"
-    : "Unread notifications";
+  const unreadCountSummary = useMemo(
+    () => ({
+      value: unreadCountQuery.isLoading
+        ? "…"
+        : unreadCountQuery.isError
+          ? "—"
+          : (unreadCountQuery.data?.unread_count ?? 0),
+      label: unreadCountQuery.isError ? "Unread count unavailable" : "Unread notifications",
+    }),
+    [unreadCountQuery.data?.unread_count, unreadCountQuery.isError, unreadCountQuery.isLoading],
+  );
 
   return (
     <PageView
@@ -440,7 +462,7 @@ export default function DashboardClientContent() {
       <PageCardGroup columns="three" aria-label="Dashboard summary cards">
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
-            <DashboardMetric value={unreadCountValue} label={unreadCountLabel} />
+            <DashboardMetric value={unreadCountSummary.value} label={unreadCountSummary.label} />
           </CardBody>
         </Card>
         <Card>
