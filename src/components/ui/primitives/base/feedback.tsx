@@ -32,3 +32,19 @@ export function Banner({ className, tone = "default", ...props }: BannerProps) {
     <div className={joinClassNames("ww-banner", `ww-banner--${tone}`, className)} {...props} />
   );
 }
+
+type LiveRegionProps = Omit<ComponentPropsWithoutRef<"p">, "role"> & {
+  politeness?: "polite" | "assertive";
+  atomic?: boolean;
+};
+
+export function LiveRegion({ politeness = "polite", atomic = true, ...props }: LiveRegionProps) {
+  return (
+    <p
+      aria-atomic={atomic}
+      aria-live={politeness}
+      role={politeness === "assertive" ? "alert" : "status"}
+      {...props}
+    />
+  );
+}

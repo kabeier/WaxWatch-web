@@ -1,5 +1,5 @@
 export { Button, ButtonLink, CheckboxRow, Select, TextInput } from "./controls";
-export { Badge, Banner, HelperText } from "./feedback";
+export { Badge, Banner, HelperText, LiveRegion } from "./feedback";
 export { ListContainer, ListRow, PageTab, PageTabs } from "./collections";
 export {
   Card,

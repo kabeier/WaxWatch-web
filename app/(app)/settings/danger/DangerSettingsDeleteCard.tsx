@@ -13,10 +13,11 @@ import {
 } from "@/components/ui/primitives/base";
 import { useDeactivateAccountMutation, useHardDeleteAccountMutation } from "@/lib/query/hooks";
 import { getErrorMessage } from "@/lib/query/state";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 
 export default function DangerSettingsDeleteCard() {
   const [isDialogOpen, setDialogOpen] = useState(false);
+  const [deleteTriggerElement, setDeleteTriggerElement] = useState<HTMLElement | null>(null);
   const deactivateMutation = useDeactivateAccountMutation();
   const hardDeleteMutation = useHardDeleteAccountMutation();
   const isPending = deactivateMutation.isPending || hardDeleteMutation.isPending;
@@ -34,7 +35,14 @@ export default function DangerSettingsDeleteCard() {
         </div>
       </CardBody>
       <CardFooter className={pageViewStyles.cardStack}>
-        <Button variant="destructive" disabled={isPending} onClick={() => setDialogOpen(true)}>
+        <Button
+          variant="destructive"
+          disabled={isPending}
+          onClick={(event: MouseEvent<HTMLButtonElement>) => {
+            setDeleteTriggerElement(event.currentTarget);
+            setDialogOpen(true);
+          }}
+        >
           {hardDeleteMutation.isPending
             ? "Permanently deleting account…"
             : "Permanently delete account"}
@@ -52,6 +60,7 @@ export default function DangerSettingsDeleteCard() {
               ? getErrorMessage(hardDeleteMutation.error, "Request failed")
               : undefined
           }
+          returnFocusRef={{ current: deleteTriggerElement }}
           onCancel={() => setDialogOpen(false)}
           onConfirm={() => {
             setDialogOpen(false);

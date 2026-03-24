@@ -14,6 +14,7 @@ import {
   CardTitle,
   CheckboxRow,
   HelperText,
+  LiveRegion,
   ListContainer,
   ListRow,
   PageTab,
@@ -86,6 +87,7 @@ describe("base ui primitives", () => {
           <PageTab>History</PageTab>
         </PageTabs>
         <Banner tone="error">Feed disconnected.</Banner>
+        <LiveRegion>Saved successfully.</LiveRegion>
       </>,
     );
 
@@ -100,5 +102,6 @@ describe("base ui primitives", () => {
     expect(screen.getByRole("tablist", { name: "Page tabs" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Feed disconnected.")).toHaveClass("ww-banner", "ww-banner--error");
+    expect(screen.getByText("Saved successfully.")).toHaveAttribute("role", "status");
   });
 });

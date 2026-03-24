@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
-import { Button, TextInput } from "@/components/ui/primitives/base";
+import { Button, LiveRegion, TextInput } from "@/components/ui/primitives/base";
 import {
   StateEmpty,
   StateError,
@@ -203,9 +203,7 @@ export default function ProfileSettingsForm() {
           {updateProfileMutation.isPending ? "Saving profile changes…" : "Save profile changes"}
         </Button>
         {updateProfileMutation.data ? (
-          <p role="status" aria-live="polite">
-            Success: Profile settings saved.
-          </p>
+          <LiveRegion>Success: Profile settings saved.</LiveRegion>
         ) : null}
         {updateProfileMutation.isPending ? (
           <StateLoading message="Saving profile changes…" />

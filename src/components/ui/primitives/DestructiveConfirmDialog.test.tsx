@@ -159,4 +159,41 @@ describe("DestructiveConfirmDialog", () => {
     expect(trigger).toHaveFocus();
     trigger.remove();
   });
+
+  it("restores focus to explicit trigger ref when provided", () => {
+    const trigger = document.createElement("button");
+    trigger.textContent = "Open modal";
+    document.body.append(trigger);
+
+    const triggerRef = { current: trigger };
+
+    const { rerender } = render(
+      <DestructiveConfirmDialog
+        open
+        title="Deactivate account?"
+        description="This will pause access."
+        confirmLabel="Deactivate"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+        returnFocusRef={triggerRef}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+
+    rerender(
+      <DestructiveConfirmDialog
+        open={false}
+        title="Deactivate account?"
+        description="This will pause access."
+        confirmLabel="Deactivate"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+        returnFocusRef={triggerRef}
+      />,
+    );
+
+    expect(trigger).toHaveFocus();
+    trigger.remove();
+  });
 });

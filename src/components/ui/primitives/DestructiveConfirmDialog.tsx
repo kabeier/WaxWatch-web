@@ -19,6 +19,7 @@ type DestructiveConfirmDialogProps = {
   pending?: boolean;
   errorMessage?: string;
   className?: string;
+  returnFocusRef?: { current: HTMLElement | null };
 };
 
 export function DestructiveConfirmDialog({
@@ -34,6 +35,7 @@ export function DestructiveConfirmDialog({
   pending = false,
   errorMessage,
   className,
+  returnFocusRef,
 }: DestructiveConfirmDialogProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -46,6 +48,7 @@ export function DestructiveConfirmDialog({
     }
 
     const previousActiveElement = document.activeElement;
+    const returnFocusElement = returnFocusRef?.current ?? null;
     cancelButtonRef.current?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -89,11 +92,12 @@ export function DestructiveConfirmDialog({
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      if (previousActiveElement instanceof HTMLElement && previousActiveElement.isConnected) {
-        previousActiveElement.focus();
+      const focusTarget = returnFocusElement ?? previousActiveElement;
+      if (focusTarget instanceof HTMLElement && focusTarget.isConnected) {
+        focusTarget.focus();
       }
     };
-  }, [onCancel, open, pending]);
+  }, [onCancel, open, pending, returnFocusRef]);
 
   if (!open) {
     return null;
