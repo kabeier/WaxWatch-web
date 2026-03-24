@@ -8,12 +8,15 @@ import type {
   MeProfileUpdate,
   Notification,
   NotificationUnreadCount,
+  NotificationsListParams,
   SaveSearchAlertRequest,
   SearchRequest,
   SearchResponse,
   WatchRelease,
+  WatchReleasesListParams,
   WatchRule,
   WatchRuleCreate,
+  WatchRulesListParams,
   WatchRuleUpdate,
 } from "@/lib/api/domains/types";
 
@@ -113,6 +116,60 @@ export function useUnreadNotificationCountQuery() {
   const retry = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: queryKeys.notifications.unreadCount });
   }, [queryClient]);
+
+  return {
+    ...query,
+    retry,
+  };
+}
+
+export function useDashboardWatchRulesPreviewQuery(limit: number) {
+  const queryClient = useQueryClient();
+  const params: WatchRulesListParams = { limit };
+  const query = useQuery({
+    queryKey: queryKeys.dashboard.watchRulesPreview(limit),
+    queryFn: (): Promise<WatchRule[]> => waxwatchApi.watchRules.list(params),
+  });
+
+  const retry = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.watchRulesPreview(limit) });
+  }, [limit, queryClient]);
+
+  return {
+    ...query,
+    retry,
+  };
+}
+
+export function useDashboardWatchReleasesPreviewQuery(limit: number) {
+  const queryClient = useQueryClient();
+  const params: WatchReleasesListParams = { limit };
+  const query = useQuery({
+    queryKey: queryKeys.dashboard.watchReleasesPreview(limit),
+    queryFn: (): Promise<WatchRelease[]> => waxwatchApi.watchReleases.list(params),
+  });
+
+  const retry = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.watchReleasesPreview(limit) });
+  }, [limit, queryClient]);
+
+  return {
+    ...query,
+    retry,
+  };
+}
+
+export function useDashboardNotificationsPreviewQuery(limit: number) {
+  const queryClient = useQueryClient();
+  const params: NotificationsListParams = { limit };
+  const query = useQuery({
+    queryKey: queryKeys.dashboard.notificationsPreview(limit),
+    queryFn: (): Promise<Notification[]> => waxwatchApi.notifications.list(params),
+  });
+
+  const retry = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.notificationsPreview(limit) });
+  }, [limit, queryClient]);
 
   return {
     ...query,

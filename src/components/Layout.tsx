@@ -1,24 +1,30 @@
 import { Suspense } from "react";
 
-import AppShellSideNav from "@/components/AppShellSideNav";
-import AppShellTopNav from "@/components/AppShellTopNav";
 import LayoutAuthNotice from "@/components/LayoutAuthNotice";
 import {
   AppShell,
   ContentContainer,
   MobileTabBar,
   ShellHeaderBand,
+  SideNav,
+  TopNav,
 } from "@/components/ui/primitives/shell";
 
 type LayoutProps = {
   children: React.ReactNode;
+  topNav?: React.ReactNode;
+  sideNav?: React.ReactNode;
 };
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({
+  children,
+  topNav = <TopNav />,
+  sideNav = <SideNav />,
+}: LayoutProps) {
   return (
     <AppShell
-      topNav={<AppShellTopNav />}
-      sideNav={<AppShellSideNav />}
+      topNav={topNav}
+      sideNav={sideNav}
       headerBand={<ShellHeaderBand />}
       mobileTabBar={<MobileTabBar />}
       banner={

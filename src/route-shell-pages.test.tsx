@@ -56,31 +56,38 @@ const dashboardFixtures = {
   ] satisfies WatchRule[],
 };
 
-vi.mock("@/lib/query/hooks", () => ({
-  useNotificationsQuery: () => ({
+const previewHookMocks = vi.hoisted(() => ({
+  notifications: vi.fn(() => ({
     data: dashboardFixtures.notifications,
     isLoading: false,
     error: null,
     retry: vi.fn(),
-  }),
-  useUnreadNotificationCountQuery: () => ({
+  })),
+  unreadCount: vi.fn(() => ({
     data: { unread_count: 1 },
     isLoading: false,
     error: null,
     retry: vi.fn(),
-  }),
-  useWatchReleasesQuery: () => ({
+  })),
+  releases: vi.fn(() => ({
     data: dashboardFixtures.releases,
     isLoading: false,
     error: null,
     retry: vi.fn(),
-  }),
-  useWatchRulesQuery: () => ({
+  })),
+  rules: vi.fn(() => ({
     data: dashboardFixtures.rules,
     isLoading: false,
     error: null,
     retry: vi.fn(),
-  }),
+  })),
+}));
+
+vi.mock("@/lib/query/hooks", () => ({
+  useDashboardNotificationsPreviewQuery: previewHookMocks.notifications,
+  useUnreadNotificationCountQuery: previewHookMocks.unreadCount,
+  useDashboardWatchReleasesPreviewQuery: previewHookMocks.releases,
+  useDashboardWatchRulesPreviewQuery: previewHookMocks.rules,
 }));
 
 describe("route shell pages", () => {
@@ -103,6 +110,9 @@ describe("route shell pages", () => {
       "href",
       "/watchlist/release-1",
     );
+    expect(previewHookMocks.rules).toHaveBeenCalledWith(4);
+    expect(previewHookMocks.releases).toHaveBeenCalledWith(5);
+    expect(previewHookMocks.notifications).toHaveBeenCalledWith(4);
     expect(container.querySelector(".ww-wave--active")).toBeInTheDocument();
   });
 

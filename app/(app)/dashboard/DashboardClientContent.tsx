@@ -22,10 +22,10 @@ import {
   StateRateLimited,
 } from "@/components/ui/primitives/state";
 import {
-  useNotificationsQuery,
+  useDashboardNotificationsPreviewQuery,
+  useDashboardWatchReleasesPreviewQuery,
+  useDashboardWatchRulesPreviewQuery,
   useUnreadNotificationCountQuery,
-  useWatchReleasesQuery,
-  useWatchRulesQuery,
 } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import { routeViewModels } from "@/lib/view-models/routes";
@@ -317,9 +317,9 @@ function DashboardRulesPanel({
 
 export default function DashboardClientContent() {
   const viewModel = routeViewModels.dashboard;
-  const watchRulesQuery = useWatchRulesQuery();
-  const watchReleasesQuery = useWatchReleasesQuery();
-  const notificationsQuery = useNotificationsQuery();
+  const watchRulesQuery = useDashboardWatchRulesPreviewQuery(DASHBOARD_RULE_LIMIT);
+  const watchReleasesQuery = useDashboardWatchReleasesPreviewQuery(DASHBOARD_RELEASE_LIMIT);
+  const notificationsQuery = useDashboardNotificationsPreviewQuery(DASHBOARD_NOTIFICATION_LIMIT);
   const unreadCountQuery = useUnreadNotificationCountQuery();
 
   const watchRules = Array.isArray(watchRulesQuery.data) ? watchRulesQuery.data : [];
@@ -332,7 +332,14 @@ export default function DashboardClientContent() {
 
   const activeRuleCount = watchRules.filter((rule) => rule.is_active).length;
   const activeMatchCount = watchReleases.filter((release) => release.is_active).length;
-  const unreadCount = unreadCountQuery.data?.unread_count ?? 0;
+  const unreadCountValue = unreadCountQuery.isLoading
+    ? "…"
+    : unreadCountQuery.isError
+      ? "—"
+      : (unreadCountQuery.data?.unread_count ?? 0);
+  const unreadCountLabel = unreadCountQuery.isError
+    ? "Unread count unavailable"
+    : "Unread notifications";
 
   return (
     <PageView
@@ -361,7 +368,7 @@ export default function DashboardClientContent() {
       <PageCardGroup columns="three" aria-label="Dashboard summary cards">
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
-            <DashboardMetric value={unreadCount} label="Unread notifications" />
+            <DashboardMetric value={unreadCountValue} label={unreadCountLabel} />
           </CardBody>
         </Card>
         <Card>
@@ -371,7 +378,7 @@ export default function DashboardClientContent() {
               label={
                 watchRules.length === 0
                   ? "Watch rules ready to create"
-                  : `${activeRuleCount} active watch rules`
+                  : `${activeRuleCount} active recent watch rules`
               }
             />
           </CardBody>
@@ -383,7 +390,7 @@ export default function DashboardClientContent() {
               label={
                 watchReleases.length === 0
                   ? "Recent matches will appear here"
-                  : `${activeMatchCount} active watchlist matches`
+                  : `${activeMatchCount} active recent matches`
               }
             />
           </CardBody>
