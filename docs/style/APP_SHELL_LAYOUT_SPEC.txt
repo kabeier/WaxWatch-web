@@ -16,7 +16,7 @@ Width:
 
 Content:
 - Top: Logo icon + "WaxWatch" wordmark
-- Nav: Dashboard, Alerts, Watchlist, Notifications, Integrations, Settings
+- Nav: Dashboard, Search, Alerts, Watchlist, Notifications, Integrations, Settings
 - Bottom: account/status (optional)
 
 Behavior:
