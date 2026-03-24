@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
-import { Button, TextInput } from "@/components/ui/primitives/base";
+import { Button, LiveRegion, TextInput } from "@/components/ui/primitives/base";
 import {
   StateEmpty,
   StateError,
@@ -159,9 +159,16 @@ export default function ProfileSettingsForm() {
             aria-invalid={validationState?.field === "displayName"}
             error={validationState?.field === "displayName"}
             aria-describedby={
-              validationState?.field === "displayName" ? "profile-settings-form-errors" : undefined
+              validationState?.field === "displayName"
+                ? "profile-settings-form-errors profile-display-name-error"
+                : undefined
             }
           />
+          {validationState?.field === "displayName" ? (
+            <p className={pageViewStyles.helpText} id="profile-display-name-error">
+              {validationState.message}
+            </p>
+          ) : null}
         </label>
         <label className={pageViewStyles.labelStack} htmlFor="profile-timezone">
           <span className={pageViewStyles.labelText}>Timezone</span>
@@ -175,9 +182,16 @@ export default function ProfileSettingsForm() {
             aria-invalid={validationState?.field === "timezone"}
             error={validationState?.field === "timezone"}
             aria-describedby={
-              validationState?.field === "timezone" ? "profile-settings-form-errors" : undefined
+              validationState?.field === "timezone"
+                ? "profile-settings-form-errors profile-timezone-error"
+                : undefined
             }
           />
+          {validationState?.field === "timezone" ? (
+            <p className={pageViewStyles.helpText} id="profile-timezone-error">
+              {validationState.message}
+            </p>
+          ) : null}
         </label>
         <label className={pageViewStyles.labelStack} htmlFor="profile-currency">
           <span className={pageViewStyles.labelText}>Preferred currency</span>
@@ -192,9 +206,16 @@ export default function ProfileSettingsForm() {
             aria-invalid={validationState?.field === "currency"}
             error={validationState?.field === "currency"}
             aria-describedby={
-              validationState?.field === "currency" ? "profile-settings-form-errors" : undefined
+              validationState?.field === "currency"
+                ? "profile-settings-form-errors profile-currency-error"
+                : undefined
             }
           />
+          {validationState?.field === "currency" ? (
+            <p className={pageViewStyles.helpText} id="profile-currency-error">
+              {validationState.message}
+            </p>
+          ) : null}
         </label>
       </form>
 
@@ -203,9 +224,7 @@ export default function ProfileSettingsForm() {
           {updateProfileMutation.isPending ? "Saving profile changes…" : "Save profile changes"}
         </Button>
         {updateProfileMutation.data ? (
-          <p role="status" aria-live="polite">
-            Success: Profile settings saved.
-          </p>
+          <LiveRegion>Success: Profile settings saved.</LiveRegion>
         ) : null}
         {updateProfileMutation.isPending ? (
           <StateLoading message="Saving profile changes…" />

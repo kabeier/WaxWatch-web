@@ -37,6 +37,7 @@ export function DestructiveConfirmDialog({
 }: DestructiveConfirmDialogProps) {
   const titleId = useId();
   const descriptionId = useId();
+  const errorId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -103,10 +104,10 @@ export function DestructiveConfirmDialog({
     <div className="ww-confirm-dialog__backdrop">
       <div
         className={joinClassNames("ww-confirm-dialog", className)}
-        role="dialog"
+        role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={descriptionId}
+        aria-describedby={errorMessage ? `${descriptionId} ${errorId}` : descriptionId}
         ref={dialogRef}
         tabIndex={-1}
       >
@@ -117,7 +118,7 @@ export function DestructiveConfirmDialog({
           {description}
         </p>
         {errorMessage ? (
-          <p className="ww-confirm-dialog__error" role="alert">
+          <p className="ww-confirm-dialog__error" id={errorId} role="alert">
             {errorMessage}
           </p>
         ) : null}

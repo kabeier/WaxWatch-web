@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import SearchPage from "../app/(app)/search/page";
 import AlertDetailClient from "../app/(app)/alerts/[id]/AlertDetailClient";
 import AlertSettingsPage from "../app/(app)/settings/alerts/page";
+import DangerRequestStatus from "../app/(app)/settings/danger/DangerRequestStatus";
 import ProfileSettingsPage from "../app/(app)/settings/profile/page";
+import WatchlistItemClient from "../app/(app)/watchlist/[id]/WatchlistItemClient";
 
 type MockMutation<TInput = unknown, TData = unknown> = {
   data?: TData;
@@ -42,6 +44,17 @@ type HookState = {
   updateWatchRuleMutation: MockMutation<unknown, unknown>;
   deleteWatchRuleMutation: MockMutation;
   updateProfileMutation: MockMutation;
+  watchReleaseDetailQuery: {
+    data: unknown;
+    isLoading: boolean;
+    isError: boolean;
+    error: unknown;
+    retry: () => void;
+  };
+  updateWatchReleaseMutation: MockMutation<unknown, unknown>;
+  disableWatchReleaseMutation: MockMutation;
+  deactivateAccountMutation: MockMutation;
+  hardDeleteAccountMutation: MockMutation;
 };
 
 const hooksState: HookState = {
@@ -99,6 +112,48 @@ const hooksState: HookState = {
     isError: false,
     mutate: vi.fn(),
   } satisfies MockMutation,
+  watchReleaseDetailQuery: {
+    data: {
+      id: "release-1",
+      title: "Kind of Blue",
+      target_price: 25,
+      min_condition: "VG+",
+      match_mode: "exact_release",
+      is_active: true,
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: mockRetry,
+  },
+  updateWatchReleaseMutation: {
+    data: undefined,
+    error: null,
+    isPending: false,
+    isError: false,
+    mutate: vi.fn(),
+  } satisfies MockMutation,
+  disableWatchReleaseMutation: {
+    data: undefined,
+    error: null,
+    isPending: false,
+    isError: false,
+    mutate: vi.fn(),
+  } satisfies MockMutation,
+  deactivateAccountMutation: {
+    data: undefined,
+    error: null,
+    isPending: false,
+    isError: false,
+    mutate: vi.fn(),
+  } satisfies MockMutation,
+  hardDeleteAccountMutation: {
+    data: undefined,
+    error: null,
+    isPending: false,
+    isError: false,
+    mutate: vi.fn(),
+  } satisfies MockMutation,
 };
 
 vi.mock("@/lib/query/hooks", () => ({
@@ -109,6 +164,8 @@ vi.mock("@/lib/query/hooks", () => ({
   useUpdateWatchRuleMutation: () => hooksState.updateWatchRuleMutation,
   useDeleteWatchRuleMutation: () => hooksState.deleteWatchRuleMutation,
   useUpdateProfileMutation: () => hooksState.updateProfileMutation,
+  useDeactivateAccountMutation: () => hooksState.deactivateAccountMutation,
+  useHardDeleteAccountMutation: () => hooksState.hardDeleteAccountMutation,
 }));
 
 vi.mock("../app/(app)/search/searchQueryHooks", () => ({
@@ -125,6 +182,12 @@ vi.mock("../app/(app)/alerts/[id]/alertDetailQueryHooks", () => ({
 vi.mock("../app/(app)/settings/profile/profileQueryHooks", () => ({
   useMeQuery: () => hooksState.meQuery,
   useUpdateProfileMutation: () => hooksState.updateProfileMutation,
+}));
+
+vi.mock("../app/(app)/watchlist/[id]/watchlistItemQueryHooks", () => ({
+  useWatchReleaseDetailQuery: () => hooksState.watchReleaseDetailQuery,
+  useUpdateWatchReleaseMutation: () => hooksState.updateWatchReleaseMutation,
+  useDisableWatchReleaseMutation: () => hooksState.disableWatchReleaseMutation,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -185,6 +248,48 @@ describe("route flow regressions", () => {
       mutate: mockDeleteMutate,
     };
     hooksState.updateProfileMutation = {
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+      mutate: vi.fn(),
+    };
+    hooksState.watchReleaseDetailQuery = {
+      data: {
+        id: "release-1",
+        title: "Kind of Blue",
+        target_price: 25,
+        min_condition: "VG+",
+        match_mode: "exact_release",
+        is_active: true,
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: mockRetry,
+    };
+    hooksState.updateWatchReleaseMutation = {
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+      mutate: vi.fn(),
+    };
+    hooksState.disableWatchReleaseMutation = {
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+      mutate: vi.fn(),
+    };
+    hooksState.deactivateAccountMutation = {
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+      mutate: vi.fn(),
+    };
+    hooksState.hardDeleteAccountMutation = {
       data: undefined,
       error: null,
       isPending: false,
@@ -259,7 +364,7 @@ describe("route flow regressions", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /delete alert/i }));
     fireEvent.click(
-      within(screen.getByRole("dialog", { name: /delete alert permanently/i })).getByRole(
+      within(screen.getByRole("alertdialog", { name: /delete alert permanently/i })).getByRole(
         "button",
         { name: /^delete alert$/i },
       ),
@@ -293,7 +398,7 @@ describe("route flow regressions", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /delete alert/i }));
     fireEvent.click(
-      within(screen.getByRole("dialog", { name: /delete alert permanently/i })).getByRole(
+      within(screen.getByRole("alertdialog", { name: /delete alert permanently/i })).getByRole(
         "button",
         { name: /^delete alert$/i },
       ),
@@ -323,7 +428,7 @@ describe("route flow regressions", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /delete alert/i }));
     fireEvent.click(
-      within(screen.getByRole("dialog", { name: /delete alert permanently/i })).getByRole(
+      within(screen.getByRole("alertdialog", { name: /delete alert permanently/i })).getByRole(
         "button",
         { name: /^delete alert$/i },
       ),
@@ -550,5 +655,47 @@ describe("route flow regressions", () => {
 
     expect(screen.queryByText(/success: alert delivery settings saved\./i)).not.toBeInTheDocument();
     expect(screen.getAllByText(/saving delivery settings…/i).length).toBeGreaterThan(0);
+  });
+
+  it("associates watchlist field validation with control-specific descriptions", () => {
+    render(<WatchlistItemClient id="release-1" />);
+
+    fireEvent.change(screen.getByLabelText(/target price/i), { target: { value: "-1" } });
+
+    const targetPriceInput = screen.getByLabelText(/target price/i);
+    expect(targetPriceInput).toHaveAttribute("aria-invalid", "true");
+    expect(targetPriceInput).toHaveAttribute(
+      "aria-describedby",
+      "watchlist-item-form-errors watchlist-item-target-price-error",
+    );
+    expect(screen.getByText(/highlighted validation issues before saving\./i)).toBeInTheDocument();
+    expect(document.getElementById("watchlist-item-target-price-error")).toHaveTextContent(
+      /target price must be empty or a number greater than or equal to 0\./i,
+    );
+  });
+
+  it("uses alertdialog semantics for destructive confirmation in watchlist item", () => {
+    render(<WatchlistItemClient id="release-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /disable watchlist item/i }));
+
+    expect(
+      screen.getByRole("alertdialog", { name: /disable watchlist item\?/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("announces danger-zone success updates through a consistent status live region", () => {
+    hooksState.deactivateAccountMutation = {
+      ...hooksState.deactivateAccountMutation,
+      data: { status: "ok" },
+    };
+
+    render(<DangerRequestStatus />);
+
+    expect(screen.getByText(/success: account deactivated\./i)).toHaveAttribute("role", "status");
+    expect(screen.getByText(/success: account deactivated\./i)).toHaveAttribute(
+      "aria-live",
+      "polite",
+    );
   });
 });

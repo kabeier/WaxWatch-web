@@ -7,7 +7,13 @@ import { useRouter } from "next/navigation";
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { DestructiveConfirmDialog } from "@/components/ui/primitives/DestructiveConfirmDialog";
-import { Button, CheckboxRow, Select, TextInput } from "@/components/ui/primitives/base/controls";
+import {
+  Button,
+  CheckboxRow,
+  LiveRegion,
+  Select,
+  TextInput,
+} from "@/components/ui/primitives/base";
 import {
   StateEmpty,
   StateError,
@@ -197,9 +203,16 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           error={validationField === "targetPrice"}
           aria-invalid={validationField === "targetPrice"}
           aria-describedby={
-            validationField === "targetPrice" ? "watchlist-item-form-errors" : undefined
+            validationField === "targetPrice"
+              ? "watchlist-item-form-errors watchlist-item-target-price-error"
+              : undefined
           }
         />
+        {validationField === "targetPrice" ? (
+          <p className={pageViewStyles.helpText} id="watchlist-item-target-price-error">
+            {validationText}
+          </p>
+        ) : null}
       </label>
 
       <label className={pageViewStyles.labelStack} htmlFor="watchlist-item-min-condition">
@@ -214,9 +227,16 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           error={validationField === "minCondition"}
           aria-invalid={validationField === "minCondition"}
           aria-describedby={
-            validationField === "minCondition" ? "watchlist-item-form-errors" : undefined
+            validationField === "minCondition"
+              ? "watchlist-item-form-errors watchlist-item-min-condition-error"
+              : undefined
           }
         />
+        {validationField === "minCondition" ? (
+          <p className={pageViewStyles.helpText} id="watchlist-item-min-condition-error">
+            {validationText}
+          </p>
+        ) : null}
       </label>
 
       <label className={pageViewStyles.labelStack} htmlFor="watchlist-item-match-mode">
@@ -289,9 +309,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
       />
 
       {updateWatchReleaseMutation.data ? (
-        <p role="status" aria-live="polite">
-          Success: Watchlist item updated.
-        </p>
+        <LiveRegion>Success: Watchlist item updated.</LiveRegion>
       ) : null}
       {updateWatchReleaseMutation.isPending ? (
         <StateLoading message="Saving watchlist item updates…" />

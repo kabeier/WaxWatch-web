@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
-import { Button, TextInput } from "@/components/ui/primitives/base";
+import { Button, LiveRegion, TextInput } from "@/components/ui/primitives/base";
 import {
   StateEmpty,
   StateError,
@@ -168,6 +168,7 @@ export default function SearchWorkbench() {
             value={keywordsInput}
             onChange={(event) => setKeywordsInput(event.currentTarget.value)}
             disabled={isBusy}
+            error={Boolean(keywordError)}
             aria-invalid={Boolean(keywordError)}
             aria-describedby={keywordError ? "search-keywords-error" : undefined}
           />
@@ -184,6 +185,7 @@ export default function SearchWorkbench() {
             value={providersInput}
             onChange={(event) => setProvidersInput(event.currentTarget.value)}
             disabled={isBusy}
+            error={Boolean(providerError)}
             aria-invalid={Boolean(providerError)}
             aria-describedby={providerError ? "search-providers-error" : undefined}
           />
@@ -203,6 +205,7 @@ export default function SearchWorkbench() {
               value={pageInput}
               onChange={(event) => setPageInput(event.currentTarget.value)}
               disabled={isBusy}
+              error={Boolean(pageError)}
               aria-invalid={Boolean(pageError)}
               aria-describedby={pageError ? "search-page-error" : undefined}
             />
@@ -222,6 +225,7 @@ export default function SearchWorkbench() {
               value={pageSizeInput}
               onChange={(event) => setPageSizeInput(event.currentTarget.value)}
               disabled={isBusy}
+              error={Boolean(pageSizeError)}
               aria-invalid={Boolean(pageSizeError)}
               aria-describedby={pageSizeError ? "search-page-size-error" : undefined}
             />
@@ -287,9 +291,7 @@ export default function SearchWorkbench() {
       ) : null}
       {searchMutation.data && searchItems.length > 0 ? (
         <>
-          <p role="status" aria-live="polite">
-            Status: Loaded {searchItems.length} search results.
-          </p>
+          <LiveRegion>Status: Loaded {searchItems.length} search results.</LiveRegion>
           <div className={pageViewStyles.copyStack}>
             <p className={pageViewStyles.mutedText}>
               Returned {searchPagination?.returned ?? searchItems.length} of{" "}
@@ -359,6 +361,7 @@ export default function SearchWorkbench() {
               value={alertName}
               onChange={(event) => setAlertName(event.currentTarget.value)}
               disabled={isBusy}
+              error={Boolean(alertNameError)}
               aria-invalid={Boolean(alertNameError)}
               aria-describedby={alertNameError ? "save-alert-name-error" : undefined}
             />
@@ -378,6 +381,7 @@ export default function SearchWorkbench() {
               value={pollIntervalInput}
               onChange={(event) => setPollIntervalInput(event.currentTarget.value)}
               disabled={isBusy}
+              error={Boolean(pollIntervalError)}
               aria-invalid={Boolean(pollIntervalError)}
               aria-describedby={pollIntervalError ? "save-alert-poll-interval-error" : undefined}
             />
@@ -401,11 +405,7 @@ export default function SearchWorkbench() {
         </Button>
       </form>
 
-      {saveAlertMutation.data ? (
-        <p role="status" aria-live="polite">
-          Success: Alert saved from search.
-        </p>
-      ) : null}
+      {saveAlertMutation.data ? <LiveRegion>Success: Alert saved from search.</LiveRegion> : null}
       {saveAlertMutation.isPending ? <StateLoading message="Saving alert…" /> : null}
       {saveAlertMutation.isError && isRateLimitedError(saveAlertMutation.error) ? (
         <StateRateLimited
