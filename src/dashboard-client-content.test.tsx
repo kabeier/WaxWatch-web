@@ -205,4 +205,34 @@ describe("DashboardClientContent", () => {
       ),
     ).toHaveLength(3);
   });
+
+  it("falls back to 'No keywords' when watch-rule keywords are empty values", () => {
+    hookMocks.rules.mockReturnValue({
+      data: [
+        {
+          id: "rule-empty-keywords",
+          user_id: "user-1",
+          name: "Sparse Rule",
+          query: { keywords: ["", "  ", null, undefined] },
+          is_active: false,
+          poll_interval_seconds: 300,
+          last_run_at: null,
+          next_run_at: null,
+          created_at: "2026-03-20T08:00:00.000Z",
+          updated_at: "2026-03-22T08:00:00.000Z",
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(<DashboardClientContent />);
+
+    expect(screen.getByRole("link", { name: "Sparse Rule" })).toBeInTheDocument();
+    expect(screen.getByText("No keywords")).toBeInTheDocument();
+    expect(screen.getAllByText("Paused").length).toBeGreaterThan(0);
+    expect(screen.getByText("Schedule pending")).toBeInTheDocument();
+  });
 });
