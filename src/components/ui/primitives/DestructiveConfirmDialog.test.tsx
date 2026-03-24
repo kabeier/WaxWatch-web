@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import * as React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { DestructiveConfirmDialog } from "./DestructiveConfirmDialog";
@@ -110,6 +111,76 @@ describe("DestructiveConfirmDialog", () => {
 
     await user.keyboard("{Escape}");
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("closes on escape and returns focus to trigger when not pending", async () => {
+    const user = userEvent.setup();
+
+    function EscapeCloseHarness({ pending = false }: { pending?: boolean }) {
+      const [open, setOpen] = React.useState(false);
+      const triggerRef = React.useRef<HTMLButtonElement>(null);
+
+      return (
+        <>
+          <button type="button" ref={triggerRef} onClick={() => setOpen(true)}>
+            Open dialog
+          </button>
+          <DestructiveConfirmDialog
+            open={open}
+            title="Delete item?"
+            description="This cannot be undone."
+            confirmLabel="Delete"
+            pending={pending}
+            onCancel={() => setOpen(false)}
+            onConfirm={() => undefined}
+            returnFocusRef={triggerRef}
+          />
+        </>
+      );
+    }
+
+    render(<EscapeCloseHarness />);
+    const trigger = screen.getByRole("button", { name: "Open dialog" });
+
+    await user.click(trigger);
+    expect(screen.getByRole("alertdialog", { name: "Delete item?" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("alertdialog", { name: "Delete item?" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("keeps dialog open on escape while pending", async () => {
+    const user = userEvent.setup();
+
+    function PendingEscapeHarness() {
+      const [open, setOpen] = React.useState(false);
+
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Open dialog
+          </button>
+          <DestructiveConfirmDialog
+            open={open}
+            title="Delete item?"
+            description="This cannot be undone."
+            confirmLabel="Delete"
+            pending
+            onCancel={() => setOpen(false)}
+            onConfirm={() => undefined}
+          />
+        </>
+      );
+    }
+
+    render(<PendingEscapeHarness />);
+
+    await user.click(screen.getByRole("button", { name: "Open dialog" }));
+    expect(screen.getByRole("alertdialog", { name: "Delete item?" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    expect(screen.getByRole("alertdialog", { name: "Delete item?" })).toBeInTheDocument();
   });
 
   it("preserves action callback behavior when pending state changes", async () => {
