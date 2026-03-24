@@ -45,9 +45,30 @@ describe("shell primitives", () => {
       "href",
       "/dashboard",
     );
+    const mobileLinks = within(mobileNav as HTMLElement).getAllByRole("link");
+    expect(mobileLinks).toHaveLength(5);
+    expect(
+      within(mobileNav as HTMLElement).getByRole("link", { name: /Home/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(mobileNav as HTMLElement).getByRole("link", { name: /Alerts/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(mobileNav as HTMLElement).getByRole("link", { name: /Watchlist/i }),
+    ).toBeInTheDocument();
     expect(
       within(mobileNav as HTMLElement).getByRole("link", { name: /Notifications/i }),
-    ).toHaveAttribute("href", "/notifications");
+    ).toBeInTheDocument();
+    expect(
+      within(mobileNav as HTMLElement).getByRole("link", { name: /Settings/i }),
+    ).toBeInTheDocument();
+    expect(mobileLinks.map((link) => link.getAttribute("href"))).toEqual([
+      "/dashboard",
+      "/alerts",
+      "/watchlist",
+      "/notifications",
+      "/settings",
+    ]);
     expect(
       within(mobileNav as HTMLElement).queryByRole("link", { name: /Search/i }),
     ).not.toBeInTheDocument();

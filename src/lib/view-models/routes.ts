@@ -87,7 +87,6 @@ export const routeViewModels = {
     heading: "Search",
     summary: "Search listings and save matching queries as alert rules.",
     navigationLabel: "Search",
-    mobileNavigationLabel: "Search",
     section: "app",
     operations: [
       { id: "run-search", label: "Run search query", serviceMethod: "search.run" },
@@ -169,7 +168,7 @@ export const routeViewModels = {
     heading: "Notifications",
     summary: "Review notification feed, unread count, and mark items as read.",
     navigationLabel: "Notifications",
-    mobileNavigationLabel: "Inbox",
+    mobileNavigationLabel: "Notifications",
     section: "app",
     operations: [
       {

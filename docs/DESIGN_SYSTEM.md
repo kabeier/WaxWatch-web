@@ -484,6 +484,7 @@ A route can move from `wired-minimum` to `production-ready` only when all criter
    - Focus, contrast, semantics, and assistive-technology messaging meet WCAG 2.1 AA expectations.
 5. **Responsive and cross-browser validation**
    - Route is validated at agreed breakpoints and in supported browsers/devices with no design regressions.
+   - For signed-in shell views at mobile breakpoints, bottom tabs match the canonical set/order: Home, Alerts, Watchlist, Notifications, Settings (Search remains non-tab on mobile).
 6. **Visual regression + QA evidence**
    - Screenshots or visual regression artifacts are attached and reviewed.
    - Product/design sign-off recorded in the migration tracker notes for that route.

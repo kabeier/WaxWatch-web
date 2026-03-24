@@ -83,12 +83,13 @@ All new route implementation/migration work must compose shared primitives first
 ### Mobile bottom navigation
 
 1. Home (`/dashboard`)
-2. Search (`/search`)
-3. Alerts (`/alerts`)
-4. Watchlist (`/watchlist`)
+2. Alerts (`/alerts`)
+3. Watchlist (`/watchlist`)
+4. Notifications (`/notifications`)
 5. Settings (`/settings`)
 
-Notifications remain available via the top utility/inbox affordance.
+Search (`/search`) remains a first-class signed-in route, but it is not a bottom-tab item on mobile.
+Users reach Search from in-route links/CTAs (for example Dashboard quick actions) and by direct route entry.
 
 ## Route maturity/status
 

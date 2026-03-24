@@ -63,8 +63,8 @@ Desktop:
 
 Mobile:
 - Bottom tab bar capped at five core items.
-- Tabs: Home (Dashboard), Search, Alerts, Watchlist, Settings.
-- Notifications remain reachable from the top utility/inbox affordance.
+- Tabs: Home (Dashboard), Alerts, Watchlist, Notifications, Settings.
+- Search remains a top-level route, reachable from in-route CTAs/quick actions and direct route entry.
 
 Theme architecture (themeable)
 ------------------------------
