@@ -389,6 +389,8 @@ describe("route-level production-ready paths", () => {
     state.watchRulesQuery.data = [{ id: "r1" }];
     render(<AlertsPage />);
     expect(screen.getByText(/loaded 1 rules/i)).toBeInTheDocument();
+    const createWatchRuleCta = screen.getByRole("button", { name: /create watch rule/i });
+    expect(createWatchRuleCta).toHaveAttribute("href", "/alerts/new");
   });
 
   it("/alerts failure", () => {
