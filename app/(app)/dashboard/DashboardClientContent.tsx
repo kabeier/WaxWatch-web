@@ -44,6 +44,7 @@ const DASHBOARD_EMPTY_TITLE_PREFIX = "No";
 const EMPTY_NOTIFICATIONS: Notification[] = [];
 const EMPTY_RELEASES: WatchRelease[] = [];
 const EMPTY_RULES: WatchRule[] = [];
+type DashboardCollectionState = "loading" | "error" | "empty" | "content";
 
 function toTimestamp(value?: string) {
   if (!value) {
@@ -105,12 +106,39 @@ function DashboardListMeta({ values }: { values: string[] }) {
   return (
     <ListMeta>
       {values.map((value, index) => (
-        <ListText key={`${value}-${index}`} className={pageViewStyles.mutedText}>
+        <ListText
+          key={`${value}-${index}`}
+          className={[pageViewStyles.mutedText, pageViewStyles.dashboardMetaText].join(" ")}
+        >
           {value}
         </ListText>
       ))}
     </ListMeta>
   );
+}
+
+function resolveDashboardCollectionState({
+  isLoading,
+  hasError,
+  itemCount,
+}: {
+  isLoading: boolean;
+  hasError: boolean;
+  itemCount: number;
+}): DashboardCollectionState {
+  if (isLoading && itemCount === 0) {
+    return "loading";
+  }
+
+  if (hasError) {
+    return "error";
+  }
+
+  if (itemCount === 0) {
+    return "empty";
+  }
+
+  return "content";
 }
 
 function DashboardQueryState({
@@ -202,16 +230,33 @@ function DashboardNotificationsPanel({
   error: unknown;
   onRetry: () => void;
 }) {
-  const isLoadingInitial = isLoading && notifications.length === 0;
-  if (isLoadingInitial) {
+  const notificationRows = useMemo(
+    () =>
+      notifications.map((notification) => ({
+        ...notification,
+        description: `${notification.channel} · ${notification.status}`,
+        readState: notification.is_read ? "Read" : "Unread",
+        metaValues: [
+          `Created ${formatDateTime(notification.created_at)}`,
+          notification.read_at ? `Read ${formatDateTime(notification.read_at)}` : "Pending review",
+        ],
+      })),
+    [notifications],
+  );
+  const state = resolveDashboardCollectionState({
+    isLoading,
+    hasError: Boolean(error),
+    itemCount: notificationRows.length,
+  });
+  if (state === "loading") {
     return <DashboardQueryState title="Notifications" error={null} onRetry={onRetry} />;
   }
 
-  if (error) {
+  if (state === "error") {
     return <DashboardQueryState title="Notifications" error={error} onRetry={onRetry} />;
   }
 
-  if (notifications.length === 0) {
+  if (state === "empty") {
     return (
       <DashboardListEmptyState
         title="Notifications"
@@ -222,29 +267,16 @@ function DashboardNotificationsPanel({
 
   return (
     <ListContainer dense>
-      {notifications.map((notification) => (
+      {notificationRows.map((notification) => (
         <ListRow
           key={notification.id}
           title={notification.event_type}
           description={
-            <DashboardListDescription>
-              {notification.channel} · {notification.status}
-            </DashboardListDescription>
+            <DashboardListDescription>{notification.description}</DashboardListDescription>
           }
-          trailing={
-            <span className={pageViewStyles.mutedText}>
-              {notification.is_read ? "Read" : "Unread"}
-            </span>
-          }
+          trailing={<span className={pageViewStyles.mutedText}>{notification.readState}</span>}
         >
-          <DashboardListMeta
-            values={[
-              `Created ${formatDateTime(notification.created_at)}`,
-              notification.read_at
-                ? `Read ${formatDateTime(notification.read_at)}`
-                : "Pending review",
-            ]}
-          />
+          <DashboardListMeta values={notification.metaValues} />
         </ListRow>
       ))}
     </ListContainer>
@@ -262,16 +294,35 @@ function DashboardMatchesPanel({
   error: unknown;
   onRetry: () => void;
 }) {
-  const isLoadingInitial = isLoading && releases.length === 0;
-  if (isLoadingInitial) {
+  const releaseRows = useMemo(
+    () =>
+      releases.map((release) => ({
+        ...release,
+        matchModeLabel:
+          release.match_mode === "master_release" ? "Master release" : "Exact release",
+        activeState: release.is_active ? "Active" : "Paused",
+        targetPriceLabel:
+          release.target_price !== null
+            ? `${release.currency} ${release.target_price}`
+            : "No target price",
+        updatedLabel: `Updated ${formatDateTime(release.updated_at)}`,
+      })),
+    [releases],
+  );
+  const state = resolveDashboardCollectionState({
+    isLoading,
+    hasError: Boolean(error),
+    itemCount: releaseRows.length,
+  });
+  if (state === "loading") {
     return <DashboardQueryState title="Recent matches" error={null} onRetry={onRetry} />;
   }
 
-  if (error) {
+  if (state === "error") {
     return <DashboardQueryState title="Recent matches" error={error} onRetry={onRetry} />;
   }
 
-  if (releases.length === 0) {
+  if (state === "empty") {
     return (
       <DashboardListEmptyState
         title="Recent matches"
@@ -282,7 +333,7 @@ function DashboardMatchesPanel({
 
   return (
     <ListContainer dense>
-      {releases.map((release) => (
+      {releaseRows.map((release) => (
         <ListRow
           key={release.id}
           title={
@@ -295,24 +346,12 @@ function DashboardMatchesPanel({
           }
           description={
             <DashboardListDescription>
-              {release.artist} ·{" "}
-              {release.match_mode === "master_release" ? "Master release" : "Exact release"}
+              {release.artist} · {release.matchModeLabel}
             </DashboardListDescription>
           }
-          trailing={
-            <span className={pageViewStyles.mutedText}>
-              {release.is_active ? "Active" : "Paused"}
-            </span>
-          }
+          trailing={<span className={pageViewStyles.mutedText}>{release.activeState}</span>}
         >
-          <DashboardListMeta
-            values={[
-              release.target_price !== null
-                ? `${release.currency} ${release.target_price}`
-                : "No target price",
-              `Updated ${formatDateTime(release.updated_at)}`,
-            ]}
-          />
+          <DashboardListMeta values={[release.targetPriceLabel, release.updatedLabel]} />
         </ListRow>
       ))}
     </ListContainer>
@@ -330,16 +369,33 @@ function DashboardRulesPanel({
   error: unknown;
   onRetry: () => void;
 }) {
-  const isLoadingInitial = isLoading && rules.length === 0;
-  if (isLoadingInitial) {
+  const ruleRows = useMemo(
+    () =>
+      rules.map((rule) => ({
+        ...rule,
+        keywordsLabel: formatKeywords(rule.query?.keywords),
+        activeState: rule.is_active ? "Active" : "Paused",
+        pollLabel: `Every ${rule.poll_interval_seconds}s`,
+        nextRunLabel: rule.next_run_at
+          ? `Next run ${formatDateTime(rule.next_run_at)}`
+          : "Schedule pending",
+      })),
+    [rules],
+  );
+  const state = resolveDashboardCollectionState({
+    isLoading,
+    hasError: Boolean(error),
+    itemCount: ruleRows.length,
+  });
+  if (state === "loading") {
     return <DashboardQueryState title="Watch rules" error={null} onRetry={onRetry} />;
   }
 
-  if (error) {
+  if (state === "error") {
     return <DashboardQueryState title="Watch rules" error={error} onRetry={onRetry} />;
   }
 
-  if (rules.length === 0) {
+  if (state === "empty") {
     return (
       <DashboardListEmptyState
         title="Watch rules"
@@ -350,7 +406,7 @@ function DashboardRulesPanel({
 
   return (
     <ListContainer dense>
-      {rules.map((rule) => (
+      {ruleRows.map((rule) => (
         <ListRow
           key={rule.id}
           title={
@@ -361,23 +417,10 @@ function DashboardRulesPanel({
               <ListText>{rule.name}</ListText>
             </Link>
           }
-          description={
-            <DashboardListDescription>
-              {formatKeywords(rule.query?.keywords)}
-            </DashboardListDescription>
-          }
-          trailing={
-            <span className={pageViewStyles.mutedText}>{rule.is_active ? "Active" : "Paused"}</span>
-          }
+          description={<DashboardListDescription>{rule.keywordsLabel}</DashboardListDescription>}
+          trailing={<span className={pageViewStyles.mutedText}>{rule.activeState}</span>}
         >
-          <DashboardListMeta
-            values={[
-              `Every ${rule.poll_interval_seconds}s`,
-              rule.next_run_at
-                ? `Next run ${formatDateTime(rule.next_run_at)}`
-                : "Schedule pending",
-            ]}
-          />
+          <DashboardListMeta values={[rule.pollLabel, rule.nextRunLabel]} />
         </ListRow>
       ))}
     </ListContainer>

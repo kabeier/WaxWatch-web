@@ -130,6 +130,11 @@
   line-height: 1.5;
 }
 
+.dashboardMetaText {
+  display: inline-block;
+  max-width: 24ch;
+}
+
 .metricValue {
   font-size: 1.8rem;
   font-weight: 700;
