@@ -19,6 +19,14 @@ type DashboardPreviewQuery<TData> = {
   retry: ReturnType<typeof vi.fn>;
 };
 
+type WatchlistDetailQuery = {
+  data: WatchRelease | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  retry: ReturnType<typeof vi.fn>;
+};
+
 type WatchlistMutationState = {
   mutate: ReturnType<typeof vi.fn>;
   data: unknown;
@@ -104,7 +112,7 @@ const previewHookMocks = vi.hoisted(() => ({
     error: null,
     retry: vi.fn(),
   })),
-  watchlistDetail: vi.fn(() => ({
+  watchlistDetail: vi.fn<() => WatchlistDetailQuery>(() => ({
     data: dashboardFixtures.releases[0],
     isLoading: false,
     isError: false,
