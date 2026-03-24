@@ -24,7 +24,11 @@ export default function AlertsPage() {
       title={alertsHeading}
       description={alertsSummary}
       eyebrow="Rule management"
-      actions={<ButtonLink href="/alerts/new">Create watch rule</ButtonLink>}
+      actions={
+        <ButtonLink href="/alerts/new" role="button">
+          Create watch rule
+        </ButtonLink>
+      }
       tabs={
         <PageTabs label="Alerts sections">
           <PageTab active aria-controls="alerts-rules-panel" id="alerts-rules-tab">
