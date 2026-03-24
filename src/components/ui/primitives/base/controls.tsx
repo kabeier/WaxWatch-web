@@ -1,11 +1,26 @@
+import Link from "next/link";
 import type { ChangeEventHandler, ComponentPropsWithoutRef, ReactNode } from "react";
 
 import { joinClassNames } from "./shared";
 
-type ButtonProps = ComponentPropsWithoutRef<"button"> & {
+type ButtonVariants = {
   variant?: "primary" | "secondary" | "destructive";
   size?: "sm" | "md" | "lg";
 };
+
+function getButtonClassName({
+  className,
+  variant = "primary",
+  size = "md",
+}: {
+  className?: string;
+} & ButtonVariants) {
+  return joinClassNames("ww-button", `ww-button--${variant}`, `ww-button--${size}`, className);
+}
+
+type ButtonProps = ComponentPropsWithoutRef<"button"> & ButtonVariants;
+
+type ButtonLinkProps = ComponentPropsWithoutRef<typeof Link> & ButtonVariants;
 
 export function Button({
   children,
@@ -16,19 +31,19 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button
-      type={type}
-      className={joinClassNames(
-        "ww-button",
-        `ww-button--${variant}`,
-        `ww-button--${size}`,
-        className,
-      )}
-      {...props}
-    >
+    <button type={type} className={getButtonClassName({ className, variant, size })} {...props}>
       {children}
     </button>
   );
+}
+
+export function ButtonLink({
+  className,
+  variant = "primary",
+  size = "md",
+  ...props
+}: ButtonLinkProps) {
+  return <Link className={getButtonClassName({ className, variant, size })} {...props} />;
 }
 
 type TextInputProps = ComponentPropsWithoutRef<"input"> & {

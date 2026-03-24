@@ -4,6 +4,7 @@ import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { ActiveDivider, PageCardGroup, PageView } from "@/components/page-view/PageView";
 import {
   Card,
+  ButtonLink,
   CardBody,
   CardDescription,
   CardHeader,
@@ -20,12 +21,9 @@ export default function SettingsLandingPage() {
       description={viewModel.summary}
       eyebrow="Settings shell"
       actions={
-        <Link
-          href={routeViewModels.integrations.path}
-          className="ww-button ww-button--secondary ww-button--md"
-        >
+        <ButtonLink href={routeViewModels.integrations.path} variant="secondary">
           Open integrations
-        </Link>
+        </ButtonLink>
       }
       meta={
         <span>

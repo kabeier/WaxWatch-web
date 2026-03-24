@@ -7,6 +7,7 @@ import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { ActiveDivider, PageCardGroup, PageView } from "@/components/page-view/PageView";
 import { formatDateTime } from "@/components/page-view/format";
 import {
+  ButtonLink,
   Card,
   CardBody,
   CardDescription,
@@ -346,14 +347,7 @@ export default function DashboardClientContent() {
       title={viewModel.heading}
       description={viewModel.summary}
       eyebrow="Signed-in landing"
-      actions={
-        <Link
-          href={routeViewModels.search.path}
-          className="ww-button ww-button--primary ww-button--md"
-        >
-          Open search
-        </Link>
-      }
+      actions={<ButtonLink href={routeViewModels.search.path}>Open search</ButtonLink>}
       meta={
         <>
           <span>

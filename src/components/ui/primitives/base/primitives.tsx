@@ -7,6 +7,6 @@ export {
   CardTitle,
   SectionHeader,
 } from "./surfaces";
-export { Button, CheckboxRow, Select, TextInput } from "./controls";
+export { Button, ButtonLink, CheckboxRow, Select, TextInput } from "./controls";
 export { Badge, Banner, HelperText } from "./feedback";
 export { ListContainer, ListRow, PageTab, PageTabs } from "./collections";
