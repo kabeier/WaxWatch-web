@@ -18,8 +18,33 @@ describe("DestructiveConfirmDialog", () => {
     );
 
     expect(screen.getByRole("dialog", { name: "Delete item?" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Delete" })).toHaveClass("ww-button--destructive");
+    const cancelButton = screen.getByRole("button", { name: "Cancel" });
+    const confirmButton = screen.getByRole("button", { name: "Delete" });
+
+    expect(cancelButton).toBeInTheDocument();
+    expect(cancelButton).toHaveClass("ww-button", "ww-button--secondary", "ww-button--md");
+    expect(confirmButton).toHaveClass("ww-button", "ww-button--destructive", "ww-button--md");
+  });
+
+  it("keeps pending button behavior unchanged", () => {
+    render(
+      <DestructiveConfirmDialog
+        open
+        title="Delete item?"
+        description="This cannot be undone."
+        confirmLabel="Delete"
+        pendingLabel="Deleting…"
+        pending
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    const cancelButton = screen.getByRole("button", { name: "Cancel" });
+    const confirmButton = screen.getByRole("button", { name: "Deleting…" });
+
+    expect(cancelButton).toBeDisabled();
+    expect(confirmButton).toBeDisabled();
   });
 
   it("keeps focus trapped in dialog when pending disables all buttons", () => {
