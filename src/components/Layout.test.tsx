@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import Layout from "./Layout";
+import AppProviders from "./AppProviders";
 import { __setPathname, __setSearchParams } from "@/test/mocks/next-navigation";
 
 describe("Layout", () => {
@@ -10,9 +11,11 @@ describe("Layout", () => {
     __setSearchParams({});
 
     render(
-      <Layout>
-        <div>Child body</div>
-      </Layout>,
+      <AppProviders>
+        <Layout>
+          <div>Child body</div>
+        </Layout>
+      </AppProviders>,
     );
 
     expect(screen.getAllByRole("link", { name: /Search/i }).length).toBeGreaterThan(0);
@@ -25,9 +28,11 @@ describe("Layout", () => {
     __setSearchParams({ reason: "signed-out" });
 
     render(
-      <Layout>
-        <div>Child body</div>
-      </Layout>,
+      <AppProviders>
+        <Layout>
+          <div>Child body</div>
+        </Layout>
+      </AppProviders>,
     );
 
     expect(screen.getByRole("status")).toHaveTextContent("You have been signed out.");
