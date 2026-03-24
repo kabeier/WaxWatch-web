@@ -219,6 +219,41 @@ describe("Login page", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/retry-after:\s*30s/i);
   });
 
+  it("allows retrying sign-in after a cooldown response and then redirects on success", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Too many attempts." } }), {
+          status: 429,
+          headers: { "Content-Type": "application/json", "Retry-After": "15" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(
+      <LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} onRedirect={onRedirect} />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/retry-after:\s*15s/i);
+    });
+    expect(onRedirect).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(onRedirect).toHaveBeenCalledWith("/");
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("prevents submit when a once-valid handoff expires before sign in", async () => {
     let nowMs = Date.parse("2026-01-02T00:00:00.000Z");
     vi.spyOn(Date, "now").mockImplementation(() => nowMs);

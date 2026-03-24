@@ -351,11 +351,12 @@ describe("route shell pages", () => {
   );
 
   it("renders dashboard notifications rate-limited fallback with updated cooldown copy", () => {
+    const retryNotifications = vi.fn();
     previewHookMocks.notifications.mockReturnValueOnce({
       data: undefined,
       isLoading: false,
       error: { kind: "rate_limited", message: "Slow down", retryAfterSeconds: 30 },
-      retry: vi.fn(),
+      retry: retryNotifications,
     });
 
     render(<DashboardPage />);
@@ -365,7 +366,9 @@ describe("route shell pages", () => {
       screen.getByText(/the dashboard will fill in once the cooldown expires\./i),
     ).toBeInTheDocument();
     expect(screen.getByText(/retry-after:\s*30s/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /retry available in 30s/i })).toBeInTheDocument();
+    const retryButton = screen.getByRole("button", { name: /retry available in 30s/i });
+    expect(retryButton).toBeDisabled();
+    expect(retryNotifications).not.toHaveBeenCalled();
   });
 
   it("renders dashboard empty summary labels and unread-count fallback label", () => {
@@ -440,6 +443,23 @@ describe("route shell pages", () => {
     expect(screen.getByRole("button", { name: /retry watchlist item load/i })).toBeInTheDocument();
   });
 
+  it("retries watchlist item load from the rate-limited cooldown state", () => {
+    const retryWatchlistLoad = vi.fn();
+    previewHookMocks.watchlistDetail.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "Cooldown active", retryAfterSeconds: 45 },
+      retry: retryWatchlistLoad,
+    });
+
+    render(<WatchlistItemClient id="release-1" />);
+
+    expect(screen.getByText(/cooldown active/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry watchlist item load/i }));
+    expect(retryWatchlistLoad).toHaveBeenCalledTimes(1);
+  });
+
   it("surfaces save mutation failure and rate-limited branches without leaving /watchlist/[id]", () => {
     const updateState = {
       mutate: updateWatchReleaseMutate,
@@ -468,6 +488,37 @@ describe("route shell pages", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText(/retry-after:\s*60s/i)).toBeInTheDocument();
+  });
+
+  it("allows retrying watchlist save after failure and keeps route state stable", () => {
+    const updateState = {
+      mutate: updateWatchReleaseMutate,
+      data: undefined as unknown,
+      error: null as unknown,
+      isPending: false,
+      isError: false,
+    };
+    previewHookMocks.updateWatchRelease.mockImplementation(() => updateState);
+
+    const { rerender } = render(<WatchlistItemClient id="release-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(updateWatchReleaseMutate).toHaveBeenCalledTimes(1);
+
+    updateState.isError = true;
+    updateState.error = { kind: "unknown_error", message: "Save failed" };
+    rerender(<WatchlistItemClient id="release-1" />);
+    expect(screen.getByText(/could not save watchlist item updates\./i)).toBeInTheDocument();
+
+    updateState.isError = false;
+    updateState.error = null;
+    updateState.data = { id: "release-1" };
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    rerender(<WatchlistItemClient id="release-1" />);
+
+    expect(updateWatchReleaseMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByText(/success: watchlist item updated\./i)).toBeInTheDocument();
+    expect(previewHookMocks.routerPush).not.toHaveBeenCalled();
   });
 
   it("keeps watchlist route in place when disable mutation fails", () => {
