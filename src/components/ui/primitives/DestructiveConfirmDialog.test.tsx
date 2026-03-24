@@ -300,8 +300,12 @@ describe("DestructiveConfirmDialog", () => {
     );
 
     expect(trigger).not.toHaveFocus();
+    const activeElement =
+      document.activeElement instanceof HTMLElement || document.activeElement instanceof SVGElement
+        ? document.activeElement
+        : null;
     expect(screen.getByRole("alertdialog", { name: "Disable item?" })).toContainElement(
-      document.activeElement,
+      activeElement,
     );
 
     trigger.remove();
