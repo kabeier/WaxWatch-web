@@ -23,6 +23,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
   const watchReleaseDetailQuery = useWatchReleaseDetailQuery(id);
   const updateWatchReleaseMutation = useUpdateWatchReleaseMutation(id);
   const disableWatchReleaseMutation = useDisableWatchReleaseMutation(id);
+  const retryWatchReleaseDetail = watchReleaseDetailQuery.retry;
   const router = useRouter();
 
   const [draft, setDraft] = useState<{
@@ -39,9 +40,9 @@ export default function WatchlistItemClient({ id }: { id: string }) {
 
   useEffect(() => {
     if (updateWatchReleaseMutation.data) {
-      watchReleaseDetailQuery.retry();
+      retryWatchReleaseDetail();
     }
-  }, [updateWatchReleaseMutation.data, watchReleaseDetailQuery]);
+  }, [retryWatchReleaseDetail, updateWatchReleaseMutation.data]);
 
   useEffect(() => {
     const disableRequest = disableRequestRef.current;
