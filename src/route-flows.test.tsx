@@ -259,7 +259,7 @@ describe("route flow regressions", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /delete alert/i }));
     fireEvent.click(
-      within(screen.getByRole("dialog", { name: /delete alert permanently/i })).getByRole(
+      within(screen.getByRole("alertdialog", { name: /delete alert permanently/i })).getByRole(
         "button",
         { name: /^delete alert$/i },
       ),
@@ -293,7 +293,7 @@ describe("route flow regressions", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /delete alert/i }));
     fireEvent.click(
-      within(screen.getByRole("dialog", { name: /delete alert permanently/i })).getByRole(
+      within(screen.getByRole("alertdialog", { name: /delete alert permanently/i })).getByRole(
         "button",
         { name: /^delete alert$/i },
       ),
@@ -323,7 +323,7 @@ describe("route flow regressions", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /delete alert/i }));
     fireEvent.click(
-      within(screen.getByRole("dialog", { name: /delete alert permanently/i })).getByRole(
+      within(screen.getByRole("alertdialog", { name: /delete alert permanently/i })).getByRole(
         "button",
         { name: /^delete alert$/i },
       ),

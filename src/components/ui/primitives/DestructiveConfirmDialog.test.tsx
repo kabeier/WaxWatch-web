@@ -17,7 +17,7 @@ describe("DestructiveConfirmDialog", () => {
       />,
     );
 
-    expect(screen.getByRole("dialog", { name: "Delete item?" })).toBeInTheDocument();
+    expect(screen.getByRole("alertdialog", { name: "Delete item?" })).toBeInTheDocument();
     const cancelButton = screen.getByRole("button", { name: "Cancel" });
     const confirmButton = screen.getByRole("button", { name: "Delete" });
 
@@ -60,7 +60,7 @@ describe("DestructiveConfirmDialog", () => {
       />,
     );
 
-    const dialog = screen.getByRole("dialog", { name: "Disable item?" });
+    const dialog = screen.getByRole("alertdialog", { name: "Disable item?" });
     const tabEvent = new KeyboardEvent("keydown", {
       key: "Tab",
       bubbles: true,

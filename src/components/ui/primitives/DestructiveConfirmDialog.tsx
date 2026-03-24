@@ -103,7 +103,7 @@ export function DestructiveConfirmDialog({
     <div className="ww-confirm-dialog__backdrop">
       <div
         className={joinClassNames("ww-confirm-dialog", className)}
-        role="dialog"
+        role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}

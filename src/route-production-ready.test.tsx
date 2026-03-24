@@ -570,19 +570,19 @@ describe("route-level production-ready paths", () => {
     render(<DangerSettingsPage />);
 
     fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
-    const deactivateDialog = screen.getByRole("dialog", { name: /deactivate account now\?/i });
+    const deactivateDialog = screen.getByRole("alertdialog", { name: /deactivate account now\?/i });
     expect(deactivateDialog).toBeInTheDocument();
     fireEvent.click(within(deactivateDialog).getByRole("button", { name: /cancel/i }));
     expect(
-      screen.queryByRole("dialog", { name: /deactivate account now\?/i }),
+      screen.queryByRole("alertdialog", { name: /deactivate account now\?/i }),
     ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
-    const deleteDialog = screen.getByRole("dialog", { name: /delete account permanently\?/i });
+    const deleteDialog = screen.getByRole("alertdialog", { name: /delete account permanently\?/i });
     expect(deleteDialog).toBeInTheDocument();
     fireEvent.click(within(deleteDialog).getByRole("button", { name: /cancel/i }));
     expect(
-      screen.queryByRole("dialog", { name: /delete account permanently\?/i }),
+      screen.queryByRole("alertdialog", { name: /delete account permanently\?/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -628,12 +628,14 @@ describe("route-level production-ready paths", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
     expect(
-      within(screen.getByRole("dialog", { name: /deactivate account now\?/i })).getByRole("alert"),
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "alert",
+      ),
     ).toHaveTextContent(/deactivate failed/i);
 
     fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
     expect(
-      within(screen.getByRole("dialog", { name: /delete account permanently\?/i })).getByRole(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
         "alert",
       ),
     ).toHaveTextContent(/try later/i);
