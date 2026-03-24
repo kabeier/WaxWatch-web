@@ -170,4 +170,39 @@ describe("DashboardClientContent", () => {
     expect(screen.getAllByText("Preparing preview row")).toHaveLength(9);
     expect(screen.getAllByText("Fetching summary")).toHaveLength(9);
   });
+
+  it("uses standardized empty states across dashboard feed cards", () => {
+    hookMocks.notifications.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    hookMocks.releases.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    hookMocks.rules.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(<DashboardClientContent />);
+
+    expect(screen.getByText("No notifications yet")).toBeInTheDocument();
+    expect(screen.getByText("No recent matches yet")).toBeInTheDocument();
+    expect(screen.getByText("No watch rules yet")).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        "This card will automatically populate once matching activity is available.",
+      ),
+    ).toHaveLength(3);
+  });
 });

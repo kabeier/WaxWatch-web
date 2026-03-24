@@ -159,22 +159,6 @@
   text-decoration: none;
 }
 
-.rowTextTruncate {
-  display: block;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.rowMeta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: var(--space-3);
-  row-gap: var(--space-1);
-}
-
 .listLink:hover,
 .listLink:focus-visible {
   text-decoration: underline;
