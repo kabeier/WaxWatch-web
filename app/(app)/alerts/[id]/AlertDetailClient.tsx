@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { DestructiveConfirmDialog } from "@/components/ui/primitives/DestructiveConfirmDialog";
 import { Button, CheckboxRow, TextInput } from "@/components/ui/primitives/base/controls";
 import { StateEmpty } from "@/components/ui/primitives/state/StateEmpty";
 import { StateError } from "@/components/ui/primitives/state/StateError";
@@ -27,6 +28,7 @@ export default function AlertDetailClient({ id }: { id: string }) {
   const [draft, setDraft] = useState<{ name?: string; pollInterval?: string; isActive?: boolean }>(
     {},
   );
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const deleteRequestRef = useRef<{ requestedId: string | null; sawPending: boolean }>({
     requestedId: null,
     sawPending: false,
@@ -204,15 +206,30 @@ export default function AlertDetailClient({ id }: { id: string }) {
           variant="destructive"
           disabled={isPending}
           onClick={() => {
-            if (window.confirm("Delete this alert permanently?")) {
-              deleteRequestRef.current = { requestedId: id, sawPending: false };
-              deleteWatchRuleMutation.mutate(undefined);
-            }
+            setDeleteDialogOpen(true);
           }}
         >
           {deleteWatchRuleMutation.isPending ? "Deleting alert…" : "Delete alert"}
         </Button>
       </div>
+      <DestructiveConfirmDialog
+        open={isDeleteDialogOpen}
+        title="Delete alert permanently?"
+        description="This permanently removes the alert and all of its matching history. This action cannot be undone."
+        confirmLabel="Delete alert"
+        pendingLabel="Deleting alert…"
+        pending={deleteWatchRuleMutation.isPending}
+        errorMessage={
+          deleteWatchRuleMutation.isError
+            ? getErrorMessage(deleteWatchRuleMutation.error, "Request failed")
+            : undefined
+        }
+        onCancel={() => setDeleteDialogOpen(false)}
+        onConfirm={() => {
+          deleteRequestRef.current = { requestedId: id, sawPending: false };
+          deleteWatchRuleMutation.mutate(undefined);
+        }}
+      />
       {updateWatchRuleMutation.data ? (
         <p role="status" aria-live="polite">
           Success: Alert updated.

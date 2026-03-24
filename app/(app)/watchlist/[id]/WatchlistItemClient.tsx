@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { DestructiveConfirmDialog } from "@/components/ui/primitives/DestructiveConfirmDialog";
 import { Button, CheckboxRow, Select, TextInput } from "@/components/ui/primitives/base/controls";
 import { StateEmpty } from "@/components/ui/primitives/state/StateEmpty";
 import { StateError } from "@/components/ui/primitives/state/StateError";
@@ -32,6 +33,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
     matchMode?: "exact_release" | "master_release";
     isActive?: boolean;
   }>({});
+  const [isDisableDialogOpen, setDisableDialogOpen] = useState(false);
 
   const disableRequestRef = useRef<{ requestedId: string | null; sawPending: boolean }>({
     requestedId: null,
@@ -245,10 +247,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           variant="destructive"
           disabled={isPending}
           onClick={() => {
-            if (window.confirm("Disable this watchlist item?")) {
-              disableRequestRef.current = { requestedId: id, sawPending: false };
-              disableWatchReleaseMutation.mutate(undefined);
-            }
+            setDisableDialogOpen(true);
           }}
         >
           {disableWatchReleaseMutation.isPending
@@ -256,6 +255,24 @@ export default function WatchlistItemClient({ id }: { id: string }) {
             : "Disable watchlist item"}
         </Button>
       </div>
+      <DestructiveConfirmDialog
+        open={isDisableDialogOpen}
+        title="Disable watchlist item?"
+        description="Disabling keeps this watchlist item visible, but it stops matching new listings until re-enabled."
+        confirmLabel="Disable watchlist item"
+        pendingLabel="Disabling watchlist item…"
+        pending={disableWatchReleaseMutation.isPending}
+        errorMessage={
+          disableWatchReleaseMutation.isError
+            ? getErrorMessage(disableWatchReleaseMutation.error, "Request failed")
+            : undefined
+        }
+        onCancel={() => setDisableDialogOpen(false)}
+        onConfirm={() => {
+          disableRequestRef.current = { requestedId: id, sawPending: false };
+          disableWatchReleaseMutation.mutate(undefined);
+        }}
+      />
 
       {updateWatchReleaseMutation.data ? (
         <p role="status" aria-live="polite">

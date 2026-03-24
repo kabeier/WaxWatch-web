@@ -2,6 +2,7 @@
 
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { DestructiveConfirmDialog } from "@/components/ui/primitives/DestructiveConfirmDialog";
 import {
   Button,
   Card,
@@ -23,8 +24,10 @@ import {
   useMeQuery,
 } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
+import { useState } from "react";
 
 export default function DangerSettingsDeactivateCard() {
+  const [isDialogOpen, setDialogOpen] = useState(false);
   const meQuery = useMeQuery();
   const deactivateMutation = useDeactivateAccountMutation();
   const hardDeleteMutation = useHardDeleteAccountMutation();
@@ -71,18 +74,28 @@ export default function DangerSettingsDeactivateCard() {
         </div>
       </CardBody>
       <CardFooter className={pageViewStyles.cardStack}>
-        <Button
-          variant="secondary"
-          disabled={isPending}
-          onClick={() => {
-            if (!window.confirm("Deactivate account? You will be signed out immediately.")) {
-              return;
-            }
-            deactivateMutation.mutate(undefined);
-          }}
-        >
+        <Button variant="secondary" disabled={isPending} onClick={() => setDialogOpen(true)}>
           {deactivateMutation.isPending ? "Deactivating account…" : "Deactivate account"}
         </Button>
+        <DestructiveConfirmDialog
+          open={isDialogOpen}
+          title="Deactivate account now?"
+          description="This immediately signs out the current session and pauses account access until you reactivate later."
+          confirmLabel="Deactivate account"
+          pendingLabel="Deactivating account…"
+          confirmVariant="destructive"
+          pending={deactivateMutation.isPending}
+          errorMessage={
+            deactivateMutation.isError
+              ? getErrorMessage(deactivateMutation.error, "Request failed")
+              : undefined
+          }
+          onCancel={() => setDialogOpen(false)}
+          onConfirm={() => {
+            setDialogOpen(false);
+            deactivateMutation.mutate(undefined);
+          }}
+        />
       </CardFooter>
     </Card>
   );

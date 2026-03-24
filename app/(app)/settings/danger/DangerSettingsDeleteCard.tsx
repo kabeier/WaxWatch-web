@@ -1,6 +1,7 @@
 "use client";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { DestructiveConfirmDialog } from "@/components/ui/primitives/DestructiveConfirmDialog";
 import {
   Button,
   Card,
@@ -11,8 +12,11 @@ import {
   CardTitle,
 } from "@/components/ui/primitives/base";
 import { useDeactivateAccountMutation, useHardDeleteAccountMutation } from "@/lib/query/hooks";
+import { getErrorMessage } from "@/lib/query/state";
+import { useState } from "react";
 
 export default function DangerSettingsDeleteCard() {
+  const [isDialogOpen, setDialogOpen] = useState(false);
   const deactivateMutation = useDeactivateAccountMutation();
   const hardDeleteMutation = useHardDeleteAccountMutation();
   const isPending = deactivateMutation.isPending || hardDeleteMutation.isPending;
@@ -30,20 +34,30 @@ export default function DangerSettingsDeleteCard() {
         </div>
       </CardBody>
       <CardFooter className={pageViewStyles.cardStack}>
-        <Button
-          variant="destructive"
-          disabled={isPending}
-          onClick={() => {
-            if (!window.confirm("Permanently delete your account now? This cannot be undone.")) {
-              return;
-            }
-            hardDeleteMutation.mutate(undefined);
-          }}
-        >
+        <Button variant="destructive" disabled={isPending} onClick={() => setDialogOpen(true)}>
           {hardDeleteMutation.isPending
             ? "Permanently deleting account…"
             : "Permanently delete account"}
         </Button>
+        <DestructiveConfirmDialog
+          open={isDialogOpen}
+          title="Delete account permanently?"
+          description="This permanently deletes account access and cannot be undone."
+          confirmLabel="Permanently delete account"
+          pendingLabel="Permanently deleting account…"
+          confirmVariant="destructive"
+          pending={hardDeleteMutation.isPending}
+          errorMessage={
+            hardDeleteMutation.isError
+              ? getErrorMessage(hardDeleteMutation.error, "Request failed")
+              : undefined
+          }
+          onCancel={() => setDialogOpen(false)}
+          onConfirm={() => {
+            setDialogOpen(false);
+            hardDeleteMutation.mutate(undefined);
+          }}
+        />
       </CardFooter>
     </Card>
   );

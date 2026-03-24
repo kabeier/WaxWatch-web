@@ -2,6 +2,7 @@
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { RetryAction } from "@/components/RetryAction";
+import { DestructiveConfirmDialog } from "@/components/ui/primitives/DestructiveConfirmDialog";
 import { CardFooter, CheckboxRow, Select, TextInput } from "@/components/ui/primitives/base";
 import {
   StateEmpty,
@@ -10,10 +11,12 @@ import {
   StateRateLimited,
 } from "@/components/ui/primitives/state";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
+import { useState } from "react";
 
 import { useAlertSettingsState } from "./AlertSettingsState";
 
 export default function AlertSettingsPolicyPanel() {
+  const [isSaveConfirmOpen, setSaveConfirmOpen] = useState(false);
   const {
     deliveryFrequency,
     isFormReady,
@@ -75,20 +78,10 @@ export default function AlertSettingsPolicyPanel() {
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
-          if (isSaveDisabled || !window.confirm("Save alert-delivery policy changes?")) {
+          if (isSaveDisabled) {
             return;
           }
-
-          updateProfileMutation.mutate({
-            preferences: {
-              delivery_frequency: deliveryFrequency as "instant" | "hourly" | "daily",
-              notification_timezone: notificationTimezone.trim(),
-              quiet_hours_start: quietStart,
-              quiet_hours_end: quietEnd,
-              notifications_email: notificationsEmail,
-              notifications_push: notificationsPush,
-            },
-          });
+          setSaveConfirmOpen(true);
         }}
       >
         <label className={pageViewStyles.labelStack} htmlFor="alert-settings-frequency">
@@ -181,6 +174,34 @@ export default function AlertSettingsPolicyPanel() {
           Push notifications
         </CheckboxRow>
       </form>
+      <DestructiveConfirmDialog
+        open={isSaveConfirmOpen}
+        title="Save alert delivery policy changes?"
+        description="Confirm to apply these alert delivery updates now."
+        confirmLabel="Save changes"
+        pendingLabel="Saving delivery settings…"
+        confirmVariant="primary"
+        pending={updateProfileMutation.isPending}
+        errorMessage={
+          updateProfileMutation.isError
+            ? getErrorMessage(updateProfileMutation.error, "Request failed")
+            : undefined
+        }
+        onCancel={() => setSaveConfirmOpen(false)}
+        onConfirm={() => {
+          setSaveConfirmOpen(false);
+          updateProfileMutation.mutate({
+            preferences: {
+              delivery_frequency: deliveryFrequency as "instant" | "hourly" | "daily",
+              notification_timezone: notificationTimezone.trim(),
+              quiet_hours_start: quietStart,
+              quiet_hours_end: quietEnd,
+              notifications_email: notificationsEmail,
+              notifications_push: notificationsPush,
+            },
+          });
+        }}
+      />
 
       <CardFooter className={pageViewStyles.cardStack}>
         {updateProfileMutation.data ? (
