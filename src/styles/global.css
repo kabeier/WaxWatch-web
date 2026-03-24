@@ -1107,6 +1107,22 @@ hr {
   font-size: 0.92rem;
 }
 
+.ww-list-row__text-truncate {
+  display: block;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ww-list-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+}
+
 .ww-list-row__leading,
 .ww-list-row__trailing {
   display: flex;
