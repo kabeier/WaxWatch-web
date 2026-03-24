@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, type RefObject } from "react";
+import { useEffect, useId, useRef, type Ref } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/primitives/base";
@@ -30,7 +30,7 @@ type DialogActionControlsProps = {
   pending: boolean;
   onCancel: () => void;
   onConfirm: () => void;
-  cancelRef: RefObject<HTMLButtonElement | null>;
+  cancelRef: Ref<HTMLButtonElement>;
 };
 
 function DialogActionControls({
