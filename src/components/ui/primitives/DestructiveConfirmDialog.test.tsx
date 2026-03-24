@@ -80,4 +80,58 @@ describe("DestructiveConfirmDialog", () => {
     await user.keyboard("{Escape}");
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
+
+  it("cycles focus with tab and shift+tab when controls are enabled", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <DestructiveConfirmDialog
+        open
+        title="Delete row?"
+        description="This cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    const cancelButton = screen.getByRole("button", { name: "Cancel" });
+    const confirmButton = screen.getByRole("button", { name: "Delete" });
+
+    expect(cancelButton).toHaveFocus();
+
+    await user.tab();
+    expect(confirmButton).toHaveFocus();
+
+    await user.tab();
+    expect(cancelButton).toHaveFocus();
+
+    await user.tab({ shift: true });
+    expect(confirmButton).toHaveFocus();
+  });
+
+  it("restores focus to the previously active element when closed", () => {
+    const trigger = document.createElement("button");
+    trigger.textContent = "Open";
+    document.body.append(trigger);
+    trigger.focus();
+
+    const { unmount } = render(
+      <DestructiveConfirmDialog
+        open
+        title="Delete record?"
+        description="This cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+
+    unmount();
+
+    expect(trigger).toHaveFocus();
+    trigger.remove();
+  });
 });
