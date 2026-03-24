@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { Button, TextInput } from "@/components/ui/primitives/base";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import type { SearchRequest } from "@/lib/api/domains/types";
 
@@ -145,9 +146,8 @@ export default function SearchWorkbench() {
       >
         <label className={pageViewStyles.labelStack} htmlFor="search-keywords">
           <span className={pageViewStyles.labelText}>Keywords (comma-separated)</span>
-          <input
+          <TextInput
             id="search-keywords"
-            className="ww-input"
             value={keywordsInput}
             onChange={(event) => setKeywordsInput(event.currentTarget.value)}
             disabled={isBusy}
@@ -155,9 +155,8 @@ export default function SearchWorkbench() {
         </label>
         <label className={pageViewStyles.labelStack} htmlFor="search-providers">
           <span className={pageViewStyles.labelText}>Providers (comma-separated)</span>
-          <input
+          <TextInput
             id="search-providers"
-            className="ww-input"
             value={providersInput}
             onChange={(event) => setProvidersInput(event.currentTarget.value)}
             disabled={isBusy}
@@ -166,9 +165,8 @@ export default function SearchWorkbench() {
         <div className={pageViewStyles.formGrid}>
           <label className={pageViewStyles.labelStack} htmlFor="search-page">
             <span className={pageViewStyles.labelText}>Page</span>
-            <input
+            <TextInput
               id="search-page"
-              className="ww-input"
               type="number"
               min={1}
               value={pageInput}
@@ -180,9 +178,8 @@ export default function SearchWorkbench() {
           </label>
           <label className={pageViewStyles.labelStack} htmlFor="search-page-size">
             <span className={pageViewStyles.labelText}>Page size</span>
-            <input
+            <TextInput
               id="search-page-size"
-              className="ww-input"
               type="number"
               min={1}
               max={100}
@@ -194,13 +191,9 @@ export default function SearchWorkbench() {
             />
           </label>
         </div>
-        <button
-          type="submit"
-          className="ww-button ww-button--primary ww-button--md"
-          disabled={isBusy || searchErrors.length > 0}
-        >
+        <Button type="submit" disabled={isBusy || searchErrors.length > 0}>
           {searchMutation.isPending ? "Running search…" : "Run search"}
-        </button>
+        </Button>
       </form>
 
       {searchMutation.isPending ? <p>Loading search results…</p> : null}
@@ -216,9 +209,10 @@ export default function SearchWorkbench() {
               ? `Retry after about ${getRetryAfterSeconds(searchMutation.error)} seconds.`
               : getErrorMessage(searchMutation.error, "Request failed")}
           </p>
-          <button
+          <Button
             type="button"
-            className="ww-button ww-button--secondary ww-button--sm"
+            variant="secondary"
+            size="sm"
             disabled={searchErrors.length > 0 || saveAlertMutation.isPending}
             onClick={() => {
               if (searchErrors.length === 0) {
@@ -228,7 +222,7 @@ export default function SearchWorkbench() {
             }}
           >
             Retry search
-          </button>
+          </Button>
         </div>
       ) : null}
       {searchMutation.data && searchItems.length === 0 ? (
@@ -300,9 +294,8 @@ export default function SearchWorkbench() {
         <div className={pageViewStyles.formGrid}>
           <label className={pageViewStyles.labelStack} htmlFor="save-alert-name">
             <span className={pageViewStyles.labelText}>Alert name</span>
-            <input
+            <TextInput
               id="save-alert-name"
-              className="ww-input"
               value={alertName}
               onChange={(event) => setAlertName(event.currentTarget.value)}
               disabled={isBusy}
@@ -312,9 +305,8 @@ export default function SearchWorkbench() {
           </label>
           <label className={pageViewStyles.labelStack} htmlFor="save-alert-poll-interval">
             <span className={pageViewStyles.labelText}>Poll interval (seconds)</span>
-            <input
+            <TextInput
               id="save-alert-poll-interval"
-              className="ww-input"
               type="number"
               min={30}
               max={86400}
@@ -330,13 +322,13 @@ export default function SearchWorkbench() {
           The last submitted query is saved when available; otherwise the current form values are
           used.
         </p>
-        <button
+        <Button
           type="submit"
-          className="ww-button ww-button--secondary ww-button--md"
+          variant="secondary"
           disabled={isBusy || saveAlertErrors.length > 0 || searchErrors.length > 0}
         >
           {saveAlertMutation.isPending ? "Saving alert…" : "Save as alert"}
-        </button>
+        </Button>
       </form>
 
       {saveAlertMutation.data ? (
