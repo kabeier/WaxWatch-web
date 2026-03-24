@@ -58,6 +58,31 @@ describe("shell primitives", () => {
     expect(screen.getByRole("link", { name: /Settings/i })).not.toHaveAttribute("aria-current");
   });
 
+  it("renders supplied live utility and session values", () => {
+    render(
+      <>
+        <TopNav
+          utilityItems={[
+            { href: "/notifications", label: "Inbox", value: "7" },
+            { href: "/settings/profile", label: "Account", value: "Active" },
+          ]}
+        />
+        <SideNav
+          status={{
+            label: "Session",
+            value: "Avery Collector",
+            meta: "Account active · 7 unread notifications",
+          }}
+        />
+      </>,
+    );
+
+    expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("7");
+    expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Active");
+    expect(screen.getByText("Avery Collector")).toBeInTheDocument();
+    expect(screen.getByText("Account active · 7 unread notifications")).toBeInTheDocument();
+  });
+
   it("does not render mobile tabs in auto mode without a mobile viewport", () => {
     const { container } = render(
       <AppShell mobileTabBar={<MobileTabBar />} topNav={<TopNav />}>

@@ -17,17 +17,31 @@ export type AppShellProps = {
   variant?: "app" | "auth";
 };
 
+export type TopNavUtilityItem = {
+  href: string;
+  label: string;
+  value: string;
+};
+
 export type TopNavProps = {
   utilities?: ReactNode;
+  utilityItems?: TopNavUtilityItem[];
   showUtilities?: boolean;
   brandHref?: string;
   brandLabel?: string;
   utilityLabel?: string;
 };
 
+export type SideNavStatus = {
+  label: string;
+  value: string;
+  meta?: string;
+};
+
 export type SideNavProps = {
   items?: ShellNavItem[];
   footer?: ReactNode;
+  status?: SideNavStatus;
 };
 
 export type MobileTabBarProps = {
@@ -151,6 +165,7 @@ export function AppShell({
 
 export function TopNav({
   utilities,
+  utilityItems,
   showUtilities = true,
   brandHref = DASHBOARD_PATH,
   brandLabel = "WaxWatch",
@@ -162,12 +177,20 @@ export function TopNav({
         <ShellBrand href={brandHref} label={brandLabel} />
         {showUtilities ? (
           <nav className="top-nav__utilities" aria-label={utilityLabel}>
-            {utilities ?? (
-              <>
-                <ShellUtilityLink href={NOTIFICATIONS_PATH} label="Inbox" value="04" />
-                <ShellUtilityLink href={SETTINGS_PROFILE_PATH} label="Account" value="Open" />
-              </>
-            )}
+            {utilities ??
+              (
+                utilityItems ?? [
+                  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "—" },
+                  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "Loading" },
+                ]
+              ).map((item) => (
+                <ShellUtilityLink
+                  key={`${item.href}-${item.label}`}
+                  href={item.href}
+                  label={item.label}
+                  value={item.value}
+                />
+              ))}
           </nav>
         ) : null}
       </div>
@@ -183,7 +206,11 @@ export function ShellHeaderBand() {
   );
 }
 
-export function SideNav({ items = APP_NAV_ITEMS, footer }: SideNavProps) {
+export function SideNav({
+  items = APP_NAV_ITEMS,
+  footer,
+  status = { label: "Session", value: "Loading profile", meta: "Notifications syncing" },
+}: SideNavProps) {
   return (
     <aside className="side-nav">
       <div className="side-nav__inner">
@@ -198,8 +225,9 @@ export function SideNav({ items = APP_NAV_ITEMS, footer }: SideNavProps) {
         <div className="side-nav__footer">
           {footer ?? (
             <div className="side-nav__status" aria-label="Account status">
-              <span className="side-nav__status-label">Session</span>
-              <strong className="side-nav__status-value">Live feed connected</strong>
+              <span className="side-nav__status-label">{status.label}</span>
+              <strong className="side-nav__status-value">{status.value}</strong>
+              {status.meta ? <span className="side-nav__status-meta">{status.meta}</span> : null}
             </div>
           )}
         </div>
