@@ -371,6 +371,21 @@ describe("route shell pages", () => {
     expect(retryNotifications).not.toHaveBeenCalled();
   });
 
+  it("retries dashboard notifications API errors from the panel action", () => {
+    const retryNotifications = vi.fn();
+    previewHookMocks.notifications.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      error: { kind: "unknown_error", message: "Notifications service unavailable" },
+      retry: retryNotifications,
+    });
+
+    render(<DashboardPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /retry notifications/i }));
+    expect(retryNotifications).toHaveBeenCalledTimes(1);
+  });
+
   it("renders dashboard empty summary labels and unread-count fallback label", () => {
     previewHookMocks.notifications.mockReturnValueOnce({
       data: [],
@@ -563,7 +578,7 @@ describe("route shell pages", () => {
 
     const { rerender } = render(<WatchlistItemClient id="release-1" />);
 
-    fireEvent.click(screen.getByRole("button", { name: /disable watchlist item/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /disable watchlist item/i })[0]);
     fireEvent.click(
       within(screen.getByRole("alertdialog", { name: /disable watchlist item/i })).getByRole(
         "button",
@@ -582,6 +597,50 @@ describe("route shell pages", () => {
     rerender(<WatchlistItemClient id="release-1" />);
 
     expect(screen.getByText(/could not disable watchlist item\./i)).toBeInTheDocument();
+    expect(previewHookMocks.routerPush).not.toHaveBeenCalled();
+    expect(previewHookMocks.routerRefresh).not.toHaveBeenCalled();
+  });
+
+  it("allows retrying watchlist disable confirms after failure without leaving /watchlist/[id]", () => {
+    const disableState = {
+      mutate: disableWatchReleaseMutate,
+      data: undefined as unknown,
+      error: null as unknown,
+      isPending: false,
+      isError: false,
+    };
+    previewHookMocks.disableWatchRelease.mockImplementation(() => disableState);
+
+    const { rerender } = render(<WatchlistItemClient id="release-1" />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: /disable watchlist item/i })[0]);
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /disable watchlist item/i })).getByRole(
+        "button",
+        { name: /^disable watchlist item$/i },
+      ),
+    );
+    expect(disableWatchReleaseMutate).toHaveBeenCalledTimes(1);
+
+    disableState.isError = true;
+    disableState.error = { kind: "unknown_error", message: "Disable failed" };
+    rerender(<WatchlistItemClient id="release-1" />);
+
+    expect(screen.getByText(/could not disable watchlist item\./i)).toBeInTheDocument();
+    expect(previewHookMocks.routerPush).not.toHaveBeenCalled();
+    expect(previewHookMocks.routerRefresh).not.toHaveBeenCalled();
+
+    disableState.isError = false;
+    disableState.error = null;
+    fireEvent.click(screen.getAllByRole("button", { name: /disable watchlist item/i })[0]);
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /disable watchlist item/i })).getByRole(
+        "button",
+        { name: /^disable watchlist item$/i },
+      ),
+    );
+
+    expect(disableWatchReleaseMutate).toHaveBeenCalledTimes(2);
     expect(previewHookMocks.routerPush).not.toHaveBeenCalled();
     expect(previewHookMocks.routerRefresh).not.toHaveBeenCalled();
   });
