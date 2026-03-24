@@ -544,6 +544,28 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/could not load danger-zone settings/i)).toBeInTheDocument();
   });
 
+  it("/settings/danger rate-limited and empty states", () => {
+    state.meQuery = {
+      ...state.meQuery,
+      data: undefined,
+      isError: true,
+      error: { kind: "rate_limited", message: "Slow down", retryAfterSeconds: 25 },
+    };
+    const { rerender } = render(<DangerSettingsPage />);
+    expect(screen.getByText(/settings are temporarily rate limited/i)).toBeInTheDocument();
+    expect(screen.getByText(/retry-after:\s*25s/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 25s/i })).toBeInTheDocument();
+
+    state.meQuery = {
+      ...state.meQuery,
+      data: undefined,
+      isError: false,
+      error: null,
+    };
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByText(/no danger-zone actions available\./i)).toBeInTheDocument();
+  });
+
   it("/settings/danger dialogs open and close from destructive cards", () => {
     render(<DangerSettingsPage />);
 
@@ -584,6 +606,38 @@ describe("route-level production-ready paths", () => {
 
     expect(screen.getByText(/submitting account change…/i)).toBeInTheDocument();
     expect(screen.getByText(/could not permanently delete account\./i)).toBeInTheDocument();
+  });
+
+  it("/settings/danger surfaces mutation failure copy from destructive dialogs", () => {
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      data: undefined,
+      isPending: false,
+      isError: true,
+      error: { kind: "http_error", status: 500, message: "Deactivate failed" },
+    };
+    state.hardDeleteMutation = {
+      ...state.hardDeleteMutation,
+      data: undefined,
+      isPending: false,
+      isError: true,
+      error: { kind: "rate_limited", status: 429, message: "Try later", retryAfterSeconds: 40 },
+    };
+
+    render(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    expect(
+      within(screen.getByRole("dialog", { name: /deactivate account now\?/i })).getByRole("alert"),
+    ).toHaveTextContent(/deactivate failed/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    expect(
+      within(screen.getByRole("dialog", { name: /delete account permanently\?/i })).getByRole(
+        "alert",
+      ),
+    ).toHaveTextContent(/try later/i);
+    expect(screen.getByText(/retry-after:\s*40s/i)).toBeInTheDocument();
   });
 
   it("/watchlist success", () => {

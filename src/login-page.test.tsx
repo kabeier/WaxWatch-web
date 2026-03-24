@@ -196,6 +196,29 @@ describe("Login page", () => {
     });
   });
 
+  it("renders rate-limited sign-in feedback with retry-after copy", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ error: { message: "Too many attempts." } }), {
+          status: 429,
+          headers: { "Content-Type": "application/json", "Retry-After": "30" },
+        }),
+    ) as typeof fetch;
+
+    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/too many attempts\./i);
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent(/retry-after:\s*30s/i);
+  });
+
   it("prevents submit when a once-valid handoff expires before sign in", async () => {
     let nowMs = Date.parse("2026-01-02T00:00:00.000Z");
     vi.spyOn(Date, "now").mockImplementation(() => nowMs);
