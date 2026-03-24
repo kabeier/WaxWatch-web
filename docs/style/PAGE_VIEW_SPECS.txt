@@ -117,8 +117,8 @@ Purpose:
 Provide the canonical item route for one tracked release.
 
 Current product note:
-- Current API support is read-only on watch releases.
-- This route should exist as the canonical item-detail/editor shell even before dedicated edit mutations arrive.
+- This route is the canonical item-detail editor for tracked releases.
+- Editing should mirror the alert-detail centered editor pattern using shared form primitives.
 
 ------------------------------------------------------------
 7) NOTIFICATIONS INBOX

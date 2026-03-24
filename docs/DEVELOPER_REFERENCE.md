@@ -182,30 +182,30 @@ Status criteria used in this matrix:
 - `redirect`: route exists only to preserve compatibility and immediately forwards to the canonical destination.
 - `planned`: documented future scope only; route is not present in `app/`.
 
-| Route                      | Status           | Notes                                                                                                         |
-| -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------- |
-| `/`                        | redirect         | Server entrypoint that forwards to `/dashboard`.                                                              |
-| `/dashboard`               | production-ready | Shared page-view landing shell with tested launch cards and route-model guidance aligned to the final UI.     |
-| `/search`                  | production-ready | Full UX states, validation/mutation hardening, cooldown-aware retries, and route-level success/failure tests. |
-| `/alerts`                  | production-ready | Full query UX states with retry actions (including cooldown handling) and route-level success/failure tests.  |
-| `/alerts/new`              | production-ready | Full setup/create UX states, validation/pending feedback, and route-level success/failure tests.              |
-| `/alerts/[id]`             | production-ready | Full detail/edit/delete UX states, retry behavior, and route-level success/failure tests.                     |
-| `/watchlist`               | production-ready | Full loading/empty/error/rate-limited behavior with explicit retry/cooldown actions and route-level tests.    |
-| `/watchlist/[id]`          | scaffold         | Canonical item-detail/editor shell exists, but current watch-release API support is read-only.                |
-| `/notifications`           | production-ready | Full feed/mutation UX states, retry/cooldown behavior, and route-level success/failure tests.                 |
-| `/integrations`            | production-ready | Full Discogs integration UX with retry/cooldown handling and route-level success/failure tests.               |
-| `/settings`                | production-ready | Shared settings directory shell with tested section cards and integrations handoff aligned to the final UI.   |
-| `/settings/profile`        | production-ready | Full profile settings UX with validation, pending/disabled controls, cooldown-aware retries, and route tests. |
-| `/settings/alerts`         | production-ready | Full settings UX states, validation/pending/success handling, cooldown-aware retries, and route-level tests.  |
-| `/settings/danger`         | production-ready | Full danger-zone UX states with robust pending/success/error handling and route-level success/failure tests.  |
-| `/settings/integrations`   | redirect         | Legacy compatibility route that forwards to `/integrations`.                                                  |
-| `/login`                   | scaffold         | Sign-in shell placeholder for Supabase auth UI.                                                               |
-| `/signed-out`              | production-ready | Centered account-state confirmation page with preserved login handoff context and route-level coverage.       |
-| `/account-removed`         | production-ready | Centered account-removal confirmation page with preserved login handoff context and route-level coverage.     |
-| `/admin/provider-requests` | planned          | Admin-only route; not yet present in `app/`.                                                                  |
-| marketing landing          | planned          | Deferred signed-out marketing surface; not part of the current tree.                                          |
-| how it works               | planned          | Deferred signed-out marketing surface; not part of the current tree.                                          |
-| pricing                    | planned          | Deferred signed-out marketing surface; not part of the current tree.                                          |
+| Route                      | Status           | Notes                                                                                                             |
+| -------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `/`                        | redirect         | Server entrypoint that forwards to `/dashboard`.                                                                  |
+| `/dashboard`               | production-ready | Shared page-view landing shell with tested launch cards and route-model guidance aligned to the final UI.         |
+| `/search`                  | production-ready | Full UX states, validation/mutation hardening, cooldown-aware retries, and route-level success/failure tests.     |
+| `/alerts`                  | production-ready | Full query UX states with retry actions (including cooldown handling) and route-level success/failure tests.      |
+| `/alerts/new`              | production-ready | Full setup/create UX states, validation/pending feedback, and route-level success/failure tests.                  |
+| `/alerts/[id]`             | production-ready | Full detail/edit/delete UX states, retry behavior, and route-level success/failure tests.                         |
+| `/watchlist`               | production-ready | Full loading/empty/error/rate-limited behavior with explicit retry/cooldown actions and route-level tests.        |
+| `/watchlist/[id]`          | production-ready | Canonical watchlist item editor supports detail load, in-place updates, and disable actions for tracked releases. |
+| `/notifications`           | production-ready | Full feed/mutation UX states, retry/cooldown behavior, and route-level success/failure tests.                     |
+| `/integrations`            | production-ready | Full Discogs integration UX with retry/cooldown handling and route-level success/failure tests.                   |
+| `/settings`                | production-ready | Shared settings directory shell with tested section cards and integrations handoff aligned to the final UI.       |
+| `/settings/profile`        | production-ready | Full profile settings UX with validation, pending/disabled controls, cooldown-aware retries, and route tests.     |
+| `/settings/alerts`         | production-ready | Full settings UX states, validation/pending/success handling, cooldown-aware retries, and route-level tests.      |
+| `/settings/danger`         | production-ready | Full danger-zone UX states with robust pending/success/error handling and route-level success/failure tests.      |
+| `/settings/integrations`   | redirect         | Legacy compatibility route that forwards to `/integrations`.                                                      |
+| `/login`                   | production-ready | First-party credential sign-in screen with secure mobile handoff validation and cooldown-aware error states.      |
+| `/signed-out`              | production-ready | Centered account-state confirmation page with preserved login handoff context and route-level coverage.           |
+| `/account-removed`         | production-ready | Centered account-removal confirmation page with preserved login handoff context and route-level coverage.         |
+| `/admin/provider-requests` | planned          | Admin-only route; not yet present in `app/`.                                                                      |
+| marketing landing          | planned          | Deferred signed-out marketing surface; not part of the current tree.                                              |
+| how it works               | planned          | Deferred signed-out marketing surface; not part of the current tree.                                              |
+| pricing                    | planned          | Deferred signed-out marketing surface; not part of the current tree.                                              |
 
 ### How to pick next work
 

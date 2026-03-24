@@ -225,6 +225,13 @@ export type WatchRuleUpdate = {
 
 export type WatchReleasesListParams = CursorOrOffsetParams;
 
+export type WatchReleaseUpdate = {
+  match_mode?: "exact_release" | "master_release" | null;
+  target_price?: number | null;
+  min_condition?: string | null;
+  is_active?: boolean | null;
+};
+
 export type NotificationsListParams = CursorOrOffsetParams;
 
 export type NotificationUnreadCount = {

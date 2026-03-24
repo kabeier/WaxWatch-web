@@ -1,8 +1,20 @@
-import Link from "next/link";
-
-import { EditorShell, PageView, pageViewStyles } from "@/components/page-view/PageView";
-import { CardBody, CardDescription, CardHeader, CardTitle } from "@/components/ui/primitives/base";
+import pageViewStyles from "@/components/page-view/PageView.module.css";
+import {
+  ActiveDivider,
+  EditorShell,
+  PageCardGroup,
+  PageView,
+} from "@/components/page-view/PageView";
+import {
+  Card,
+  CardBody,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/primitives/base";
 import { routeViewModels } from "@/lib/view-models/routes";
+
+import WatchlistItemClient from "./WatchlistItemClient";
 
 type WatchlistItemPageProps = {
   params: Promise<{
@@ -18,7 +30,7 @@ export default async function WatchlistItemPage({ params }: WatchlistItemPagePro
     <PageView
       title={viewModel.heading}
       description={viewModel.summary}
-      eyebrow="Canonical item shell"
+      eyebrow="Centered editor"
       centered
       compactWave
       meta={
@@ -26,29 +38,62 @@ export default async function WatchlistItemPage({ params }: WatchlistItemPagePro
           <span>
             Selected item <code>{id}</code>
           </span>
-          <span>Read-only today; ready for future editing flows.</span>
+          <span>Edit tracking configuration without leaving the canonical item route.</span>
         </>
       }
     >
       <EditorShell>
         <CardHeader>
-          <CardTitle>Tracked release detail</CardTitle>
+          <CardTitle>Watchlist item configuration</CardTitle>
           <CardDescription>
-            Provide the canonical watchlist item shell even before dedicated edit mutations arrive.
+            Keep save, cancel, and disable actions close to the centered editor card.
           </CardDescription>
         </CardHeader>
-        <CardBody className={pageViewStyles.copyStack}>
-          <p className={pageViewStyles.mutedText}>
-            Current API support is read-only on watch releases, so this route acts as the canonical
-            item detail/editor shell until dedicated watch-release mutations are introduced.
-          </p>
-          <p>
-            <Link className={pageViewStyles.listLink} href={routeViewModels.watchlist.path}>
-              Back to {routeViewModels.watchlist.heading}
-            </Link>
-          </p>
+        <CardBody className={pageViewStyles.cardStack}>
+          <WatchlistItemClient id={id} />
         </CardBody>
       </EditorShell>
+
+      <ActiveDivider />
+
+      <PageCardGroup columns="two">
+        <Card padding="lg">
+          <CardHeader>
+            <CardTitle>Identity mode guidance</CardTitle>
+            <CardDescription>
+              Choose exact release matching when precision matters, or master release matching to
+              widen acceptable variants.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.copyStack}>
+            <p className={pageViewStyles.mutedText}>
+              Exact release mode requires listing identity to match the selected Discogs release.
+            </p>
+            <p className={pageViewStyles.mutedText}>
+              Master release mode matches any listing mapped to the selected Discogs master family.
+            </p>
+          </CardBody>
+        </Card>
+
+        <Card padding="lg">
+          <CardHeader>
+            <CardTitle>Editor behavior</CardTitle>
+            <CardDescription>
+              Save edits in place, or disable tracking when this release should stop generating
+              matches.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.copyStack}>
+            <p className={pageViewStyles.mutedText}>
+              Target price, minimum condition, match mode, and active state align with current watch
+              release backend support.
+            </p>
+            <p className={pageViewStyles.mutedText}>
+              Use Cancel to return to the watchlist without applying draft changes.
+            </p>
+          </CardBody>
+        </Card>
+      </PageCardGroup>
     </PageView>
   );
 }

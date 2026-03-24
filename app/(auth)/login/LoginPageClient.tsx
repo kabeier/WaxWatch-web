@@ -194,7 +194,7 @@ export function LoginPageClient({ handoff, fetchImpl = fetch, onRedirect }: Logi
   return (
     <PageView
       title="Login"
-      description="Enter the product through the hosted authentication flow."
+      description="Sign in with your WaxWatch credentials, with optional secure mobile handoff."
       eyebrow="Signed out"
       centered
       compactWave
@@ -209,7 +209,7 @@ export function LoginPageClient({ handoff, fetchImpl = fetch, onRedirect }: Logi
         <CardHeader>
           <CardTitle>Sign in to WaxWatch</CardTitle>
           <CardDescription>
-            Use your existing credentials, or complete the secure handoff from the mobile app.
+            Use your WaxWatch email and password, or complete a secure handoff from the mobile app.
           </CardDescription>
         </CardHeader>
         <CardBody className={pageViewStyles.cardStack}>
