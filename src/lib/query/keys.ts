@@ -6,6 +6,7 @@ export const queryKeys = {
   },
   watchReleases: {
     list: ["watchReleases:list"] as const,
+    detail: (id: string) => ["watchReleases:detail", id] as const,
   },
   notifications: {
     list: ["notifications:list"] as const,

@@ -5,6 +5,7 @@ import SearchPage from "../app/(app)/search/page";
 import AlertDetailClient from "../app/(app)/alerts/[id]/AlertDetailClient";
 import AlertSettingsPage from "../app/(app)/settings/alerts/page";
 import ProfileSettingsPage from "../app/(app)/settings/profile/page";
+import WatchlistItemClient from "../app/(app)/watchlist/[id]/WatchlistItemClient";
 
 type MockMutation<TInput = unknown, TData = unknown> = {
   data?: TData;
@@ -18,7 +19,10 @@ const mockSearchMutate = vi.fn();
 const mockSaveAlertMutate = vi.fn();
 const mockUpdateMutate = vi.fn();
 const mockDeleteMutate = vi.fn();
+const mockUpdateWatchReleaseMutate = vi.fn();
+const mockDeleteWatchReleaseMutate = vi.fn();
 const mockRetry = vi.fn();
+const mockWatchReleaseRetry = vi.fn();
 const mockPush = vi.fn();
 const mockRefresh = vi.fn();
 
@@ -40,6 +44,15 @@ type HookState = {
   };
   updateWatchRuleMutation: MockMutation<unknown, unknown>;
   deleteWatchRuleMutation: MockMutation;
+  watchReleaseDetailQuery: {
+    data: unknown;
+    isLoading: boolean;
+    isError: boolean;
+    error: unknown;
+    retry: () => void;
+  };
+  updateWatchReleaseMutation: MockMutation<unknown, unknown>;
+  deleteWatchReleaseMutation: MockMutation;
   updateProfileMutation: MockMutation;
 };
 
@@ -90,6 +103,36 @@ const hooksState: HookState = {
     isError: false,
     mutate: mockDeleteMutate,
   } satisfies MockMutation,
+  watchReleaseDetailQuery: {
+    data: {
+      id: "release-1",
+      title: "Selected Ambient Works 85-92",
+      target_price: 45,
+      currency: "USD",
+      min_condition: "VG+",
+      match_mode: "master_release",
+      discogs_master_id: 6211,
+      is_active: true,
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: mockWatchReleaseRetry,
+  },
+  updateWatchReleaseMutation: {
+    data: undefined,
+    error: null,
+    isPending: false,
+    isError: false,
+    mutate: mockUpdateWatchReleaseMutate,
+  } satisfies MockMutation,
+  deleteWatchReleaseMutation: {
+    data: undefined,
+    error: null,
+    isPending: false,
+    isError: false,
+    mutate: mockDeleteWatchReleaseMutate,
+  } satisfies MockMutation,
   updateProfileMutation: {
     data: undefined,
     error: null,
@@ -123,6 +166,12 @@ vi.mock("../app/(app)/alerts/[id]/alertDetailQueryHooks", () => ({
 vi.mock("../app/(app)/settings/profile/profileQueryHooks", () => ({
   useMeQuery: () => hooksState.meQuery,
   useUpdateProfileMutation: () => hooksState.updateProfileMutation,
+}));
+
+vi.mock("../app/(app)/watchlist/[id]/watchlistItemQueryHooks", () => ({
+  useWatchReleaseDetailQuery: () => ({ ...hooksState.watchReleaseDetailQuery }),
+  useUpdateWatchReleaseMutation: () => hooksState.updateWatchReleaseMutation,
+  useDeleteWatchReleaseMutation: () => hooksState.deleteWatchReleaseMutation,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -180,6 +229,36 @@ describe("route flow regressions", () => {
       isPending: false,
       isError: false,
       mutate: mockDeleteMutate,
+    };
+    hooksState.watchReleaseDetailQuery = {
+      data: {
+        id: "release-1",
+        title: "Selected Ambient Works 85-92",
+        target_price: 45,
+        currency: "USD",
+        min_condition: "VG+",
+        match_mode: "master_release",
+        discogs_master_id: 6211,
+        is_active: true,
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: mockWatchReleaseRetry,
+    };
+    hooksState.updateWatchReleaseMutation = {
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+      mutate: mockUpdateWatchReleaseMutate,
+    };
+    hooksState.deleteWatchReleaseMutation = {
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+      mutate: mockDeleteWatchReleaseMutate,
     };
     hooksState.updateProfileMutation = {
       data: undefined,
@@ -352,6 +431,56 @@ describe("route flow regressions", () => {
     render(<AlertDetailClient id="rule-1" />);
 
     expect(screen.getByText(/success: alert updated\./i)).toHaveAttribute("role", "status");
+  });
+
+  it("submits watchlist item edits with normalized values", () => {
+    render(<WatchlistItemClient id="release-1" />);
+
+    fireEvent.change(screen.getByLabelText(/target price/i), { target: { value: "30" } });
+    fireEvent.change(screen.getByLabelText(/currency/i), { target: { value: "usd" } });
+    fireEvent.change(screen.getByLabelText(/minimum condition/i), { target: { value: "NM" } });
+    fireEvent.change(screen.getByLabelText(/identity match mode/i), {
+      target: { value: "exact_release" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist item/i }));
+
+    expect(mockUpdateWatchReleaseMutate).toHaveBeenCalledWith({
+      target_price: 30,
+      currency: "USD",
+      min_condition: "NM",
+      match_mode: "exact_release",
+      is_active: true,
+    });
+  });
+
+  it("redirects to watchlist after a successful watchlist item delete mutation", () => {
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    const { rerender } = render(<WatchlistItemClient id="release-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /remove item/i }));
+
+    expect(mockDeleteWatchReleaseMutate).toHaveBeenCalledTimes(1);
+    expect(mockPush).not.toHaveBeenCalled();
+
+    hooksState.deleteWatchReleaseMutation = {
+      ...hooksState.deleteWatchReleaseMutation,
+      isPending: true,
+      isError: false,
+    };
+    rerender(<WatchlistItemClient id="release-1" />);
+
+    hooksState.deleteWatchReleaseMutation = {
+      ...hooksState.deleteWatchReleaseMutation,
+      isPending: false,
+      isError: false,
+    };
+    rerender(<WatchlistItemClient id="release-1" />);
+
+    expect(mockPush).toHaveBeenCalledWith("/watchlist");
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+
+    confirmSpy.mockRestore();
   });
 
   it("links alert settings validation errors to form controls", () => {

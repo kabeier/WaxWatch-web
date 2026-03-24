@@ -107,18 +107,19 @@ Layout:
 - Actions emphasize inspection and navigation to item detail
 
 ------------------------------------------------------------
-6) WATCHLIST ITEM DETAIL / EDITOR SHELL
+6) WATCHLIST ITEM DETAIL / EDITOR
 ------------------------------------------------------------
 
 Canonical route:
 /watchlist/:id
 
 Purpose:
-Provide the canonical item route for one tracked release.
+Provide the canonical item route for one tracked release and its editable tracking preferences.
 
-Current product note:
-- Current API support is read-only on watch releases.
-- This route should exist as the canonical item-detail/editor shell even before dedicated edit mutations arrive.
+Layout:
+- Centered editor card aligned with the alert-detail pattern
+- Save / Cancel / Remove actions kept close to the form
+- Supporting identity/tracking summary cards placed outside the form
 
 ------------------------------------------------------------
 7) NOTIFICATIONS INBOX

@@ -191,7 +191,7 @@ Status criteria used in this matrix:
 | `/alerts/new`              | production-ready | Full setup/create UX states, validation/pending feedback, and route-level success/failure tests.              |
 | `/alerts/[id]`             | production-ready | Full detail/edit/delete UX states, retry behavior, and route-level success/failure tests.                     |
 | `/watchlist`               | production-ready | Full loading/empty/error/rate-limited behavior with explicit retry/cooldown actions and route-level tests.    |
-| `/watchlist/[id]`          | scaffold         | Canonical item-detail/editor shell exists, but current watch-release API support is read-only.                |
+| `/watchlist/[id]`          | wired-minimum    | Real detail/edit/remove flow for tracked releases, aligned to the centered editor pattern with shared inputs. |
 | `/notifications`           | production-ready | Full feed/mutation UX states, retry/cooldown behavior, and route-level success/failure tests.                 |
 | `/integrations`            | production-ready | Full Discogs integration UX with retry/cooldown handling and route-level success/failure tests.               |
 | `/settings`                | production-ready | Shared settings directory shell with tested section cards and integrations handoff aligned to the final UI.   |
@@ -199,7 +199,7 @@ Status criteria used in this matrix:
 | `/settings/alerts`         | production-ready | Full settings UX states, validation/pending/success handling, cooldown-aware retries, and route-level tests.  |
 | `/settings/danger`         | production-ready | Full danger-zone UX states with robust pending/success/error handling and route-level success/failure tests.  |
 | `/settings/integrations`   | redirect         | Legacy compatibility route that forwards to `/integrations`.                                                  |
-| `/login`                   | scaffold         | Sign-in shell placeholder for Supabase auth UI.                                                               |
+| `/login`                   | wired-minimum    | Canonical web credential form with secure-handoff support, API submit handling, and tested auth error states. |
 | `/signed-out`              | production-ready | Centered account-state confirmation page with preserved login handoff context and route-level coverage.       |
 | `/account-removed`         | production-ready | Centered account-removal confirmation page with preserved login handoff context and route-level coverage.     |
 | `/admin/provider-requests` | planned          | Admin-only route; not yet present in `app/`.                                                                  |

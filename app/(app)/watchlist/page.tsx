@@ -51,7 +51,7 @@ export default function WatchlistPage() {
           <CardHeader>
             <CardTitle>Watch releases</CardTitle>
             <CardDescription>
-              Actions emphasize inspection and navigation into the canonical item shell.
+              Actions emphasize inspection and navigation into the canonical item editor.
             </CardDescription>
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
@@ -69,7 +69,7 @@ export default function WatchlistPage() {
           </CardHeader>
           <CardBody className={pageViewStyles.copyStack}>
             <div className={pageViewStyles.callout}>
-              The canonical item shell already exists at <code>{watchlistItemPath}</code>.
+              The canonical item editor lives at <code>{watchlistItemPath}</code>.
             </div>
             <p className={pageViewStyles.mutedText}>
               Release rows prioritize navigation first, then context such as pricing, match mode,

@@ -1,8 +1,25 @@
-import Link from "next/link";
+import pageViewStyles from "@/components/page-view/PageView.module.css";
+import {
+  ActiveDivider,
+  EditorShell,
+  PageCardGroup,
+  PageView,
+} from "@/components/page-view/PageView";
+import {
+  Card,
+  CardBody,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/primitives/base";
 
-import { EditorShell, PageView, pageViewStyles } from "@/components/page-view/PageView";
-import { CardBody, CardDescription, CardHeader, CardTitle } from "@/components/ui/primitives/base";
-import { routeViewModels } from "@/lib/view-models/routes";
+import WatchlistItemClient from "./WatchlistItemClient";
+import WatchlistItemMeta from "./WatchlistItemMeta";
+import WatchlistItemSummary from "./WatchlistItemSummary";
+
+const watchlistItemHeading = "Watchlist Item";
+const watchlistItemSummary =
+  "Inspect and edit one tracked release from the canonical watchlist item route.";
 
 type WatchlistItemPageProps = {
   params: Promise<{
@@ -12,43 +29,54 @@ type WatchlistItemPageProps = {
 
 export default async function WatchlistItemPage({ params }: WatchlistItemPageProps) {
   const { id } = await params;
-  const viewModel = routeViewModels.watchlistItem;
 
   return (
     <PageView
-      title={viewModel.heading}
-      description={viewModel.summary}
-      eyebrow="Canonical item shell"
+      title={watchlistItemHeading}
+      description={watchlistItemSummary}
+      eyebrow="Centered editor"
       centered
       compactWave
-      meta={
-        <>
-          <span>
-            Selected item <code>{id}</code>
-          </span>
-          <span>Read-only today; ready for future editing flows.</span>
-        </>
-      }
+      meta={<WatchlistItemMeta id={id} />}
     >
       <EditorShell>
         <CardHeader>
-          <CardTitle>Tracked release detail</CardTitle>
+          <CardTitle>Tracking preferences</CardTitle>
           <CardDescription>
-            Provide the canonical watchlist item shell even before dedicated edit mutations arrive.
+            Keep save, cancel, and remove actions close to the centered editor card.
           </CardDescription>
         </CardHeader>
-        <CardBody className={pageViewStyles.copyStack}>
-          <p className={pageViewStyles.mutedText}>
-            Current API support is read-only on watch releases, so this route acts as the canonical
-            item detail/editor shell until dedicated watch-release mutations are introduced.
-          </p>
-          <p>
-            <Link className={pageViewStyles.listLink} href={routeViewModels.watchlist.path}>
-              Back to {routeViewModels.watchlist.heading}
-            </Link>
-          </p>
+        <CardBody className={pageViewStyles.cardStack}>
+          <WatchlistItemClient id={id} />
         </CardBody>
       </EditorShell>
+
+      <ActiveDivider />
+
+      <PageCardGroup columns="two">
+        <Card padding="lg">
+          <CardHeader>
+            <CardTitle>Release identity</CardTitle>
+            <CardDescription>
+              Discogs identity stays visible beside the editor so match-mode changes remain clear.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.copyStack}>
+            <WatchlistItemSummary id={id} section="identity" />
+          </CardBody>
+        </Card>
+        <Card padding="lg">
+          <CardHeader>
+            <CardTitle>Tracking snapshot</CardTitle>
+            <CardDescription>
+              Supporting detail stays outside the form so the editor remains visually focused.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.copyStack}>
+            <WatchlistItemSummary id={id} section="tracking" />
+          </CardBody>
+        </Card>
+      </PageCardGroup>
     </PageView>
   );
 }

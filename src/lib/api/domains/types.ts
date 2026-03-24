@@ -147,6 +147,19 @@ export type WatchRelease = {
   updated_at: string;
 };
 
+export type WatchReleaseUpdate = {
+  artist?: string | null;
+  currency?: string | null;
+  discogs_master_id?: number | null;
+  discogs_release_id?: number | null;
+  is_active?: boolean | null;
+  match_mode?: "exact_release" | "master_release" | null;
+  min_condition?: string | null;
+  target_price?: number | null;
+  title?: string | null;
+  year?: number | null;
+};
+
 export type Notification = {
   id: string;
   user_id: string;

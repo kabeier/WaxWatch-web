@@ -22,6 +22,7 @@ import type {
   ProviderRequestSummary,
   SearchResponse,
   WatchRelease,
+  WatchReleaseUpdate,
   WatchRule,
 } from "./domains/types";
 import { toApiError } from "./errors";
@@ -1189,6 +1190,13 @@ describe("domain response fixtures", () => {
     ];
 
     const readFixture = listFixture[0];
+    const updatePayload: WatchReleaseUpdate = {
+      target_price: 30,
+      currency: "USD",
+      min_condition: "NM",
+      is_active: true,
+      match_mode: "master_release",
+    };
 
     const fetchMock = vi
       .fn<typeof fetch>()
@@ -1209,6 +1217,18 @@ describe("domain response fixtures", () => {
           status: 200,
           headers: { "content-type": "application/json" },
         }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ...readFixture, ...updatePayload }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ...readFixture, is_active: false }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
       );
 
     const domains = createDomainServices(
@@ -1221,6 +1241,14 @@ describe("domain response fixtures", () => {
       listFixture,
     );
     await expect(domains.watchReleases.getById(readFixture.id)).resolves.toEqual(readFixture);
+    await expect(domains.watchReleases.update(readFixture.id, updatePayload)).resolves.toEqual({
+      ...readFixture,
+      ...updatePayload,
+    });
+    await expect(domains.watchReleases.remove(readFixture.id)).resolves.toEqual({
+      ...readFixture,
+      is_active: false,
+    });
 
     expect(fetchMock.mock.calls[0][0]).toBe(
       "https://api.example.com/watch-releases?offset=0&limit=25",
@@ -1228,6 +1256,19 @@ describe("domain response fixtures", () => {
     expect(fetchMock.mock.calls[1][0]).toBe(
       "https://api.example.com/watch-releases?cursor=next-page&limit=25",
     );
+    expect(fetchMock.mock.calls[3][0]).toBe(
+      `https://api.example.com/watch-releases/${readFixture.id}`,
+    );
+    expect(fetchMock.mock.calls[3][1]).toMatchObject({
+      method: "PATCH",
+      body: JSON.stringify(updatePayload),
+    });
+    expect(fetchMock.mock.calls[4][0]).toBe(
+      `https://api.example.com/watch-releases/${readFixture.id}`,
+    );
+    expect(fetchMock.mock.calls[4][1]).toMatchObject({
+      method: "DELETE",
+    });
   });
 
   it("accepts NotificationOut and unread_count transport shapes", async () => {

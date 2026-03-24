@@ -42,7 +42,7 @@ All new route implementation/migration work must compose shared primitives first
 - `/alerts/new` — create alert
 - `/alerts/[id]` — alert detail/edit
 - `/watchlist` — list/manage tracked releases
-- `/watchlist/[id]` — canonical watchlist item detail/editor shell
+- `/watchlist/[id]` — watchlist item detail/editor
 - `/notifications` — inbox + mark read/unread
 - `/integrations` — Discogs connect/import/status
 - `/settings` — settings landing shell
@@ -52,7 +52,7 @@ All new route implementation/migration work must compose shared primitives first
 
 ### Signed-out routes
 
-- `/login` — Supabase auth UI / sign in flow
+- `/login` — web credential sign-in + secure-handoff entry
 - `/signed-out` — post-logout informational state
 - `/account-removed` — post-account-removal informational state
 
@@ -95,5 +95,7 @@ Notifications remain available via the top utility/inbox affordance.
 Route maturity definitions and the up-to-date status matrix are maintained in `docs/DEVELOPER_REFERENCE.md` under **Route matrix**.
 
 Production-ready route shells currently include `/dashboard`, `/settings`, `/signed-out`, and `/account-removed` in addition to the data-backed app routes already marked ready in `docs/DEVELOPER_REFERENCE.md`.
+
+Routes currently in `wired-minimum` state are `/login` and `/watchlist/[id]`: both now own real product behavior, but they should still be considered the next polish/testing targets before any `production-ready` status change.
 
 When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source, and keep this summary aligned when the production-ready route set changes.

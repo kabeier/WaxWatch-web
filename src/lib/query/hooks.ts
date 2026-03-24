@@ -12,6 +12,7 @@ import type {
   SearchRequest,
   SearchResponse,
   WatchRelease,
+  WatchReleaseUpdate,
   WatchRule,
   WatchRuleCreate,
   WatchRuleUpdate,
@@ -86,6 +87,24 @@ export function useWatchReleasesQuery() {
   };
 }
 
+export function useWatchReleaseDetailQuery(id: string) {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: queryKeys.watchReleases.detail(id),
+    queryFn: (): Promise<WatchRelease> => waxwatchApi.watchReleases.getById(id),
+    enabled: Boolean(id),
+  });
+
+  const retry = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.watchReleases.detail(id) });
+  }, [id, queryClient]);
+
+  return {
+    ...query,
+    retry,
+  };
+}
+
 export function useNotificationsQuery() {
   const queryClient = useQueryClient();
   const query = useQuery({
@@ -148,6 +167,30 @@ export function useDiscogsStatusQuery() {
     ...query,
     retry,
   };
+}
+
+export function useUpdateWatchReleaseMutation(id: string) {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (input: WatchReleaseUpdate) => waxwatchApi.watchReleases.update(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchReleases.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchReleases.list });
+    },
+  });
+}
+
+export function useDeleteWatchReleaseMutation(id: string) {
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (_: undefined) => waxwatchApi.watchReleases.remove(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchReleases.detail(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchReleases.list });
+    },
+  });
 }
 
 export function useDiscogsConnectMutation() {
