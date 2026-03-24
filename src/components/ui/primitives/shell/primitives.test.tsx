@@ -187,7 +187,7 @@ describe("shell primitives", () => {
     expect(screen.queryByText("Account Loading")).not.toBeInTheDocument();
   });
 
-  it("shows loading and error utility/status states only when the query state requires them", () => {
+  it("renders loading utility and session values from query-backed chrome data", () => {
     queryHookMocks.me.mockReturnValue({
       data: undefined,
       isLoading: true,
@@ -203,7 +203,7 @@ describe("shell primitives", () => {
       retry: vi.fn(),
     });
 
-    const { rerender } = render(
+    render(
       <>
         <AppChromeTopNav />
         <AppChromeSideNav />
@@ -213,7 +213,10 @@ describe("shell primitives", () => {
     expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("…");
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Loading");
     expect(screen.getByText("Loading profile")).toBeInTheDocument();
+    expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
+  });
 
+  it("renders error utility and session values from query-backed chrome data", () => {
     queryHookMocks.me.mockReturnValue({
       data: undefined,
       isLoading: false,
@@ -229,7 +232,7 @@ describe("shell primitives", () => {
       retry: vi.fn(),
     });
 
-    rerender(
+    render(
       <>
         <AppChromeTopNav />
         <AppChromeSideNav />

@@ -12,19 +12,13 @@ import {
 
 type LayoutProps = {
   children: React.ReactNode;
-  topNav?: React.ReactNode;
-  sideNav?: React.ReactNode;
 };
 
-export default function Layout({
-  children,
-  topNav = <AppShellTopNav />,
-  sideNav = <AppShellSideNav />,
-}: LayoutProps) {
+export default function Layout({ children }: LayoutProps) {
   return (
     <AppShell
-      topNav={topNav}
-      sideNav={sideNav}
+      topNav={<AppShellTopNav />}
+      sideNav={<AppShellSideNav />}
       headerBand={<ShellHeaderBand />}
       mobileTabBar={<MobileTabBar />}
       banner={
