@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import SearchPage from "../app/(app)/search/page";
@@ -235,11 +235,15 @@ describe("route flow regressions", () => {
   });
 
   it("redirects to alerts after a successful delete mutation", () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
-
     const { rerender } = render(<AlertDetailClient id="rule-1" />);
 
     fireEvent.click(screen.getByRole("button", { name: /delete alert/i }));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: /delete alert permanently/i })).getByRole(
+        "button",
+        { name: /^delete alert$/i },
+      ),
+    );
 
     expect(mockDeleteMutate).toHaveBeenCalledTimes(1);
     expect(mockPush).not.toHaveBeenCalled();
@@ -262,16 +266,18 @@ describe("route flow regressions", () => {
 
     expect(mockPush).toHaveBeenCalledWith("/alerts");
     expect(mockRefresh).toHaveBeenCalledTimes(1);
-
-    confirmSpy.mockRestore();
   });
 
   it("does not redirect to alerts when delete mutation fails", () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
-
     const { rerender } = render(<AlertDetailClient id="rule-1" />);
 
     fireEvent.click(screen.getByRole("button", { name: /delete alert/i }));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: /delete alert permanently/i })).getByRole(
+        "button",
+        { name: /^delete alert$/i },
+      ),
+    );
 
     hooksState.deleteWatchRuleMutation = {
       ...hooksState.deleteWatchRuleMutation,
@@ -290,16 +296,18 @@ describe("route flow regressions", () => {
 
     expect(mockPush).not.toHaveBeenCalled();
     expect(mockRefresh).not.toHaveBeenCalled();
-
-    confirmSpy.mockRestore();
   });
 
   it("does not redirect when alert id changes during an in-flight delete", () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
-
     const { rerender } = render(<AlertDetailClient id="rule-1" />);
 
     fireEvent.click(screen.getByRole("button", { name: /delete alert/i }));
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: /delete alert permanently/i })).getByRole(
+        "button",
+        { name: /^delete alert$/i },
+      ),
+    );
 
     hooksState.deleteWatchRuleMutation = {
       ...hooksState.deleteWatchRuleMutation,
@@ -319,8 +327,6 @@ describe("route flow regressions", () => {
 
     expect(mockPush).not.toHaveBeenCalled();
     expect(mockRefresh).not.toHaveBeenCalled();
-
-    confirmSpy.mockRestore();
   });
 
   it("announces alert update success via status role", () => {

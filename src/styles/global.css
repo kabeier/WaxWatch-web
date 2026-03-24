@@ -1288,3 +1288,60 @@ hr {
     justify-content: flex-start;
   }
 }
+
+.ww-confirm-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--ww-bg-app) 62%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.ww-confirm-dialog {
+  width: min(32rem, 100%);
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-xl);
+  border: 1px solid color-mix(in srgb, var(--ww-error) 34%, var(--ww-card-border));
+  background: var(--ww-bg-elevated);
+  box-shadow:
+    var(--ww-shadow-soft),
+    0 0 0 1px color-mix(in srgb, var(--ww-error) 18%, transparent);
+}
+
+.ww-confirm-dialog:focus-visible {
+  outline: 2px solid var(--ww-focus-ring);
+  outline-offset: 2px;
+}
+
+.ww-confirm-dialog__title {
+  margin: 0;
+  color: var(--ww-text-primary);
+  font-size: clamp(1.05rem, 1.8vw, 1.28rem);
+}
+
+.ww-confirm-dialog__description {
+  margin: 0;
+  color: var(--ww-text-secondary);
+  line-height: 1.5;
+}
+
+.ww-confirm-dialog__error {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--ww-error) 60%, var(--ww-border-subtle));
+  background: color-mix(in srgb, var(--ww-error) 10%, transparent);
+  color: var(--ww-text-primary);
+}
+
+.ww-confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
