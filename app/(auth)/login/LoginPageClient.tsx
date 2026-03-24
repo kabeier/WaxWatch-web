@@ -2,9 +2,6 @@
 
 import { FormEvent, useMemo, useState } from "react";
 
-import { StateError } from "@/components/StateError";
-import { StateLoading } from "@/components/StateLoading";
-import { StateRateLimited } from "@/components/StateRateLimited";
 import { EditorShell, PageView, pageViewStyles } from "@/components/page-view/PageView";
 import {
   Button,
@@ -15,6 +12,7 @@ import {
   CardTitle,
   TextInput,
 } from "@/components/ui/primitives/base";
+import { StateError, StateLoading, StateRateLimited } from "@/components/ui/primitives/state";
 import type { AuthHandoffContext } from "@/lib/auth/handoff";
 import { toApiError, tryParseErrorEnvelope } from "@/lib/api/errors";
 import { resolveApiBaseUrl } from "@/lib/query/api";

@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { Button } from "@/components/ui/primitives/base";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
 import { useWatchRulesQuery } from "./alertsQueryHooks";
@@ -46,13 +47,14 @@ export default function AlertsRulesPanel() {
               Retry after about {getRetryAfterSeconds(watchRulesQuery.error)} seconds.
             </p>
           ) : null}
-          <button
+          <Button
             type="button"
-            className="ww-button ww-button--secondary ww-button--sm"
+            variant="secondary"
+            size="sm"
             onClick={() => void watchRulesQuery.retry()}
           >
             Retry watch rules
-          </button>
+          </Button>
         </div>
       ) : null}
 
