@@ -1,8 +1,9 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __setPathname } from "@/test/mocks/next-navigation";
 
+import { useAppShellChromeData } from "./useAppShellChromeData";
 import {
   AppShell,
   AuthNotice,
@@ -13,7 +14,48 @@ import {
   TopNav,
 } from "./primitives";
 
+const queryHookMocks = vi.hoisted(() => ({
+  me: vi.fn(),
+  unread: vi.fn(),
+}));
+
+vi.mock("@/lib/query/hooks", () => ({
+  useMeQuery: queryHookMocks.me,
+  useUnreadNotificationCountQuery: queryHookMocks.unread,
+}));
+
+function AppChromeTopNav() {
+  const { utilities } = useAppShellChromeData();
+
+  return <TopNav utilityItems={utilities} />;
+}
+
+function AppChromeSideNav() {
+  const { sideNavStatus } = useAppShellChromeData();
+
+  return <SideNav status={sideNavStatus} />;
+}
+
 describe("shell primitives", () => {
+  beforeEach(() => {
+    queryHookMocks.me.mockReset();
+    queryHookMocks.unread.mockReset();
+    queryHookMocks.me.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+  });
+
   it("renders desktop and mobile navigation links", () => {
     __setPathname("/settings/profile");
     const { container } = render(
@@ -108,6 +150,96 @@ describe("shell primitives", () => {
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Active");
     expect(screen.getByText("Avery Collector")).toBeInTheDocument();
     expect(screen.getByText("Account active · 7 unread notifications")).toBeInTheDocument();
+  });
+
+  it("renders dynamic shell utility and status values from query-backed chrome data", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: {
+        display_name: "Avery Collector",
+        email: "avery@example.com",
+        is_active: true,
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: { unread_count: 7 },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(
+      <>
+        <AppChromeTopNav />
+        <AppChromeSideNav />
+      </>,
+    );
+
+    expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("7");
+    expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Active");
+    expect(screen.getByText("Avery Collector")).toBeInTheDocument();
+    expect(screen.getByText("Account active · 7 unread notifications")).toBeInTheDocument();
+    expect(screen.queryByText("Inbox —")).not.toBeInTheDocument();
+    expect(screen.queryByText("Account Loading")).not.toBeInTheDocument();
+  });
+
+  it("shows loading and error utility/status states only when the query state requires them", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    const { rerender } = render(
+      <>
+        <AppChromeTopNav />
+        <AppChromeSideNav />
+      </>,
+    );
+
+    expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("…");
+    expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Loading");
+    expect(screen.getByText("Loading profile")).toBeInTheDocument();
+
+    queryHookMocks.me.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("profile unavailable"),
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("notifications unavailable"),
+      retry: vi.fn(),
+    });
+
+    rerender(
+      <>
+        <AppChromeTopNav />
+        <AppChromeSideNav />
+      </>,
+    );
+
+    expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("—");
+    expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Unavailable");
+    expect(screen.getByText("Profile unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
   });
 
   it("does not render mobile tabs in auto mode without a mobile viewport", () => {
