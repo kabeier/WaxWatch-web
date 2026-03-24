@@ -46,7 +46,11 @@ describe("DestructiveConfirmDialog", () => {
     const confirmButton = screen.getByRole("button", { name: "Deleting…" });
 
     expect(cancelButton).toBeDisabled();
+    expect(cancelButton).toHaveClass("ww-button", "ww-button--secondary", "ww-button--md");
+    expect(cancelButton).toHaveAttribute("type", "button");
     expect(confirmButton).toBeDisabled();
+    expect(confirmButton).toHaveClass("ww-button", "ww-button--destructive", "ww-button--md");
+    expect(confirmButton).toHaveAttribute("type", "button");
   });
 
   it("keeps focus trapped in dialog when pending disables all buttons", () => {
