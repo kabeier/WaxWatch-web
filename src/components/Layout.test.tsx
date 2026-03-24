@@ -1,15 +1,21 @@
+import type { ReactElement } from "react";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import AppProviders from "./AppProviders";
 import Layout from "./Layout";
 import { __setPathname, __setSearchParams } from "@/test/mocks/next-navigation";
+
+function renderWithProviders(children: ReactElement) {
+  return render(<AppProviders>{children}</AppProviders>);
+}
 
 describe("Layout", () => {
   it("renders shared shell navigation and children", () => {
     __setPathname("/search");
     __setSearchParams({});
 
-    render(
+    renderWithProviders(
       <Layout>
         <div>Child body</div>
       </Layout>,
@@ -24,7 +30,7 @@ describe("Layout", () => {
     __setPathname("/search");
     __setSearchParams({ reason: "signed-out" });
 
-    render(
+    renderWithProviders(
       <Layout>
         <div>Child body</div>
       </Layout>,
