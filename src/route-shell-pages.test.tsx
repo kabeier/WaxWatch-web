@@ -297,6 +297,19 @@ describe("route shell pages", () => {
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
   });
 
+  it("renders login handoff-required empty branch when secure params are missing", async () => {
+    const page = await LoginPage({
+      searchParams: Promise.resolve({ handoff: "waxwatch://auth/callback" }),
+    });
+
+    render(page);
+
+    expect(screen.getByRole("heading", { name: "Login", level: 1 })).toBeInTheDocument();
+    expect(screen.getByText(/secure handoff required/i)).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
+    expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
+  });
+
   it("renders watchlist item editor route with editable controls", async () => {
     const page = await WatchlistItemPage({
       params: Promise.resolve({ id: "release-1" }),
@@ -480,6 +493,55 @@ describe("route shell pages", () => {
     expect(within(dialog).getByRole("button", { name: /cancel/i })).toHaveFocus();
     await user.click(within(dialog).getByRole("button", { name: /cancel/i }));
     expect(disableTrigger).toHaveFocus();
+  });
+
+  it("renders dashboard empty cards with current UX labels", () => {
+    previewHookMocks.notifications.mockReturnValueOnce({
+      data: [],
+      isLoading: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    previewHookMocks.releases.mockReturnValueOnce({
+      data: [],
+      isLoading: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    previewHookMocks.rules.mockReturnValueOnce({
+      data: [],
+      isLoading: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByText("No notifications yet")).toBeInTheDocument();
+    expect(screen.getByText("No recent matches yet")).toBeInTheDocument();
+    expect(screen.getByText("No watch rules yet")).toBeInTheDocument();
+    expect(
+      screen.getByText(/recent notification activity will appear here\./i),
+    ).toBeInTheDocument();
+  });
+
+  it("renders watchlist item detail generic-error branch and retries without route changes", () => {
+    const retryWatchlistLoad = vi.fn();
+    previewHookMocks.watchlistDetail.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Detail service unavailable" },
+      retry: retryWatchlistLoad,
+    });
+
+    render(<WatchlistItemClient id="release-1" />);
+
+    expect(screen.getByText(/could not load watchlist item detail\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry watchlist item load/i }));
+    expect(retryWatchlistLoad).toHaveBeenCalledTimes(1);
+    expect(previewHookMocks.routerPush).not.toHaveBeenCalled();
+    expect(previewHookMocks.routerRefresh).not.toHaveBeenCalled();
   });
 
   it("renders watchlist item detail empty and rate-limited branches", () => {

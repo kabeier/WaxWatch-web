@@ -356,6 +356,27 @@ describe("Login page", () => {
     expect(onRedirect).not.toHaveBeenCalled();
   });
 
+  it("renders secure handoff-required messaging with current UX labels", () => {
+    render(
+      <LoginPageClient
+        handoff={{
+          returnTo: null,
+          handoffUrl: "waxwatch://auth/callback",
+          state: null,
+          nonce: null,
+          expiresAt: null,
+          expiresAtEpochMs: null,
+          isExpired: false,
+          hasRequiredSecurityParams: false,
+        }}
+      />,
+    );
+
+    expect(screen.getByText(/secure handoff required/i)).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
+    expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
+  });
+
   it("shows missing-params handoff-required state when handoff params are incomplete", async () => {
     const page = await LoginPage({
       searchParams: Promise.resolve({
