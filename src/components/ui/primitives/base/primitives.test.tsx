@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -110,5 +111,30 @@ describe("base ui primitives", () => {
     expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Feed disconnected.")).toHaveClass("ww-banner", "ww-banner--error");
     expect(screen.getByText("Saved successfully.")).toHaveAttribute("role", "status");
+  });
+
+  it("supports arrow-key traversal in shared page tabs", async () => {
+    const user = userEvent.setup();
+    render(
+      <PageTabs label="Settings sections">
+        <PageTab active>Profile</PageTab>
+        <PageTab>Alerts</PageTab>
+        <PageTab>Danger zone</PageTab>
+      </PageTabs>,
+    );
+
+    const profile = screen.getByRole("tab", { name: "Profile" });
+    const alerts = screen.getByRole("tab", { name: "Alerts" });
+    const danger = screen.getByRole("tab", { name: "Danger zone" });
+
+    profile.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(alerts).toHaveFocus();
+    await user.keyboard("{End}");
+    expect(danger).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(alerts).toHaveFocus();
+    await user.keyboard("{Home}");
+    expect(profile).toHaveFocus();
   });
 });

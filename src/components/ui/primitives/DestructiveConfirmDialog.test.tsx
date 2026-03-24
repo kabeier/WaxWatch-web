@@ -264,4 +264,46 @@ describe("DestructiveConfirmDialog", () => {
     expect(trigger).toHaveFocus();
     trigger.remove();
   });
+
+  it("keeps focus in the dialog while open when pending state changes", () => {
+    const trigger = document.createElement("button");
+    trigger.textContent = "Open modal";
+    document.body.append(trigger);
+    const triggerRef = { current: trigger };
+
+    const { rerender } = render(
+      <DestructiveConfirmDialog
+        open
+        title="Disable item?"
+        description="This cannot be undone."
+        confirmLabel="Disable item"
+        pending={false}
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+        returnFocusRef={triggerRef}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+
+    rerender(
+      <DestructiveConfirmDialog
+        open
+        title="Disable item?"
+        description="This cannot be undone."
+        confirmLabel="Disable item"
+        pending
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+        returnFocusRef={triggerRef}
+      />,
+    );
+
+    expect(trigger).not.toHaveFocus();
+    expect(screen.getByRole("alertdialog", { name: "Disable item?" })).toContainElement(
+      document.activeElement,
+    );
+
+    trigger.remove();
+  });
 });

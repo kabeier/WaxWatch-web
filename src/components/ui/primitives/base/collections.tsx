@@ -74,11 +74,62 @@ type PageTabsProps = ComponentPropsWithoutRef<"div"> & {
 };
 
 export function PageTabs({ className, label = "Page tabs", ...props }: PageTabsProps) {
+  const handleKeyDown: ComponentPropsWithoutRef<"div">["onKeyDown"] = (event) => {
+    props.onKeyDown?.(event);
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    if (
+      event.key !== "ArrowRight" &&
+      event.key !== "ArrowLeft" &&
+      event.key !== "Home" &&
+      event.key !== "End"
+    ) {
+      return;
+    }
+
+    const currentTab =
+      event.target instanceof HTMLElement ? event.target.closest('[role="tab"]') : null;
+    const tablist = event.currentTarget;
+    if (!currentTab || !tablist.contains(currentTab)) {
+      return;
+    }
+
+    const tabs = Array.from(tablist.querySelectorAll<HTMLElement>('[role="tab"]')).filter(
+      (tab) => !tab.hasAttribute("disabled"),
+    );
+    if (tabs.length === 0) {
+      return;
+    }
+
+    const currentIndex = tabs.indexOf(currentTab as HTMLElement);
+    if (currentIndex === -1) {
+      return;
+    }
+
+    event.preventDefault();
+    if (event.key === "Home") {
+      tabs[0]?.focus();
+      return;
+    }
+    if (event.key === "End") {
+      tabs[tabs.length - 1]?.focus();
+      return;
+    }
+
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
+    tabs[nextIndex]?.focus();
+  };
+
   return (
     <div
       role="tablist"
       aria-label={label}
       className={joinClassNames("ww-page-tabs", className)}
+      tabIndex={-1}
+      onKeyDown={handleKeyDown}
       {...props}
     />
   );

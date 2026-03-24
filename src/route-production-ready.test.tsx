@@ -812,6 +812,23 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/signed in as/i)).toBeInTheDocument();
   });
 
+  it("/settings/profile supports keyboard arrow traversal between settings tabs", async () => {
+    const user = userEvent.setup();
+    render(<ProfileSettingsPage />);
+
+    const profileTab = screen.getByRole("tab", { name: /^profile$/i });
+    const alertsTab = screen.getByRole("tab", { name: /^alerts$/i });
+    const dangerTab = screen.getByRole("tab", { name: /danger zone/i });
+
+    profileTab.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(alertsTab).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+    expect(dangerTab).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(alertsTab).toHaveFocus();
+  });
+
   it("/settings/profile wires field-level aria-describedby to shared validation error summary", () => {
     render(<ProfileSettingsPage />);
 
