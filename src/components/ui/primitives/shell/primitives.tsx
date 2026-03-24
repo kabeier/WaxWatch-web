@@ -180,8 +180,8 @@ export function TopNav({
             {utilities ??
               (
                 utilityItems ?? [
-                  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "—" },
-                  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "—" },
+                  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "" },
+                  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "" },
                 ]
               ).map((item) => (
                 <ShellUtilityLink
@@ -209,7 +209,7 @@ export function ShellHeaderBand() {
 export function SideNav({
   items = APP_NAV_ITEMS,
   footer,
-  status = { label: "Session", value: "Unavailable", meta: "Status unavailable" },
+  status = { label: "", value: "", meta: undefined },
 }: SideNavProps) {
   return (
     <aside className="side-nav">
