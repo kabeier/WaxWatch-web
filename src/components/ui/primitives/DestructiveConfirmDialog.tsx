@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type Ref } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/primitives/base";
@@ -21,6 +21,39 @@ type DestructiveConfirmDialogProps = {
   className?: string;
   returnFocusRef?: { current: HTMLElement | null };
 };
+
+type DialogActionControlsProps = {
+  cancelLabel: string;
+  confirmLabel: string;
+  pendingLabel?: string;
+  confirmVariant: "primary" | "destructive";
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+  cancelRef: Ref<HTMLButtonElement>;
+};
+
+function DialogActionControls({
+  cancelLabel,
+  confirmLabel,
+  pendingLabel,
+  confirmVariant,
+  pending,
+  onCancel,
+  onConfirm,
+  cancelRef,
+}: DialogActionControlsProps) {
+  return (
+    <div className="ww-confirm-dialog__actions">
+      <Button variant="secondary" size="md" onClick={onCancel} disabled={pending} ref={cancelRef}>
+        {cancelLabel}
+      </Button>
+      <Button variant={confirmVariant} size="md" onClick={onConfirm} disabled={pending}>
+        {pending ? (pendingLabel ?? confirmLabel) : confirmLabel}
+      </Button>
+    </div>
+  );
+}
 
 export function DestructiveConfirmDialog({
   open,
@@ -126,20 +159,16 @@ export function DestructiveConfirmDialog({
             {errorMessage}
           </p>
         ) : null}
-        <div className="ww-confirm-dialog__actions">
-          <Button
-            variant="secondary"
-            size="md"
-            onClick={onCancel}
-            disabled={pending}
-            ref={cancelButtonRef}
-          >
-            {cancelLabel}
-          </Button>
-          <Button variant={confirmVariant} size="md" onClick={onConfirm} disabled={pending}>
-            {pending ? (pendingLabel ?? confirmLabel) : confirmLabel}
-          </Button>
-        </div>
+        <DialogActionControls
+          cancelLabel={cancelLabel}
+          confirmLabel={confirmLabel}
+          pendingLabel={pendingLabel}
+          confirmVariant={confirmVariant}
+          pending={pending}
+          onCancel={onCancel}
+          onConfirm={onConfirm}
+          cancelRef={cancelButtonRef}
+        />
       </div>
     </div>,
     document.body,
