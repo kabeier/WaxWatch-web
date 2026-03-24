@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Notification, WatchRelease, WatchRule } from "@/lib/api/domains/types";
@@ -446,6 +447,24 @@ describe("route shell pages", () => {
       screen.getByText(/please fix the highlighted validation issues before saving\./i),
     ).toBeInTheDocument();
     expect(updateWatchReleaseMutate).not.toHaveBeenCalled();
+  });
+
+  it("wires helper text to the watchlist active checkbox and restores trigger focus after dialog cancel", async () => {
+    const user = userEvent.setup();
+    render(<WatchlistItemClient id="release-1" />);
+
+    const activeCheckbox = screen.getByRole("checkbox", { name: /watchlist item active/i });
+    const helperText = screen.getByText(
+      /paused watchlist items stay visible but stop matching new listings\./i,
+    );
+    expect(activeCheckbox).toHaveAttribute("aria-describedby", helperText.id);
+
+    const disableTrigger = screen.getByRole("button", { name: /^disable watchlist item$/i });
+    await user.click(disableTrigger);
+    const dialog = screen.getByRole("alertdialog", { name: /disable watchlist item\?/i });
+    expect(within(dialog).getByRole("button", { name: /cancel/i })).toHaveFocus();
+    await user.click(within(dialog).getByRole("button", { name: /cancel/i }));
+    expect(disableTrigger).toHaveFocus();
   });
 
   it("renders watchlist item detail empty and rate-limited branches", () => {

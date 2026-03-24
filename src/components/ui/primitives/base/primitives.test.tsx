@@ -96,8 +96,15 @@ describe("base ui primitives", () => {
       "ww-input--error",
     );
     expect(screen.getByRole("combobox", { name: "Marketplace" })).toHaveClass("ww-select");
-    expect(screen.getByRole("checkbox", { name: /include archived data/i })).toBeInTheDocument();
+    const checkbox = screen.getByRole("checkbox", { name: /include archived data/i });
+    expect(checkbox).toBeInTheDocument();
     expect(screen.getByText("Required")).toHaveClass("ww-checkbox-row__error");
+    const checkboxDescriptionIds = checkbox.getAttribute("aria-describedby");
+    expect(checkboxDescriptionIds).toBeTruthy();
+    const describedByIds = checkboxDescriptionIds?.split(" ") ?? [];
+    expect(describedByIds).toHaveLength(2);
+    expect(screen.getByText("Include hidden pressings").id).toBe(describedByIds[0]);
+    expect(screen.getByText("Required").id).toBe(describedByIds[1]);
     expect(screen.getByText("Live")).toHaveClass("ww-badge", "ww-badge--accent");
     expect(screen.getByRole("tablist", { name: "Page tabs" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "true");

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import AlertsPage from "../app/(app)/alerts/page";
@@ -369,6 +370,24 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByRole("button", { name: /run search/i })).toHaveClass("ww-button");
   });
 
+  it("/search follows expected keyboard focus order across controls", async () => {
+    const user = userEvent.setup();
+    render(<SearchPage />);
+
+    await user.tab();
+    expect(screen.getByLabelText(/keywords \(comma-separated\)/i)).toHaveFocus();
+    await user.tab();
+    expect(screen.getByLabelText(/providers \(comma-separated\)/i)).toHaveFocus();
+    await user.tab();
+    expect(screen.getByLabelText(/^page$/i)).toHaveFocus();
+    await user.tab();
+    expect(screen.getByLabelText(/page size/i)).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: /run search/i })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByLabelText(/alert name/i)).toHaveFocus();
+  });
+
   it("/search failure", () => {
     state.searchMutation = {
       data: undefined,
@@ -603,6 +622,20 @@ describe("route-level production-ready paths", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("/settings/danger dialog open and close preserve trigger focus", async () => {
+    const user = userEvent.setup();
+    render(<DangerSettingsPage />);
+
+    const deactivateTrigger = screen.getByRole("button", { name: /^deactivate account$/i });
+    await user.click(deactivateTrigger);
+
+    const dialog = screen.getByRole("alertdialog", { name: /deactivate account now\?/i });
+    expect(within(dialog).getByRole("button", { name: /cancel/i })).toHaveFocus();
+
+    await user.click(within(dialog).getByRole("button", { name: /cancel/i }));
+    expect(deactivateTrigger).toHaveFocus();
+  });
+
   it("/settings/danger propagates pending and mutation errors through request status", () => {
     state.deactivateMutation = {
       ...state.deactivateMutation,
@@ -725,6 +758,20 @@ describe("route-level production-ready paths", () => {
   it("/settings/profile success", () => {
     render(<ProfileSettingsPage />);
     expect(screen.getByText(/signed in as/i)).toBeInTheDocument();
+  });
+
+  it("/settings/profile wires field-level aria-describedby to shared validation error summary", () => {
+    render(<ProfileSettingsPage />);
+
+    fireEvent.change(screen.getByLabelText(/preferred currency/i), { target: { value: "US" } });
+
+    const summary = screen.getByText(/please fix profile validation issues before saving\./i);
+    expect(summary).toBeInTheDocument();
+    expect(screen.getByLabelText(/preferred currency/i)).toHaveAttribute(
+      "aria-describedby",
+      "profile-settings-form-errors",
+    );
+    expect(screen.getByLabelText(/preferred currency/i)).toHaveAttribute("aria-invalid", "true");
   });
 
   it("/settings/profile failure", () => {

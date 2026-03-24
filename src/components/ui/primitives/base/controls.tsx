@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   forwardRef,
+  useId,
   type ChangeEventHandler,
   type ComponentPropsWithoutRef,
   type ReactNode,
@@ -106,6 +107,12 @@ export function CheckboxRow({
   value,
   ...props
 }: CheckboxRowProps) {
+  const helperTextId = useId();
+  const errorTextId = useId();
+  const ariaDescribedBy = [helperText ? helperTextId : null, errorText ? errorTextId : null]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <label
       className={joinClassNames(
@@ -125,11 +132,20 @@ export function CheckboxRow({
         name={name}
         onChange={onChange}
         value={value}
+        aria-describedby={ariaDescribedBy.length > 0 ? ariaDescribedBy : undefined}
       />
       <span className="ww-checkbox-row__copy">
         <span className="ww-checkbox-row__label">{children}</span>
-        {helperText ? <span className="ww-checkbox-row__helper">{helperText}</span> : null}
-        {errorText ? <span className="ww-checkbox-row__error">{errorText}</span> : null}
+        {helperText ? (
+          <span className="ww-checkbox-row__helper" id={helperTextId}>
+            {helperText}
+          </span>
+        ) : null}
+        {errorText ? (
+          <span className="ww-checkbox-row__error" id={errorTextId}>
+            {errorText}
+          </span>
+        ) : null}
       </span>
     </label>
   );

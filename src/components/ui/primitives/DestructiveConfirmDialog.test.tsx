@@ -150,6 +150,26 @@ describe("DestructiveConfirmDialog", () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
+  it("includes both description and error text in aria-describedby when an error is shown", () => {
+    render(
+      <DestructiveConfirmDialog
+        open
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        errorMessage="Delete failed."
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    const dialog = screen.getByRole("alertdialog", { name: "Delete account?" });
+    const describedByIds = dialog.getAttribute("aria-describedby")?.split(" ") ?? [];
+    expect(describedByIds).toHaveLength(2);
+    expect(screen.getByText("This action is permanent.").id).toBe(describedByIds[0]);
+    expect(screen.getByRole("alert").id).toBe(describedByIds[1]);
+  });
+
   it("cycles focus with tab and shift+tab when controls are enabled", async () => {
     const user = userEvent.setup();
 
