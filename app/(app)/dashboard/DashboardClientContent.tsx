@@ -15,7 +15,9 @@ import {
   CardHeader,
   CardTitle,
   ListContainer,
+  ListMeta,
   ListRow,
+  ListText,
 } from "@/components/ui/primitives/base";
 import {
   StateEmpty,
@@ -96,21 +98,18 @@ function DashboardMetric({ value, label }: { value: number | string; label: stri
 }
 
 function DashboardListDescription({ children }: { children: ReactNode }) {
-  return <span className="ww-list-row__text-truncate">{children}</span>;
+  return <ListText>{children}</ListText>;
 }
 
 function DashboardListMeta({ values }: { values: string[] }) {
   return (
-    <div className="ww-list-row__meta">
+    <ListMeta>
       {values.map((value, index) => (
-        <span
-          key={`${value}-${index}`}
-          className={`ww-list-row__text-truncate ${pageViewStyles.mutedText}`}
-        >
+        <ListText key={`${value}-${index}`} className={pageViewStyles.mutedText}>
           {value}
-        </span>
+        </ListText>
       ))}
-    </div>
+    </ListMeta>
   );
 }
 
@@ -167,14 +166,14 @@ function DashboardListLoadingState({ title }: { title: string }) {
         {Array.from({ length: DASHBOARD_LOADING_ROW_COUNT }, (_, index) => (
           <ListRow
             key={`loading-${title}-${index}`}
-            title={<span className="ww-list-row__text-truncate">Loading…</span>}
-            description={<span className="ww-list-row__text-truncate">Preparing preview row</span>}
-            trailing={<span className={pageViewStyles.mutedText}>…</span>}
+            title={<ListText>Loading…</ListText>}
+            description={<ListText>Preparing preview row</ListText>}
+            trailing={<ListText className={pageViewStyles.mutedText}>…</ListText>}
           >
-            <div className="ww-list-row__meta">
-              <span className={pageViewStyles.mutedText}>Fetching summary</span>
-              <span className={pageViewStyles.mutedText}>Refreshing timeline</span>
-            </div>
+            <ListMeta>
+              <ListText className={pageViewStyles.mutedText}>Fetching summary</ListText>
+              <ListText className={pageViewStyles.mutedText}>Refreshing timeline</ListText>
+            </ListMeta>
           </ListRow>
         ))}
       </ListContainer>
@@ -291,7 +290,7 @@ function DashboardMatchesPanel({
               className={pageViewStyles.listLink}
               href={`${routeViewModels.watchlist.path}/${release.id}`}
             >
-              <span className="ww-list-row__text-truncate">{release.title}</span>
+              <ListText>{release.title}</ListText>
             </Link>
           }
           description={
@@ -359,7 +358,7 @@ function DashboardRulesPanel({
               className={pageViewStyles.listLink}
               href={`${routeViewModels.alerts.path}/${rule.id}`}
             >
-              <span className="ww-list-row__text-truncate">{rule.name}</span>
+              <ListText>{rule.name}</ListText>
             </Link>
           }
           description={
@@ -405,31 +404,30 @@ export default function DashboardClientContent() {
     [watchReleasesQuery.data],
   );
 
-  const recentNotifications = useMemo(
-    () => sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT),
-    [notifications],
-  );
-  const watchRulesSummary = useMemo(() => {
+  const dashboardSummaries = useMemo(() => {
+    const recentNotifications = sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT);
     const recentRules = sortByNewest(watchRules).slice(0, DASHBOARD_RULE_LIMIT);
-    const activeRuleCount = watchRules.reduce((count, rule) => count + (rule.is_active ? 1 : 0), 0);
-    return {
-      recentRules,
-      activeRuleCount,
-      totalRuleCount: watchRules.length,
-    };
-  }, [watchRules]);
-  const watchReleasesSummary = useMemo(() => {
     const recentMatches = sortByNewest(watchReleases).slice(0, DASHBOARD_RELEASE_LIMIT);
+    const activeRuleCount = watchRules.reduce((count, rule) => count + (rule.is_active ? 1 : 0), 0);
     const activeMatchCount = watchReleases.reduce(
       (count, release) => count + (release.is_active ? 1 : 0),
       0,
     );
+
     return {
-      recentMatches,
-      activeMatchCount,
-      totalReleaseCount: watchReleases.length,
+      recentNotifications,
+      watchRulesSummary: {
+        recentRules,
+        activeRuleCount,
+        totalRuleCount: watchRules.length,
+      },
+      watchReleasesSummary: {
+        recentMatches,
+        activeMatchCount,
+        totalReleaseCount: watchReleases.length,
+      },
     };
-  }, [watchReleases]);
+  }, [notifications, watchReleases, watchRules]);
   const unreadCountSummary = useMemo(
     () => ({
       value: unreadCountQuery.isLoading
@@ -468,11 +466,11 @@ export default function DashboardClientContent() {
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
             <DashboardMetric
-              value={watchRulesSummary.totalRuleCount}
+              value={dashboardSummaries.watchRulesSummary.totalRuleCount}
               label={
-                watchRulesSummary.totalRuleCount === 0
+                dashboardSummaries.watchRulesSummary.totalRuleCount === 0
                   ? "Watch rules ready to create"
-                  : `${watchRulesSummary.activeRuleCount} active recent watch rules`
+                  : `${dashboardSummaries.watchRulesSummary.activeRuleCount} active recent watch rules`
               }
             />
           </CardBody>
@@ -480,11 +478,11 @@ export default function DashboardClientContent() {
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
             <DashboardMetric
-              value={watchReleasesSummary.totalReleaseCount}
+              value={dashboardSummaries.watchReleasesSummary.totalReleaseCount}
               label={
-                watchReleasesSummary.totalReleaseCount === 0
+                dashboardSummaries.watchReleasesSummary.totalReleaseCount === 0
                   ? "Recent matches will appear here"
-                  : `${watchReleasesSummary.activeMatchCount} active recent matches`
+                  : `${dashboardSummaries.watchReleasesSummary.activeMatchCount} active recent matches`
               }
             />
           </CardBody>
@@ -504,7 +502,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardMatchesPanel
-              releases={watchReleasesSummary.recentMatches}
+              releases={dashboardSummaries.watchReleasesSummary.recentMatches}
               isLoading={watchReleasesQuery.isLoading}
               error={watchReleasesQuery.error}
               onRetry={() => void watchReleasesQuery.retry()}
@@ -525,7 +523,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardRulesPanel
-              rules={watchRulesSummary.recentRules}
+              rules={dashboardSummaries.watchRulesSummary.recentRules}
               isLoading={watchRulesQuery.isLoading}
               error={watchRulesQuery.error}
               onRetry={() => void watchRulesQuery.retry()}
@@ -549,7 +547,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardNotificationsPanel
-              notifications={recentNotifications}
+              notifications={dashboardSummaries.recentNotifications}
               isLoading={notificationsQuery.isLoading}
               error={notificationsQuery.error}
               onRetry={() => {
