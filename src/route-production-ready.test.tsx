@@ -566,6 +566,23 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/no danger-zone actions available\./i)).toBeInTheDocument();
   });
 
+  it("/settings/danger shows disabled retry affordance during cooldown", () => {
+    const retrySettingsLoad = vi.fn();
+    state.meQuery = {
+      ...state.meQuery,
+      data: undefined,
+      isError: true,
+      error: { kind: "rate_limited", message: "Slow down", retryAfterSeconds: 25 },
+      retry: retrySettingsLoad,
+    };
+
+    render(<DangerSettingsPage />);
+
+    expect(screen.getByText(/settings are temporarily rate limited/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 25s/i })).toBeDisabled();
+    expect(retrySettingsLoad).not.toHaveBeenCalled();
+  });
+
   it("/settings/danger dialogs open and close from destructive cards", () => {
     render(<DangerSettingsPage />);
 
@@ -640,6 +657,57 @@ describe("route-level production-ready paths", () => {
       ),
     ).toHaveTextContent(/try later/i);
     expect(screen.getByText(/retry-after:\s*40s/i)).toBeInTheDocument();
+  });
+
+  it("/settings/danger allows retrying deactivate workflow after a failure", () => {
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      data: undefined,
+      isPending: false,
+      isError: false,
+      error: null,
+      mutate: vi.fn(),
+    };
+
+    const { rerender } = render(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "button",
+        { name: /^deactivate account$/i },
+      ),
+    );
+    expect(state.deactivateMutation.mutate).toHaveBeenCalledTimes(1);
+
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      isError: true,
+      error: { kind: "unknown_error", message: "Deactivate failed" },
+    };
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByText(/could not deactivate account\./i)).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      isError: false,
+      error: null,
+      data: { ok: true },
+    };
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "button",
+        { name: /^deactivate account$/i },
+      ),
+    );
+    rerender(<DangerSettingsPage />);
+
+    expect(state.deactivateMutation.mutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByText(/success: account deactivated\./i)).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockRefresh).not.toHaveBeenCalled();
   });
 
   it("/watchlist success", () => {
