@@ -1,3 +1,5 @@
+"use client";
+
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
 import { joinClassNames } from "./shared";
@@ -74,8 +76,9 @@ type PageTabsProps = ComponentPropsWithoutRef<"div"> & {
 };
 
 export function PageTabs({ className, label = "Page tabs", ...props }: PageTabsProps) {
+  const { onKeyDown, ...restProps } = props;
   const handleKeyDown: ComponentPropsWithoutRef<"div">["onKeyDown"] = (event) => {
-    props.onKeyDown?.(event);
+    onKeyDown?.(event);
     if (event.defaultPrevented) {
       return;
     }
@@ -125,12 +128,12 @@ export function PageTabs({ className, label = "Page tabs", ...props }: PageTabsP
 
   return (
     <div
+      {...restProps}
       role="tablist"
       aria-label={label}
       className={joinClassNames("ww-page-tabs", className)}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
-      {...props}
     />
   );
 }
