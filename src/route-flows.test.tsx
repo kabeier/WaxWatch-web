@@ -28,6 +28,7 @@ type HookState = {
     isLoading: boolean;
     isError: boolean;
     error: unknown;
+    retry: () => void;
   };
   searchMutation: MockMutation;
   saveAlertMutation: MockMutation;
@@ -49,6 +50,7 @@ const hooksState: HookState = {
     isLoading: false,
     isError: false,
     error: null,
+    retry: vi.fn(),
   },
   searchMutation: {
     data: undefined,
@@ -140,6 +142,7 @@ describe("route flow regressions", () => {
       isLoading: false,
       isError: false,
       error: null,
+      retry: vi.fn(),
     };
     hooksState.searchMutation = {
       data: undefined,
@@ -232,6 +235,38 @@ describe("route flow regressions", () => {
     expect(
       screen.getByText(/please fix search validation issues before submitting/i),
     ).toBeInTheDocument();
+  });
+
+  it("renders shared rate-limited state for search failures", () => {
+    hooksState.searchMutation = {
+      ...hooksState.searchMutation,
+      isError: true,
+      error: {
+        kind: "rate_limited",
+        message: "Rate limited by upstream provider",
+        status: 429,
+        retryAfterSeconds: 45,
+      },
+    };
+
+    render(<SearchPage />);
+
+    expect(
+      screen.getByRole("alert", { name: /search requests are temporarily rate limited/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/retry-after: 45s/i)).toBeInTheDocument();
+  });
+
+  it("renders shared loading state for profile queries", () => {
+    hooksState.meQuery = {
+      ...hooksState.meQuery,
+      isLoading: true,
+    };
+
+    render(<ProfileSettingsPage />);
+
+    expect(screen.getByRole("status", { name: /loading profile/i })).toBeInTheDocument();
+    expect(screen.getByText(/loading profile…/i)).toBeInTheDocument();
   });
 
   it("redirects to alerts after a successful delete mutation", () => {

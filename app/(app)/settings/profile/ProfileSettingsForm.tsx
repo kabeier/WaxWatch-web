@@ -3,6 +3,13 @@
 import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
+import { Button, TextInput } from "@/components/ui/primitives/base";
+import {
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/ui/primitives/state";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
 import { useMeQuery, useUpdateProfileMutation } from "./profileQueryHooks";
@@ -62,31 +69,57 @@ export default function ProfileSettingsForm() {
         <p className={pageViewStyles.mutedText}>Signed in as {meQuery.data.email ?? "—"}</p>
       ) : null}
 
-      {meQuery.isLoading ? <p>Loading profile…</p> : null}
-
-      {meQuery.isError ? (
-        <div role="alert" className={pageViewStyles.copyStack}>
-          <p>
-            {rateLimitedLoadError
-              ? "Profile requests are temporarily rate limited."
-              : "Could not load profile."}
-          </p>
-          <p className={pageViewStyles.mutedText}>
-            {rateLimitedLoadError
-              ? `Retry after about ${getRetryAfterSeconds(rateLimitedLoadError)} seconds.`
-              : getErrorMessage(meQuery.error, "Request failed")}
-          </p>
-          <button
-            type="button"
-            className="ww-button ww-button--secondary ww-button--sm"
-            onClick={() => void meQuery.retry()}
-          >
-            Retry profile load
-          </button>
-        </div>
+      {meQuery.isLoading ? (
+        <StateLoading
+          title="Loading profile"
+          message="Loading profile…"
+          detail="Fetching your account profile and preferences."
+        />
       ) : null}
 
-      {!meQuery.data && !meQuery.isLoading && !meQuery.isError ? <p>No profile found.</p> : null}
+      {meQuery.isError ? (
+        rateLimitedLoadError ? (
+          <StateRateLimited
+            title="Profile requests are temporarily rate limited"
+            message="Profile requests are temporarily rate limited."
+            retryAfterSeconds={getRetryAfterSeconds(rateLimitedLoadError)}
+            action={
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => void meQuery.retry()}
+              >
+                Retry profile load
+              </Button>
+            }
+          />
+        ) : (
+          <StateError
+            title="Could not load profile"
+            message="Could not load profile."
+            detail={getErrorMessage(meQuery.error, "Request failed")}
+            action={
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => void meQuery.retry()}
+              >
+                Retry profile load
+              </Button>
+            }
+          />
+        )
+      ) : null}
+
+      {!meQuery.data && !meQuery.isLoading && !meQuery.isError ? (
+        <StateEmpty
+          title="No profile found"
+          message="No profile found."
+          detail="Complete your account setup and try refreshing this page."
+        />
+      ) : null}
 
       {validationMessage ? (
         <div id="profile-settings-form-errors" role="alert">
@@ -111,9 +144,8 @@ export default function ProfileSettingsForm() {
       >
         <label className={pageViewStyles.labelStack} htmlFor="profile-display-name">
           <span className={pageViewStyles.labelText}>Display name</span>
-          <input
+          <TextInput
             id="profile-display-name"
-            className="ww-input"
             value={displayName}
             disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending}
             onChange={(event) =>
@@ -125,9 +157,8 @@ export default function ProfileSettingsForm() {
         </label>
         <label className={pageViewStyles.labelStack} htmlFor="profile-timezone">
           <span className={pageViewStyles.labelText}>Timezone</span>
-          <input
+          <TextInput
             id="profile-timezone"
-            className="ww-input"
             value={timezone}
             disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending}
             onChange={(event) =>
@@ -139,9 +170,8 @@ export default function ProfileSettingsForm() {
         </label>
         <label className={pageViewStyles.labelStack} htmlFor="profile-currency">
           <span className={pageViewStyles.labelText}>Preferred currency</span>
-          <input
+          <TextInput
             id="profile-currency"
-            className="ww-input"
             value={currency}
             maxLength={3}
             disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending}
@@ -155,31 +185,36 @@ export default function ProfileSettingsForm() {
       </form>
 
       <div className={pageViewStyles.cardStack}>
-        <button
-          type="submit"
-          form="profile-settings-form"
-          className="ww-button ww-button--primary ww-button--md"
-          disabled={isSaveDisabled}
-        >
+        <Button type="submit" form="profile-settings-form" disabled={isSaveDisabled}>
           {updateProfileMutation.isPending ? "Saving profile changes…" : "Save profile changes"}
-        </button>
+        </Button>
         {updateProfileMutation.data ? (
           <p role="status" aria-live="polite">
             Success: Profile settings saved.
           </p>
         ) : null}
-        {updateProfileMutation.isPending ? <p>Saving profile changes…</p> : null}
+        {updateProfileMutation.isPending ? (
+          <StateLoading
+            title="Saving profile settings"
+            message="Saving profile changes…"
+            detail="Submitting your profile and preference updates."
+          />
+        ) : null}
         {updateProfileMutation.isError ? (
-          <div role="alert">
-            <p>
-              {isRateLimitedError(updateProfileMutation.error)
-                ? "Saving profile settings is temporarily rate limited."
-                : "Could not save profile settings."}
-            </p>
-            <p className={pageViewStyles.mutedText}>
-              {getErrorMessage(updateProfileMutation.error, "Request failed")}
-            </p>
-          </div>
+          isRateLimitedError(updateProfileMutation.error) ? (
+            <StateRateLimited
+              title="Saving profile settings is temporarily rate limited"
+              message="Saving profile settings is temporarily rate limited."
+              detail={getErrorMessage(updateProfileMutation.error, "Request failed")}
+              retryAfterSeconds={getRetryAfterSeconds(updateProfileMutation.error)}
+            />
+          ) : (
+            <StateError
+              title="Could not save profile settings"
+              message="Could not save profile settings."
+              detail={getErrorMessage(updateProfileMutation.error, "Request failed")}
+            />
+          )
         ) : null}
       </div>
     </>

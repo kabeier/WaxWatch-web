@@ -4,6 +4,12 @@ import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { Button, TextInput } from "@/components/ui/primitives/base";
+import {
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/ui/primitives/state";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import type { SearchRequest } from "@/lib/api/domains/types";
 
@@ -196,37 +202,66 @@ export default function SearchWorkbench() {
         </Button>
       </form>
 
-      {searchMutation.isPending ? <p>Loading search results…</p> : null}
+      {searchMutation.isPending ? (
+        <StateLoading
+          title="Loading search results"
+          message="Loading search results…"
+          detail="This can take a few seconds depending on provider response times."
+        />
+      ) : null}
       {searchMutation.isError ? (
-        <div role="alert" className={pageViewStyles.copyStack}>
-          <p>
-            {isRateLimitedError(searchMutation.error)
-              ? "Search is temporarily rate limited."
-              : "Could not run search."}
-          </p>
-          <p className={pageViewStyles.mutedText}>
-            {isRateLimitedError(searchMutation.error)
-              ? `Retry after about ${getRetryAfterSeconds(searchMutation.error)} seconds.`
-              : getErrorMessage(searchMutation.error, "Request failed")}
-          </p>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            disabled={searchErrors.length > 0 || saveAlertMutation.isPending}
-            onClick={() => {
-              if (searchErrors.length === 0) {
-                setLastSubmittedQuery(queryPayload);
-                searchMutation.mutate(queryPayload);
-              }
-            }}
-          >
-            Retry search
-          </Button>
-        </div>
+        isRateLimitedError(searchMutation.error) ? (
+          <StateRateLimited
+            title="Search requests are temporarily rate limited"
+            message="Search is temporarily rate limited."
+            retryAfterSeconds={getRetryAfterSeconds(searchMutation.error)}
+            action={
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={searchErrors.length > 0 || saveAlertMutation.isPending}
+                onClick={() => {
+                  if (searchErrors.length === 0) {
+                    setLastSubmittedQuery(queryPayload);
+                    searchMutation.mutate(queryPayload);
+                  }
+                }}
+              >
+                Retry search
+              </Button>
+            }
+          />
+        ) : (
+          <StateError
+            title="Could not run search"
+            message="Could not run search."
+            detail={getErrorMessage(searchMutation.error, "Request failed")}
+            action={
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={searchErrors.length > 0 || saveAlertMutation.isPending}
+                onClick={() => {
+                  if (searchErrors.length === 0) {
+                    setLastSubmittedQuery(queryPayload);
+                    searchMutation.mutate(queryPayload);
+                  }
+                }}
+              >
+                Retry search
+              </Button>
+            }
+          />
+        )
       ) : null}
       {searchMutation.data && searchItems.length === 0 ? (
-        <p>No results matched this query. Adjust keywords or providers and retry.</p>
+        <StateEmpty
+          title="No search results"
+          message="No results matched this query."
+          detail="Adjust keywords or providers and retry."
+        />
       ) : null}
       {searchMutation.data && searchItems.length > 0 ? (
         <>
@@ -336,18 +371,28 @@ export default function SearchWorkbench() {
           Success: Alert saved from search.
         </p>
       ) : null}
-      {saveAlertMutation.isPending ? <p>Saving alert…</p> : null}
+      {saveAlertMutation.isPending ? (
+        <StateLoading
+          title="Saving alert"
+          message="Saving alert…"
+          detail="Your alert preferences are being stored."
+        />
+      ) : null}
       {saveAlertMutation.isError ? (
-        <div role="alert">
-          <p>
-            {isRateLimitedError(saveAlertMutation.error)
-              ? "Saving alerts is temporarily rate limited."
-              : "Could not save alert."}
-          </p>
-          <p className={pageViewStyles.mutedText}>
-            {getErrorMessage(saveAlertMutation.error, "Request failed")}
-          </p>
-        </div>
+        isRateLimitedError(saveAlertMutation.error) ? (
+          <StateRateLimited
+            title="Saving alerts is temporarily rate limited"
+            message="Saving alerts is temporarily rate limited."
+            detail={getErrorMessage(saveAlertMutation.error, "Request failed")}
+            retryAfterSeconds={getRetryAfterSeconds(saveAlertMutation.error)}
+          />
+        ) : (
+          <StateError
+            title="Could not save alert"
+            message="Could not save alert."
+            detail={getErrorMessage(saveAlertMutation.error, "Request failed")}
+          />
+        )
       ) : null}
     </div>
   );
