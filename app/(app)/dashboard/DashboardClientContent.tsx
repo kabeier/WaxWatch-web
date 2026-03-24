@@ -38,6 +38,11 @@ const DASHBOARD_NOTIFICATION_LIMIT = 4;
 const DASHBOARD_RELEASE_LIMIT = 5;
 const DASHBOARD_RULE_LIMIT = 4;
 const DASHBOARD_LOADING_ROW_COUNT = 3;
+const EMPTY_ITEMS: [] = [];
+
+function asArray<TItem>(value: TItem[] | null | undefined): TItem[] {
+  return Array.isArray(value) ? value : EMPTY_ITEMS;
+}
 
 function toTimestamp(value?: string) {
   if (!value) {
@@ -80,6 +85,16 @@ function formatKeywords(values?: Array<string | number | null | undefined>) {
     ) ?? [];
 
   return filtered.length > 0 ? filtered.join(", ") : "No keywords";
+}
+
+function RowText({ children }: { children: string }) {
+  return <span className={pageViewStyles.rowTextTruncate}>{children}</span>;
+}
+
+function RowMetaItem({ children }: { children: string }) {
+  return (
+    <span className={`${pageViewStyles.mutedText} ${pageViewStyles.rowMetaItem}`}>{children}</span>
+  );
 }
 
 function DashboardMetric({ value, label }: { value: number | string; label: string }) {
@@ -140,21 +155,23 @@ function DashboardListLoadingState({ title }: { title: string }) {
         {Array.from({ length: DASHBOARD_LOADING_ROW_COUNT }, (_, index) => (
           <ListRow
             key={`loading-${title}-${index}`}
-            title={<span className={pageViewStyles.rowTextTruncate}>Loading…</span>}
-            description={
-              <span className={pageViewStyles.rowTextTruncate}>Preparing preview row</span>
-            }
-            trailing={<span className={pageViewStyles.mutedText}>…</span>}
+            title={<RowText>Loading…</RowText>}
+            description={<RowText>Preparing preview row</RowText>}
+            trailing={<RowMetaItem>…</RowMetaItem>}
           >
             <div className={pageViewStyles.rowMeta}>
-              <span className={pageViewStyles.mutedText}>Fetching summary</span>
-              <span className={pageViewStyles.mutedText}>Refreshing timeline</span>
+              <RowMetaItem>Fetching summary</RowMetaItem>
+              <RowMetaItem>Refreshing timeline</RowMetaItem>
             </div>
           </ListRow>
         ))}
       </ListContainer>
     </>
   );
+}
+
+function DashboardListEmptyState({ title, message }: { title: string; message: string }) {
+  return <StateEmpty title={`No ${title.toLowerCase()} yet`} message={message} />;
 }
 
 function DashboardNotificationsPanel({
@@ -177,7 +194,12 @@ function DashboardNotificationsPanel({
   }
 
   if (notifications.length === 0) {
-    return <StateEmpty message="No recent notifications yet." />;
+    return (
+      <DashboardListEmptyState
+        title="Notifications"
+        message="Recent inbox activity will show here once events arrive."
+      />
+    );
   }
 
   return (
@@ -186,26 +208,16 @@ function DashboardNotificationsPanel({
         <ListRow
           key={notification.id}
           title={notification.event_type}
-          description={
-            <span className={pageViewStyles.rowTextTruncate}>
-              {notification.channel} · {notification.status}
-            </span>
-          }
-          trailing={
-            <span className={pageViewStyles.mutedText}>
-              {notification.is_read ? "Read" : "Unread"}
-            </span>
-          }
+          description={<RowText>{`${notification.channel} · ${notification.status}`}</RowText>}
+          trailing={<RowMetaItem>{notification.is_read ? "Read" : "Unread"}</RowMetaItem>}
         >
           <div className={pageViewStyles.rowMeta}>
-            <span className={pageViewStyles.mutedText}>
-              Created {formatDateTime(notification.created_at)}
-            </span>
-            <span className={pageViewStyles.mutedText}>
+            <RowMetaItem>{`Created ${formatDateTime(notification.created_at)}`}</RowMetaItem>
+            <RowMetaItem>
               {notification.read_at
                 ? `Read ${formatDateTime(notification.read_at)}`
                 : "Pending review"}
-            </span>
+            </RowMetaItem>
           </div>
         </ListRow>
       ))}
@@ -233,7 +245,12 @@ function DashboardMatchesPanel({
   }
 
   if (releases.length === 0) {
-    return <StateEmpty message="No watchlist matches yet." />;
+    return (
+      <DashboardListEmptyState
+        title="Recent matches"
+        message="Watchlist matches will appear once your rules begin finding releases."
+      />
+    );
   }
 
   return (
@@ -246,30 +263,23 @@ function DashboardMatchesPanel({
               className={pageViewStyles.listLink}
               href={`${routeViewModels.watchlist.path}/${release.id}`}
             >
-              <span className={pageViewStyles.rowTextTruncate}>{release.title}</span>
+              <RowText>{release.title}</RowText>
             </Link>
           }
           description={
-            <span className={pageViewStyles.rowTextTruncate}>
-              {release.artist} ·{" "}
-              {release.match_mode === "master_release" ? "Master release" : "Exact release"}
-            </span>
+            <RowText>
+              {`${release.artist} · ${release.match_mode === "master_release" ? "Master release" : "Exact release"}`}
+            </RowText>
           }
-          trailing={
-            <span className={pageViewStyles.mutedText}>
-              {release.is_active ? "Active" : "Paused"}
-            </span>
-          }
+          trailing={<RowMetaItem>{release.is_active ? "Active" : "Paused"}</RowMetaItem>}
         >
           <div className={pageViewStyles.rowMeta}>
-            <span className={pageViewStyles.mutedText}>
+            <RowMetaItem>
               {release.target_price !== null
                 ? `${release.currency} ${release.target_price}`
                 : "No target price"}
-            </span>
-            <span className={pageViewStyles.mutedText}>
-              Updated {formatDateTime(release.updated_at)}
-            </span>
+            </RowMetaItem>
+            <RowMetaItem>{`Updated ${formatDateTime(release.updated_at)}`}</RowMetaItem>
           </div>
         </ListRow>
       ))}
@@ -297,7 +307,12 @@ function DashboardRulesPanel({
   }
 
   if (rules.length === 0) {
-    return <StateEmpty message="No watch rules yet. Create one to start matching releases." />;
+    return (
+      <DashboardListEmptyState
+        title="Watch rules"
+        message="Create a watch rule to start matching new releases."
+      />
+    );
   }
 
   return (
@@ -310,25 +325,19 @@ function DashboardRulesPanel({
               className={pageViewStyles.listLink}
               href={`${routeViewModels.alerts.path}/${rule.id}`}
             >
-              <span className={pageViewStyles.rowTextTruncate}>{rule.name}</span>
+              <RowText>{rule.name}</RowText>
             </Link>
           }
-          description={
-            <span className={pageViewStyles.rowTextTruncate}>
-              {formatKeywords(rule.query?.keywords)}
-            </span>
-          }
-          trailing={
-            <span className={pageViewStyles.mutedText}>{rule.is_active ? "Active" : "Paused"}</span>
-          }
+          description={<RowText>{formatKeywords(rule.query?.keywords)}</RowText>}
+          trailing={<RowMetaItem>{rule.is_active ? "Active" : "Paused"}</RowMetaItem>}
         >
           <div className={pageViewStyles.rowMeta}>
-            <span className={pageViewStyles.mutedText}>Every {rule.poll_interval_seconds}s</span>
-            <span className={pageViewStyles.mutedText}>
+            <RowMetaItem>{`Every ${rule.poll_interval_seconds}s`}</RowMetaItem>
+            <RowMetaItem>
               {rule.next_run_at
                 ? `Next run ${formatDateTime(rule.next_run_at)}`
                 : "Schedule pending"}
-            </span>
+            </RowMetaItem>
           </div>
         </ListRow>
       ))}
@@ -343,18 +352,9 @@ export default function DashboardClientContent() {
   const notificationsQuery = useDashboardNotificationsPreviewQuery(DASHBOARD_NOTIFICATION_LIMIT);
   const unreadCountQuery = useUnreadNotificationCountQuery();
 
-  const watchRules = useMemo(
-    () => (Array.isArray(watchRulesQuery.data) ? watchRulesQuery.data : []),
-    [watchRulesQuery.data],
-  );
-  const watchReleases = useMemo(
-    () => (Array.isArray(watchReleasesQuery.data) ? watchReleasesQuery.data : []),
-    [watchReleasesQuery.data],
-  );
-  const notifications = useMemo(
-    () => (Array.isArray(notificationsQuery.data) ? notificationsQuery.data : []),
-    [notificationsQuery.data],
-  );
+  const watchRules = useMemo(() => asArray(watchRulesQuery.data), [watchRulesQuery.data]);
+  const watchReleases = useMemo(() => asArray(watchReleasesQuery.data), [watchReleasesQuery.data]);
+  const notifications = useMemo(() => asArray(notificationsQuery.data), [notificationsQuery.data]);
 
   const recentNotifications = useMemo(
     () => sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT),
