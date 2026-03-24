@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { DestructiveConfirmDialog } from "@/components/ui/primitives/DestructiveConfirmDialog";
 import { Button, CheckboxRow, Select, TextInput } from "@/components/ui/primitives/base/controls";
+import { LiveRegion } from "@/components/ui/primitives/base/feedback";
 import {
   StateEmpty,
   StateError,
@@ -36,6 +37,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
     isActive?: boolean;
   }>({});
   const [isDisableDialogOpen, setDisableDialogOpen] = useState(false);
+  const [disableTriggerElement, setDisableTriggerElement] = useState<HTMLElement | null>(null);
 
   const disableRequestRef = useRef<{ requestedId: string | null; sawPending: boolean }>({
     requestedId: null,
@@ -258,9 +260,11 @@ export default function WatchlistItemClient({ id }: { id: string }) {
             : "Save watchlist updates"}
         </Button>
         <Button
+          type="button"
           variant="destructive"
           disabled={isPending}
-          onClick={() => {
+          onClick={(event: MouseEvent<HTMLButtonElement>) => {
+            setDisableTriggerElement(event.currentTarget);
             setDisableDialogOpen(true);
           }}
         >
@@ -282,6 +286,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
             : undefined
         }
         onCancel={() => setDisableDialogOpen(false)}
+        returnFocusRef={{ current: disableTriggerElement }}
         onConfirm={() => {
           disableRequestRef.current = { requestedId: id, sawPending: false };
           disableWatchReleaseMutation.mutate(undefined);
@@ -289,9 +294,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
       />
 
       {updateWatchReleaseMutation.data ? (
-        <p role="status" aria-live="polite">
-          Success: Watchlist item updated.
-        </p>
+        <LiveRegion>Success: Watchlist item updated.</LiveRegion>
       ) : null}
       {updateWatchReleaseMutation.isPending ? (
         <StateLoading message="Saving watchlist item updates…" />
