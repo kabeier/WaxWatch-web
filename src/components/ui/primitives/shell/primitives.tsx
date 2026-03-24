@@ -163,6 +163,13 @@ export function AppShell({
   );
 }
 
+const DEFENSIVE_UTILITY_ITEMS: TopNavUtilityItem[] = [
+  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "" },
+  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "" },
+];
+
+const DEFENSIVE_SIDE_NAV_STATUS: SideNavStatus = { label: "", value: "", meta: undefined };
+
 export function TopNav({
   utilities,
   utilityItems,
@@ -178,12 +185,8 @@ export function TopNav({
         {showUtilities ? (
           <nav className="top-nav__utilities" aria-label={utilityLabel}>
             {utilities ??
-              (
-                utilityItems ?? [
-                  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "" },
-                  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "" },
-                ]
-              ).map((item) => (
+              // Defensive fallback only: authenticated shells should pass live utilityItems
+              (utilityItems ?? DEFENSIVE_UTILITY_ITEMS).map((item) => (
                 <ShellUtilityLink
                   key={`${item.href}-${item.label}`}
                   href={item.href}
@@ -209,7 +212,8 @@ export function ShellHeaderBand() {
 export function SideNav({
   items = APP_NAV_ITEMS,
   footer,
-  status = { label: "", value: "", meta: undefined },
+  // Defensive fallback only: authenticated shells should pass live status
+  status = DEFENSIVE_SIDE_NAV_STATUS,
 }: SideNavProps) {
   return (
     <aside className="side-nav">
