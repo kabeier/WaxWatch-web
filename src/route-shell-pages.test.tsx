@@ -342,6 +342,24 @@ describe("route shell pages", () => {
     },
   );
 
+  it("renders dashboard notifications rate-limited fallback with updated cooldown copy", () => {
+    previewHookMocks.notifications.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      error: { kind: "rate_limited", message: "Slow down", retryAfterSeconds: 30 },
+      retry: vi.fn(),
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByText(/notifications are temporarily rate limited/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/the dashboard will fill in once the cooldown expires\./i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/retry-after:\s*30s/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 30s/i })).toBeInTheDocument();
+  });
+
   it("renders dashboard empty summary labels and unread-count fallback label", () => {
     previewHookMocks.notifications.mockReturnValueOnce({
       data: [],
@@ -387,6 +405,61 @@ describe("route shell pages", () => {
       screen.getByText(/please fix the highlighted validation issues before saving\./i),
     ).toBeInTheDocument();
     expect(updateWatchReleaseMutate).not.toHaveBeenCalled();
+  });
+
+  it("renders watchlist item detail empty and rate-limited branches", () => {
+    previewHookMocks.watchlistDetail.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    const { rerender } = render(<WatchlistItemClient id="release-1" />);
+    expect(screen.getByText(/watchlist item not found\./i)).toBeInTheDocument();
+
+    previewHookMocks.watchlistDetail.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "Cooldown", retryAfterSeconds: 45 },
+      retry: vi.fn(),
+    });
+    rerender(<WatchlistItemClient id="release-1" />);
+
+    expect(screen.getByText(/cooldown/i)).toBeInTheDocument();
+    expect(screen.getByText(/retry-after:\s*45s/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry watchlist item load/i })).toBeInTheDocument();
+  });
+
+  it("surfaces save mutation failure and rate-limited branches without leaving /watchlist/[id]", () => {
+    const updateState = {
+      mutate: updateWatchReleaseMutate,
+      data: undefined,
+      error: null as unknown,
+      isPending: false,
+      isError: false,
+    };
+    previewHookMocks.updateWatchRelease.mockImplementation(() => updateState);
+
+    const { rerender } = render(<WatchlistItemClient id="release-1" />);
+
+    updateState.isError = true;
+    updateState.error = { kind: "unknown_error", message: "Save failed" };
+    rerender(<WatchlistItemClient id="release-1" />);
+
+    expect(screen.getByText(/could not save watchlist item updates\./i)).toBeInTheDocument();
+    expect(previewHookMocks.routerPush).not.toHaveBeenCalled();
+
+    updateState.error = { kind: "rate_limited", message: "Slow down", retryAfterSeconds: 60 };
+    rerender(<WatchlistItemClient id="release-1" />);
+
+    expect(
+      screen.getByText(
+        /saving watchlist item updates is rate limited\. please wait for cooldown\./i,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/retry-after:\s*60s/i)).toBeInTheDocument();
   });
 
   it("keeps watchlist route in place when disable mutation fails", () => {
