@@ -98,3 +98,13 @@ Route maturity definitions and the up-to-date status matrix are maintained in `d
 Production-ready routes include fully data-backed surfaces such as `/dashboard`, `/watchlist/[id]`, `/search`, `/settings/profile`, and `/settings/danger`, plus account-state/auth pages like `/login`, `/signed-out`, and `/account-removed` (see the canonical matrix in `docs/DEVELOPER_REFERENCE.md`).
 
 When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source, and keep this summary aligned when the production-ready route set changes.
+
+## Verification lock (2026-03-24)
+
+The route summary in this file is locked to outcomes re-verified in this workspace on March 24, 2026:
+
+- Passed: `npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`.
+- Route gate script executed: `npm run docs:route-status-gate` (reported skip because `GITHUB_BASE_REF` is not set outside PR/CI).
+- Not completed here: `npm run build` (SWC download `ENETUNREACH`) and therefore `npm run a11y:smoke` (requires built standalone artifact at `.next/standalone/server.js`).
+
+Treat `docs/DEVELOPER_REFERENCE.md` as the canonical matrix, and consider production-build/a11y confirmation still pending until those two gates pass in a network-capable CI or release environment.
