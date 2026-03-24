@@ -362,6 +362,13 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/loaded 1 search results/i)).toBeInTheDocument();
   });
 
+  it("/search workspace uses shared input and button primitives", () => {
+    render(<SearchPage />);
+
+    expect(screen.getByLabelText(/keywords \(comma-separated\)/i)).toHaveClass("ww-input");
+    expect(screen.getByRole("button", { name: /run search/i })).toHaveClass("ww-button");
+  });
+
   it("/search failure", () => {
     state.searchMutation = {
       data: undefined,
@@ -372,6 +379,10 @@ describe("route-level production-ready paths", () => {
     };
     render(<SearchPage />);
     expect(screen.getByText(/could not run search/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry search/i })).toHaveClass(
+      "ww-button--secondary",
+      "ww-button--sm",
+    );
   });
 
   it("/alerts success", () => {
@@ -384,6 +395,10 @@ describe("route-level production-ready paths", () => {
     state.watchRulesQuery = { ...state.watchRulesQuery, isError: true, error: apiError };
     render(<AlertsPage />);
     expect(screen.getByText(/could not load watch rules/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry watch rules/i })).toHaveClass(
+      "ww-button--secondary",
+      "ww-button--sm",
+    );
   });
 
   it("/alerts/new success", () => {
