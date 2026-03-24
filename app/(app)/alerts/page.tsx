@@ -4,6 +4,7 @@ import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { ActiveDivider, PageCardGroup, PageView } from "@/components/page-view/PageView";
 import {
   Card,
+  ButtonLink,
   CardBody,
   CardDescription,
   CardHeader,
@@ -23,15 +24,7 @@ export default function AlertsPage() {
       title={alertsHeading}
       description={alertsSummary}
       eyebrow="Rule management"
-      actions={
-        <Link
-          href="/alerts/new"
-          role="button"
-          className="ww-button ww-button--primary ww-button--md"
-        >
-          Create watch rule
-        </Link>
-      }
+      actions={<ButtonLink href="/alerts/new">Create watch rule</ButtonLink>}
       tabs={
         <PageTabs label="Alerts sections">
           <PageTab active aria-controls="alerts-rules-panel" id="alerts-rules-tab">

@@ -4,6 +4,12 @@ import Link from "next/link";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { Button } from "@/components/ui/primitives/base";
+import {
+  StateEmpty,
+  StateError,
+  StateLoading,
+  StateRateLimited,
+} from "@/components/ui/primitives/state";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
 import { useWatchRulesQuery } from "./alertsQueryHooks";
@@ -30,36 +36,44 @@ export default function AlertsRulesPanel() {
         </Link>
       </div>
 
-      {watchRulesQuery.isLoading ? <p>Loading watch rules…</p> : null}
+      {watchRulesQuery.isLoading ? <StateLoading message="Loading watch rules…" /> : null}
 
-      {watchRulesQuery.isError ? (
-        <div role="alert" className={pageViewStyles.copyStack}>
-          <p>
-            {isRateLimitedError(watchRulesQuery.error)
-              ? "Too many watch-rule requests. We'll re-enable retry when cooldown finishes."
-              : "Could not load watch rules."}
-          </p>
-          <p className={pageViewStyles.mutedText}>
-            {getErrorMessage(watchRulesQuery.error, "Request failed")}
-          </p>
-          {isRateLimitedError(watchRulesQuery.error) ? (
-            <p className={pageViewStyles.mutedText}>
-              Retry after about {getRetryAfterSeconds(watchRulesQuery.error)} seconds.
-            </p>
-          ) : null}
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => void watchRulesQuery.retry()}
-          >
-            Retry watch rules
-          </Button>
-        </div>
+      {watchRulesQuery.isError && isRateLimitedError(watchRulesQuery.error) ? (
+        <StateRateLimited
+          message="Watch-rule requests are temporarily rate limited."
+          retryAfterSeconds={getRetryAfterSeconds(watchRulesQuery.error)}
+          action={
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => void watchRulesQuery.retry()}
+            >
+              Retry watch rules
+            </Button>
+          }
+        />
+      ) : null}
+
+      {watchRulesQuery.isError && !isRateLimitedError(watchRulesQuery.error) ? (
+        <StateError
+          message="Could not load watch rules."
+          detail={getErrorMessage(watchRulesQuery.error, "Request failed")}
+          action={
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => void watchRulesQuery.retry()}
+            >
+              Retry watch rules
+            </Button>
+          }
+        />
       ) : null}
 
       {watchRulesQuery.data && watchRules.length === 0 ? (
-        <p>No watch rules yet. Create one to start matching releases.</p>
+        <StateEmpty message="No watch rules yet. Create one to start matching releases." />
       ) : null}
 
       {watchRulesQuery.data && watchRules.length > 0 ? (
