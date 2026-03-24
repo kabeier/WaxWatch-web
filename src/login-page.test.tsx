@@ -196,6 +196,41 @@ describe("Login page", () => {
     });
   });
 
+  it("allows retrying sign-in after a generic API error and then redirects on success", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Service unavailable." } }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(
+      <LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} onRedirect={onRedirect} />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(/service unavailable\./i);
+    });
+    expect(onRedirect).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(onRedirect).toHaveBeenCalledWith("/");
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("renders rate-limited sign-in feedback with retry-after copy", async () => {
     const fetchMock = vi.fn(
       async () =>

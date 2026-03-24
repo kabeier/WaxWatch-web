@@ -710,6 +710,58 @@ describe("route-level production-ready paths", () => {
     expect(mockRefresh).not.toHaveBeenCalled();
   });
 
+  it("/settings/danger allows retrying permanent delete confirm flow after a failure", () => {
+    state.hardDeleteMutation = {
+      ...state.hardDeleteMutation,
+      data: undefined,
+      isPending: false,
+      isError: false,
+      error: null,
+      mutate: vi.fn(),
+    };
+
+    const { rerender } = render(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
+        "button",
+        { name: /^permanently delete account$/i },
+      ),
+    );
+    expect(state.hardDeleteMutation.mutate).toHaveBeenCalledTimes(1);
+
+    state.hardDeleteMutation = {
+      ...state.hardDeleteMutation,
+      isError: true,
+      error: { kind: "unknown_error", message: "Delete failed" },
+    };
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByText(/could not permanently delete account\./i)).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockRefresh).not.toHaveBeenCalled();
+
+    state.hardDeleteMutation = {
+      ...state.hardDeleteMutation,
+      isError: false,
+      error: null,
+      data: { ok: true },
+    };
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
+        "button",
+        { name: /^permanently delete account$/i },
+      ),
+    );
+    rerender(<DangerSettingsPage />);
+
+    expect(state.hardDeleteMutation.mutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByText(/success: account permanently deleted\./i)).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockRefresh).not.toHaveBeenCalled();
+  });
+
   it("/watchlist success", () => {
     state.watchReleasesQuery.data = [{ id: "w1" }];
     render(<WatchlistPage />);
