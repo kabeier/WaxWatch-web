@@ -45,6 +45,12 @@ describe("shell primitives", () => {
       "href",
       "/dashboard",
     );
+    expect(
+      within(mobileNav as HTMLElement).getByRole("link", { name: /Notifications/i }),
+    ).toHaveAttribute("href", "/notifications");
+    expect(
+      within(mobileNav as HTMLElement).queryByRole("link", { name: /Search/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps integrations as the only active item on integrations routes", () => {

@@ -93,9 +93,9 @@ const MOBILE_NAV_ITEMS: ShellNavItem[] = [
     shortLabel: "DB",
     matchMode: "dashboard",
   },
-  { href: SEARCH_PATH, label: "Search", shortLabel: "SR" },
   { href: ALERTS_PATH, label: "Alerts", shortLabel: "AL" },
   { href: WATCHLIST_PATH, label: "Watchlist", shortLabel: "WL" },
+  { href: NOTIFICATIONS_PATH, label: "Notifications", shortLabel: "NT" },
   {
     href: SETTINGS_PATH,
     label: "Settings",
