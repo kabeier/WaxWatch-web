@@ -235,4 +235,32 @@ describe("DashboardClientContent", () => {
     expect(screen.getAllByText("Paused").length).toBeGreaterThan(0);
     expect(screen.getByText("Schedule pending")).toBeInTheDocument();
   });
+
+  it("keeps rendered feed content visible during background refetches", () => {
+    hookMocks.notifications.mockReturnValue({
+      data: [
+        {
+          id: "notification-refetch",
+          user_id: "user-1",
+          event_id: "event-2",
+          event_type: "rule.updated",
+          channel: "in_app",
+          status: "queued",
+          is_read: true,
+          created_at: "2026-03-23T09:00:00.000Z",
+          read_at: "2026-03-23T10:00:00.000Z",
+        },
+      ],
+      isLoading: true,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(<DashboardClientContent />);
+
+    expect(screen.getByText("rule.updated")).toBeInTheDocument();
+    expect(screen.getByText("in_app · queued")).toBeInTheDocument();
+    expect(screen.queryByText("Loading Notifications")).not.toBeInTheDocument();
+  });
 });
