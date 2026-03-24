@@ -1,5 +1,24 @@
 # WaxWatch Frontend (Next.js)
 
+## Verification lock (2026-03-24)
+
+This reference is locked to outcomes that were **directly re-verified** in this workspace on **March 24, 2026**.
+
+Verified pass gates:
+
+- `npm run test:run`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run format:check`
+- `npm run docs:route-status-gate` (script executed; it reports `Skipping route-status test gate (GITHUB_BASE_REF not set).` outside PR/CI contexts)
+
+Not fully verifiable in this workspace run:
+
+- `npm run build` could not complete because Next.js attempted to fetch missing SWC binaries and failed with `ENETUNREACH`.
+- `npm run a11y:smoke` could not complete because `npm run start` requires `.next/standalone/server.js`, which is produced only after a successful build.
+
+Route maturity statements below therefore remain constrained to test/typecheck/lint/format evidence plus route-level/unit coverage already present in this repo; production-build and a11y-smoke confirmation is pending a network-capable build environment.
+
 WaxWatch is a record-price alert web app. Users can land on a dashboard, search listings across providers, save searches as alerts, manage alerts/watchlist, connect integrations, and receive notifications.
 
 ## Developer quickstart (read this first)
