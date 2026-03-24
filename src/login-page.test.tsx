@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { AuthHandoffContext } from "@/lib/auth/handoff";
+
 import LoginPage from "../app/(auth)/login/page";
 import { LoginPageClient } from "../app/(auth)/login/LoginPageClient";
 
@@ -230,7 +232,7 @@ describe("Login page", () => {
   });
 
   it("blocks post-login redirect when handoff security params become invalid mid-submit", async () => {
-    const handoff = {
+    const handoff: AuthHandoffContext = {
       returnTo: null,
       handoffUrl: "waxwatch://auth/callback",
       state: "state-123",

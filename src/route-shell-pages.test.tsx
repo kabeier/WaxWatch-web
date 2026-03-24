@@ -11,6 +11,25 @@ import SettingsLandingPage from "../app/(app)/settings/page";
 import WatchlistItemPage from "../app/(app)/watchlist/[id]/page";
 import WatchlistItemClient from "../app/(app)/watchlist/[id]/WatchlistItemClient";
 
+type DashboardPreviewQuery<TData> = {
+  data: TData | undefined;
+  isLoading: boolean;
+  isError?: boolean;
+  error: unknown;
+  retry: ReturnType<typeof vi.fn>;
+};
+
+type WatchlistMutationState = {
+  mutate: ReturnType<typeof vi.fn>;
+  data: unknown;
+  error: unknown;
+  isPending: boolean;
+  isError: boolean;
+};
+
+const updateWatchReleaseMutate = vi.hoisted(() => vi.fn());
+const disableWatchReleaseMutate = vi.hoisted(() => vi.fn());
+
 const dashboardFixtures = {
   notifications: [
     {
@@ -60,25 +79,26 @@ const dashboardFixtures = {
 };
 
 const previewHookMocks = vi.hoisted(() => ({
-  notifications: vi.fn(() => ({
+  notifications: vi.fn<() => DashboardPreviewQuery<Notification[]>>(() => ({
     data: dashboardFixtures.notifications,
     isLoading: false,
     error: null,
     retry: vi.fn(),
   })),
-  unreadCount: vi.fn(() => ({
+  unreadCount: vi.fn<() => DashboardPreviewQuery<{ unread_count: number }>>(() => ({
     data: { unread_count: 1 },
     isLoading: false,
+    isError: false,
     error: null,
     retry: vi.fn(),
   })),
-  releases: vi.fn(() => ({
+  releases: vi.fn<() => DashboardPreviewQuery<WatchRelease[]>>(() => ({
     data: dashboardFixtures.releases,
     isLoading: false,
     error: null,
     retry: vi.fn(),
   })),
-  rules: vi.fn(() => ({
+  rules: vi.fn<() => DashboardPreviewQuery<WatchRule[]>>(() => ({
     data: dashboardFixtures.rules,
     isLoading: false,
     error: null,
@@ -91,22 +111,20 @@ const previewHookMocks = vi.hoisted(() => ({
     error: null,
     retry: vi.fn(),
   })),
-  updateWatchRelease: vi.fn(() => ({
-    mutate: previewHookMocks.updateWatchReleaseMutate,
+  updateWatchRelease: vi.fn<() => WatchlistMutationState>(() => ({
+    mutate: updateWatchReleaseMutate,
     data: undefined,
     error: null,
     isPending: false,
     isError: false,
   })),
-  disableWatchRelease: vi.fn(() => ({
-    mutate: previewHookMocks.disableWatchReleaseMutate,
+  disableWatchRelease: vi.fn<() => WatchlistMutationState>(() => ({
+    mutate: disableWatchReleaseMutate,
     data: undefined,
     error: null,
     isPending: false,
     isError: false,
   })),
-  updateWatchReleaseMutate: vi.fn(),
-  disableWatchReleaseMutate: vi.fn(),
   routerPush: vi.fn(),
   routerRefresh: vi.fn(),
 }));
@@ -148,6 +166,7 @@ describe("route shell pages", () => {
     previewHookMocks.unreadCount.mockImplementation(() => ({
       data: { unread_count: 1 },
       isLoading: false,
+      isError: false,
       error: null,
       retry: vi.fn(),
     }));
@@ -171,14 +190,14 @@ describe("route shell pages", () => {
       retry: vi.fn(),
     }));
     previewHookMocks.updateWatchRelease.mockImplementation(() => ({
-      mutate: previewHookMocks.updateWatchReleaseMutate,
+      mutate: updateWatchReleaseMutate,
       data: undefined,
       error: null,
       isPending: false,
       isError: false,
     }));
     previewHookMocks.disableWatchRelease.mockImplementation(() => ({
-      mutate: previewHookMocks.disableWatchReleaseMutate,
+      mutate: disableWatchReleaseMutate,
       data: undefined,
       error: null,
       isPending: false,
@@ -367,12 +386,12 @@ describe("route shell pages", () => {
     expect(
       screen.getByText(/please fix the highlighted validation issues before saving\./i),
     ).toBeInTheDocument();
-    expect(previewHookMocks.updateWatchReleaseMutate).not.toHaveBeenCalled();
+    expect(updateWatchReleaseMutate).not.toHaveBeenCalled();
   });
 
   it("keeps watchlist route in place when disable mutation fails", () => {
     const disableState = {
-      mutate: previewHookMocks.disableWatchReleaseMutate,
+      mutate: disableWatchReleaseMutate,
       data: undefined,
       error: null as unknown,
       isPending: false,
@@ -388,7 +407,7 @@ describe("route shell pages", () => {
         name: /^disable watchlist item$/i,
       }),
     );
-    expect(previewHookMocks.disableWatchReleaseMutate).toHaveBeenCalledWith(undefined);
+    expect(disableWatchReleaseMutate).toHaveBeenCalledWith(undefined);
 
     disableState.isPending = true;
     rerender(<WatchlistItemClient id="release-1" />);
@@ -404,7 +423,7 @@ describe("route shell pages", () => {
 
   it("navigates back to watchlist after disable succeeds post-pending", () => {
     const disableState = {
-      mutate: previewHookMocks.disableWatchReleaseMutate,
+      mutate: disableWatchReleaseMutate,
       data: undefined,
       error: null,
       isPending: false,
