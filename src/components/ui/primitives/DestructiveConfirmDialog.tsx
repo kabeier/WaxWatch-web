@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 
+import { Button } from "./base";
 import { joinClassNames } from "./base/shared";
 
 type DestructiveConfirmDialogProps = {
@@ -121,23 +122,18 @@ export function DestructiveConfirmDialog({
           </p>
         ) : null}
         <div className="ww-confirm-dialog__actions">
-          <button
-            type="button"
-            className="ww-button ww-button--secondary ww-button--md"
+          <Button
+            variant="secondary"
+            size="md"
             onClick={onCancel}
             disabled={pending}
             ref={cancelButtonRef}
           >
             {cancelLabel}
-          </button>
-          <button
-            type="button"
-            className={joinClassNames("ww-button", `ww-button--${confirmVariant}`, "ww-button--md")}
-            onClick={onConfirm}
-            disabled={pending}
-          >
+          </Button>
+          <Button variant={confirmVariant} size="md" onClick={onConfirm} disabled={pending}>
             {pending ? (pendingLabel ?? confirmLabel) : confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

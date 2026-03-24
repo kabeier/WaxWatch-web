@@ -1,5 +1,10 @@
 import Link from "next/link";
-import type { ChangeEventHandler, ComponentPropsWithoutRef, ReactNode } from "react";
+import {
+  forwardRef,
+  type ChangeEventHandler,
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+} from "react";
 
 import { joinClassNames } from "./shared";
 
@@ -22,20 +27,21 @@ type ButtonProps = ComponentPropsWithoutRef<"button"> & ButtonVariants;
 
 type ButtonLinkProps = ComponentPropsWithoutRef<typeof Link> & ButtonVariants;
 
-export function Button({
-  children,
-  className,
-  type = "button",
-  variant = "primary",
-  size = "md",
-  ...props
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { children, className, type = "button", variant = "primary", size = "md", ...props },
+  ref,
+) {
   return (
-    <button type={type} className={getButtonClassName({ className, variant, size })} {...props}>
+    <button
+      type={type}
+      className={getButtonClassName({ className, variant, size })}
+      ref={ref}
+      {...props}
+    >
       {children}
     </button>
   );
-}
+});
 
 export function ButtonLink({
   className,
