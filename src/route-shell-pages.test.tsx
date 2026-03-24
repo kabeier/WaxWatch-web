@@ -405,6 +405,36 @@ describe("route shell pages", () => {
     expect(screen.getByText("Recent matches will appear here")).toBeInTheDocument();
   });
 
+  it("keeps preview rows visible during dashboard loading refreshes when cached data exists", () => {
+    previewHookMocks.notifications.mockReturnValueOnce({
+      data: dashboardFixtures.notifications,
+      isLoading: true,
+      error: null,
+      retry: vi.fn(),
+    });
+    previewHookMocks.releases.mockReturnValueOnce({
+      data: dashboardFixtures.releases,
+      isLoading: true,
+      error: null,
+      retry: vi.fn(),
+    });
+    previewHookMocks.rules.mockReturnValueOnce({
+      data: dashboardFixtures.rules,
+      isLoading: true,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByText("match.created")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /kind of blue/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /blue note wants/i })).toBeInTheDocument();
+    expect(screen.queryByText(/loading notifications/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/loading recent matches/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/loading watch rules/i)).not.toBeInTheDocument();
+  });
+
   it("prevents invalid watchlist item editor saves and surfaces validation guidance", async () => {
     render(<WatchlistItemClient id="release-1" />);
 
