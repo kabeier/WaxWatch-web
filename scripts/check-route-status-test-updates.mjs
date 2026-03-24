@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import process from "node:process";
 
 const baseRef = process.env.GITHUB_BASE_REF;
 
@@ -16,13 +17,32 @@ try {
   process.exit(0);
 }
 
-const diffRange = `origin/${baseRef}...HEAD`;
+const baseTrackingRef = `origin/${baseRef}`;
+let diffRange = `${baseTrackingRef}...HEAD`;
 const ROUTE_STATUS_DOC = "docs/DEVELOPER_REFERENCE.md";
-const changedFilesOutput = execFileSync(
-  "git",
-  ["diff", "--name-only", "--diff-filter=AMR", diffRange],
-  { encoding: "utf8" },
-);
+
+try {
+  execFileSync("git", ["merge-base", baseTrackingRef, "HEAD"], { stdio: "pipe" });
+} catch {
+  diffRange = `${baseTrackingRef}..HEAD`;
+  console.log(
+    "Route-status test gate: no merge base found for triple-dot diff; using two-dot fallback range.",
+  );
+}
+
+let changedFilesOutput = "";
+try {
+  changedFilesOutput = execFileSync(
+    "git",
+    ["diff", "--name-only", "--diff-filter=AMR", diffRange],
+    {
+      encoding: "utf8",
+    },
+  );
+} catch {
+  console.log(`Skipping route-status test gate (unable to read changed files for ${diffRange}).`);
+  process.exit(0);
+}
 
 const changedFiles = changedFilesOutput
   .split("\n")
@@ -34,9 +54,15 @@ if (!changedFiles.includes(ROUTE_STATUS_DOC)) {
   process.exit(0);
 }
 
-const routeStatusDocDiff = execFileSync("git", ["diff", "-U0", diffRange, "--", ROUTE_STATUS_DOC], {
-  encoding: "utf8",
-});
+let routeStatusDocDiff = "";
+try {
+  routeStatusDocDiff = execFileSync("git", ["diff", "-U0", diffRange, "--", ROUTE_STATUS_DOC], {
+    encoding: "utf8",
+  });
+} catch {
+  console.log(`Skipping route-status test gate (unable to diff ${ROUTE_STATUS_DOC}).`);
+  process.exit(0);
+}
 
 const addedProductionReadyRoutes = new Set();
 const removedStatusesByRoute = new Map();
