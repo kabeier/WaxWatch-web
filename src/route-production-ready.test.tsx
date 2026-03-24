@@ -583,6 +583,10 @@ describe("route-level production-ready paths", () => {
     };
     rerender(<DangerSettingsPage />);
     expect(screen.getByText(/no danger-zone actions available\./i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^deactivate account$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^permanently delete account$/i }),
+    ).toBeInTheDocument();
   });
 
   it("/settings/danger shows disabled retry affordance during cooldown", () => {
