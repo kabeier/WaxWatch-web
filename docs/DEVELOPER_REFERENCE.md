@@ -10,12 +10,13 @@ Verified pass gates:
 - `npm run typecheck`
 - `npm run lint`
 - `npm run format:check`
-- `npm run docs:route-status-gate` (script executed; it reports `Skipping route-status test gate (GITHUB_BASE_REF not set).` outside PR/CI contexts)
+- `npm run docs:route-status-gate` (script executed; reports `Skipping route-status test gate (GITHUB_BASE_REF not set).` when no base ref is provided)
 
 Not fully verifiable in this workspace run:
 
 - `npm run build` could not complete because Next.js attempted to fetch missing SWC binaries and failed with `ENETUNREACH`.
 - `npm run a11y:smoke` could not complete because `npm run start` requires `.next/standalone/server.js`, which is produced only after a successful build.
+- `GITHUB_BASE_REF=main npm run docs:route-status-gate` also skipped because this workspace has no reachable `origin` remote (`fatal: 'origin' does not appear to be a git repository`), so PR-base route-promotion diff checks could not be executed locally.
 
 Route maturity statements below therefore remain constrained to test/typecheck/lint/format evidence plus route-level/unit coverage already present in this repo; production-build and a11y-smoke confirmation is pending a network-capable build environment.
 
