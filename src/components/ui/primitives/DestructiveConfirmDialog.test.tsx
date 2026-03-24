@@ -23,7 +23,9 @@ describe("DestructiveConfirmDialog", () => {
 
     expect(cancelButton).toBeInTheDocument();
     expect(cancelButton).toHaveClass("ww-button", "ww-button--secondary", "ww-button--md");
+    expect(cancelButton).toHaveAttribute("type", "button");
     expect(confirmButton).toHaveClass("ww-button", "ww-button--destructive", "ww-button--md");
+    expect(confirmButton).toHaveAttribute("type", "button");
   });
 
   it("keeps pending button behavior unchanged", () => {
@@ -104,6 +106,48 @@ describe("DestructiveConfirmDialog", () => {
 
     await user.keyboard("{Escape}");
     expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves action callback behavior when pending state changes", async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn();
+
+    const { rerender } = render(
+      <DestructiveConfirmDialog
+        open
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <DestructiveConfirmDialog
+        open
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        pendingLabel="Deleting…"
+        pending
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(screen.getByRole("button", { name: "Deleting…" }));
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
   it("cycles focus with tab and shift+tab when controls are enabled", async () => {

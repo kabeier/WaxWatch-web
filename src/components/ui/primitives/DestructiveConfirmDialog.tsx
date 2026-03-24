@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 
-import { Button } from "./base";
+import { Button } from "@/components/ui-primitives";
 import { joinClassNames } from "./base/shared";
 
 type DestructiveConfirmDialogProps = {
