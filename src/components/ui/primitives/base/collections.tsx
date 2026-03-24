@@ -50,6 +50,25 @@ export function ListRow({
   );
 }
 
+type ListTextProps = ComponentPropsWithoutRef<"span"> & {
+  truncate?: boolean;
+};
+
+export function ListText({ className, truncate = true, ...props }: ListTextProps) {
+  return (
+    <span
+      className={joinClassNames(truncate && "ww-list-row__text-truncate", className)}
+      {...props}
+    />
+  );
+}
+
+type ListMetaProps = ComponentPropsWithoutRef<"div">;
+
+export function ListMeta({ className, ...props }: ListMetaProps) {
+  return <div className={joinClassNames("ww-list-row__meta", className)} {...props} />;
+}
+
 type PageTabsProps = ComponentPropsWithoutRef<"div"> & {
   label?: string;
 };
