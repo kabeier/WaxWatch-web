@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import AlertsPage from "../app/(app)/alerts/page";
@@ -542,6 +542,48 @@ describe("route-level production-ready paths", () => {
     state.meQuery = { ...state.meQuery, isError: true, error: apiError };
     render(<DangerSettingsPage />);
     expect(screen.getByText(/could not load danger-zone settings/i)).toBeInTheDocument();
+  });
+
+  it("/settings/danger dialogs open and close from destructive cards", () => {
+    render(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    const deactivateDialog = screen.getByRole("dialog", { name: /deactivate account now\?/i });
+    expect(deactivateDialog).toBeInTheDocument();
+    fireEvent.click(within(deactivateDialog).getByRole("button", { name: /cancel/i }));
+    expect(
+      screen.queryByRole("dialog", { name: /deactivate account now\?/i }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    const deleteDialog = screen.getByRole("dialog", { name: /delete account permanently\?/i });
+    expect(deleteDialog).toBeInTheDocument();
+    fireEvent.click(within(deleteDialog).getByRole("button", { name: /cancel/i }));
+    expect(
+      screen.queryByRole("dialog", { name: /delete account permanently\?/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("/settings/danger propagates pending and mutation errors through request status", () => {
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      data: undefined,
+      isPending: true,
+      isError: false,
+      error: null,
+    };
+    state.hardDeleteMutation = {
+      ...state.hardDeleteMutation,
+      data: undefined,
+      isPending: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Delete failed" },
+    };
+
+    render(<DangerSettingsPage />);
+
+    expect(screen.getByText(/submitting account change…/i)).toBeInTheDocument();
+    expect(screen.getByText(/could not permanently delete account\./i)).toBeInTheDocument();
   });
 
   it("/watchlist success", () => {
