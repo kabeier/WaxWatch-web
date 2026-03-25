@@ -101,10 +101,10 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ## Verification lock (2026-03-25)
 
-The route summary in this file is locked to the **release-candidate frontend baseline** after rerunning the requested verification sequence in this workspace on March 25, 2026.
+The post-merge full gate rerun (`npm run ci:prod-gates`) was executed in this workspace on March 25, 2026 with explicit CI-like env values.
 
-- Passed in this workspace: `npm run test:run`, `npm run typecheck`, `npm run lint`, and `npm run format:check`.
-- Route gate script executed: `GITHUB_BASE_REF=main npm run docs:route-status-gate` (reported skip because `origin` is not configured/fetchable in this workspace).
-- Blocked by environment/network constraints: `npm run build` passed `prebuild` env validation but failed when Next.js attempted SWC download/lockfile patching (`ENETUNREACH`), and `npm run a11y:smoke` then failed because `npm run start` requires `.next/standalone/server.js` from a successful build.
+- Passed in this workspace: `npm run test:coverage` and `npm run prebuild:prod-env`.
+- Blocked by environment/network constraints: `npm run build` failed during Next.js SWC download/lockfile patching (`ENETUNREACH`) before `.next/standalone` could be produced.
+- Because `build` did not complete, downstream gates (`bundle:check`, `a11y:smoke`, `verify:deployment`, `release:checklist`) could not be completed in this workspace run.
 
-Treat `docs/DEVELOPER_REFERENCE.md` as the canonical matrix and keep this summary synchronized in the same PR; move both docs to a fully completed verification lock only after `build` and `a11y:smoke` pass in network-capable CI/release infrastructure.
+Treat `docs/DEVELOPER_REFERENCE.md` as the canonical matrix and keep this summary synchronized in the same PR; move both docs to a fully green release-candidate lock only after `npm run ci:prod-gates` passes end-to-end in network-capable CI/release infrastructure.
