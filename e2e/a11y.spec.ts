@@ -222,6 +222,10 @@ async function mockChromeData(page: Page) {
 }
 
 test.describe("accessibility regression audit", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.context().setOffline(false);
+  });
+
   test("/search: keyboard traversal, visible focus, and async status/error announcements", async ({
     page,
   }, testInfo) => {
@@ -271,7 +275,7 @@ test.describe("accessibility regression audit", () => {
       diagnostics.locationLogs.push(
         `before-click: ${await page.evaluate(() => window.location.href)}`,
       );
-      await expect(page.getByRole("heading", { name: /search/i })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Search", exact: true })).toBeVisible();
       await expect(page).not.toHaveURL(/\/(signed-out|account-removed)/);
 
       const searchKeywords = page.locator("#search-keywords");
@@ -341,6 +345,12 @@ test.describe("accessibility regression audit", () => {
 
     const displayNameInput = page.locator("#profile-display-name");
     await expect(displayNameInput).toBeVisible();
+    if (await displayNameInput.isDisabled()) {
+      const stateMessages = await page.locator('[role="alert"], [role="status"]').allInnerTexts();
+      throw new Error(
+        `Profile display-name input is disabled. Visible state messages: ${stateMessages.join(" | ") || "none"}`,
+      );
+    }
     await expect(displayNameInput).toBeEnabled();
     await displayNameInput.focus();
     await expect(displayNameInput).toBeFocused();
