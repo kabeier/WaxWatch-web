@@ -2,19 +2,18 @@
 
 ## Verification lock (2026-03-25)
 
-Requested gate-suite rerun completed in this workspace on **March 25, 2026**.
+Post-merge full verification rerun completed once in this workspace on **March 25, 2026** using:
 
-Verified outcomes in this environment:
+- `npm run ci:prod-gates`
 
-- ✅ `npm run test:run` passed (329/329 tests).
-- ✅ `npm run typecheck` passed.
-- ✅ `npm run lint` passed.
-- ✅ `npm run format:check` passed.
-- ✅ `npm run docs:route-status-gate` completed with local skip output: `Skipping route-status test gate (GITHUB_BASE_REF not set).`
-- ⚠️ `npm run build` failed while Next.js attempted SWC download/lockfile patching (`ENETUNREACH`), so `.next/standalone/server.js` was not produced.
-- ⚠️ `npm run a11y:smoke` could not run to completion because `npm run start` requires `.next/standalone/server.js`.
+Outcome in this environment: **not green**.
 
-Route maturity statements below remain backed by passing tests/typecheck/lint/format and existing route-level coverage, while build-coupled readiness checks remain environment-blocked until the SWC download step can complete in network-capable CI/release infrastructure.
+- ✅ `npm run test:coverage` passed (47/47 files, 336/336 tests).
+- ✅ `npm run prebuild:prod-env` passed (same-origin defaults accepted).
+- ❌ `npm run build` failed at the `prebuild` hook (`scripts/env-contract.mjs`) because required production env vars were not set (`NODE_ENV`, `APP_BASE_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_RELEASE_VERSION`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_REGION`, `AWS_SECRETS_PREFIX`, `TRUSTED_PROXY_CIDRS`, `LOG_LEVEL`).
+- ⚠️ Downstream gates in `ci:prod-gates` did not execute after the build step failure (`bundle:check`, `a11y:smoke`, `verify:deployment`, `release:checklist`).
+
+Because the full suite did not finish green, route statuses/docs are **not** frozen as a frontend release-candidate baseline in this run.
 
 ## Developer quickstart (read this first)
 

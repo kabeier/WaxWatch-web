@@ -101,11 +101,8 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ## Verification lock (2026-03-25)
 
-The requested gate suite was re-run in this workspace on **March 25, 2026** with explicit production-like env values for build-dependent checks.
+Post-merge full verification rerun completed once on **March 25, 2026** with `npm run ci:prod-gates`.
 
-- ✅ Passed: `npm run test:run` (329/329 tests), `npm run typecheck`, `npm run lint`, and `npm run format:check`.
-- ✅ Passed (with local-CI skip behavior): `npm run docs:route-status-gate` reported **"Skipping route-status test gate (GITHUB_BASE_REF not set)."**
-- ⚠️ Environment-blocked: `npm run build` failed during Next.js SWC artifact download/lockfile patching (`ENETUNREACH`) before `.next/standalone/server.js` could be generated.
-- ⚠️ Blocked downstream by missing build artifact: `npm run a11y:smoke` failed because `npm run start` could not find `.next/standalone/server.js`.
+Result: **not green** in this workspace. `test:coverage` and `prebuild:prod-env` passed, but `npm run build` failed at `prebuild` because required production env vars were missing (`NODE_ENV`, `APP_BASE_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_RELEASE_VERSION`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_REGION`, `AWS_SECRETS_PREFIX`, `TRUSTED_PROXY_CIDRS`, `LOG_LEVEL`).
 
-Treat `docs/DEVELOPER_REFERENCE.md` as the canonical matrix and keep this summary synchronized in the same PR; move both docs to a fully green release-candidate lock only after `npm run ci:prod-gates` passes end-to-end in network-capable CI/release infrastructure.
+Since the gate run did not complete end-to-end, keep route status/docs unfrozen for now and only mark a frontend release-candidate baseline after a fully green `npm run ci:prod-gates` run in CI/release infrastructure with complete production env configuration.
