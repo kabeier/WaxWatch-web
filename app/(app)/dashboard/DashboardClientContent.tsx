@@ -41,6 +41,7 @@ const DASHBOARD_RELEASE_LIMIT = 5;
 const DASHBOARD_RULE_LIMIT = 4;
 const DASHBOARD_LOADING_ROW_COUNT = 3;
 const DASHBOARD_EMPTY_TITLE_PREFIX = "No";
+const DASHBOARD_META_SEPARATOR = "•";
 const EMPTY_NOTIFICATIONS: Notification[] = [];
 const EMPTY_RELEASES: WatchRelease[] = [];
 const EMPTY_RULES: WatchRule[] = [];
@@ -103,14 +104,13 @@ function DashboardListDescription({ children }: { children: ReactNode }) {
 }
 
 function DashboardListMeta({ values }: { values: string[] }) {
+  const renderedValues = values.filter((value) => value.trim().length > 0);
+
   return (
     <ListMeta>
-      {values.map((value, index) => (
-        <ListText
-          key={`${value}-${index}`}
-          className={[pageViewStyles.mutedText, pageViewStyles.dashboardMetaText].join(" ")}
-        >
-          {value}
+      {renderedValues.map((value, index) => (
+        <ListText key={`${value}-${index}`} className={pageViewStyles.mutedText}>
+          {index === 0 ? value : `${DASHBOARD_META_SEPARATOR} ${value}`}
         </ListText>
       ))}
     </ListMeta>
@@ -183,6 +183,11 @@ function DashboardQueryState({
 }
 
 function DashboardListLoadingState({ title }: { title: string }) {
+  const placeholderRows = useMemo(
+    () => Array.from({ length: DASHBOARD_LOADING_ROW_COUNT }, (_, index) => index),
+    [],
+  );
+
   return (
     <>
       <StateLoading
@@ -191,17 +196,14 @@ function DashboardListLoadingState({ title }: { title: string }) {
         detail="Showing placeholder rows while the latest dashboard preview is prepared."
       />
       <ListContainer dense aria-hidden>
-        {Array.from({ length: DASHBOARD_LOADING_ROW_COUNT }, (_, index) => (
+        {placeholderRows.map((index) => (
           <ListRow
             key={`loading-${title}-${index}`}
             title={<ListText>Loading…</ListText>}
-            description={<ListText>Preparing preview row</ListText>}
-            trailing={<ListText className={pageViewStyles.mutedText}>…</ListText>}
+            description={<DashboardListDescription>Preparing preview row</DashboardListDescription>}
+            trailing={<ListText className={pageViewStyles.mutedText}>Updating…</ListText>}
           >
-            <ListMeta>
-              <ListText className={pageViewStyles.mutedText}>Fetching summary</ListText>
-              <ListText className={pageViewStyles.mutedText}>Refreshing timeline</ListText>
-            </ListMeta>
+            <DashboardListMeta values={["Fetching summary", "Refreshing timeline"]} />
           </ListRow>
         ))}
       </ListContainer>
@@ -270,11 +272,13 @@ function DashboardNotificationsPanel({
       {notificationRows.map((notification) => (
         <ListRow
           key={notification.id}
-          title={notification.event_type}
+          title={<ListText>{notification.event_type}</ListText>}
           description={
             <DashboardListDescription>{notification.description}</DashboardListDescription>
           }
-          trailing={<span className={pageViewStyles.mutedText}>{notification.readState}</span>}
+          trailing={
+            <ListText className={pageViewStyles.mutedText}>{notification.readState}</ListText>
+          }
         >
           <DashboardListMeta values={notification.metaValues} />
         </ListRow>
@@ -349,7 +353,7 @@ function DashboardMatchesPanel({
               {release.artist} · {release.matchModeLabel}
             </DashboardListDescription>
           }
-          trailing={<span className={pageViewStyles.mutedText}>{release.activeState}</span>}
+          trailing={<ListText className={pageViewStyles.mutedText}>{release.activeState}</ListText>}
         >
           <DashboardListMeta values={[release.targetPriceLabel, release.updatedLabel]} />
         </ListRow>
@@ -418,7 +422,7 @@ function DashboardRulesPanel({
             </Link>
           }
           description={<DashboardListDescription>{rule.keywordsLabel}</DashboardListDescription>}
-          trailing={<span className={pageViewStyles.mutedText}>{rule.activeState}</span>}
+          trailing={<ListText className={pageViewStyles.mutedText}>{rule.activeState}</ListText>}
         >
           <DashboardListMeta values={[rule.pollLabel, rule.nextRunLabel]} />
         </ListRow>
