@@ -61,12 +61,14 @@ describe("useAppShellChromeData", () => {
       data: undefined,
       isLoading: false,
       isError: false,
+      isFetched: false,
       error: null,
     });
     queryHookMocks.unread.mockReturnValue({
       data: undefined,
       isLoading: false,
       isError: false,
+      isFetched: false,
       error: null,
     });
 
@@ -80,6 +82,35 @@ describe("useAppShellChromeData", () => {
       label: "Session",
       value: "Loading profile",
       meta: "Notifications syncing",
+    });
+  });
+
+  it("uses unavailable copy after successful empty payloads settle", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      isFetched: true,
+      error: null,
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      isFetched: true,
+      error: null,
+    });
+
+    const { result } = renderHook(() => useAppShellChromeData());
+
+    expect(result.current.utilities).toEqual([
+      { href: "/notifications", label: "Inbox", value: "0" },
+      { href: "/settings/profile", label: "Account", value: "Unavailable" },
+    ]);
+    expect(result.current.sideNavStatus).toEqual({
+      label: "Session",
+      value: "Profile unavailable",
+      meta: "Notifications unavailable",
     });
   });
 

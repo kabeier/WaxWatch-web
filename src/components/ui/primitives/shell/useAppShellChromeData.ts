@@ -7,13 +7,13 @@ function getAccountStatusLabel(args: {
   isActive?: boolean;
   isLoading: boolean;
   hasError: boolean;
-  hasData: boolean;
+  hasSettled: boolean;
 }) {
   if (args.hasError) {
     return "Unavailable";
   }
 
-  if (args.isLoading || !args.hasData) {
+  if (args.isLoading || !args.hasSettled) {
     return "Loading";
   }
 
@@ -45,7 +45,7 @@ function getSessionValue(args: {
   email?: string | null;
   isLoading: boolean;
   hasError: boolean;
-  hasData: boolean;
+  hasSettled: boolean;
 }) {
   const normalizedDisplayName = args.displayName?.trim();
   const normalizedEmail = args.email?.trim();
@@ -62,7 +62,7 @@ function getSessionValue(args: {
     return "Profile unavailable";
   }
 
-  if (args.isLoading || !args.hasData) {
+  if (args.isLoading || !args.hasSettled) {
     return "Loading profile";
   }
 
@@ -75,13 +75,13 @@ function getSessionMeta(args: {
   unreadIsLoading: boolean;
   unreadHasError: boolean;
   unreadError: unknown;
-  unreadHasData: boolean;
+  unreadHasSettled: boolean;
 }) {
   const activityLabel = args.unreadHasError
     ? isRateLimitedError(args.unreadError)
       ? "Notifications cooling down"
       : "Notifications unavailable"
-    : args.unreadIsLoading || !args.unreadHasData
+    : args.unreadIsLoading || !args.unreadHasSettled
       ? "Notifications syncing"
       : typeof args.unreadCount === "number"
         ? `${args.unreadCount ?? 0} unread notification${args.unreadCount === 1 ? "" : "s"}`
@@ -102,6 +102,15 @@ export function useAppShellChromeData() {
   const meQuery = useMeQuery();
   const unreadCountQuery = useUnreadNotificationCountQuery();
 
+  const meHasSettled =
+    typeof meQuery.isFetched === "boolean"
+      ? meQuery.isFetched
+      : Boolean(meQuery.data) || meQuery.isError;
+  const unreadHasSettled =
+    typeof unreadCountQuery.isFetched === "boolean"
+      ? unreadCountQuery.isFetched
+      : Boolean(unreadCountQuery.data) || unreadCountQuery.isError;
+
   const utilities: TopNavUtilityItem[] = [
     {
       href: "/notifications",
@@ -119,7 +128,7 @@ export function useAppShellChromeData() {
         isActive: meQuery.data?.is_active,
         isLoading: meQuery.isLoading,
         hasError: meQuery.isError,
-        hasData: Boolean(meQuery.data),
+        hasSettled: meHasSettled,
       }),
     },
   ];
@@ -131,7 +140,7 @@ export function useAppShellChromeData() {
       email: meQuery.data?.email,
       isLoading: meQuery.isLoading,
       hasError: meQuery.isError,
-      hasData: Boolean(meQuery.data),
+      hasSettled: meHasSettled,
     }),
     meta: getSessionMeta({
       isActive: meQuery.data?.is_active,
@@ -139,7 +148,7 @@ export function useAppShellChromeData() {
       unreadIsLoading: unreadCountQuery.isLoading,
       unreadHasError: unreadCountQuery.isError,
       unreadError: unreadCountQuery.error,
-      unreadHasData: Boolean(unreadCountQuery.data),
+      unreadHasSettled: unreadHasSettled,
     }),
   };
 
