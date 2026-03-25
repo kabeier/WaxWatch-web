@@ -109,4 +109,34 @@ describe("/login route", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("shows invalid-credentials failure, then redirects after a corrected retry", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { code: "invalid_credentials" } }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(<LoginPageClient handoff={noHandoff} fetchImpl={fetchMock} onRedirect={onRedirect} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "bad-password" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/invalid email or password\./i);
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeEnabled();
+
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });

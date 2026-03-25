@@ -139,11 +139,11 @@ describe("/settings/danger route", () => {
       within(deactivateDialog).getByRole("button", { name: /^deactivate account$/i }),
     );
     fireEvent.click(screen.getAllByRole("button", { name: /^deactivate account$/i })[0]);
+    const deactivateDialogSecond = screen.getByRole("alertdialog", {
+      name: /deactivate account now\?/i,
+    });
     fireEvent.click(
-      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
-        "button",
-        { name: /^deactivate account$/i },
-      ),
+      within(deactivateDialogSecond).getByRole("button", { name: /^deactivate account$/i }),
     );
     expect(deactivateMutate).toHaveBeenCalledTimes(2);
     expect(screen.getByText(/could not deactivate account\./i)).toBeInTheDocument();
@@ -165,6 +165,41 @@ describe("/settings/danger route", () => {
     expect(deleteMutate).toHaveBeenCalledTimes(2);
     expect(screen.getAllByText(/delete cooldown/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/retry-after:\s*45s/i)).toBeInTheDocument();
+  });
+
+  it("supports deactivate retry from failure to success status", () => {
+    const deactivateMutate = vi.fn();
+    hooks.deactivate.mockReturnValue({
+      mutate: deactivateMutate,
+      data: undefined,
+      error: { kind: "unknown_error", message: "Deactivate failed" },
+      isPending: false,
+      isError: true,
+    });
+
+    const { rerender } = render(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: /^deactivate account$/i })[0]);
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "button",
+        { name: /^deactivate account$/i },
+      ),
+    );
+    expect(deactivateMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/could not deactivate account\./i)).toBeInTheDocument();
+
+    hooks.deactivate.mockReturnValue({
+      mutate: deactivateMutate,
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+    rerender(<DangerSettingsPage />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(/success: account deactivated\./i);
+    expect(screen.queryByText(/could not deactivate account\./i)).not.toBeInTheDocument();
   });
 
   it("traps focus in the confirmation dialog and restores focus to the trigger on close", async () => {
