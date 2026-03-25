@@ -182,10 +182,10 @@ describe("shell primitives", () => {
     const statusValue = container.querySelector("strong.side-nav__status-value");
 
     expect(utilityValues).toHaveLength(2);
-    expect(utilityValues.map((node) => node.textContent)).toEqual(["—", "Unavailable"]);
+    expect(utilityValues.map((node) => node.textContent)).toEqual(["N/A", "N/A"]);
     expect(statusLabel).toHaveTextContent("Session");
-    expect(statusValue).toHaveTextContent("Profile unavailable");
-    expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
+    expect(statusValue).toHaveTextContent("Status unavailable");
+    expect(screen.getByText("Connect live chrome data")).toBeInTheDocument();
   });
 
   it("renders dynamic shell utility and status values from query-backed chrome data", () => {
@@ -247,6 +247,8 @@ describe("shell primitives", () => {
     expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Loading profile")).toBeInTheDocument();
     expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
+    expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
     expect(screen.queryByText("Profile unavailable")).not.toBeInTheDocument();
     expect(screen.queryByText("Notifications unavailable")).not.toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveTextContent("App content");
@@ -276,6 +278,8 @@ describe("shell primitives", () => {
     expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Profile unavailable")).toBeInTheDocument();
     expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
+    expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveTextContent("App content");
   });
 
@@ -307,6 +311,8 @@ describe("shell primitives", () => {
     expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Avery Collector")).toBeInTheDocument();
     expect(screen.getByText("Account active · 4 unread notifications")).toBeInTheDocument();
+    expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
     expect(screen.queryByText("Profile unavailable")).not.toBeInTheDocument();
     expect(screen.queryByText("Notifications unavailable")).not.toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveTextContent("App content");
