@@ -14,7 +14,7 @@ Outcome in this environment: **partially green**.
 - ❌ `npm run build` (with explicit production env values): failed because Next.js could not download/install SWC binaries in this environment (`ENETUNREACH` while downloading `@next/swc-linux-x64-gnu`).
 - ❌ `npm run a11y:smoke` (with explicit production env values): blocked because production start requires `.next/standalone/server.js`, which is not produced when build fails.
 - ⚠️ `npm run docs:route-status-gate`: skipped because `GITHUB_BASE_REF` is not set in this workspace.
-- ⚠️ `GITHUB_BASE_REF=origin/main npm run docs:route-status-gate`: skipped because this workspace has no `origin` remote/base ref to diff against.
+- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate`: skipped because this workspace has no `origin` remote/base ref to diff against.
 
 Because build + a11y smoke did not pass end-to-end here, do **not** freeze route statuses/docs as a release-candidate baseline from this workspace run.
 
