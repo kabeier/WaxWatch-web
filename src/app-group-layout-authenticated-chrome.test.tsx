@@ -58,6 +58,8 @@ describe("AppGroupLayout authenticated chrome", () => {
     expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
     expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
     expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /inbox/i })).not.toHaveTextContent("N/A");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent("N/A");
   });
 
   it("renders error top-nav and side-nav chrome from useAppShellChromeData", () => {
@@ -90,6 +92,8 @@ describe("AppGroupLayout authenticated chrome", () => {
     expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
     expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
     expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /inbox/i })).not.toHaveTextContent("N/A");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent("N/A");
   });
 
   it("renders success top-nav and side-nav chrome from useAppShellChromeData", () => {
@@ -126,6 +130,8 @@ describe("AppGroupLayout authenticated chrome", () => {
     expect(screen.getByText("Account active · 7 unread notifications")).toBeInTheDocument();
     expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
     expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /inbox/i })).not.toHaveTextContent("N/A");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent("N/A");
     expect(screen.getByRole("main")).toHaveTextContent("App content");
   });
 });

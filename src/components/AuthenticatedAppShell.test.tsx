@@ -58,6 +58,41 @@ describe("AuthenticatedAppShell", () => {
     expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent("N/A");
   });
 
+  it("always provides live utility and session props to TopNav and SideNav", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(
+      <AppProviders>
+        <AuthenticatedAppShell>
+          <div>App content</div>
+        </AuthenticatedAppShell>
+      </AppProviders>,
+    );
+
+    const inboxLink = screen.getByRole("link", { name: /inbox/i });
+    const accountLink = screen.getByRole("link", { name: /account/i });
+
+    expect(inboxLink).toHaveTextContent("…");
+    expect(accountLink).toHaveTextContent("Loading");
+    expect(inboxLink).not.toHaveTextContent("N/A");
+    expect(accountLink).not.toHaveTextContent("N/A");
+    expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+  });
+
   it("renders error chrome values from useAppShellChromeData", () => {
     queryHookMocks.me.mockReturnValue({
       data: undefined,
