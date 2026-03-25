@@ -101,12 +101,13 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ## Verification lock (2026-03-25)
 
-Verification was rerun on **March 25, 2026** with the full CI/release command chain (`npm run ci:prod-gates`).
+Verification was rerun on **March 25, 2026** with the requested CI/release checks (`npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build`, `npm run a11y:smoke`, and `npm run docs:route-status-gate`).
 
-Result: **not green** in this workspace.
+Result: **partially green** in this workspace.
 
-- `npm run ci:prod-gates` failed at `npm run test:coverage`.
-- 7 Vitest specs timed out (5000ms) across `src/route-shell-pages.test.tsx`, `src/route-production-ready.test.tsx`, `src/dashboard-client-content.test.tsx`, and `src/profile-settings-form.a11y.test.tsx`.
-- 43/47 test files and 333/340 tests passed before the timeout failures terminated the pipeline.
+- ✅ Tests/typecheck/lint/format checks passed (`npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`).
+- ❌ `npm run build` failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH`), and direct `@next/swc-*` install attempts were blocked (`403 Forbidden`).
+- ❌ `npm run a11y:smoke` failed because `.next/standalone/server.js` is unavailable when build fails.
+- ⚠️ `npm run docs:route-status-gate` skipped because this workspace has no usable `origin/<base-ref>` for comparison.
 
-Since the gate run did not complete end-to-end, keep route status/docs unfrozen for now and only mark a frontend release-candidate baseline after a fully green rerun in CI/release infrastructure.
+Since the release-capable gate run did not complete end-to-end, keep route status/docs unfrozen for now and only mark a frontend release-candidate baseline after a fully green rerun in CI/release infrastructure.
