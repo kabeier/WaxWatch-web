@@ -136,6 +136,10 @@ describe("base ui primitives", () => {
     expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("Feed disconnected.")).toHaveClass("ww-banner", "ww-banner--error");
     expect(screen.getByText("Saved successfully.")).toHaveAttribute("role", "status");
+    expect(screen.getByText("Saved successfully.")).toHaveAttribute(
+      "aria-relevant",
+      "additions text",
+    );
   });
 
   it("supports arrow-key traversal in shared page tabs", async () => {
@@ -210,5 +214,24 @@ describe("base ui primitives", () => {
       "release-note-summary release-note-error",
     );
     expect(releaseNotes).toHaveAttribute("aria-errormessage", "release-note-error");
+  });
+
+  it("treats aria-errormessage as invalid semantics when aria-invalid is omitted", () => {
+    render(
+      <>
+        <TextInput
+          aria-label="Alert name"
+          aria-describedby="alert-name-summary"
+          aria-errormessage="alert-name-error"
+        />
+        <p id="alert-name-summary">Fix the form errors below.</p>
+        <p id="alert-name-error">Alert name is required.</p>
+      </>,
+    );
+
+    const alertName = screen.getByRole("textbox", { name: "Alert name" });
+    expect(alertName).toHaveAttribute("aria-invalid", "true");
+    expect(alertName).toHaveAttribute("aria-describedby", "alert-name-summary alert-name-error");
+    expect(alertName).toHaveAttribute("aria-errormessage", "alert-name-error");
   });
 });

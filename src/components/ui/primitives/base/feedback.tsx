@@ -36,13 +36,20 @@ export function Banner({ className, tone = "default", ...props }: BannerProps) {
 type LiveRegionProps = Omit<ComponentPropsWithoutRef<"p">, "role"> & {
   politeness?: "polite" | "assertive";
   atomic?: boolean;
+  relevant?: "additions" | "additions text" | "all" | "removals" | "text";
 };
 
-export function LiveRegion({ politeness = "polite", atomic = true, ...props }: LiveRegionProps) {
+export function LiveRegion({
+  politeness = "polite",
+  atomic = true,
+  relevant = "additions text",
+  ...props
+}: LiveRegionProps) {
   return (
     <p
       aria-atomic={atomic}
       aria-live={politeness}
+      aria-relevant={relevant}
       role={politeness === "assertive" ? "alert" : "status"}
       {...props}
     />
