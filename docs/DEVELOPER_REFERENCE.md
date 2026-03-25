@@ -2,17 +2,17 @@
 
 ## Verification lock (2026-03-25)
 
-Verification was rerun in this workspace on **March 25, 2026** using the requested CI/release checks (`npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build`, `npm run a11y:smoke`, and `npm run docs:route-status-gate`).
+After the parallel streams merge, verification was rerun in this workspace on **March 25, 2026** using the requested CI/release checks (`npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build`, `npm run a11y:smoke`, and `npm run docs:route-status-gate`).
 
 Outcome in this environment: **partially green**.
 
-- ✅ `npm run test:run`: passed (47/47 files, 340/340 tests).
+- ✅ `npm run test:run`: passed (47/47 files, 345/345 tests).
 - ✅ `npm run typecheck`: passed.
 - ✅ `npm run lint`: passed.
 - ✅ `npm run format:check`: passed.
-- ❌ `npm run build`: failed because Next.js could not fetch/install SWC binaries in this environment (`ENETUNREACH` to download `@next/swc-linux-x64-gnu`; direct npm install attempts for `@next/swc-*` also returned `403 Forbidden`).
+- ❌ `npm run build`: failed because Next.js could not fetch/install SWC binaries in this environment (`ENETUNREACH` while downloading `@next/swc-linux-x64-gnu`).
 - ❌ `npm run a11y:smoke`: failed because production start requires `.next/standalone/server.js`, which is not produced when build fails.
-- ⚠️ `npm run docs:route-status-gate`: no base-ref comparison was possible in this workspace (`origin` remote unavailable), so the gate self-skipped.
+- ⚠️ `npm run docs:route-status-gate`: self-skipped because `GITHUB_BASE_REF` is not set in this workspace (and there is no `origin` remote for base-ref comparison).
 
 Because build + a11y smoke did not pass end-to-end in this environment, route status/docs remain **unfrozen** and this run is **not** a frontend release-candidate baseline.
 
