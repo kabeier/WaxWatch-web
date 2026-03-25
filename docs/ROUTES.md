@@ -99,9 +99,9 @@ Production-ready routes include fully data-backed surfaces such as `/dashboard`,
 
 When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source, and keep this summary aligned when the production-ready route set changes.
 
-## Verification lock (2026-03-25 post-merge rerun + final rerun)
+## Verification lock (2026-03-25 CI/release-capable rerun)
 
-After merging parallel streams, verification was rerun once more on **March 25, 2026** with the requested release-capable checks.
+Verification was rerun on **March 25, 2026** with the requested release-capable checks in this workspace.
 
 Result in this workspace: **partially green**.
 

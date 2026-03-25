@@ -1,8 +1,8 @@
 # WaxWatch Frontend (Next.js)
 
-## Verification lock (2026-03-25 post-merge rerun + final rerun)
+## Verification lock (2026-03-25 CI/release-capable rerun)
 
-After merging parallel streams, full verification was rerun once more in this workspace on **March 25, 2026**.
+Release-capable verification was rerun in this workspace on **March 25, 2026**.
 
 Outcome in this environment: **partially green**.
 
