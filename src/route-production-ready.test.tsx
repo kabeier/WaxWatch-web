@@ -819,7 +819,6 @@ describe("route-level production-ready paths", () => {
       error: null,
       data: { ok: true },
     };
-    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
     fireEvent.click(
       within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
         "button",
@@ -871,7 +870,6 @@ describe("route-level production-ready paths", () => {
       error: null,
       data: { ok: true },
     };
-    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
     fireEvent.click(
       within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
         "button",

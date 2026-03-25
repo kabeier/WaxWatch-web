@@ -55,35 +55,69 @@ export function ButtonLink({
 
 type TextInputProps = ComponentPropsWithoutRef<"input"> & {
   error?: boolean;
+  errorMessageId?: string;
 };
 
-export function TextInput({ className, error = false, type = "text", ...props }: TextInputProps) {
-  const ariaInvalid = props["aria-invalid"];
+export function TextInput({
+  className,
+  error = false,
+  errorMessageId,
+  type = "text",
+  ...props
+}: TextInputProps) {
+  const {
+    "aria-invalid": ariaInvalid,
+    "aria-describedby": ariaDescribedBy,
+    "aria-errormessage": ariaErrorMessage,
+    ...restProps
+  } = props;
   const shouldSetAriaInvalid = ariaInvalid !== undefined ? ariaInvalid : error;
+  const describedByIds = [ariaDescribedBy, error ? errorMessageId : null].filter(Boolean).join(" ");
+  const shouldSetAriaErrorMessage =
+    ariaErrorMessage !== undefined ? ariaErrorMessage : error ? errorMessageId : undefined;
 
   return (
     <input
       type={type}
       className={joinClassNames("ww-input", error && "ww-input--error", className)}
       aria-invalid={shouldSetAriaInvalid}
-      {...props}
+      aria-describedby={describedByIds.length > 0 ? describedByIds : undefined}
+      aria-errormessage={shouldSetAriaErrorMessage}
+      {...restProps}
     />
   );
 }
 
 type SelectProps = ComponentPropsWithoutRef<"select"> & {
   error?: boolean;
+  errorMessageId?: string;
 };
 
-export function Select({ className, error = false, children, ...props }: SelectProps) {
-  const ariaInvalid = props["aria-invalid"];
+export function Select({
+  className,
+  error = false,
+  errorMessageId,
+  children,
+  ...props
+}: SelectProps) {
+  const {
+    "aria-invalid": ariaInvalid,
+    "aria-describedby": ariaDescribedBy,
+    "aria-errormessage": ariaErrorMessage,
+    ...restProps
+  } = props;
   const shouldSetAriaInvalid = ariaInvalid !== undefined ? ariaInvalid : error;
+  const describedByIds = [ariaDescribedBy, error ? errorMessageId : null].filter(Boolean).join(" ");
+  const shouldSetAriaErrorMessage =
+    ariaErrorMessage !== undefined ? ariaErrorMessage : error ? errorMessageId : undefined;
 
   return (
     <select
       className={joinClassNames("ww-input", "ww-select", error && "ww-input--error", className)}
       aria-invalid={shouldSetAriaInvalid}
-      {...props}
+      aria-describedby={describedByIds.length > 0 ? describedByIds : undefined}
+      aria-errormessage={shouldSetAriaErrorMessage}
+      {...restProps}
     >
       {children}
     </select>
