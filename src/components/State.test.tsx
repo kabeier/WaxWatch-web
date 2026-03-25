@@ -52,6 +52,7 @@ describe("shared state components", () => {
       "ww-helper-text",
       "ww-helper-text--warning",
     );
+    expect(screen.getByRole("alert")).toHaveAccessibleDescription("Slow down Retry-After: 12s");
   });
 
   it("renders fallback retry-after text when missing", () => {

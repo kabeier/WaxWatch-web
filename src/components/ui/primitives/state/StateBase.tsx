@@ -41,13 +41,22 @@ export function StateBase({
 }: StateBaseProps) {
   const titleId = useId();
   const descriptionId = useId();
+  const detailId = useId();
+  const retryAfterId = useId();
   const helperToneClass = tone === "rate-limited" ? "ww-helper-text--warning" : undefined;
+  const describedBy = [
+    descriptionId,
+    detail ? detailId : null,
+    showRetryAfter ? retryAfterId : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <section
       aria-busy={busy}
       aria-atomic="true"
-      aria-describedby={descriptionId}
+      aria-describedby={describedBy}
       aria-labelledby={titleId}
       aria-live={role === "alert" ? "assertive" : "polite"}
       className={`ww-card-base ww-card-base--padding-lg ww-state ww-state--${tone}`}
@@ -66,9 +75,16 @@ export function StateBase({
         <p className="ww-state__message" id={descriptionId}>
           {message}
         </p>
-        {detail ? <p className="ww-helper-text ww-state__detail">{detail}</p> : null}
+        {detail ? (
+          <p className="ww-helper-text ww-state__detail" id={detailId}>
+            {detail}
+          </p>
+        ) : null}
         {showRetryAfter ? (
-          <p className={`ww-helper-text ww-state__detail ${helperToneClass ?? ""}`.trim()}>
+          <p
+            className={`ww-helper-text ww-state__detail ${helperToneClass ?? ""}`.trim()}
+            id={retryAfterId}
+          >
             Retry-After:{" "}
             {typeof retryAfterSeconds === "number" ? `${retryAfterSeconds}s` : "Not provided"}
           </p>

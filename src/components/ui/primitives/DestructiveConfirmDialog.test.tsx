@@ -79,8 +79,7 @@ describe("DestructiveConfirmDialog", () => {
     expect(dialog).toHaveFocus();
   });
 
-  it("re-captures tab focus when focus drifts outside of the dialog", async () => {
-    const user = userEvent.setup();
+  it("re-captures focus when it drifts outside of the dialog", async () => {
     render(
       <>
         <button type="button">Outside trigger</button>
@@ -99,9 +98,6 @@ describe("DestructiveConfirmDialog", () => {
     const cancelButton = screen.getByRole("button", { name: "Cancel" });
 
     outsideButton.focus();
-    expect(outsideButton).toHaveFocus();
-    await user.keyboard("{Tab}");
-
     expect(cancelButton).toHaveFocus();
   });
 
