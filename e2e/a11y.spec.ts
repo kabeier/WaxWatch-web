@@ -26,7 +26,7 @@ async function mockJson(
 async function mockChromeData(page: Page) {
   await mockJson(
     page,
-    "/api/me",
+    "/api/me*",
     {
       id: "user-1",
       email: "collector@example.com",
@@ -38,7 +38,7 @@ async function mockChromeData(page: Page) {
     200,
     "GET",
   );
-  await mockJson(page, "/api/notifications/unread-count", { unread_count: 0 }, 200, "GET");
+  await mockJson(page, "/api/notifications/unread-count*", { unread_count: 0 }, 200, "GET");
 }
 
 test.describe("accessibility regression audit", () => {
@@ -48,7 +48,7 @@ test.describe("accessibility regression audit", () => {
     await mockChromeData(page);
     await mockJson(
       page,
-      "/api/search",
+      "/api/search*",
       {
         items: [
           {
@@ -74,7 +74,7 @@ test.describe("accessibility regression audit", () => {
     );
     await mockJson(
       page,
-      "/api/search/save-alert",
+      "/api/search/save-alert*",
       { error: { message: "Save failed" } },
       500,
       "POST",
@@ -118,12 +118,13 @@ test.describe("accessibility regression audit", () => {
     page,
   }) => {
     await mockChromeData(page);
-    await mockJson(page, "/api/me", { error: { message: "Update failed" } }, 500, "PATCH");
+    await mockJson(page, "/api/me*", { error: { message: "Update failed" } }, 500, "PATCH");
 
     await page.goto("/settings/profile");
 
     const displayNameInput = page.locator("#profile-display-name");
     await expect(displayNameInput).toBeVisible();
+    await expect(displayNameInput).toBeEnabled();
     await displayNameInput.focus();
     await expect(displayNameInput).toBeFocused();
 
@@ -149,7 +150,7 @@ test.describe("accessibility regression audit", () => {
     await mockChromeData(page);
     await mockJson(
       page,
-      "/api/watch-releases/release-1",
+      "/api/watch-releases/release-1*",
       {
         id: "release-1",
         user_id: "user-1",
@@ -171,7 +172,7 @@ test.describe("accessibility regression audit", () => {
     );
     await mockJson(
       page,
-      "/api/watch-releases/release-1",
+      "/api/watch-releases/release-1*",
       { error: { message: "Disable failed" } },
       500,
       "DELETE",
@@ -211,7 +212,7 @@ test.describe("accessibility regression audit", () => {
     await mockChromeData(page);
     await mockJson(
       page,
-      "/api/me/hard-delete",
+      "/api/me/hard-delete*",
       { error: { message: "Delete failed" } },
       500,
       "DELETE",
