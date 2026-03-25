@@ -169,6 +169,16 @@ describe("DashboardClientContent", () => {
 
     expect(screen.getAllByText("Preparing preview row")).toHaveLength(9);
     expect(screen.getAllByText("Fetching summary")).toHaveLength(9);
+    expect(screen.getAllByText("• Refreshing timeline")).toHaveLength(9);
+    expect(screen.getAllByText("Updating…")).toHaveLength(9);
+  });
+
+  it("renders dense-row metadata with shared separator spacing", () => {
+    render(<DashboardClientContent />);
+
+    expect(screen.getAllByText("USD 20").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/• Updated /).length).toBeGreaterThan(0);
+    expect(screen.getByText("• Pending review")).toBeInTheDocument();
   });
 
   it("uses standardized empty states across dashboard feed cards", () => {
@@ -233,7 +243,7 @@ describe("DashboardClientContent", () => {
     expect(screen.getByRole("link", { name: "Sparse Rule" })).toBeInTheDocument();
     expect(screen.getByText("No keywords")).toBeInTheDocument();
     expect(screen.getAllByText("Paused").length).toBeGreaterThan(0);
-    expect(screen.getByText("Schedule pending")).toBeInTheDocument();
+    expect(screen.getByText("• Schedule pending")).toBeInTheDocument();
   });
 
   it("keeps rendered feed content visible during background refetches", () => {
