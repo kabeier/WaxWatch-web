@@ -48,13 +48,25 @@ function resolveApiMockPath(pathname: string): string {
     return pathname;
   }
 
+  const normalizeBasePath = (basePath: string) => {
+    const trimmed = basePath.trim();
+    if (!trimmed) {
+      return "/api";
+    }
+
+    const withoutTrailingSlash = trimmed.replace(/\/+$/, "");
+    return withoutTrailingSlash.length > 0 ? withoutTrailingSlash : "/";
+  };
+
   if (configuredApiBaseUrl.startsWith("/")) {
-    return pathname.replace(/^\/api/, configuredApiBaseUrl);
+    const normalizedBasePath = normalizeBasePath(configuredApiBaseUrl);
+    return pathname.replace(/^\/api(?=\/)/, normalizedBasePath);
   }
 
   try {
     const url = new URL(configuredApiBaseUrl);
-    return pathname.replace(/^\/api/, url.pathname);
+    const normalizedBasePath = normalizeBasePath(url.pathname);
+    return pathname.replace(/^\/api(?=\/)/, normalizedBasePath);
   } catch {
     return pathname;
   }
