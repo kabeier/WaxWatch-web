@@ -1,3 +1,5 @@
+/* eslint-env node */
+
 function isLocalHostname(hostname) {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
 }
@@ -74,7 +76,12 @@ function getTrustedStyleOrigins() {
 }
 
 const connectSrcDirective = ["'self'", ...getTrustedConnectOrigins()].join(" ");
-const styleSrcDirective = ["'self'", ...getTrustedStyleOrigins()].join(" ");
+const allowInlineStylesForE2E = process.env.E2E_ALLOW_UNSAFE_INLINE_STYLE === "true";
+const styleSrcTokens = ["'self'", ...getTrustedStyleOrigins()];
+if (allowInlineStylesForE2E) {
+  styleSrcTokens.push("'unsafe-inline'");
+}
+const styleSrcDirective = styleSrcTokens.join(" ");
 
 const csp = [
   "default-src 'self'",
