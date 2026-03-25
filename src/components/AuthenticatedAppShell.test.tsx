@@ -52,6 +52,9 @@ describe("AuthenticatedAppShell", () => {
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Loading");
     expect(screen.getByText("Loading profile")).toBeInTheDocument();
     expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
+    expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    expect(screen.queryByText("Inbox N/A")).not.toBeInTheDocument();
   });
 
   it("renders error chrome values from useAppShellChromeData", () => {
@@ -82,6 +85,9 @@ describe("AuthenticatedAppShell", () => {
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Unavailable");
     expect(screen.getByText("Profile unavailable")).toBeInTheDocument();
     expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
+    expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    expect(screen.queryByText("Inbox N/A")).not.toBeInTheDocument();
   });
 
   it("renders success chrome values from useAppShellChromeData", () => {
@@ -116,5 +122,8 @@ describe("AuthenticatedAppShell", () => {
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Active");
     expect(screen.getByText("Avery Collector")).toBeInTheDocument();
     expect(screen.getByText("Account active · 7 unread notifications")).toBeInTheDocument();
+    expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    expect(screen.queryByText("Inbox N/A")).not.toBeInTheDocument();
   });
 });
