@@ -41,14 +41,20 @@ describe("/login route", () => {
     await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
   });
 
-  it("covers missing-handoff empty state plus mutation-failure and rate-limited states", async () => {
+  it("shows empty-state style blocking copy for missing handoff security parameters", async () => {
     const page = await LoginPage({
       searchParams: Promise.resolve({ handoff: "waxwatch://auth/callback" }),
     });
-    const initialRender = render(page);
-    expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
-    initialRender.unmount();
 
+    render(page);
+
+    expect(screen.getByRole("heading", { name: /secure handoff required/i })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
+    expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
+  });
+
+  it("covers API errors, cooldown state, and retry-after-cooldown success path", async () => {
+    const onRedirect = vi.fn();
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -62,9 +68,10 @@ describe("/login route", () => {
           status: 429,
           headers: { "Content-Type": "application/json", "Retry-After": "20" },
         }),
-      ) as typeof fetch;
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
 
-    render(<LoginPageClient handoff={noHandoff} fetchImpl={fetchMock} />);
+    render(<LoginPageClient handoff={noHandoff} fetchImpl={fetchMock} onRedirect={onRedirect} />);
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "listener@example.com" },
@@ -77,5 +84,10 @@ describe("/login route", () => {
     fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/too many attempts\./i);
     expect(screen.getByRole("alert")).toHaveTextContent(/retry-after:\s*20s/i);
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 });
