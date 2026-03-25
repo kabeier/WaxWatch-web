@@ -164,14 +164,14 @@ export function AppShell({
 }
 
 const DEFENSIVE_UTILITY_ITEMS: TopNavUtilityItem[] = [
-  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "—" },
-  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "Unavailable" },
+  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "…" },
+  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "Loading" },
 ];
 
 const DEFENSIVE_SIDE_NAV_STATUS: SideNavStatus = {
   label: "Session",
-  value: "Profile unavailable",
-  meta: "Notifications unavailable",
+  value: "Loading profile",
+  meta: "Notifications syncing",
 };
 
 function getNonEmptyValue(value: string | undefined, fallback: string) {
