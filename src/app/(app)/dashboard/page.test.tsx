@@ -166,4 +166,43 @@ describe("/dashboard route", () => {
     fireEvent.click(screen.getByRole("button", { name: /retry watch rules/i }));
     expect(retryRules).toHaveBeenCalledTimes(1);
   });
+
+  it("shows failure messaging first, then success evidence after retry-driven refresh", () => {
+    hookMocks.notifications.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Notifications unavailable" },
+      retry: vi.fn(),
+    });
+
+    const { rerender } = render(<DashboardPage />);
+
+    expect(screen.getByText(/could not load notifications\./i)).toBeInTheDocument();
+
+    hookMocks.notifications.mockReturnValueOnce({
+      data: [
+        {
+          id: "notification-1",
+          user_id: "user-1",
+          event_type: "match_found",
+          payload: {},
+          channel: "email",
+          status: "sent",
+          is_read: false,
+          created_at: "2026-03-22T10:00:00.000Z",
+          read_at: null,
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    rerender(<DashboardPage />);
+
+    expect(screen.getByText(/match_found/i)).toBeInTheDocument();
+    expect(screen.queryByText(/could not load notifications\./i)).not.toBeInTheDocument();
+  });
 });

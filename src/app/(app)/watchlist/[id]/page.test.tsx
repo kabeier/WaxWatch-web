@@ -206,4 +206,20 @@ describe("/watchlist/[id] route", () => {
     expect(screen.queryByRole("alertdialog", { name: /disable watchlist item\?/i })).toBeNull();
     expect(disableButton).toHaveFocus();
   });
+
+  it("locks form controls while save mutation is pending", async () => {
+    state.update.mockReturnValue({
+      mutate: vi.fn(),
+      data: undefined,
+      error: null,
+      isPending: true,
+      isError: false,
+    });
+
+    render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
+    expect(screen.getByRole("button", { name: /saving watchlist updates/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^disable watchlist item$/i })).toBeDisabled();
+    expect(screen.getByRole("spinbutton", { name: /target price/i })).toBeDisabled();
+  });
 });

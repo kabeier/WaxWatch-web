@@ -86,4 +86,27 @@ describe("/login route", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("allows retry after a submit failure and then redirects on successful retry", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network down"))
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(<LoginPageClient handoff={noHandoff} fetchImpl={fetchMock} onRedirect={onRedirect} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/unable to sign in right now/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
