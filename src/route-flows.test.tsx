@@ -508,8 +508,8 @@ describe("route flow regressions", () => {
     fireEvent.change(screen.getByLabelText(/preferred currency/i), { target: { value: "US" } });
 
     expect(screen.getByLabelText(/preferred currency/i)).toHaveAttribute("aria-invalid", "true");
-    expect(screen.getByLabelText(/display name/i)).toHaveAttribute("aria-invalid", "false");
-    expect(screen.getByLabelText(/timezone/i)).toHaveAttribute("aria-invalid", "false");
+    expect(screen.getByLabelText(/display name/i)).not.toHaveAttribute("aria-invalid");
+    expect(screen.getByLabelText(/timezone/i)).not.toHaveAttribute("aria-invalid");
   });
 
   it("hides stale alert-settings success status while a new save is pending", () => {

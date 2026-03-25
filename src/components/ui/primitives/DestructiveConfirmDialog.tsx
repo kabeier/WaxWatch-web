@@ -116,14 +116,26 @@ export function DestructiveConfirmDialog({
 
       const first = focusableNodes[0];
       const last = focusableNodes[focusableNodes.length - 1];
+      const activeElement = document.activeElement;
 
-      if (event.shiftKey && document.activeElement === first) {
+      if (!activeElement || !dialogRef.current?.contains(activeElement)) {
+        event.preventDefault();
+        if (event.shiftKey) {
+          last.focus();
+          return;
+        }
+
+        first.focus();
+        return;
+      }
+
+      if (event.shiftKey && activeElement === first) {
         event.preventDefault();
         last.focus();
         return;
       }
 
-      if (!event.shiftKey && document.activeElement === last) {
+      if (!event.shiftKey && activeElement === last) {
         event.preventDefault();
         first.focus();
       }

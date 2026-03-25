@@ -117,14 +117,14 @@ describe("base ui primitives", () => {
       "search-form-error-summary search-term-error",
     );
     expect(screen.getByRole("combobox", { name: "Marketplace" })).toHaveClass("ww-select");
-    expect(screen.getByRole("combobox", { name: "Marketplace" })).toHaveAttribute(
+    expect(screen.getByRole("combobox", { name: "Marketplace" })).not.toHaveAttribute(
       "aria-invalid",
-      "false",
     );
     const checkbox = screen.getByRole("checkbox", { name: /include archived data/i });
     expect(checkbox).toBeInTheDocument();
     expect(screen.getByText("Required")).toHaveClass("ww-checkbox-row__error");
     expect(checkbox).toHaveAttribute("aria-invalid", "true");
+    expect(checkbox).toHaveAttribute("aria-errormessage", screen.getByText("Required").id);
     const checkboxDescriptionIds = checkbox.getAttribute("aria-describedby");
     expect(checkboxDescriptionIds).toBeTruthy();
     const describedByIds = checkboxDescriptionIds?.split(" ") ?? [];
@@ -161,5 +161,28 @@ describe("base ui primitives", () => {
     expect(alerts).toHaveFocus();
     await user.keyboard("{Home}");
     expect(profile).toHaveFocus();
+  });
+
+  it("preserves explicit aria-invalid states like grammar without coercing to true", () => {
+    render(
+      <>
+        <TextInput
+          aria-label="Release notes"
+          aria-invalid="grammar"
+          aria-describedby="release-note-summary"
+          errorMessageId="release-note-error"
+        />
+        <p id="release-note-summary">Check spelling and grammar.</p>
+        <p id="release-note-error">Grammar issue detected.</p>
+      </>,
+    );
+
+    const releaseNotes = screen.getByRole("textbox", { name: "Release notes" });
+    expect(releaseNotes).toHaveAttribute("aria-invalid", "grammar");
+    expect(releaseNotes).toHaveAttribute(
+      "aria-describedby",
+      "release-note-summary release-note-error",
+    );
+    expect(releaseNotes).toHaveAttribute("aria-errormessage", "release-note-error");
   });
 });

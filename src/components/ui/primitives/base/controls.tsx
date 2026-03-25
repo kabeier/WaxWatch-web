@@ -9,6 +9,17 @@ import {
 
 import { joinClassNames } from "./shared";
 
+function joinAriaIds(...ids: Array<string | null | undefined>) {
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+  return uniqueIds.length > 0 ? uniqueIds.join(" ") : undefined;
+}
+
+function isAriaInvalidState(
+  value: ComponentPropsWithoutRef<"input">["aria-invalid"],
+): value is true | "true" | "grammar" | "spelling" {
+  return value === true || value === "true" || value === "grammar" || value === "spelling";
+}
+
 type ButtonVariants = {
   variant?: "primary" | "secondary" | "destructive";
   size?: "sm" | "md" | "lg";
@@ -71,17 +82,17 @@ export function TextInput({
     "aria-errormessage": ariaErrorMessage,
     ...restProps
   } = props;
-  const shouldSetAriaInvalid = ariaInvalid !== undefined ? ariaInvalid : error;
-  const describedByIds = [ariaDescribedBy, error ? errorMessageId : null].filter(Boolean).join(" ");
-  const shouldSetAriaErrorMessage =
-    ariaErrorMessage !== undefined ? ariaErrorMessage : error ? errorMessageId : undefined;
+  const resolvedAriaInvalid = ariaInvalid ?? (error ? true : undefined);
+  const isInvalid = isAriaInvalidState(resolvedAriaInvalid);
+  const describedByIds = joinAriaIds(ariaDescribedBy, isInvalid ? errorMessageId : undefined);
+  const shouldSetAriaErrorMessage = isInvalid ? (ariaErrorMessage ?? errorMessageId) : undefined;
 
   return (
     <input
       type={type}
       className={joinClassNames("ww-input", error && "ww-input--error", className)}
-      aria-invalid={shouldSetAriaInvalid}
-      aria-describedby={describedByIds.length > 0 ? describedByIds : undefined}
+      aria-invalid={resolvedAriaInvalid}
+      aria-describedby={describedByIds}
       aria-errormessage={shouldSetAriaErrorMessage}
       {...restProps}
     />
@@ -106,16 +117,16 @@ export function Select({
     "aria-errormessage": ariaErrorMessage,
     ...restProps
   } = props;
-  const shouldSetAriaInvalid = ariaInvalid !== undefined ? ariaInvalid : error;
-  const describedByIds = [ariaDescribedBy, error ? errorMessageId : null].filter(Boolean).join(" ");
-  const shouldSetAriaErrorMessage =
-    ariaErrorMessage !== undefined ? ariaErrorMessage : error ? errorMessageId : undefined;
+  const resolvedAriaInvalid = ariaInvalid ?? (error ? true : undefined);
+  const isInvalid = isAriaInvalidState(resolvedAriaInvalid);
+  const describedByIds = joinAriaIds(ariaDescribedBy, isInvalid ? errorMessageId : undefined);
+  const shouldSetAriaErrorMessage = isInvalid ? (ariaErrorMessage ?? errorMessageId) : undefined;
 
   return (
     <select
       className={joinClassNames("ww-input", "ww-select", error && "ww-input--error", className)}
-      aria-invalid={shouldSetAriaInvalid}
-      aria-describedby={describedByIds.length > 0 ? describedByIds : undefined}
+      aria-invalid={resolvedAriaInvalid}
+      aria-describedby={describedByIds}
       aria-errormessage={shouldSetAriaErrorMessage}
       {...restProps}
     >
@@ -151,9 +162,10 @@ export function CheckboxRow({
 }: CheckboxRowProps) {
   const helperTextId = useId();
   const errorTextId = useId();
-  const ariaDescribedBy = [helperText ? helperTextId : null, errorText ? errorTextId : null]
-    .filter(Boolean)
-    .join(" ");
+  const ariaDescribedBy = joinAriaIds(
+    helperText ? helperTextId : null,
+    errorText ? errorTextId : null,
+  );
 
   return (
     <label
@@ -174,8 +186,9 @@ export function CheckboxRow({
         name={name}
         onChange={onChange}
         value={value}
-        aria-invalid={Boolean(errorText)}
-        aria-describedby={ariaDescribedBy.length > 0 ? ariaDescribedBy : undefined}
+        aria-invalid={Boolean(errorText) || undefined}
+        aria-describedby={ariaDescribedBy}
+        aria-errormessage={errorText ? errorTextId : undefined}
       />
       <span className="ww-checkbox-row__copy">
         <span className="ww-checkbox-row__label">{children}</span>
