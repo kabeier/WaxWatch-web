@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,6 +12,9 @@ import DangerSettingsPage from "../app/(app)/settings/danger/page";
 import IntegrationSettingsPage from "../app/(app)/integrations/page";
 import ProfileSettingsPage from "../app/(app)/settings/profile/page";
 import WatchlistPage from "../app/(app)/watchlist/page";
+import DashboardPage from "../app/(app)/dashboard/page";
+import WatchlistItemPage from "../app/(app)/watchlist/[id]/page";
+import { LoginPageClient } from "../app/(auth)/login/LoginPageClient";
 
 type MockQuery = {
   data: unknown;
@@ -48,8 +51,11 @@ const state: {
   saveSearchAlertMutation: MockMutation;
   createWatchRuleMutation: MockMutation;
   watchRuleDetailQuery: MockQuery;
+  watchReleaseDetailQuery: MockQuery;
   updateWatchRuleMutation: MockMutation;
   deleteWatchRuleMutation: MockMutation;
+  updateWatchReleaseMutation: MockMutation;
+  disableWatchReleaseMutation: MockMutation;
   updateProfileMutation: MockMutation;
   deactivateMutation: MockMutation;
   hardDeleteMutation: MockMutation;
@@ -97,6 +103,28 @@ const state: {
     error: null,
     retry: vi.fn(),
   },
+  watchReleaseDetailQuery: {
+    data: {
+      id: "release-1",
+      user_id: "user-1",
+      discogs_release_id: 1,
+      discogs_master_id: null,
+      match_mode: "exact_release",
+      title: "Kind of Blue",
+      artist: "Miles Davis",
+      year: 1959,
+      target_price: 25,
+      currency: "USD",
+      min_condition: "VG+",
+      is_active: true,
+      created_at: "2026-03-21T08:00:00.000Z",
+      updated_at: "2026-03-22T10:00:00.000Z",
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: vi.fn(),
+  },
   updateWatchRuleMutation: {
     data: undefined,
     isPending: false,
@@ -105,6 +133,20 @@ const state: {
     mutate: vi.fn(),
   },
   deleteWatchRuleMutation: {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  },
+  updateWatchReleaseMutation: {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  },
+  disableWatchReleaseMutation: {
     data: undefined,
     isPending: false,
     isError: false,
@@ -167,7 +209,10 @@ vi.mock("@/lib/query/hooks", () => ({
   useWatchReleasesQuery: () => state.watchReleasesQuery,
   useMeQuery: () => state.meQuery,
   useNotificationsQuery: () => state.notificationsQuery,
+  useDashboardNotificationsPreviewQuery: () => state.notificationsQuery,
   useUnreadNotificationCountQuery: () => state.unreadCountQuery,
+  useDashboardWatchReleasesPreviewQuery: () => state.watchReleasesQuery,
+  useDashboardWatchRulesPreviewQuery: () => state.watchRulesQuery,
   useSearchMutation: () => state.searchMutation,
   useSaveSearchAlertMutation: () => state.saveSearchAlertMutation,
   useCreateWatchRuleMutation: () => state.createWatchRuleMutation,
@@ -209,6 +254,11 @@ vi.mock("../app/(app)/alerts/[id]/alertDetailQueryHooks", () => ({
 
 vi.mock("../app/(app)/watchlist/watchlistQueryHooks", () => ({
   useWatchReleasesQuery: () => state.watchReleasesQuery,
+}));
+vi.mock("../app/(app)/watchlist/[id]/watchlistItemQueryHooks", () => ({
+  useWatchReleaseDetailQuery: () => state.watchReleaseDetailQuery,
+  useUpdateWatchReleaseMutation: () => state.updateWatchReleaseMutation,
+  useDisableWatchReleaseMutation: () => state.disableWatchReleaseMutation,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -292,6 +342,28 @@ beforeEach(() => {
     error: null,
     retry: vi.fn(),
   };
+  state.watchReleaseDetailQuery = {
+    data: {
+      id: "release-1",
+      user_id: "user-1",
+      discogs_release_id: 1,
+      discogs_master_id: null,
+      match_mode: "exact_release",
+      title: "Kind of Blue",
+      artist: "Miles Davis",
+      year: 1959,
+      target_price: 25,
+      currency: "USD",
+      min_condition: "VG+",
+      is_active: true,
+      created_at: "2026-03-21T08:00:00.000Z",
+      updated_at: "2026-03-22T10:00:00.000Z",
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: vi.fn(),
+  };
   state.updateWatchRuleMutation = {
     data: { id: "rule-1" },
     isPending: false,
@@ -300,6 +372,20 @@ beforeEach(() => {
     mutate: vi.fn(),
   };
   state.deleteWatchRuleMutation = {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
+  state.updateWatchReleaseMutation = {
+    data: undefined,
+    isPending: false,
+    isError: false,
+    error: null,
+    mutate: vi.fn(),
+  };
+  state.disableWatchReleaseMutation = {
     data: undefined,
     isPending: false,
     isError: false,
@@ -539,6 +625,187 @@ describe("route-level production-ready paths", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText(/unread notifications: 0\./i)).not.toBeInTheDocument();
     expect(screen.getByText(/unread count is temporarily rate limited/i)).toBeInTheDocument();
+  });
+
+  it("/dashboard success and failure evidence includes retry and cooldown behavior", () => {
+    const retryNotifications = vi.fn();
+    state.notificationsQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Notifications unavailable" },
+      retry: retryNotifications,
+    };
+    state.watchReleasesQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "Cooldown active", retryAfterSeconds: 45 },
+      retry: vi.fn(),
+    };
+
+    const { rerender } = render(<DashboardPage />);
+
+    expect(screen.getByText(/could not load notifications\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry notifications/i }));
+    expect(retryNotifications).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/recent matches are temporarily rate limited/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 45s/i })).toBeDisabled();
+
+    state.notificationsQuery = {
+      ...state.notificationsQuery,
+      data: [{ id: "n2", event_type: "match_found", is_read: false }],
+      isError: false,
+      error: null,
+    };
+    state.watchReleasesQuery = {
+      ...state.watchReleasesQuery,
+      data: [
+        {
+          id: "release-1",
+          user_id: "user-1",
+          discogs_release_id: 1,
+          discogs_master_id: null,
+          match_mode: "exact_release",
+          title: "Kind of Blue",
+          artist: "Miles Davis",
+          year: 1959,
+          target_price: 25,
+          currency: "USD",
+          min_condition: "VG+",
+          is_active: true,
+          created_at: "2026-03-21T08:00:00.000Z",
+          updated_at: "2026-03-22T10:00:00.000Z",
+        },
+      ],
+      isError: false,
+      error: null,
+    };
+    rerender(<DashboardPage />);
+
+    expect(screen.getByText(/match_found/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /kind of blue/i })).toHaveAttribute(
+      "href",
+      "/watchlist/release-1",
+    );
+  });
+
+  it("/login shows submit pending, API/rate-limit failure states, then successful redirect", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Auth unavailable." } }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Too many attempts." } }), {
+          status: 429,
+          headers: { "Content-Type": "application/json", "Retry-After": "20" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(
+      <LoginPageClient
+        handoff={{
+          returnTo: null,
+          handoffUrl: null,
+          state: null,
+          nonce: null,
+          expiresAt: null,
+          expiresAtEpochMs: null,
+          isExpired: false,
+          hasRequiredSecurityParams: false,
+        }}
+        fetchImpl={fetchMock}
+        onRedirect={onRedirect}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(screen.getByText(/signing you in/i)).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(/auth unavailable/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/too many attempts\./i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/retry-after:\s*20s/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
+  });
+
+  it("/watchlist/[id] covers load error, empty, rate-limited, and mutation-failure paths", async () => {
+    state.watchReleaseDetailQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "detail unavailable" },
+      retry: vi.fn(),
+    };
+    const updateMutate = vi.fn();
+    state.updateWatchReleaseMutation = {
+      data: undefined,
+      isPending: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "save failed" },
+      mutate: updateMutate,
+    };
+
+    const { rerender } = render(
+      await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }),
+    );
+    expect(screen.getByText(/could not load watchlist item detail\./i)).toBeInTheDocument();
+
+    state.watchReleaseDetailQuery = {
+      ...state.watchReleaseDetailQuery,
+      data: undefined,
+      isError: false,
+      error: null,
+    };
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    expect(screen.getByText(/watchlist item not found\./i)).toBeInTheDocument();
+
+    state.watchReleaseDetailQuery = {
+      ...state.watchReleaseDetailQuery,
+      isError: true,
+      error: { kind: "rate_limited", message: "slow down", retryAfterSeconds: 35 },
+    };
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    expect(screen.getByText(/retry-after:\s*35s/i)).toBeInTheDocument();
+
+    state.watchReleaseDetailQuery = {
+      ...state.watchReleaseDetailQuery,
+      data: {
+        id: "release-1",
+        user_id: "user-1",
+        discogs_release_id: 1,
+        discogs_master_id: null,
+        match_mode: "exact_release",
+        title: "Kind of Blue",
+        artist: "Miles Davis",
+        year: 1959,
+        target_price: 25,
+        currency: "USD",
+        min_condition: "VG+",
+        is_active: true,
+        created_at: "2026-03-21T08:00:00.000Z",
+        updated_at: "2026-03-22T10:00:00.000Z",
+      },
+      isError: false,
+      error: null,
+    };
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(updateMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/could not save watchlist item updates\./i)).toBeInTheDocument();
   });
 
   it("/settings/alerts success", () => {
