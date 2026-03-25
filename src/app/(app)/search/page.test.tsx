@@ -56,6 +56,27 @@ describe("/search route", () => {
     expect(providers).toHaveFocus();
   });
 
+  it("wires save-alert field errors and keyboard traversal semantics", async () => {
+    const user = userEvent.setup();
+    render(<SearchPage />);
+
+    const alertName = screen.getByRole("textbox", { name: /alert name/i });
+    const pollInterval = screen.getByRole("spinbutton", { name: /poll interval/i });
+
+    alertName.focus();
+    await user.tab();
+    expect(pollInterval).toHaveFocus();
+
+    await user.clear(alertName);
+
+    expect(alertName).toHaveAttribute("aria-invalid", "true");
+    expect(alertName).toHaveAttribute("aria-errormessage", "save-alert-name-error");
+    expect(alertName).toHaveAttribute(
+      "aria-describedby",
+      "save-alert-errors save-alert-name-error",
+    );
+  });
+
   it("announces async search failures through alert semantics", () => {
     hooks.search.mockReturnValue({
       mutate: vi.fn(),

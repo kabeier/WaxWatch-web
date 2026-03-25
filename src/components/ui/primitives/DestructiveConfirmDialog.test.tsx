@@ -84,6 +84,22 @@ describe("DestructiveConfirmDialog", () => {
     expect(dialog).toHaveFocus();
   });
 
+  it("moves focus into the dialog immediately when opened in a pending state", () => {
+    render(
+      <DestructiveConfirmDialog
+        open
+        title="Disable item?"
+        description="Please wait while request is in progress."
+        confirmLabel="Disable"
+        pending
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("alertdialog", { name: "Disable item?" })).toHaveFocus();
+  });
+
   it("re-captures focus when it drifts outside of the dialog", async () => {
     render(
       <>
