@@ -41,14 +41,19 @@ describe("/login route", () => {
     await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
   });
 
-  it("covers missing-handoff empty state plus mutation-failure and rate-limited states", async () => {
+  it("shows empty-state style blocking copy for missing handoff security parameters", async () => {
     const page = await LoginPage({
       searchParams: Promise.resolve({ handoff: "waxwatch://auth/callback" }),
     });
-    const initialRender = render(page);
-    expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
-    initialRender.unmount();
 
+    render(page);
+
+    expect(screen.getByRole("heading", { name: /secure handoff required/i })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
+    expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
+  });
+
+  it("covers API errors and cooldown state messaging", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -77,5 +82,8 @@ describe("/login route", () => {
     fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/too many attempts\./i);
     expect(screen.getByRole("alert")).toHaveTextContent(/retry-after:\s*20s/i);
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeEnabled();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

@@ -82,20 +82,19 @@ describe("/dashboard route", () => {
     expect(screen.getByText(/no notifications yet/i)).toBeInTheDocument();
   });
 
-  it("shows error, empty, and rate-limited states with retry affordances", () => {
-    const retryNotifications = vi.fn();
+  it("shows empty-state copy across dashboard cards", () => {
     hookMocks.notifications.mockReturnValueOnce({
-      data: undefined,
+      data: [],
       isLoading: false,
-      isError: true,
-      error: { kind: "unknown_error", message: "Notifications unavailable" },
-      retry: retryNotifications,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
     });
     hookMocks.releases.mockReturnValueOnce({
-      data: undefined,
+      data: [],
       isLoading: false,
-      isError: true,
-      error: { kind: "rate_limited", message: "Cooldown active", retryAfterSeconds: 45 },
+      isError: false,
+      error: null,
       retry: vi.fn(),
     });
     hookMocks.rules.mockReturnValueOnce({
@@ -108,14 +107,63 @@ describe("/dashboard route", () => {
 
     render(<DashboardPage />);
 
+    expect(screen.getByText(/recent matches will appear here/i)).toBeInTheDocument();
+    expect(screen.getByText(/no recent matches yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no watch rules yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no notifications yet/i)).toBeInTheDocument();
+  });
+
+  it("shows API error and cooldown states with disabled and retry actions", () => {
+    const retryNotifications = vi.fn();
+    const retryUnreadCount = vi.fn();
+    const retryReleases = vi.fn();
+    const retryRules = vi.fn();
+
+    hookMocks.notifications.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Notifications unavailable" },
+      retry: retryNotifications,
+    });
+    hookMocks.unreadCount.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Unread unavailable" },
+      retry: retryUnreadCount,
+    });
+    hookMocks.releases.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "Cooldown active", retryAfterSeconds: 45 },
+      retry: retryReleases,
+    });
+    hookMocks.rules.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Rules unavailable" },
+      retry: retryRules,
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByText(/unread count unavailable/i)).toBeInTheDocument();
+
     expect(screen.getByText(/could not load notifications\./i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /retry notifications/i }));
     expect(retryNotifications).toHaveBeenCalledTimes(1);
+    expect(retryUnreadCount).toHaveBeenCalledTimes(1);
 
     expect(screen.getByText(/recent matches are temporarily rate limited/i)).toBeInTheDocument();
     expect(screen.getByText(/retry-after:\s*45s/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /retry available in 45s/i })).toBeDisabled();
+    expect(retryReleases).not.toHaveBeenCalled();
 
-    expect(screen.getByText(/no watch rules yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/could not load watch rules\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry watch rules/i }));
+    expect(retryRules).toHaveBeenCalledTimes(1);
   });
 });

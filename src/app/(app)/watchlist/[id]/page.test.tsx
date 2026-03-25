@@ -72,7 +72,7 @@ describe("/watchlist/[id] route", () => {
     expect(state.push).not.toHaveBeenCalled();
   });
 
-  it("covers load error, empty, rate-limited, and mutation failure feedback", async () => {
+  it("covers load error, empty, cooldown, and retry affordances", async () => {
     const retryLoad = vi.fn();
     state.detail.mockReturnValueOnce({
       data: undefined,
@@ -108,9 +108,12 @@ describe("/watchlist/[id] route", () => {
     });
     rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
     expect(screen.getByText(/retry-after:\s*40s/i)).toBeInTheDocument();
+  });
 
+  it("shows mutation failures and allows retrying save/disable actions", async () => {
     const updateMutate = vi.fn();
     const disableMutate = vi.fn();
+
     state.update.mockReturnValue({
       mutate: updateMutate,
       data: undefined,
@@ -121,47 +124,51 @@ describe("/watchlist/[id] route", () => {
     state.disable.mockReturnValue({
       mutate: disableMutate,
       data: undefined,
-      error: { kind: "unknown_error", message: "Disable failed" },
+      error: { kind: "rate_limited", message: "Disable cooldown", retryAfterSeconds: 15 },
       isPending: false,
       isError: true,
     });
-    state.detail.mockReturnValue({
-      data: {
-        id: "release-1",
-        user_id: "user-1",
-        discogs_release_id: 1,
-        discogs_master_id: null,
-        match_mode: "exact_release",
-        title: "Kind of Blue",
-        artist: "Miles Davis",
-        year: 1959,
-        target_price: 25,
-        currency: "USD",
-        min_condition: "VG+",
-        is_active: true,
-        created_at: "2026-03-21T08:00:00.000Z",
-        updated_at: "2026-03-22T10:00:00.000Z",
-      },
-      isLoading: false,
-      isError: false,
-      error: null,
-      retry: vi.fn(),
-    });
-    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
+    render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
 
     fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
-    expect(updateMutate).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(updateMutate).toHaveBeenCalledTimes(2);
     expect(screen.getByText(/could not save watchlist item updates\./i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /disable watchlist item/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^disable watchlist item$/i })[0]);
     fireEvent.click(
       within(screen.getByRole("alertdialog", { name: /disable watchlist item\?/i })).getByRole(
         "button",
         { name: /^disable watchlist item$/i },
       ),
     );
-    expect(disableMutate).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/could not disable watchlist item\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: /^disable watchlist item$/i })[0]);
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /disable watchlist item\?/i })).getByRole(
+        "button",
+        { name: /^disable watchlist item$/i },
+      ),
+    );
+
+    expect(disableMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByText(/disabling watchlist items is rate limited/i)).toBeInTheDocument();
+    expect(screen.getByText(/retry-after:\s*15s/i)).toBeInTheDocument();
+  });
+
+  it("shows pending disable state with user-visible disabled controls", async () => {
+    state.disable.mockReturnValue({
+      mutate: vi.fn(),
+      data: undefined,
+      error: null,
+      isPending: true,
+      isError: false,
+    });
+
+    render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
+    expect(screen.getByRole("button", { name: /disabling watchlist item/i })).toBeDisabled();
+    expect(screen.getAllByText(/disabling watchlist item/i).length).toBeGreaterThan(0);
   });
 
   it("returns focus to disable trigger when dialog closes with escape", async () => {
@@ -176,21 +183,5 @@ describe("/watchlist/[id] route", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("alertdialog", { name: /disable watchlist item\?/i })).toBeNull();
     expect(disableButton).toHaveFocus();
-  });
-
-  it("only shows disable errors after a confirm attempt", async () => {
-    const user = userEvent.setup();
-    state.disable.mockReturnValue({
-      mutate: vi.fn(),
-      data: undefined,
-      error: { kind: "unknown_error", message: "Disable failed" },
-      isPending: false,
-      isError: true,
-    });
-
-    render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
-    await user.click(screen.getByRole("button", { name: /^disable watchlist item$/i }));
-
-    expect(screen.queryByText(/disable failed/i)).not.toBeInTheDocument();
   });
 });

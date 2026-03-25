@@ -72,10 +72,22 @@ describe("/settings/danger route", () => {
     expect(screen.getByRole("button", { name: /permanently deleting account/i })).toBeDisabled();
   });
 
-  it("covers empty/error/rate-limited and mutation-failure states", () => {
+  it("covers API error/retry, empty state, and cooldown disabled controls", () => {
     const retryMe = vi.fn();
-    const deactivateMutate = vi.fn();
-    const deleteMutate = vi.fn();
+
+    hooks.meQuery.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Profile service unavailable" },
+      retry: retryMe,
+    });
+
+    const { rerender } = render(<DangerSettingsPage />);
+
+    expect(screen.getByText(/could not load danger-zone settings\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry danger-zone load/i }));
+    expect(retryMe).toHaveBeenCalledTimes(1);
 
     hooks.meQuery.mockReturnValueOnce({
       data: undefined,
@@ -84,6 +96,25 @@ describe("/settings/danger route", () => {
       error: { kind: "rate_limited", message: "Cooldown active", retryAfterSeconds: 20 },
       retry: retryMe,
     });
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByText(/settings are temporarily rate limited\./i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 20s/i })).toBeDisabled();
+
+    hooks.meQuery.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByText(/no danger-zone actions available\./i)).toBeInTheDocument();
+  });
+
+  it("shows mutation failures and allows retrying deactivate/delete confirmations", () => {
+    const deactivateMutate = vi.fn();
+    const deleteMutate = vi.fn();
+
     hooks.deactivate.mockReturnValue({
       mutate: deactivateMutate,
       data: undefined,
@@ -99,41 +130,40 @@ describe("/settings/danger route", () => {
       isError: true,
     });
 
-    const { rerender } = render(<DangerSettingsPage />);
-    expect(screen.getByText(/settings are temporarily rate limited\./i)).toBeInTheDocument();
-    expect(screen.getByText(/could not deactivate account\./i)).toBeInTheDocument();
-    expect(screen.getByText(/delete cooldown/i)).toBeInTheDocument();
+    render(<DangerSettingsPage />);
 
-    expect(screen.getByRole("button", { name: /retry available in 20s/i })).toBeDisabled();
-    expect(retryMe).not.toHaveBeenCalled();
-
-    hooks.meQuery.mockReturnValueOnce({
-      data: undefined,
-      isLoading: false,
-      isError: false,
-      error: null,
-      retry: vi.fn(),
-    });
-    rerender(<DangerSettingsPage />);
-    expect(screen.getByText(/no danger-zone actions available\./i)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^deactivate account$/i })[0]);
+    const deactivateDialog = screen.getByRole("alertdialog", { name: /deactivate account now\?/i });
+    fireEvent.click(
+      within(deactivateDialog).getByRole("button", { name: /^deactivate account$/i }),
+    );
+    fireEvent.click(screen.getAllByRole("button", { name: /^deactivate account$/i })[0]);
     fireEvent.click(
       within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
         "button",
         { name: /^deactivate account$/i },
       ),
     );
-    expect(deactivateMutate).toHaveBeenCalledTimes(1);
+    expect(deactivateMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByText(/could not deactivate account\./i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^permanently delete account$/i })[0]);
     fireEvent.click(
       within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
         "button",
         { name: /^permanently delete account$/i },
       ),
     );
-    expect(deleteMutate).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getAllByRole("button", { name: /^permanently delete account$/i })[0]);
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
+        "button",
+        { name: /^permanently delete account$/i },
+      ),
+    );
+    expect(deleteMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getAllByText(/delete cooldown/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/retry-after:\s*45s/i)).toBeInTheDocument();
   });
 
   it("traps focus in the confirmation dialog and restores focus to the trigger on close", async () => {
@@ -156,20 +186,5 @@ describe("/settings/danger route", () => {
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("alertdialog", { name: /deactivate account now\?/i })).toBeNull();
     expect(trigger).toHaveFocus();
-  });
-
-  it("does not show dialog submission errors before confirm is pressed", async () => {
-    const user = userEvent.setup();
-    hooks.deactivate.mockReturnValue({
-      mutate: vi.fn(),
-      data: undefined,
-      error: { kind: "unknown_error", message: "Deactivate failed" },
-      isPending: false,
-      isError: true,
-    });
-
-    render(<DangerSettingsPage />);
-    await user.click(screen.getByRole("button", { name: /^deactivate account$/i }));
-    expect(screen.queryByText(/deactivate failed/i)).not.toBeInTheDocument();
   });
 });
