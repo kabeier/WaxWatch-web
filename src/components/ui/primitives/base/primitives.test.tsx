@@ -14,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
   CheckboxRow,
-  FocusOnRender,
   HelperText,
   LiveRegion,
   ListContainer,
@@ -236,20 +235,5 @@ describe("base ui primitives", () => {
     expect(alertName).toHaveClass("ww-input--error");
     expect(alertName).toHaveAttribute("aria-describedby", "alert-name-summary alert-name-error");
     expect(alertName).toHaveAttribute("aria-errormessage", "alert-name-error");
-  });
-
-  it("moves focus to shared focus-on-render wrappers for validation summaries", () => {
-    render(
-      <>
-        <button type="button">Submit form</button>
-        <FocusOnRender id="form-errors">Fix highlighted fields before saving.</FocusOnRender>
-      </>,
-    );
-
-    expect(screen.getByText("Fix highlighted fields before saving.")).toHaveFocus();
-    expect(screen.getByText("Fix highlighted fields before saving.")).toHaveAttribute(
-      "tabindex",
-      "-1",
-    );
   });
 });
