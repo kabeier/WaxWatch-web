@@ -10,7 +10,9 @@ async function mockJson(
   status = 200,
   method?: "GET" | "POST" | "PATCH" | "DELETE",
 ) {
-  await page.route(`**${pathname}`, async (route) => {
+  const resolvedPathname = resolveApiMockPath(pathname);
+
+  await page.route(`**${resolvedPathname}`, async (route) => {
     if (method && route.request().method() !== method) {
       await route.fallback();
       return;
@@ -21,6 +23,24 @@ async function mockJson(
       body: JSON.stringify(payload),
     });
   });
+}
+
+function resolveApiMockPath(pathname: string): string {
+  const configuredApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  if (!configuredApiBaseUrl || !pathname.startsWith("/api/")) {
+    return pathname;
+  }
+
+  if (configuredApiBaseUrl.startsWith("/")) {
+    return pathname.replace(/^\/api/, configuredApiBaseUrl);
+  }
+
+  try {
+    const url = new URL(configuredApiBaseUrl);
+    return pathname.replace(/^\/api/, url.pathname);
+  } catch {
+    return pathname;
+  }
 }
 
 async function mockChromeData(page: Page) {
