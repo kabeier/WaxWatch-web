@@ -167,7 +167,9 @@ describe("/watchlist/[id] route", () => {
 
     render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
 
-    expect(screen.getByRole("button", { name: /disabling watchlist item/i })).toBeDisabled();
+    for (const button of screen.getAllByRole("button", { name: /disabling watchlist item/i })) {
+      expect(button).toBeDisabled();
+    }
     expect(screen.getAllByText(/disabling watchlist item/i).length).toBeGreaterThan(0);
   });
 
@@ -190,7 +192,7 @@ describe("/watchlist/[id] route", () => {
     render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
 
     expect(screen.getByRole("status")).toHaveTextContent(/success: watchlist item updated\./i);
-    expect(screen.getByRole("alert")).toHaveTextContent(/could not disable watchlist item\./i);
+    expect(screen.getByText(/could not disable watchlist item\./i)).toBeInTheDocument();
   });
 
   it("supports mutation retry flow from save failure to save success messaging", async () => {
@@ -225,6 +227,74 @@ describe("/watchlist/[id] route", () => {
     expect(mutate).toHaveBeenCalledTimes(2);
     expect(screen.getByRole("status")).toHaveTextContent(/success: watchlist item updated\./i);
     expect(screen.queryByText(/could not save watchlist item updates\./i)).not.toBeInTheDocument();
+  });
+
+  it("retries disable mutation after a failure and then redirects on successful retry", async () => {
+    const disableMutate = vi.fn();
+    state.disable.mockReturnValue({
+      mutate: disableMutate,
+      data: undefined,
+      error: { kind: "unknown_error", message: "Disable failed" },
+      isPending: false,
+      isError: true,
+    });
+
+    const { rerender } = render(
+      await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }),
+    );
+
+    fireEvent.click(screen.getAllByRole("button", { name: /^disable watchlist item$/i })[0]);
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /disable watchlist item\?/i })).getAllByRole(
+        "button",
+        { name: /^disable watchlist item$/i },
+      )[0],
+    );
+    expect(disableMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/could not disable watchlist item\./i)).toBeInTheDocument();
+    expect(state.push).not.toHaveBeenCalled();
+
+    state.disable.mockReturnValue({
+      mutate: disableMutate,
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^disable watchlist item$/i })[0]);
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /disable watchlist item\?/i })).getAllByRole(
+        "button",
+        { name: /^disable watchlist item$/i },
+      )[0],
+    );
+    expect(disableMutate).toHaveBeenCalledTimes(2);
+
+    state.disable.mockReturnValue({
+      mutate: disableMutate,
+      data: undefined,
+      error: null,
+      isPending: true,
+      isError: false,
+    });
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    for (const button of screen.getAllByRole("button", { name: /disabling watchlist item/i })) {
+      expect(button).toBeDisabled();
+    }
+    expect(state.push).not.toHaveBeenCalled();
+
+    state.disable.mockReturnValue({
+      mutate: disableMutate,
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
+    expect(state.push).toHaveBeenCalledWith("/watchlist");
+    expect(state.refresh).toHaveBeenCalledTimes(1);
   });
 
   it("returns focus to disable trigger when dialog closes with escape", async () => {

@@ -167,4 +167,40 @@ describe("/login route", () => {
     await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("captures blocked handoff failure evidence before showing rate-limited retry and eventual redirect success", async () => {
+    const blockedPage = await LoginPage({
+      searchParams: Promise.resolve({ handoff: "waxwatch://auth/callback", state: "state-only" }),
+    });
+    const { unmount } = render(blockedPage);
+    expect(screen.getByRole("heading", { name: /secure handoff required/i })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
+    expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
+    unmount();
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Too many attempts." } }), {
+          status: 429,
+          headers: { "Content-Type": "application/json", "Retry-After": "10" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(<LoginPageClient handoff={noHandoff} fetchImpl={fetchMock} onRedirect={onRedirect} />);
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/too many attempts\./i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/retry-after:\s*10s/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
