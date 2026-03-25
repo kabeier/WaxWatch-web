@@ -10,7 +10,8 @@ Outcome in this environment: **partially green (infrastructure/network limited)*
 - ✅ `npm run typecheck`: passed.
 - ✅ `npm run lint`: passed.
 - ✅ `npm run format:check`: passed.
-- ✅ `NODE_ENV=production ... npm run build` passed env-contract prebuild validation.
+- ✅ `NODE_ENV=production ... npm run prebuild:prod-env`: passed (same-origin API + CSP standalone gate checks).
+- ✅ `NODE_ENV=production ... npm run build` passed env-contract prebuild validation (`npm run prebuild` hook).
 - ❌ `NODE_ENV=production ... npm run build`: failed because Next.js attempted to fetch missing SWC binary `@next/swc-linux-x64-gnu` and the environment could not reach the package host (`ENETUNREACH`).
 - ⚠️ `npm run a11y:smoke`: failed downstream because `npm run start` requires `.next/standalone/server.js`, which is only produced after a successful build.
 - ⚠️ `npm run docs:route-status-gate`: skipped in local workspace context (`GITHUB_BASE_REF` not set by default; with `GITHUB_BASE_REF=main`, gate still skips because `origin` remote is unavailable).

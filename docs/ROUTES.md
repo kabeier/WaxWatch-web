@@ -107,7 +107,8 @@ Result in this workspace: **partially green (infrastructure/network limited)**.
 
 - ✅ `npm run test:run` passed (48/48 files, 364/364 tests).
 - ✅ `npm run typecheck`, `npm run lint`, and `npm run format:check` all passed.
-- ✅ `NODE_ENV=production ... npm run build` passed env-contract prebuild validation.
+- ✅ `NODE_ENV=production ... npm run prebuild:prod-env` passed (same-origin API + CSP standalone gate checks).
+- ✅ `NODE_ENV=production ... npm run build` passed env-contract prebuild validation (`npm run prebuild` hook).
 - ❌ `NODE_ENV=production ... npm run build` failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH` fetching `@next/swc-linux-x64-gnu`).
 - ⚠️ `npm run a11y:smoke` could not complete because production start requires build output (`.next/standalone/server.js`), which is absent after the failed build.
 - ⚠️ `npm run docs:route-status-gate` skips in this workspace context (no default `GITHUB_BASE_REF`; with `GITHUB_BASE_REF=main`, no `origin` remote is available to fetch base ref).
