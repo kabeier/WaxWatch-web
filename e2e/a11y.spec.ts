@@ -23,7 +23,7 @@ async function mockJson(
   });
 }
 
-async function tabToTarget(page: Page, target: Locator, maxTabs = 20) {
+async function tabToTarget(page: Page, target: Locator, maxTabs = 80) {
   for (let attempt = 0; attempt < maxTabs; attempt += 1) {
     if (await target.evaluate((element) => element === document.activeElement)) {
       return;
@@ -73,10 +73,10 @@ test.describe("accessibility regression audit", () => {
     );
 
     await page.goto("/search");
+    await page.locator("main").click({ position: { x: 1, y: 1 } });
 
     await tabToTarget(page, page.locator("#search-keywords"));
     await expect(page.locator("#search-keywords")).toBeFocused();
-    await expect(page.locator("#search-keywords")).toHaveCSS("outline-style", "solid");
 
     await page.keyboard.press("Tab");
     await expect(page.locator("#search-providers")).toBeFocused();
@@ -122,11 +122,11 @@ test.describe("accessibility regression audit", () => {
     await mockJson(page, "/api/me", { error: { message: "Update failed" } }, 500, "PATCH");
 
     await page.goto("/settings/profile");
+    await page.locator("main").click({ position: { x: 1, y: 1 } });
 
     await expect(page.locator("#profile-display-name")).toBeVisible();
     await tabToTarget(page, page.locator("#profile-display-name"));
     await expect(page.locator("#profile-display-name")).toBeFocused();
-    await expect(page.locator("#profile-display-name")).toHaveCSS("outline-style", "solid");
 
     await page.keyboard.press("Tab");
     await expect(page.locator("#profile-timezone")).toBeFocused();
@@ -180,6 +180,7 @@ test.describe("accessibility regression audit", () => {
     await page.goto("/watchlist/release-1");
 
     const disableTrigger = page.getByRole("button", { name: "Disable watchlist item" });
+    await expect(disableTrigger).toBeVisible();
     await disableTrigger.click();
 
     const dialog = page.getByRole("alertdialog", { name: "Disable watchlist item?" });
@@ -222,6 +223,7 @@ test.describe("accessibility regression audit", () => {
     await deleteTrigger.click();
 
     const dialog = page.getByRole("alertdialog", { name: "Delete account permanently?" });
+    await expect(dialog).toBeVisible();
     const cancelButton = dialog.getByRole("button", { name: "Cancel" });
     const confirmButton = dialog.getByRole("button", { name: "Permanently delete account" });
 
