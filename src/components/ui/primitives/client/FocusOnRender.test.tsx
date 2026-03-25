@@ -26,4 +26,31 @@ describe("FocusOnRender", () => {
     input.focus();
     expect(input).toHaveFocus();
   });
+
+  it("re-focuses when focusKey changes while enabled", () => {
+    const { rerender } = render(
+      <>
+        <button type="button">Trigger</button>
+        <FocusOnRender id="form-errors" focusKey={0}>
+          Fix highlighted fields.
+        </FocusOnRender>
+      </>,
+    );
+
+    const trigger = screen.getByRole("button", { name: "Trigger" });
+    trigger.focus();
+    expect(trigger).toHaveFocus();
+
+    rerender(
+      <>
+        <button type="button">Trigger</button>
+        <FocusOnRender id="form-errors" focusKey={1}>
+          Fix highlighted fields.
+        </FocusOnRender>
+      </>,
+    );
+
+    const summary = screen.getByText("Fix highlighted fields.");
+    expect(summary).toHaveFocus();
+  });
 });

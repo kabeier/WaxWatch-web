@@ -4,9 +4,10 @@ import { useEffect, useRef, type ComponentPropsWithoutRef } from "react";
 
 type FocusOnRenderProps = ComponentPropsWithoutRef<"div"> & {
   enabled?: boolean;
+  focusKey?: string | number;
 };
 
-export function FocusOnRender({ enabled = true, ...props }: FocusOnRenderProps) {
+export function FocusOnRender({ enabled = true, focusKey, ...props }: FocusOnRenderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -15,7 +16,7 @@ export function FocusOnRender({ enabled = true, ...props }: FocusOnRenderProps) 
     }
 
     containerRef.current?.focus();
-  }, [enabled]);
+  }, [enabled, focusKey]);
 
   return <div ref={containerRef} tabIndex={-1} {...props} />;
 }

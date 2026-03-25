@@ -58,6 +58,8 @@ export default function SearchWorkbench() {
   const [lastSubmittedQuery, setLastSubmittedQuery] = useState<SearchRequest | null>(null);
   const [searchSubmitAttempted, setSearchSubmitAttempted] = useState(false);
   const [saveAlertSubmitAttempted, setSaveAlertSubmitAttempted] = useState(false);
+  const [searchSubmitAttemptCount, setSearchSubmitAttemptCount] = useState(0);
+  const [saveAlertSubmitAttemptCount, setSaveAlertSubmitAttemptCount] = useState(0);
 
   const page = Number(pageInput);
   const pageSize = Number(pageSizeInput);
@@ -141,7 +143,11 @@ export default function SearchWorkbench() {
       </div>
 
       {searchErrors.length > 0 ? (
-        <FocusOnRender id="search-form-errors" enabled={searchSubmitAttempted}>
+        <FocusOnRender
+          id="search-form-errors"
+          enabled={searchSubmitAttempted}
+          focusKey={searchSubmitAttemptCount}
+        >
           <StateError
             title="Search validation issue"
             message="Please fix search validation issues before submitting."
@@ -158,6 +164,7 @@ export default function SearchWorkbench() {
           event.preventDefault();
           if (searchErrors.length > 0) {
             setSearchSubmitAttempted(true);
+            setSearchSubmitAttemptCount((current) => current + 1);
             return;
           }
 
@@ -241,7 +248,7 @@ export default function SearchWorkbench() {
             ) : null}
           </label>
         </div>
-        <Button type="submit" disabled={isBusy || searchErrors.length > 0}>
+        <Button type="submit" disabled={isBusy}>
           {searchMutation.isPending ? "Running search…" : "Run search"}
         </Button>
       </form>
@@ -331,7 +338,11 @@ export default function SearchWorkbench() {
       ) : null}
 
       {saveAlertErrors.length > 0 ? (
-        <FocusOnRender id="save-alert-errors" enabled={saveAlertSubmitAttempted}>
+        <FocusOnRender
+          id="save-alert-errors"
+          enabled={saveAlertSubmitAttempted}
+          focusKey={saveAlertSubmitAttemptCount}
+        >
           <StateError
             title="Save-alert validation issue"
             message="Please fix save-alert validation issues before submitting."
@@ -349,6 +360,11 @@ export default function SearchWorkbench() {
           if (saveAlertErrors.length > 0 || searchErrors.length > 0) {
             if (saveAlertErrors.length > 0) {
               setSaveAlertSubmitAttempted(true);
+              setSaveAlertSubmitAttemptCount((current) => current + 1);
+            }
+            if (searchErrors.length > 0) {
+              setSearchSubmitAttempted(true);
+              setSearchSubmitAttemptCount((current) => current + 1);
             }
             return;
           }

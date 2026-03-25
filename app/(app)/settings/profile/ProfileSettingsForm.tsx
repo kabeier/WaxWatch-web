@@ -31,6 +31,7 @@ export default function ProfileSettingsForm() {
   const updateProfileMutation = useUpdateProfileMutation();
   const [draft, setDraft] = useState<ProfileDraft>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [submitAttemptCount, setSubmitAttemptCount] = useState(0);
 
   const displayName = draft.displayName ?? meQuery.data?.display_name ?? "";
   const timezone = draft.timezone ?? meQuery.data?.preferences?.timezone ?? "UTC";
@@ -69,7 +70,6 @@ export default function ProfileSettingsForm() {
     !isFormReady ||
     meQuery.isLoading ||
     updateProfileMutation.isPending ||
-    Boolean(validationMessage) ||
     Boolean(rateLimitedLoadError);
 
   const savePayload = {
@@ -126,7 +126,11 @@ export default function ProfileSettingsForm() {
       ) : null}
 
       {validationMessage ? (
-        <FocusOnRender id="profile-settings-form-errors" enabled={submitAttempted}>
+        <FocusOnRender
+          id="profile-settings-form-errors"
+          enabled={submitAttempted}
+          focusKey={submitAttemptCount}
+        >
           <StateError
             title="Profile validation issue"
             message="Please fix profile validation issues before saving."
@@ -145,7 +149,14 @@ export default function ProfileSettingsForm() {
           if (isSaveDisabled) {
             if (validationMessage) {
               setSubmitAttempted(true);
+              setSubmitAttemptCount((current) => current + 1);
             }
+            return;
+          }
+
+          if (validationMessage) {
+            setSubmitAttempted(true);
+            setSubmitAttemptCount((current) => current + 1);
             return;
           }
 
