@@ -101,13 +101,14 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ## Verification lock (2026-03-25)
 
-After the parallel streams merge, verification was rerun on **March 25, 2026** with the requested CI/release checks (`npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build`, `npm run a11y:smoke`, and `npm run docs:route-status-gate`).
+Verification was rerun on **March 25, 2026** with the requested CI/release-capable gates.
 
-Result: **partially green** in this workspace.
+Result in this workspace: **partially green**.
 
-- ✅ Tests/typecheck/lint/format checks passed (`npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`).
-- ❌ `npm run build` failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH`).
-- ❌ `npm run a11y:smoke` failed because `.next/standalone/server.js` is unavailable when build fails.
-- ⚠️ `npm run docs:route-status-gate` self-skipped because `GITHUB_BASE_REF` is not set (and this workspace has no `origin/<base-ref>` to compare).
+- ✅ `npm run test:run`, `npm run typecheck`, `npm run lint`, and `npm run format:check` passed.
+- ✅ `npm run prebuild:prod-env` (with explicit production env values) passed.
+- ❌ `npm run build` (with explicit production env values) failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH`).
+- ❌ `npm run a11y:smoke` (with explicit production env values) failed because `.next/standalone/server.js` is unavailable when build fails.
+- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate` self-skipped because `origin/main` could not be fetched from this workspace.
 
-Since the release-capable gate run did not complete end-to-end, keep route status/docs unfrozen for now and only mark a frontend release-candidate baseline after a fully green rerun in CI/release infrastructure.
+Since the release-capable gate run did not complete end-to-end, keep route readiness claims tied to this partial result and only treat the run as release-candidate evidence after a fully green rerun in CI/release infrastructure.

@@ -2,7 +2,7 @@
 
 ## Verification lock (2026-03-25)
 
-After the parallel streams merge, verification was rerun in this workspace on **March 25, 2026** using the requested CI/release checks (`npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build`, `npm run a11y:smoke`, and `npm run docs:route-status-gate`).
+Verification was rerun in this workspace on **March 25, 2026** for the requested CI/release-capable gates.
 
 Outcome in this environment: **partially green**.
 
@@ -10,11 +10,12 @@ Outcome in this environment: **partially green**.
 - ✅ `npm run typecheck`: passed.
 - ✅ `npm run lint`: passed.
 - ✅ `npm run format:check`: passed.
-- ❌ `npm run build`: failed because Next.js could not fetch/install SWC binaries in this environment (`ENETUNREACH` while downloading `@next/swc-linux-x64-gnu`).
-- ❌ `npm run a11y:smoke`: failed because production start requires `.next/standalone/server.js`, which is not produced when build fails.
-- ⚠️ `npm run docs:route-status-gate`: self-skipped because `GITHUB_BASE_REF` is not set in this workspace (and there is no `origin` remote for base-ref comparison).
+- ✅ `npm run prebuild:prod-env` (with explicit production env values): passed.
+- ❌ `npm run build` (with explicit production env values): failed because Next.js could not fetch/install SWC binaries in this environment (`ENETUNREACH` while downloading `@next/swc-linux-x64-gnu`).
+- ❌ `npm run a11y:smoke` (with explicit production env values): failed because production start requires `.next/standalone/server.js`, which is not produced when build fails.
+- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate`: self-skipped because this workspace cannot fetch `origin/main` (`origin` remote unavailable).
 
-Because build + a11y smoke did not pass end-to-end in this environment, route status/docs remain **unfrozen** and this run is **not** a frontend release-candidate baseline.
+Because build + a11y smoke did not pass end-to-end here, this workspace run is **not** a release-candidate baseline.
 
 ## Developer quickstart (read this first)
 
