@@ -101,10 +101,10 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ## Verification lock (2026-03-25)
 
-The route summary in this file is locked to outcomes from a full verification-gate rerun re-verified in this workspace on March 25, 2026:
+The route summary in this file is locked to a release-gate rerun executed in this workspace on March 25, 2026.
 
-- Passed: `npm run test`, `npm run typecheck`, `npm run lint`, `npm run format:check`.
+- Passed: `npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`.
 - Route gate script executed: `npm run docs:route-status-gate` (reported skip because `GITHUB_BASE_REF` is not set outside PR/CI).
-- Not completed here: `npm run build` was run with production-safe env values but failed when Next.js attempted SWC download/lockfile patching (`ENETUNREACH`), and therefore `npm run a11y:smoke` failed because `npm run start` requires `.next/standalone/server.js`.
+- Environment-limited/pending: `npm run build` passed `prebuild` but failed while Next.js attempted SWC download/lockfile patching (`ENETUNREACH`), and `npm run a11y:smoke` then failed because `npm run start` requires `.next/standalone/server.js`.
 
-Treat `docs/DEVELOPER_REFERENCE.md` as the canonical matrix, and consider production-build/a11y confirmation still pending until those two gates pass in a network-capable CI or release environment.
+Treat `docs/DEVELOPER_REFERENCE.md` as the canonical matrix and keep this summary synchronized in the same PR; move both docs to a fully completed verification lock only after `build` and `a11y:smoke` pass in network-capable CI/release infrastructure.
