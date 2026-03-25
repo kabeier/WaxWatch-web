@@ -101,13 +101,13 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ## Verification lock (2026-03-25)
 
-Verification was rerun on **March 25, 2026** with the requested CI/release checks (`npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build`, `npm run a11y:smoke`, and `npm run docs:route-status-gate`).
+After the parallel streams merge, verification was rerun on **March 25, 2026** with the requested CI/release checks (`npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build`, `npm run a11y:smoke`, and `npm run docs:route-status-gate`).
 
 Result: **partially green** in this workspace.
 
 - ✅ Tests/typecheck/lint/format checks passed (`npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`).
-- ❌ `npm run build` failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH`), and direct `@next/swc-*` install attempts were blocked (`403 Forbidden`).
+- ❌ `npm run build` failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH`).
 - ❌ `npm run a11y:smoke` failed because `.next/standalone/server.js` is unavailable when build fails.
-- ⚠️ `npm run docs:route-status-gate` skipped because this workspace has no usable `origin/<base-ref>` for comparison.
+- ⚠️ `npm run docs:route-status-gate` self-skipped because `GITHUB_BASE_REF` is not set (and this workspace has no `origin/<base-ref>` to compare).
 
 Since the release-capable gate run did not complete end-to-end, keep route status/docs unfrozen for now and only mark a frontend release-candidate baseline after a fully green rerun in CI/release infrastructure.
