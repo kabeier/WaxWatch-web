@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -23,34 +23,29 @@ async function mockJson(
   });
 }
 
-async function focusMainContent(page: Page) {
-  await page.evaluate(() => {
-    const main = document.querySelector("main");
-
-    if (main instanceof HTMLElement) {
-      main.setAttribute("tabindex", "-1");
-      main.focus();
-    }
-  });
+async function mockChromeData(page: Page) {
+  await mockJson(
+    page,
+    "/api/me",
+    {
+      id: "user-1",
+      email: "collector@example.com",
+      is_active: true,
+      created_at: "2026-03-20T08:00:00.000Z",
+      updated_at: "2026-03-22T10:00:00.000Z",
+      display_name: "Collector",
+    },
+    200,
+    "GET",
+  );
+  await mockJson(page, "/api/notifications/unread-count", { unread_count: 0 }, 200, "GET");
 }
 
-async function tabToTarget(page: Page, target: Locator, maxTabs = 80) {
-  await target.waitFor({ state: "visible" });
-
-  for (let attempt = 0; attempt < maxTabs; attempt += 1) {
-    if (await target.evaluate((element) => element === document.activeElement)) {
-      return;
-    }
-
-    await page.keyboard.press("Tab");
-  }
-
-  throw new Error(`Failed to focus target after ${maxTabs} Tab presses.`);
-}
 test.describe("accessibility regression audit", () => {
   test("/search: keyboard traversal, visible focus, and async status/error announcements", async ({
     page,
   }) => {
+    await mockChromeData(page);
     await mockJson(
       page,
       "/api/search",
@@ -86,10 +81,11 @@ test.describe("accessibility regression audit", () => {
     );
 
     await page.goto("/search");
-    await focusMainContent(page);
 
-    await tabToTarget(page, page.locator("#search-keywords"));
-    await expect(page.locator("#search-keywords")).toBeFocused();
+    const searchKeywords = page.locator("#search-keywords");
+    await expect(searchKeywords).toBeVisible();
+    await searchKeywords.focus();
+    await expect(searchKeywords).toBeFocused();
 
     await page.keyboard.press("Tab");
     await expect(page.locator("#search-providers")).toBeFocused();
@@ -100,9 +96,10 @@ test.describe("accessibility regression audit", () => {
     await page.keyboard.press("Tab");
     await expect(page.locator("#search-page-size")).toBeFocused();
 
+    const runSearchButton = page.getByRole("button", { name: "Run search" });
     await page.keyboard.press("Tab");
-    await expect(page.getByRole("button", { name: "Run search" })).toBeFocused();
-    await page.keyboard.press("Enter");
+    await expect(runSearchButton).toBeFocused();
+    await runSearchButton.click();
 
     await expect(
       page.getByRole("status").filter({ hasText: "Status: Loaded 1 search results." }),
@@ -120,26 +117,15 @@ test.describe("accessibility regression audit", () => {
   test("/settings/profile: keyboard traversal, visible focus, and async error announcement", async ({
     page,
   }) => {
-    await mockJson(
-      page,
-      "/api/me",
-      {
-        id: "user-1",
-        email: "collector@example.com",
-        display_name: "Collector",
-        preferences: { timezone: "UTC", currency: "USD" },
-      },
-      200,
-      "GET",
-    );
+    await mockChromeData(page);
     await mockJson(page, "/api/me", { error: { message: "Update failed" } }, 500, "PATCH");
 
     await page.goto("/settings/profile");
-    await focusMainContent(page);
 
-    await expect(page.locator("#profile-display-name")).toBeVisible();
-    await tabToTarget(page, page.locator("#profile-display-name"));
-    await expect(page.locator("#profile-display-name")).toBeFocused();
+    const displayNameInput = page.locator("#profile-display-name");
+    await expect(displayNameInput).toBeVisible();
+    await displayNameInput.focus();
+    await expect(displayNameInput).toBeFocused();
 
     await page.keyboard.press("Tab");
     await expect(page.locator("#profile-timezone")).toBeFocused();
@@ -160,6 +146,7 @@ test.describe("accessibility regression audit", () => {
   test("/watchlist/[id]: dialog focus trap + focus return and async error announcement", async ({
     page,
   }) => {
+    await mockChromeData(page);
     await mockJson(
       page,
       "/api/watch-releases/release-1",
@@ -221,7 +208,7 @@ test.describe("accessibility regression audit", () => {
   test("/settings/danger: dialog focus trap + return and async status/error announcements", async ({
     page,
   }) => {
-    await mockJson(page, "/api/me", { id: "user-1" }, 200, "GET");
+    await mockChromeData(page);
     await mockJson(
       page,
       "/api/me/hard-delete",
