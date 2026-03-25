@@ -236,4 +236,27 @@ describe("base ui primitives", () => {
     expect(alertName).toHaveAttribute("aria-describedby", "alert-name-summary alert-name-error");
     expect(alertName).toHaveAttribute("aria-errormessage", "alert-name-error");
   });
+
+  it("merges checkbox field descriptions with externally provided error associations", () => {
+    render(
+      <>
+        <CheckboxRow
+          inputAriaDescribedBy="watchlist-form-errors"
+          inputAriaErrorMessage="watchlist-active-error"
+        >
+          Watchlist item active
+        </CheckboxRow>
+        <p id="watchlist-form-errors">Fix watchlist item form errors.</p>
+        <p id="watchlist-active-error">Confirm whether this watchlist item should stay active.</p>
+      </>,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: /watchlist item active/i });
+    expect(checkbox).toHaveAttribute("aria-invalid", "true");
+    expect(checkbox).toHaveAttribute("aria-errormessage", "watchlist-active-error");
+    expect(checkbox).toHaveAttribute(
+      "aria-describedby",
+      "watchlist-form-errors watchlist-active-error",
+    );
+  });
 });

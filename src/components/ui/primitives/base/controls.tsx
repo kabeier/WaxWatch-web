@@ -180,6 +180,11 @@ type CheckboxRowProps = Omit<ComponentPropsWithoutRef<"label">, "children" | "on
   onChange?: ChangeEventHandler<HTMLInputElement>;
   helperText?: ReactNode;
   errorText?: ReactNode;
+  error?: boolean;
+  errorMessageId?: string;
+  inputAriaInvalid?: ComponentPropsWithoutRef<"input">["aria-invalid"];
+  inputAriaDescribedBy?: string;
+  inputAriaErrorMessage?: string;
   children: ReactNode;
 };
 
@@ -194,13 +199,27 @@ export function CheckboxRow({
   name,
   onChange,
   value,
+  error = false,
+  errorMessageId,
+  inputAriaInvalid,
+  inputAriaDescribedBy,
+  inputAriaErrorMessage,
   ...props
 }: CheckboxRowProps) {
   const helperTextId = useId();
   const errorTextId = useId();
+  const resolvedErrorMessageId =
+    inputAriaErrorMessage ?? errorMessageId ?? (errorText ? errorTextId : undefined);
+  const resolvedAriaInvalid = resolveAriaInvalidState({
+    ariaInvalid: inputAriaInvalid,
+    error: error || Boolean(errorText),
+    ariaErrorMessage: resolvedErrorMessageId,
+  });
+  const isInvalid = isAriaInvalidState(resolvedAriaInvalid);
   const ariaDescribedBy = joinAriaIds(
+    inputAriaDescribedBy,
     helperText ? helperTextId : null,
-    errorText ? errorTextId : null,
+    isInvalid ? resolvedErrorMessageId : null,
   );
 
   return (
@@ -208,7 +227,7 @@ export function CheckboxRow({
       className={joinClassNames(
         "ww-checkbox-row",
         disabled && "ww-checkbox-row--disabled",
-        Boolean(errorText) && "ww-checkbox-row--error",
+        isInvalid && "ww-checkbox-row--error",
         className,
       )}
       {...props}
@@ -222,9 +241,9 @@ export function CheckboxRow({
         name={name}
         onChange={onChange}
         value={value}
-        aria-invalid={Boolean(errorText) || undefined}
+        aria-invalid={resolvedAriaInvalid}
         aria-describedby={ariaDescribedBy}
-        aria-errormessage={errorText ? errorTextId : undefined}
+        aria-errormessage={isInvalid ? resolvedErrorMessageId : undefined}
       />
       <span className="ww-checkbox-row__copy">
         <span className="ww-checkbox-row__label">{children}</span>
