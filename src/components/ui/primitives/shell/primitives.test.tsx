@@ -182,10 +182,10 @@ describe("shell primitives", () => {
     const statusValue = container.querySelector("strong.side-nav__status-value");
 
     expect(utilityValues).toHaveLength(2);
-    expect(utilityValues.map((node) => node.textContent)).toEqual(["N/A", "N/A"]);
+    expect(utilityValues.map((node) => node.textContent)).toEqual(["—", "Unavailable"]);
     expect(statusLabel).toHaveTextContent("Session");
-    expect(statusValue).toHaveTextContent("Status unavailable");
-    expect(screen.getByText("Connect live chrome data")).toBeInTheDocument();
+    expect(statusValue).toHaveTextContent("Profile unavailable");
+    expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
   });
 
   it("renders dynamic shell utility and status values from query-backed chrome data", () => {
