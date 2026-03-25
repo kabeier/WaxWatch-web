@@ -92,19 +92,36 @@ export function DestructiveConfirmDialog({
     const returnFocusElement = returnFocusRef?.current ?? null;
     cancelButtonRef.current?.focus();
 
+    let isRepositioningFocus = false;
+
     const focusDialog = (useLastFocusable = false) => {
       const focusableNodes = dialogRef.current?.querySelectorAll<HTMLElement>(
         'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
       );
 
       if (!focusableNodes || focusableNodes.length === 0) {
-        dialogRef.current?.focus();
+        const fallbackNode = dialogRef.current;
+        if (!fallbackNode || document.activeElement === fallbackNode) {
+          return;
+        }
+
+        isRepositioningFocus = true;
+        fallbackNode.focus();
+        isRepositioningFocus = false;
         return;
       }
 
       const first = focusableNodes[0];
       const last = focusableNodes[focusableNodes.length - 1];
-      (useLastFocusable ? last : first).focus();
+      const nextFocusTarget = useLastFocusable ? last : first;
+
+      if (document.activeElement === nextFocusTarget) {
+        return;
+      }
+
+      isRepositioningFocus = true;
+      nextFocusTarget.focus();
+      isRepositioningFocus = false;
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -152,6 +169,10 @@ export function DestructiveConfirmDialog({
     };
 
     const handleFocusIn = (event: FocusEvent) => {
+      if (isRepositioningFocus) {
+        return;
+      }
+
       const target = event.target;
       if (!(target instanceof Node)) {
         return;
