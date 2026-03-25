@@ -14,6 +14,7 @@ import ProfileSettingsPage from "../app/(app)/settings/profile/page";
 import WatchlistPage from "../app/(app)/watchlist/page";
 import DashboardPage from "../app/(app)/dashboard/page";
 import WatchlistItemPage from "../app/(app)/watchlist/[id]/page";
+import LoginPage from "../app/(auth)/login/page";
 import { LoginPageClient } from "../app/(auth)/login/LoginPageClient";
 
 type MockQuery = {
@@ -627,9 +628,31 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/unread count is temporarily rate limited/i)).toBeInTheDocument();
   });
 
-  it("/dashboard success and failure evidence includes retry and cooldown behavior", () => {
+  it("/dashboard success and failure evidence includes empty-state, retry, cooldown, and recovery behavior", () => {
+    state.notificationsQuery = {
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    };
+    state.watchReleasesQuery = {
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    };
+    state.watchRulesQuery = {
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    };
     const retryNotifications = vi.fn();
     state.notificationsQuery = {
+      ...state.notificationsQuery,
       data: undefined,
       isLoading: false,
       isError: true,
@@ -692,6 +715,14 @@ describe("route-level production-ready paths", () => {
   });
 
   it("/login shows submit pending, API/rate-limit failure states, then successful redirect", async () => {
+    const blockedPage = await LoginPage({
+      searchParams: Promise.resolve({ handoff: "waxwatch://auth/callback", state: "state-only" }),
+    });
+    const blockedRender = render(blockedPage);
+    expect(screen.getByRole("heading", { name: /secure handoff required/i })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
+    blockedRender.unmount();
+
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -743,13 +774,14 @@ describe("route-level production-ready paths", () => {
     await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
   });
 
-  it("/watchlist/[id] shows failure evidence first, then success evidence after retry", async () => {
+  it("/watchlist/[id] shows empty/error/cooldown evidence, then mutation failure and retry success", async () => {
+    const retryDetail = vi.fn();
     state.watchReleaseDetailQuery = {
       data: undefined,
       isLoading: false,
       isError: true,
       error: { kind: "unknown_error", message: "detail unavailable" },
-      retry: vi.fn(),
+      retry: retryDetail,
     };
     const updateMutate = vi.fn();
     state.updateWatchReleaseMutation = {
@@ -764,6 +796,8 @@ describe("route-level production-ready paths", () => {
       await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }),
     );
     expect(screen.getByText(/could not load watchlist item detail\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry watchlist item load/i }));
+    expect(retryDetail).toHaveBeenCalledTimes(1);
 
     state.watchReleaseDetailQuery = {
       ...state.watchReleaseDetailQuery,
@@ -832,9 +866,17 @@ describe("route-level production-ready paths", () => {
   });
 
   it("/settings/danger captures empty, API error, rate-limited, and mutation retry evidence before status freeze", () => {
-    state.meQuery = { ...state.meQuery, isError: true, error: apiError, data: undefined };
+    const retryMeQuery = vi.fn();
+    state.meQuery = {
+      ...state.meQuery,
+      isError: true,
+      error: apiError,
+      data: undefined,
+      retry: retryMeQuery,
+    };
 
     const deactivateMutate = vi.fn();
+    const deleteMutate = vi.fn();
     state.deactivateMutation = {
       ...state.deactivateMutation,
       data: undefined,
@@ -842,9 +884,18 @@ describe("route-level production-ready paths", () => {
       error: { kind: "unknown_error", message: "Deactivate failed" },
       mutate: deactivateMutate,
     };
+    state.hardDeleteMutation = {
+      ...state.hardDeleteMutation,
+      data: undefined,
+      isError: true,
+      error: { kind: "unknown_error", message: "Delete failed" },
+      mutate: deleteMutate,
+    };
 
     const { rerender } = render(<DangerSettingsPage />);
     expect(screen.getByText(/could not load danger-zone settings/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry danger-zone load/i }));
+    expect(retryMeQuery).toHaveBeenCalledTimes(1);
 
     state.meQuery = {
       ...state.meQuery,
@@ -889,6 +940,34 @@ describe("route-level production-ready paths", () => {
     );
     expect(deactivateMutate).toHaveBeenCalledTimes(2);
     expect(screen.getByRole("status")).toHaveTextContent(/success: account deactivated\./i);
+
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
+        "button",
+        { name: /^permanently delete account$/i },
+      ),
+    );
+    expect(deleteMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/could not permanently delete account\./i)).toBeInTheDocument();
+
+    state.hardDeleteMutation = {
+      ...state.hardDeleteMutation,
+      data: { ok: true },
+      isError: false,
+      error: null,
+      mutate: deleteMutate,
+    };
+    rerender(<DangerSettingsPage />);
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
+        "button",
+        { name: /^permanently delete account$/i },
+      ),
+    );
+    expect(deleteMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByText(/success: account permanently deleted\./i)).toBeInTheDocument();
   });
 
   it("/settings/danger shows disabled retry affordance during cooldown", () => {
