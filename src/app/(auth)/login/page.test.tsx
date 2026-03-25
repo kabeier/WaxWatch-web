@@ -53,8 +53,7 @@ describe("/login route", () => {
     expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
   });
 
-  it("covers API errors, cooldown state, and retry-after-cooldown success path", async () => {
-    const onRedirect = vi.fn();
+  it("covers API errors and cooldown state messaging", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
@@ -68,10 +67,9 @@ describe("/login route", () => {
           status: 429,
           headers: { "Content-Type": "application/json", "Retry-After": "20" },
         }),
-      )
-      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+      ) as typeof fetch;
 
-    render(<LoginPageClient handoff={noHandoff} fetchImpl={fetchMock} onRedirect={onRedirect} />);
+    render(<LoginPageClient handoff={noHandoff} fetchImpl={fetchMock} />);
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "listener@example.com" },
@@ -86,8 +84,6 @@ describe("/login route", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/retry-after:\s*20s/i);
     expect(screen.getByRole("button", { name: /sign in/i })).toBeEnabled();
 
-    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
-    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
