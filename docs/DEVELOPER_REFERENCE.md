@@ -2,24 +2,22 @@
 
 ## Verification lock (2026-03-25)
 
-This reference is locked to outcomes from a full verification-gate rerun that was **directly re-verified** in this workspace on **March 25, 2026**.
+This reference is locked to a release-gate rerun executed in this workspace on **March 25, 2026**.
 
 Verified pass gates:
 
-- `npm run test`
+- `npm run test:run`
 - `npm run typecheck`
 - `npm run lint`
 - `npm run format:check`
-- `npm run docs:route-status-gate` (script executed; reports `Skipping route-status test gate (GITHUB_BASE_REF not set).` when no base ref is provided)
+- `npm run docs:route-status-gate` (script executed and reported: `Skipping route-status test gate (GITHUB_BASE_REF not set).`)
 
-Not fully verifiable in this workspace run:
+Environment-limited gates (still pending network-capable CI/release verification):
 
-- `npm run build` was run with production-safe env values to satisfy `prebuild`, but Next.js failed while attempting SWC download/lockfile patching due `ENETUNREACH`, so a standalone artifact was not produced.
-- `npm run a11y:smoke` was run with the same env values; it failed because `npm run start` correctly requires `.next/standalone/server.js`, which was unavailable after the failed build.
+- `npm run build` was executed with production-safe env values and passed `prebuild`, but Next.js failed while patching/downloading SWC artifacts (`ENETUNREACH`), so no standalone artifact was generated.
+- `npm run a11y:smoke` was executed with the same production-safe env values and failed as expected because `npm run start` requires `.next/standalone/server.js`, which is unavailable until `npm run build` succeeds.
 
-Route maturity statements below therefore remain constrained to test/typecheck/lint/format plus route-level test coverage already present in this repo; production-build and a11y-smoke confirmation is pending a network-capable build environment.
-
-WaxWatch is a record-price alert web app. Users can land on a dashboard, search listings across providers, save searches as alerts, manage alerts/watchlist, connect integrations, and receive notifications.
+Route maturity statements below therefore remain constrained to the passing gates above plus route-level test coverage already present in this repo. Promote this lock to fully completed verification only after `build` and `a11y:smoke` pass in a network-capable CI/release environment.
 
 ## Developer quickstart (read this first)
 
