@@ -58,7 +58,10 @@ describe("Login page", () => {
         }),
     ) as typeof fetch;
 
-    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+    const onRedirect = vi.fn();
+    render(
+      <LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} onRedirect={onRedirect} />,
+    );
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "listener@example.com" },
@@ -287,6 +290,35 @@ describe("Login page", () => {
       expect(onRedirect).toHaveBeenCalledWith("/");
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("disables the sign-in action while a login mutation is pending", async () => {
+    let resolveRequest: ((value: Response) => void) | undefined;
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveRequest = resolve;
+        }),
+    ) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(
+      <LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} onRedirect={onRedirect} />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeDisabled();
+    expect(screen.getByText(/signing you in…/i)).toBeInTheDocument();
+
+    resolveRequest?.(new Response(null, { status: 200 }));
+    await waitFor(() => {
+      expect(onRedirect).toHaveBeenCalledWith("/");
+    });
   });
 
   it("prevents submit when a once-valid handoff expires before sign in", async () => {
