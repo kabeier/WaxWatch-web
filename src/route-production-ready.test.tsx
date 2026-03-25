@@ -647,6 +647,7 @@ describe("route-level production-ready paths", () => {
     const { rerender } = render(<DashboardPage />);
 
     expect(screen.getByText(/could not load notifications\./i)).toBeInTheDocument();
+    expect(screen.getByText(/no watch rules yet/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /retry notifications/i }));
     expect(retryNotifications).toHaveBeenCalledTimes(1);
     expect(screen.getByText(/recent matches are temporarily rate limited/i)).toBeInTheDocument();
@@ -742,7 +743,7 @@ describe("route-level production-ready paths", () => {
     await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
   });
 
-  it("/watchlist/[id] covers load error, empty, rate-limited, and mutation-failure paths", async () => {
+  it("/watchlist/[id] shows failure evidence first, then success evidence after retry", async () => {
     state.watchReleaseDetailQuery = {
       data: undefined,
       isLoading: false,
@@ -806,6 +807,17 @@ describe("route-level production-ready paths", () => {
     fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
     expect(updateMutate).toHaveBeenCalledTimes(1);
     expect(screen.getByText(/could not save watchlist item updates\./i)).toBeInTheDocument();
+    state.updateWatchReleaseMutation = {
+      ...state.updateWatchReleaseMutation,
+      data: { ok: true },
+      isError: false,
+      error: null,
+    };
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(updateMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("status")).toHaveTextContent(/success: watchlist item updated\./i);
+    expect(screen.queryByText(/could not save watchlist item updates\./i)).not.toBeInTheDocument();
   });
 
   it("/settings/alerts success", () => {
@@ -819,41 +831,64 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/could not load alert delivery settings/i)).toBeInTheDocument();
   });
 
-  it("/settings/danger success", () => {
-    render(<DangerSettingsPage />);
-    expect(screen.getByText(/success: account deactivated/i)).toBeInTheDocument();
-  });
+  it("/settings/danger captures empty, API error, rate-limited, and mutation retry evidence before status freeze", () => {
+    state.meQuery = { ...state.meQuery, isError: true, error: apiError, data: undefined };
 
-  it("/settings/danger failure", () => {
-    state.meQuery = { ...state.meQuery, isError: true, error: apiError };
-    render(<DangerSettingsPage />);
+    const deactivateMutate = vi.fn();
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      data: undefined,
+      isError: true,
+      error: { kind: "unknown_error", message: "Deactivate failed" },
+      mutate: deactivateMutate,
+    };
+
+    const { rerender } = render(<DangerSettingsPage />);
     expect(screen.getByText(/could not load danger-zone settings/i)).toBeInTheDocument();
-  });
 
-  it("/settings/danger rate-limited and empty states", () => {
     state.meQuery = {
       ...state.meQuery,
       data: undefined,
       isError: true,
       error: { kind: "rate_limited", message: "Slow down", retryAfterSeconds: 25 },
     };
-    const { rerender } = render(<DangerSettingsPage />);
+    rerender(<DangerSettingsPage />);
     expect(screen.getByText(/settings are temporarily rate limited/i)).toBeInTheDocument();
-    expect(screen.getByText(/retry-after:\s*25s/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /retry available in 25s/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 25s/i })).toBeDisabled();
 
-    state.meQuery = {
-      ...state.meQuery,
-      data: undefined,
-      isError: false,
-      error: null,
-    };
+    state.meQuery = { ...state.meQuery, data: undefined, isError: false, error: null };
     rerender(<DangerSettingsPage />);
     expect(screen.getByText(/no danger-zone actions available\./i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^deactivate account$/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /^permanently delete account$/i }),
-    ).toBeInTheDocument();
+
+    state.meQuery = { ...state.meQuery, data: { id: "user-1" }, isError: false, error: null };
+    rerender(<DangerSettingsPage />);
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "button",
+        { name: /^deactivate account$/i },
+      ),
+    );
+    expect(deactivateMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/could not deactivate account\./i)).toBeInTheDocument();
+
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      data: { ok: true },
+      isError: false,
+      error: null,
+      mutate: deactivateMutate,
+    };
+    rerender(<DangerSettingsPage />);
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "button",
+        { name: /^deactivate account$/i },
+      ),
+    );
+    expect(deactivateMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("status")).toHaveTextContent(/success: account deactivated\./i);
   });
 
   it("/settings/danger shows disabled retry affordance during cooldown", () => {
