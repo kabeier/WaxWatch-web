@@ -21,6 +21,26 @@ type MutationResult<TInput, TData> = MutationState<TData> & {
   mutate: (input: TInput) => void;
 };
 
+function getMutationEnvelopeError(data: unknown): string | null {
+  if (!data || typeof data !== "object" || !("error" in data)) {
+    return null;
+  }
+
+  const errorField = (data as { error?: unknown }).error;
+  if (!errorField || typeof errorField !== "object") {
+    return "Request failed";
+  }
+
+  if (
+    "message" in errorField &&
+    typeof (errorField as { message?: unknown }).message === "string"
+  ) {
+    return (errorField as { message: string }).message;
+  }
+
+  return "Request failed";
+}
+
 function useApiMutation<TInput, TData>(options: {
   mutationFn: (input: TInput) => Promise<TData>;
   onSuccess?: () => void;
@@ -51,6 +71,11 @@ function useApiMutation<TInput, TData>(options: {
       void options
         .mutationFn(input)
         .then((data) => {
+          const envelopeErrorMessage = getMutationEnvelopeError(data);
+          if (envelopeErrorMessage) {
+            throw new Error(envelopeErrorMessage);
+          }
+
           pendingCountRef.current = Math.max(0, pendingCountRef.current - 1);
           const isLatest = mutationId === latestMutationIdRef.current;
 
