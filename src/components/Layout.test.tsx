@@ -87,6 +87,8 @@ describe("Layout", () => {
     expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
     expect(screen.queryByText("Profile unavailable")).not.toBeInTheDocument();
     expect(screen.queryByText("Notifications unavailable")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /inbox/i })).not.toHaveTextContent("N/A");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent("N/A");
   });
 
   it("renders error chrome values from query-backed app-shell data", () => {
@@ -122,6 +124,8 @@ describe("Layout", () => {
     expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
     expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
     expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /inbox/i })).not.toHaveTextContent("N/A");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent("N/A");
   });
 
   it("renders success chrome values from query-backed app-shell data", () => {
@@ -163,6 +167,8 @@ describe("Layout", () => {
     expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
     expect(screen.queryByText("Profile unavailable")).not.toBeInTheDocument();
     expect(screen.queryByText("Notifications unavailable")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /inbox/i })).not.toHaveTextContent("N/A");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent("N/A");
   });
 
   it("renders auth notice from reason query param", () => {
