@@ -79,6 +79,32 @@ describe("DestructiveConfirmDialog", () => {
     expect(dialog).toHaveFocus();
   });
 
+  it("re-captures tab focus when focus drifts outside of the dialog", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <button type="button">Outside trigger</button>
+        <DestructiveConfirmDialog
+          open
+          title="Disable item?"
+          description="Please confirm the change."
+          confirmLabel="Disable"
+          onCancel={() => undefined}
+          onConfirm={() => undefined}
+        />
+      </>,
+    );
+
+    const outsideButton = screen.getByRole("button", { name: "Outside trigger" });
+    const cancelButton = screen.getByRole("button", { name: "Cancel" });
+
+    outsideButton.focus();
+    expect(outsideButton).toHaveFocus();
+    await user.keyboard("{Tab}");
+
+    expect(cancelButton).toHaveFocus();
+  });
+
   it("handles escape based on pending state", async () => {
     const user = userEvent.setup();
     const onCancel = vi.fn();

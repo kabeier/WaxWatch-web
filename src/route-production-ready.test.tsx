@@ -462,7 +462,7 @@ describe("route-level production-ready paths", () => {
     fireEvent.change(nameField, { target: { value: "" } });
 
     expect(screen.getByText(/name must be between 1 and 120 characters\./i)).toBeInTheDocument();
-    expect(keywordsField).toHaveAttribute("aria-invalid", "false");
+    expect(keywordsField).not.toHaveAttribute("aria-invalid");
     expect(keywordsField).not.toHaveAttribute("aria-describedby", "new-alert-form-errors");
   });
 
@@ -609,21 +609,25 @@ describe("route-level production-ready paths", () => {
   it("/settings/danger dialogs open and close from destructive cards", () => {
     render(<DangerSettingsPage />);
 
-    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    const deactivateTrigger = screen.getByRole("button", { name: /^deactivate account$/i });
+    fireEvent.click(deactivateTrigger);
     const deactivateDialog = screen.getByRole("alertdialog", { name: /deactivate account now\?/i });
     expect(deactivateDialog).toBeInTheDocument();
     fireEvent.click(within(deactivateDialog).getByRole("button", { name: /cancel/i }));
     expect(
       screen.queryByRole("alertdialog", { name: /deactivate account now\?/i }),
     ).not.toBeInTheDocument();
+    expect(deactivateTrigger).toHaveFocus();
 
-    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    const deleteTrigger = screen.getByRole("button", { name: /^permanently delete account$/i });
+    fireEvent.click(deleteTrigger);
     const deleteDialog = screen.getByRole("alertdialog", { name: /delete account permanently\?/i });
     expect(deleteDialog).toBeInTheDocument();
     fireEvent.click(within(deleteDialog).getByRole("button", { name: /cancel/i }));
     expect(
       screen.queryByRole("alertdialog", { name: /delete account permanently\?/i }),
     ).not.toBeInTheDocument();
+    expect(deleteTrigger).toHaveFocus();
   });
 
   it("/settings/danger destructive dialogs pair open-close behavior with failure and success status feedback", () => {

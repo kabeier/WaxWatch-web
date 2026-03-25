@@ -117,14 +117,14 @@ describe("base ui primitives", () => {
       "search-form-error-summary search-term-error",
     );
     expect(screen.getByRole("combobox", { name: "Marketplace" })).toHaveClass("ww-select");
-    expect(screen.getByRole("combobox", { name: "Marketplace" })).toHaveAttribute(
+    expect(screen.getByRole("combobox", { name: "Marketplace" })).not.toHaveAttribute(
       "aria-invalid",
-      "false",
     );
     const checkbox = screen.getByRole("checkbox", { name: /include archived data/i });
     expect(checkbox).toBeInTheDocument();
     expect(screen.getByText("Required")).toHaveClass("ww-checkbox-row__error");
     expect(checkbox).toHaveAttribute("aria-invalid", "true");
+    expect(checkbox).toHaveAttribute("aria-errormessage", screen.getByText("Required").id);
     const checkboxDescriptionIds = checkbox.getAttribute("aria-describedby");
     expect(checkboxDescriptionIds).toBeTruthy();
     const describedByIds = checkboxDescriptionIds?.split(" ") ?? [];

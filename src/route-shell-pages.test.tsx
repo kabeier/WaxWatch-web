@@ -566,6 +566,10 @@ describe("route shell pages", () => {
     await user.click(disableTrigger);
     const dialog = screen.getByRole("alertdialog", { name: /disable watchlist item\?/i });
     expect(within(dialog).getByRole("button", { name: /cancel/i })).toHaveFocus();
+    await user.tab();
+    expect(within(dialog).getByRole("button", { name: /^disable watchlist item$/i })).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(within(dialog).getByRole("button", { name: /cancel/i })).toHaveFocus();
     await user.click(within(dialog).getByRole("button", { name: /cancel/i }));
     expect(disableTrigger).toHaveFocus();
   });
