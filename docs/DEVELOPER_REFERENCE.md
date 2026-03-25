@@ -2,20 +2,15 @@
 
 ## Verification lock (2026-03-25)
 
-Verification was rerun in this workspace on **March 25, 2026** using CI/release-style commands.
+Verification was rerun in this workspace on **March 25, 2026** using the full CI/release command chain (`npm run ci:prod-gates`).
 
 Outcome in this environment: **not green**.
 
-- ✅ `npm run test:run` passed (47/47 files, 336/336 tests).
-- ✅ `npm run typecheck` passed.
-- ✅ `npm run lint` passed.
-- ✅ `npm run format:check` passed.
-- ✅ `npm run prebuild:prod-env` passed (same-origin defaults accepted).
-- ❌ `NODE_ENV=production ... npm run build` failed after env contract passed because Next.js attempted to download `@next/swc-linux-x64-gnu` and the network request failed (`ENETUNREACH`).
-- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate` skipped because `origin` was unavailable in this workspace (could not fetch base ref).
-- ⚠️ `NODE_ENV=production ... npm run a11y:smoke` could not run because `start-server-and-test` was unavailable after dependency reinstall attempts failed (`npm install`/`npm ci` returned 403 for `@swc/helpers`).
+- ❌ `npm run ci:prod-gates` failed at `npm run test:coverage` (Vitest) before build/deployment gates.
+- ❌ 7 Vitest specs timed out at 5000ms (`src/route-shell-pages.test.tsx`, `src/route-production-ready.test.tsx`, `src/dashboard-client-content.test.tsx`, `src/profile-settings-form.a11y.test.tsx`).
+- ℹ️ Passing during the same rerun: 43/47 test files and 333/340 tests completed before timeout failures halted the pipeline.
 
-Because build + downstream gates did not complete, route status/docs are **not** frozen as a release-candidate baseline in this run.
+Because the full gate chain did not pass end-to-end, route status/docs remain **unfrozen** and this run is **not** a frontend release-candidate baseline.
 
 ## Developer quickstart (read this first)
 

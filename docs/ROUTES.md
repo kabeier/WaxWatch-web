@@ -101,13 +101,12 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ## Verification lock (2026-03-25)
 
-Verification was rerun on **March 25, 2026** with CI/release-style commands.
+Verification was rerun on **March 25, 2026** with the full CI/release command chain (`npm run ci:prod-gates`).
 
 Result: **not green** in this workspace.
 
-- `npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`, and `npm run prebuild:prod-env` passed.
-- `NODE_ENV=production ... npm run build` failed after env validation because Next.js could not download `@next/swc-linux-x64-gnu` (`ENETUNREACH`).
-- `GITHUB_BASE_REF=main npm run docs:route-status-gate` skipped due missing `origin` remote access.
-- `NODE_ENV=production ... npm run a11y:smoke` could not execute because `start-server-and-test` was unavailable after failed dependency reinstall attempts (`npm install`/`npm ci` hit 403 on `@swc/helpers`).
+- `npm run ci:prod-gates` failed at `npm run test:coverage`.
+- 7 Vitest specs timed out (5000ms) across `src/route-shell-pages.test.tsx`, `src/route-production-ready.test.tsx`, `src/dashboard-client-content.test.tsx`, and `src/profile-settings-form.a11y.test.tsx`.
+- 43/47 test files and 333/340 tests passed before the timeout failures terminated the pipeline.
 
 Since the gate run did not complete end-to-end, keep route status/docs unfrozen for now and only mark a frontend release-candidate baseline after a fully green rerun in CI/release infrastructure.
