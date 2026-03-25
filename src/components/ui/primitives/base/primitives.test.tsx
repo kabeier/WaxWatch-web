@@ -96,10 +96,19 @@ describe("base ui primitives", () => {
       "ww-input",
       "ww-input--error",
     );
+    expect(screen.getByRole("textbox", { name: "Search term" })).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
     expect(screen.getByRole("combobox", { name: "Marketplace" })).toHaveClass("ww-select");
+    expect(screen.getByRole("combobox", { name: "Marketplace" })).toHaveAttribute(
+      "aria-invalid",
+      "false",
+    );
     const checkbox = screen.getByRole("checkbox", { name: /include archived data/i });
     expect(checkbox).toBeInTheDocument();
     expect(screen.getByText("Required")).toHaveClass("ww-checkbox-row__error");
+    expect(checkbox).toHaveAttribute("aria-invalid", "true");
     const checkboxDescriptionIds = checkbox.getAttribute("aria-describedby");
     expect(checkboxDescriptionIds).toBeTruthy();
     const describedByIds = checkboxDescriptionIds?.split(" ") ?? [];

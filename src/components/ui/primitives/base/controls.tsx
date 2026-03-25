@@ -58,10 +58,14 @@ type TextInputProps = ComponentPropsWithoutRef<"input"> & {
 };
 
 export function TextInput({ className, error = false, type = "text", ...props }: TextInputProps) {
+  const ariaInvalid = props["aria-invalid"];
+  const shouldSetAriaInvalid = ariaInvalid !== undefined ? ariaInvalid : error;
+
   return (
     <input
       type={type}
       className={joinClassNames("ww-input", error && "ww-input--error", className)}
+      aria-invalid={shouldSetAriaInvalid}
       {...props}
     />
   );
@@ -72,9 +76,13 @@ type SelectProps = ComponentPropsWithoutRef<"select"> & {
 };
 
 export function Select({ className, error = false, children, ...props }: SelectProps) {
+  const ariaInvalid = props["aria-invalid"];
+  const shouldSetAriaInvalid = ariaInvalid !== undefined ? ariaInvalid : error;
+
   return (
     <select
       className={joinClassNames("ww-input", "ww-select", error && "ww-input--error", className)}
+      aria-invalid={shouldSetAriaInvalid}
       {...props}
     >
       {children}
@@ -132,6 +140,7 @@ export function CheckboxRow({
         name={name}
         onChange={onChange}
         value={value}
+        aria-invalid={Boolean(errorText)}
         aria-describedby={ariaDescribedBy.length > 0 ? ariaDescribedBy : undefined}
       />
       <span className="ww-checkbox-row__copy">

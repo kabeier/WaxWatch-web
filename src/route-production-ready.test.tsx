@@ -833,7 +833,7 @@ describe("route-level production-ready paths", () => {
     expect(alertsTab).toHaveFocus();
   });
 
-  it("/settings/profile wires field-level aria-describedby to shared validation error summary", () => {
+  it("/settings/profile wires invalid fields to both summary and field-level validation descriptions", () => {
     render(<ProfileSettingsPage />);
 
     fireEvent.change(screen.getByLabelText(/preferred currency/i), { target: { value: "US" } });
@@ -842,7 +842,7 @@ describe("route-level production-ready paths", () => {
     expect(summary).toBeInTheDocument();
     expect(screen.getByLabelText(/preferred currency/i)).toHaveAttribute(
       "aria-describedby",
-      "profile-settings-form-errors",
+      "profile-settings-form-errors profile-currency-error",
     );
     expect(screen.getByLabelText(/preferred currency/i)).toHaveAttribute("aria-invalid", "true");
   });
