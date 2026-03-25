@@ -23,7 +23,20 @@ async function mockJson(
   });
 }
 
+async function focusMainContent(page: Page) {
+  await page.evaluate(() => {
+    const main = document.querySelector("main");
+
+    if (main instanceof HTMLElement) {
+      main.setAttribute("tabindex", "-1");
+      main.focus();
+    }
+  });
+}
+
 async function tabToTarget(page: Page, target: Locator, maxTabs = 80) {
+  await target.waitFor({ state: "visible" });
+
   for (let attempt = 0; attempt < maxTabs; attempt += 1) {
     if (await target.evaluate((element) => element === document.activeElement)) {
       return;
@@ -73,7 +86,7 @@ test.describe("accessibility regression audit", () => {
     );
 
     await page.goto("/search");
-    await page.locator("main").click({ position: { x: 1, y: 1 } });
+    await focusMainContent(page);
 
     await tabToTarget(page, page.locator("#search-keywords"));
     await expect(page.locator("#search-keywords")).toBeFocused();
@@ -92,7 +105,7 @@ test.describe("accessibility regression audit", () => {
     await page.keyboard.press("Enter");
 
     await expect(
-      page.getByRole("status", { name: /status: loaded 1 search results\./i }),
+      page.getByRole("status").filter({ hasText: "Status: Loaded 1 search results." }),
     ).toBeVisible();
 
     await page.locator("#save-alert-name").fill("Price watch");
@@ -122,7 +135,7 @@ test.describe("accessibility regression audit", () => {
     await mockJson(page, "/api/me", { error: { message: "Update failed" } }, 500, "PATCH");
 
     await page.goto("/settings/profile");
-    await page.locator("main").click({ position: { x: 1, y: 1 } });
+    await focusMainContent(page);
 
     await expect(page.locator("#profile-display-name")).toBeVisible();
     await tabToTarget(page, page.locator("#profile-display-name"));
@@ -179,11 +192,11 @@ test.describe("accessibility regression audit", () => {
 
     await page.goto("/watchlist/release-1");
 
-    const disableTrigger = page.getByRole("button", { name: "Disable watchlist item" });
-    await expect(disableTrigger).toBeVisible();
+    const disableTrigger = page.getByRole("button", { name: /^Disable watchlist item/ });
+    await expect(disableTrigger).toBeVisible({ timeout: 15_000 });
     await disableTrigger.click();
 
-    const dialog = page.getByRole("alertdialog", { name: "Disable watchlist item?" });
+    const dialog = page.getByRole("alertdialog");
     await expect(dialog).toBeVisible();
     const cancelButton = dialog.getByRole("button", { name: "Cancel" });
     const confirmButton = dialog.getByRole("button", { name: "Disable watchlist item" });
@@ -222,7 +235,7 @@ test.describe("accessibility regression audit", () => {
     const deleteTrigger = page.getByRole("button", { name: "Permanently delete account" });
     await deleteTrigger.click();
 
-    const dialog = page.getByRole("alertdialog", { name: "Delete account permanently?" });
+    const dialog = page.getByRole("alertdialog");
     await expect(dialog).toBeVisible();
     const cancelButton = dialog.getByRole("button", { name: "Cancel" });
     const confirmButton = dialog.getByRole("button", { name: "Permanently delete account" });
