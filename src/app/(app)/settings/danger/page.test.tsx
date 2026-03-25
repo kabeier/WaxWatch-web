@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import DangerSettingsPage from "../../../../../app/(app)/settings/danger/page";
@@ -133,5 +134,42 @@ describe("/settings/danger route", () => {
       ),
     );
     expect(deleteMutate).toHaveBeenCalledTimes(1);
+  });
+
+  it("traps focus in the confirmation dialog and restores focus to the trigger on close", async () => {
+    const user = userEvent.setup();
+    render(<DangerSettingsPage />);
+
+    const trigger = screen.getByRole("button", { name: /^deactivate account$/i });
+    await user.click(trigger);
+
+    const dialog = screen.getByRole("alertdialog", { name: /deactivate account now\?/i });
+    const cancelButton = within(dialog).getByRole("button", { name: /^cancel$/i });
+    const confirmButton = within(dialog).getByRole("button", { name: /^deactivate account$/i });
+
+    expect(cancelButton).toHaveFocus();
+    await user.tab();
+    expect(confirmButton).toHaveFocus();
+    await user.tab();
+    expect(cancelButton).toHaveFocus();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("alertdialog", { name: /deactivate account now\?/i })).toBeNull();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("does not show dialog submission errors before confirm is pressed", async () => {
+    const user = userEvent.setup();
+    hooks.deactivate.mockReturnValue({
+      mutate: vi.fn(),
+      data: undefined,
+      error: { kind: "unknown_error", message: "Deactivate failed" },
+      isPending: false,
+      isError: true,
+    });
+
+    render(<DangerSettingsPage />);
+    await user.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    expect(screen.queryByText(/deactivate failed/i)).not.toBeInTheDocument();
   });
 });
