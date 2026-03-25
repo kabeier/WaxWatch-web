@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import WatchlistItemPage from "../../../../../app/(app)/watchlist/[id]/page";
@@ -62,10 +62,12 @@ describe("/watchlist/[id] route", () => {
     });
   });
 
-  it("renders success controls and keeps users on route", async () => {
+  it("renders success controls and route actions", async () => {
     render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
     expect(screen.getByRole("button", { name: /save watchlist updates/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /disable watchlist item/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /cancel/i })).toHaveAttribute("href", "/watchlist");
     expect(state.push).not.toHaveBeenCalled();
   });
 
@@ -78,6 +80,7 @@ describe("/watchlist/[id] route", () => {
       error: { kind: "unknown_error", message: "service unavailable" },
       retry: retryLoad,
     });
+
     const { rerender } = render(
       await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }),
     );
@@ -105,10 +108,19 @@ describe("/watchlist/[id] route", () => {
     rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
     expect(screen.getByText(/retry-after:\s*40s/i)).toBeInTheDocument();
 
+    const updateMutate = vi.fn();
+    const disableMutate = vi.fn();
     state.update.mockReturnValue({
-      mutate: vi.fn(),
+      mutate: updateMutate,
       data: undefined,
       error: { kind: "unknown_error", message: "Save failed" },
+      isPending: false,
+      isError: true,
+    });
+    state.disable.mockReturnValue({
+      mutate: disableMutate,
+      data: undefined,
+      error: { kind: "unknown_error", message: "Disable failed" },
       isPending: false,
       isError: true,
     });
@@ -135,6 +147,19 @@ describe("/watchlist/[id] route", () => {
       retry: vi.fn(),
     });
     rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(updateMutate).toHaveBeenCalledTimes(1);
     expect(screen.getByText(/could not save watchlist item updates\./i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /disable watchlist item/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /disable watchlist item\?/i })).getByRole(
+        "button",
+        { name: /^disable watchlist item$/i },
+      ),
+    );
+    expect(disableMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/could not disable watchlist item\./i)).toBeInTheDocument();
   });
 });
