@@ -37,12 +37,15 @@ function getSessionValue(args: {
   isLoading: boolean;
   hasError: boolean;
 }) {
-  if (args.displayName) {
-    return args.displayName;
+  const normalizedDisplayName = args.displayName?.trim();
+  const normalizedEmail = args.email?.trim();
+
+  if (normalizedDisplayName) {
+    return normalizedDisplayName;
   }
 
-  if (args.email) {
-    return args.email;
+  if (normalizedEmail) {
+    return normalizedEmail;
   }
 
   if (args.isLoading) {
