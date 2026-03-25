@@ -13,11 +13,11 @@ import {
 } from "@/components/ui/primitives/base";
 import { useDeactivateAccountMutation, useHardDeleteAccountMutation } from "@/lib/query/hooks";
 import { getErrorMessage } from "@/lib/query/state";
-import { useState, type MouseEvent } from "react";
+import { useRef, useState, type MouseEvent } from "react";
 
 export default function DangerSettingsDeleteCard() {
   const [isDialogOpen, setDialogOpen] = useState(false);
-  const [deleteTriggerElement, setDeleteTriggerElement] = useState<HTMLElement | null>(null);
+  const deleteTriggerRef = useRef<HTMLElement | null>(null);
   const deactivateMutation = useDeactivateAccountMutation();
   const hardDeleteMutation = useHardDeleteAccountMutation();
   const isPending = deactivateMutation.isPending || hardDeleteMutation.isPending;
@@ -39,7 +39,7 @@ export default function DangerSettingsDeleteCard() {
           variant="destructive"
           disabled={isPending}
           onClick={(event: MouseEvent<HTMLButtonElement>) => {
-            setDeleteTriggerElement(event.currentTarget);
+            deleteTriggerRef.current = event.currentTarget;
             setDialogOpen(true);
           }}
         >
@@ -60,7 +60,7 @@ export default function DangerSettingsDeleteCard() {
               ? getErrorMessage(hardDeleteMutation.error, "Request failed")
               : undefined
           }
-          returnFocusRef={{ current: deleteTriggerElement }}
+          returnFocusRef={deleteTriggerRef}
           onCancel={() => setDialogOpen(false)}
           onConfirm={() => {
             setDialogOpen(false);

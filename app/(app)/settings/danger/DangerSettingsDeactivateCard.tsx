@@ -24,13 +24,11 @@ import {
   useMeQuery,
 } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
-import { useState, type MouseEvent } from "react";
+import { useRef, useState, type MouseEvent } from "react";
 
 export default function DangerSettingsDeactivateCard() {
   const [isDialogOpen, setDialogOpen] = useState(false);
-  const [deactivateTriggerElement, setDeactivateTriggerElement] = useState<HTMLElement | null>(
-    null,
-  );
+  const deactivateTriggerRef = useRef<HTMLElement | null>(null);
   const meQuery = useMeQuery();
   const deactivateMutation = useDeactivateAccountMutation();
   const hardDeleteMutation = useHardDeleteAccountMutation();
@@ -81,7 +79,7 @@ export default function DangerSettingsDeactivateCard() {
           variant="secondary"
           disabled={isPending}
           onClick={(event: MouseEvent<HTMLButtonElement>) => {
-            setDeactivateTriggerElement(event.currentTarget);
+            deactivateTriggerRef.current = event.currentTarget;
             setDialogOpen(true);
           }}
         >
@@ -100,7 +98,7 @@ export default function DangerSettingsDeactivateCard() {
               ? getErrorMessage(deactivateMutation.error, "Request failed")
               : undefined
           }
-          returnFocusRef={{ current: deactivateTriggerElement }}
+          returnFocusRef={deactivateTriggerRef}
           onCancel={() => setDialogOpen(false)}
           onConfirm={() => {
             setDialogOpen(false);

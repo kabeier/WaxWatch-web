@@ -75,6 +75,13 @@ export function DestructiveConfirmDialog({
   const errorId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
+  const pendingRef = useRef(pending);
+  const onCancelRef = useRef(onCancel);
+
+  useEffect(() => {
+    pendingRef.current = pending;
+    onCancelRef.current = onCancel;
+  }, [onCancel, pending]);
 
   useEffect(() => {
     if (!open) {
@@ -88,8 +95,8 @@ export function DestructiveConfirmDialog({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        if (!pending) {
-          onCancel();
+        if (!pendingRef.current) {
+          onCancelRef.current();
         }
       }
 
@@ -131,7 +138,7 @@ export function DestructiveConfirmDialog({
         focusTarget.focus();
       }
     };
-  }, [onCancel, open, pending, returnFocusRef]);
+  }, [open, returnFocusRef]);
 
   if (!open) {
     return null;

@@ -1,22 +1,19 @@
-import Link from "next/link";
+"use client";
+
+import { useRouter } from "next/navigation";
+
+import { PageTab, PageTabs } from "@/components/ui/primitives/base";
 
 export default function ProfileSettingsTabs() {
+  const router = useRouter();
+
   return (
-    <div role="tablist" aria-label="Settings sections" className="ww-page-tabs">
-      <Link
-        href="/settings/profile"
-        role="tab"
-        aria-selected="true"
-        className="ww-page-tab ww-page-tab--active"
-      >
+    <PageTabs label="Settings sections">
+      <PageTab active onClick={() => router.push("/settings/profile")}>
         Profile
-      </Link>
-      <Link href="/settings/alerts" role="tab" aria-selected="false" className="ww-page-tab">
-        Alerts
-      </Link>
-      <Link href="/settings/danger" role="tab" aria-selected="false" className="ww-page-tab">
-        Danger zone
-      </Link>
-    </div>
+      </PageTab>
+      <PageTab onClick={() => router.push("/settings/alerts")}>Alerts</PageTab>
+      <PageTab onClick={() => router.push("/settings/danger")}>Danger zone</PageTab>
+    </PageTabs>
   );
 }
