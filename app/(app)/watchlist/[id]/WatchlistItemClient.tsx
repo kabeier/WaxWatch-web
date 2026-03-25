@@ -197,11 +197,15 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           }
           disabled={isPending}
           error={validationField === "targetPrice"}
-          aria-invalid={validationField === "targetPrice"}
           aria-describedby={
-            validationField === "targetPrice" ? "watchlist-item-form-errors" : undefined
+            validationField === "targetPrice" ? "watchlist-item-target-price-error" : undefined
           }
         />
+        {validationField === "targetPrice" ? (
+          <p className={pageViewStyles.helpText} id="watchlist-item-target-price-error">
+            {validationText}
+          </p>
+        ) : null}
       </label>
 
       <label className={pageViewStyles.labelStack} htmlFor="watchlist-item-min-condition">
@@ -214,11 +218,15 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           }
           disabled={isPending}
           error={validationField === "minCondition"}
-          aria-invalid={validationField === "minCondition"}
           aria-describedby={
-            validationField === "minCondition" ? "watchlist-item-form-errors" : undefined
+            validationField === "minCondition" ? "watchlist-item-min-condition-error" : undefined
           }
         />
+        {validationField === "minCondition" ? (
+          <p className={pageViewStyles.helpText} id="watchlist-item-min-condition-error">
+            {validationText}
+          </p>
+        ) : null}
       </label>
 
       <label className={pageViewStyles.labelStack} htmlFor="watchlist-item-match-mode">

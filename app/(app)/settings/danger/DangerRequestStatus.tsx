@@ -1,6 +1,7 @@
 "use client";
 
 import { StateError, StateLoading, StateRateLimited } from "@/components/ui/primitives/state";
+import { LiveRegion } from "@/components/ui/primitives/base";
 import { useDeactivateAccountMutation, useHardDeleteAccountMutation } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 
@@ -11,14 +12,10 @@ export default function DangerRequestStatus() {
   return (
     <>
       {deactivateMutation.data !== undefined && !deactivateMutation.isPending ? (
-        <p role="status" aria-live="polite">
-          Success: Account deactivated.
-        </p>
+        <LiveRegion>Success: Account deactivated.</LiveRegion>
       ) : null}
       {hardDeleteMutation.data !== undefined && !hardDeleteMutation.isPending ? (
-        <p role="status" aria-live="polite">
-          Success: Account permanently deleted.
-        </p>
+        <LiveRegion>Success: Account permanently deleted.</LiveRegion>
       ) : null}
       {deactivateMutation.isPending || hardDeleteMutation.isPending ? (
         <StateLoading message="Submitting account change…" />

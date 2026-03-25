@@ -156,12 +156,16 @@ export default function ProfileSettingsForm() {
             onChange={(event) =>
               setDraft((current) => ({ ...current, displayName: event.currentTarget.value }))
             }
-            aria-invalid={validationState?.field === "displayName"}
             error={validationState?.field === "displayName"}
             aria-describedby={
-              validationState?.field === "displayName" ? "profile-settings-form-errors" : undefined
+              validationState?.field === "displayName" ? "profile-display-name-error" : undefined
             }
           />
+          {validationState?.field === "displayName" ? (
+            <p className={pageViewStyles.helpText} id="profile-display-name-error">
+              {validationMessage}
+            </p>
+          ) : null}
         </label>
         <label className={pageViewStyles.labelStack} htmlFor="profile-timezone">
           <span className={pageViewStyles.labelText}>Timezone</span>
@@ -172,12 +176,16 @@ export default function ProfileSettingsForm() {
             onChange={(event) =>
               setDraft((current) => ({ ...current, timezone: event.currentTarget.value }))
             }
-            aria-invalid={validationState?.field === "timezone"}
             error={validationState?.field === "timezone"}
             aria-describedby={
-              validationState?.field === "timezone" ? "profile-settings-form-errors" : undefined
+              validationState?.field === "timezone" ? "profile-timezone-error" : undefined
             }
           />
+          {validationState?.field === "timezone" ? (
+            <p className={pageViewStyles.helpText} id="profile-timezone-error">
+              {validationMessage}
+            </p>
+          ) : null}
         </label>
         <label className={pageViewStyles.labelStack} htmlFor="profile-currency">
           <span className={pageViewStyles.labelText}>Preferred currency</span>
@@ -189,12 +197,16 @@ export default function ProfileSettingsForm() {
             onChange={(event) =>
               setDraft((current) => ({ ...current, currency: event.currentTarget.value }))
             }
-            aria-invalid={validationState?.field === "currency"}
             error={validationState?.field === "currency"}
             aria-describedby={
-              validationState?.field === "currency" ? "profile-settings-form-errors" : undefined
+              validationState?.field === "currency" ? "profile-currency-error" : undefined
             }
           />
+          {validationState?.field === "currency" ? (
+            <p className={pageViewStyles.helpText} id="profile-currency-error">
+              {validationMessage}
+            </p>
+          ) : null}
         </label>
       </form>
 
