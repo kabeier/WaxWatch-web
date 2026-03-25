@@ -362,6 +362,10 @@ export default function SearchWorkbench() {
               setSaveAlertSubmitAttempted(true);
               setSaveAlertSubmitAttemptCount((current) => current + 1);
             }
+            if (searchErrors.length > 0) {
+              setSearchSubmitAttempted(true);
+              setSearchSubmitAttemptCount((current) => current + 1);
+            }
             return;
           }
 
@@ -417,7 +421,11 @@ export default function SearchWorkbench() {
           The last submitted query is saved when available; otherwise the current form values are
           used.
         </p>
-        <Button type="submit" variant="secondary" disabled={isBusy}>
+        <Button
+          type="submit"
+          variant="secondary"
+          disabled={isBusy || saveAlertErrors.length > 0 || searchErrors.length > 0}
+        >
           {saveAlertMutation.isPending ? "Saving alert…" : "Save as alert"}
         </Button>
       </form>
