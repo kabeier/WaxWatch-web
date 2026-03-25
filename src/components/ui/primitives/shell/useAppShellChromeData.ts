@@ -102,13 +102,14 @@ export function useAppShellChromeData() {
   const meQuery = useMeQuery();
   const unreadCountQuery = useUnreadNotificationCountQuery();
 
+  const meFetchedFlag = (meQuery as { isFetched?: boolean }).isFetched;
+  const unreadFetchedFlag = (unreadCountQuery as { isFetched?: boolean }).isFetched;
+
   const meHasSettled =
-    typeof meQuery.isFetched === "boolean"
-      ? meQuery.isFetched
-      : Boolean(meQuery.data) || meQuery.isError;
+    typeof meFetchedFlag === "boolean" ? meFetchedFlag : Boolean(meQuery.data) || meQuery.isError;
   const unreadHasSettled =
-    typeof unreadCountQuery.isFetched === "boolean"
-      ? unreadCountQuery.isFetched
+    typeof unreadFetchedFlag === "boolean"
+      ? unreadFetchedFlag
       : Boolean(unreadCountQuery.data) || unreadCountQuery.isError;
 
   const utilities: TopNavUtilityItem[] = [
