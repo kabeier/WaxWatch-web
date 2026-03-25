@@ -13,6 +13,22 @@ async function mockJson(
   const resolvedPathname = resolveApiMockPath(pathname);
 
   await page.route(`**${resolvedPathname}`, async (route) => {
+    const origin = route.request().headerValue("origin");
+    const corsHeaders = {
+      "access-control-allow-origin": origin ?? "*",
+      "access-control-allow-credentials": "true",
+      "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS",
+      "access-control-allow-headers": "authorization,content-type,x-request-id",
+    };
+
+    if (route.request().method() === "OPTIONS") {
+      await route.fulfill({
+        status: 204,
+        headers: corsHeaders,
+      });
+      return;
+    }
+
     if (method && route.request().method() !== method) {
       await route.fallback();
       return;
@@ -20,6 +36,7 @@ async function mockJson(
     await route.fulfill({
       status,
       contentType: "application/json",
+      headers: corsHeaders,
       body: JSON.stringify(payload),
     });
   });
