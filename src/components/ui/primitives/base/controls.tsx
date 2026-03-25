@@ -14,6 +14,12 @@ function joinAriaIds(...ids: Array<string | null | undefined>) {
   return uniqueIds.length > 0 ? uniqueIds.join(" ") : undefined;
 }
 
+function isAriaInvalidState(
+  value: ComponentPropsWithoutRef<"input">["aria-invalid"],
+): value is true | "true" | "grammar" | "spelling" {
+  return value === true || value === "true" || value === "grammar" || value === "spelling";
+}
+
 type ButtonVariants = {
   variant?: "primary" | "secondary" | "destructive";
   size?: "sm" | "md" | "lg";
@@ -76,7 +82,8 @@ export function TextInput({
     "aria-errormessage": ariaErrorMessage,
     ...restProps
   } = props;
-  const isInvalid = Boolean(ariaInvalid ?? error);
+  const resolvedAriaInvalid = ariaInvalid ?? (error ? true : undefined);
+  const isInvalid = isAriaInvalidState(resolvedAriaInvalid);
   const describedByIds = joinAriaIds(ariaDescribedBy, isInvalid ? errorMessageId : undefined);
   const shouldSetAriaErrorMessage = isInvalid ? (ariaErrorMessage ?? errorMessageId) : undefined;
 
@@ -84,7 +91,7 @@ export function TextInput({
     <input
       type={type}
       className={joinClassNames("ww-input", error && "ww-input--error", className)}
-      aria-invalid={isInvalid || undefined}
+      aria-invalid={resolvedAriaInvalid}
       aria-describedby={describedByIds}
       aria-errormessage={shouldSetAriaErrorMessage}
       {...restProps}
@@ -110,14 +117,15 @@ export function Select({
     "aria-errormessage": ariaErrorMessage,
     ...restProps
   } = props;
-  const isInvalid = Boolean(ariaInvalid ?? error);
+  const resolvedAriaInvalid = ariaInvalid ?? (error ? true : undefined);
+  const isInvalid = isAriaInvalidState(resolvedAriaInvalid);
   const describedByIds = joinAriaIds(ariaDescribedBy, isInvalid ? errorMessageId : undefined);
   const shouldSetAriaErrorMessage = isInvalid ? (ariaErrorMessage ?? errorMessageId) : undefined;
 
   return (
     <select
       className={joinClassNames("ww-input", "ww-select", error && "ww-input--error", className)}
-      aria-invalid={isInvalid || undefined}
+      aria-invalid={resolvedAriaInvalid}
       aria-describedby={describedByIds}
       aria-errormessage={shouldSetAriaErrorMessage}
       {...restProps}

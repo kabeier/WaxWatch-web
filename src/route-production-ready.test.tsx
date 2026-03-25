@@ -462,7 +462,7 @@ describe("route-level production-ready paths", () => {
     fireEvent.change(nameField, { target: { value: "" } });
 
     expect(screen.getByText(/name must be between 1 and 120 characters\./i)).toBeInTheDocument();
-    expect(keywordsField).not.toHaveAttribute("aria-invalid");
+    expect(keywordsField).toHaveAttribute("aria-invalid", "false");
     expect(keywordsField).not.toHaveAttribute("aria-describedby", "new-alert-form-errors");
   });
 

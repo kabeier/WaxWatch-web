@@ -162,4 +162,27 @@ describe("base ui primitives", () => {
     await user.keyboard("{Home}");
     expect(profile).toHaveFocus();
   });
+
+  it("preserves explicit aria-invalid states like grammar without coercing to true", () => {
+    render(
+      <>
+        <TextInput
+          aria-label="Release notes"
+          aria-invalid="grammar"
+          aria-describedby="release-note-summary"
+          errorMessageId="release-note-error"
+        />
+        <p id="release-note-summary">Check spelling and grammar.</p>
+        <p id="release-note-error">Grammar issue detected.</p>
+      </>,
+    );
+
+    const releaseNotes = screen.getByRole("textbox", { name: "Release notes" });
+    expect(releaseNotes).toHaveAttribute("aria-invalid", "grammar");
+    expect(releaseNotes).toHaveAttribute(
+      "aria-describedby",
+      "release-note-summary release-note-error",
+    );
+    expect(releaseNotes).toHaveAttribute("aria-errormessage", "release-note-error");
+  });
 });
