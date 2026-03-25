@@ -198,6 +198,22 @@ describe("useApiMutation sequential state", () => {
     });
   });
 
+  it("treats resolved error envelopes with blank messages as failures", async () => {
+    searchRunMock.mockResolvedValueOnce({
+      error: { message: "   " },
+    });
+
+    render(<SearchMutationProbe />);
+
+    fireEvent.click(screen.getByRole("button", { name: "mutate" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("pending").textContent).toBe("false");
+      expect(screen.getByTestId("error").textContent).toBe("true");
+      expect(screen.getByTestId("data").textContent).toBe("no-data");
+    });
+  });
+
   it("runs create watch-rule side effects only once when A resolves after B", async () => {
     const mutationA = createDeferred<{ id: string }>();
     const mutationB = createDeferred<{ id: string }>();

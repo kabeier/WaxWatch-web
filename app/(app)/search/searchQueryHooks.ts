@@ -35,7 +35,8 @@ function getMutationEnvelopeError(data: unknown): string | null {
     "message" in errorField &&
     typeof (errorField as { message?: unknown }).message === "string"
   ) {
-    return (errorField as { message: string }).message;
+    const message = (errorField as { message: string }).message.trim();
+    return message.length > 0 ? message : "Request failed";
   }
 
   return "Request failed";
@@ -72,7 +73,7 @@ function useApiMutation<TInput, TData>(options: {
         .mutationFn(input)
         .then((data) => {
           const envelopeErrorMessage = getMutationEnvelopeError(data);
-          if (envelopeErrorMessage) {
+          if (envelopeErrorMessage !== null) {
             throw new Error(envelopeErrorMessage);
           }
 
