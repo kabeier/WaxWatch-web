@@ -169,7 +169,7 @@ describe("shell primitives", () => {
     expect(screen.getByText("Account active · 7 unread notifications")).toBeInTheDocument();
   });
 
-  it("keeps blank defensive fallback values limited to primitive-only usage", () => {
+  it("keeps defensive fallback values limited to primitive-only usage", () => {
     const { container } = render(
       <>
         <TopNav />
@@ -182,11 +182,10 @@ describe("shell primitives", () => {
     const statusValue = container.querySelector("strong.side-nav__status-value");
 
     expect(utilityValues).toHaveLength(2);
-    expect(utilityValues.map((node) => node.textContent)).toEqual(["", ""]);
-    expect(statusLabel).toHaveTextContent("");
-    expect(statusValue).toHaveTextContent("");
-    expect(screen.queryByText("Session")).not.toBeInTheDocument();
-    expect(screen.queryByText("Loading profile")).not.toBeInTheDocument();
+    expect(utilityValues.map((node) => node.textContent)).toEqual(["—", "Unavailable"]);
+    expect(statusLabel).toHaveTextContent("Session");
+    expect(statusValue).toHaveTextContent("Profile unavailable");
+    expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
   });
 
   it("renders dynamic shell utility and status values from query-backed chrome data", () => {
@@ -248,6 +247,8 @@ describe("shell primitives", () => {
     expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Loading profile")).toBeInTheDocument();
     expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
+    expect(screen.queryByText("Profile unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Notifications unavailable")).not.toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveTextContent("App content");
   });
 
@@ -306,6 +307,8 @@ describe("shell primitives", () => {
     expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Avery Collector")).toBeInTheDocument();
     expect(screen.getByText("Account active · 4 unread notifications")).toBeInTheDocument();
+    expect(screen.queryByText("Profile unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Notifications unavailable")).not.toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveTextContent("App content");
   });
 

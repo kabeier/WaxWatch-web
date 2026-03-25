@@ -83,7 +83,8 @@ describe("Layout", () => {
     expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Loading profile")).toBeInTheDocument();
     expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
-    expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Profile unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Notifications unavailable")).not.toBeInTheDocument();
   });
 
   it("renders error chrome values from query-backed app-shell data", () => {
@@ -117,7 +118,6 @@ describe("Layout", () => {
     expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Profile unavailable")).toBeInTheDocument();
     expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
-    expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
   });
 
   it("renders success chrome values from query-backed app-shell data", () => {
@@ -155,7 +155,8 @@ describe("Layout", () => {
     expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Avery Collector")).toBeInTheDocument();
     expect(screen.getByText("Account active · 7 unread notifications")).toBeInTheDocument();
-    expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Profile unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Notifications unavailable")).not.toBeInTheDocument();
   });
 
   it("renders auth notice from reason query param", () => {

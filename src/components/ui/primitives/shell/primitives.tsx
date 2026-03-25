@@ -164,11 +164,21 @@ export function AppShell({
 }
 
 const DEFENSIVE_UTILITY_ITEMS: TopNavUtilityItem[] = [
-  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "" },
-  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "" },
+  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "—" },
+  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "Unavailable" },
 ];
 
-const DEFENSIVE_SIDE_NAV_STATUS: SideNavStatus = { label: "", value: "", meta: undefined };
+const DEFENSIVE_SIDE_NAV_STATUS: SideNavStatus = {
+  label: "Session",
+  value: "Profile unavailable",
+  meta: "Notifications unavailable",
+};
+
+function getNonEmptyValue(value: string | undefined, fallback: string) {
+  const normalizedValue = value?.trim();
+
+  return normalizedValue && normalizedValue.length > 0 ? normalizedValue : fallback;
+}
 
 export function TopNav({
   utilities,
@@ -191,7 +201,7 @@ export function TopNav({
                   key={`${item.href}-${item.label}`}
                   href={item.href}
                   label={item.label}
-                  value={item.value}
+                  value={getNonEmptyValue(item.value, "—")}
                 />
               ))}
           </nav>
@@ -229,9 +239,15 @@ export function SideNav({
         <div className="side-nav__footer">
           {footer ?? (
             <div className="side-nav__status" aria-label="Account status">
-              <span className="side-nav__status-label">{status.label}</span>
-              <strong className="side-nav__status-value">{status.value}</strong>
-              {status.meta ? <span className="side-nav__status-meta">{status.meta}</span> : null}
+              <span className="side-nav__status-label">
+                {getNonEmptyValue(status.label, "Session")}
+              </span>
+              <strong className="side-nav__status-value">
+                {getNonEmptyValue(status.value, "Profile unavailable")}
+              </strong>
+              {status.meta?.trim() ? (
+                <span className="side-nav__status-meta">{status.meta}</span>
+              ) : null}
             </div>
           )}
         </div>
