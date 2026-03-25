@@ -6,6 +6,7 @@ type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
 
 type MockHandle = {
   getHitCount: () => number;
+  getDiagnostics: () => string;
 };
 
 function normalizePathname(pathname: string): string {
@@ -27,23 +28,29 @@ async function mockJson(
   status = 200,
   method?: HttpMethod,
 ): Promise<MockHandle> {
-  const resolvedPathname = resolveApiMockPath(pathname);
-  const isPrefixMatch = resolvedPathname.endsWith("*");
-  const normalizedMockPath = normalizePathname(
-    isPrefixMatch ? resolvedPathname.slice(0, -1) : resolvedPathname,
+  const normalizedPatternPath = normalizePathname(
+    pathname.endsWith("*") ? pathname.slice(0, -1) : pathname,
   );
+  const normalizedEndpoint =
+    normalizedPatternPath === "/api"
+      ? "/"
+      : normalizePathname(normalizedPatternPath.replace(/^\/api(?=\/|$)/, ""));
   let hitCount = 0;
+  const unmatchedApiRequests: string[] = [];
 
   await page.route("**/*", async (route) => {
     const request = route.request();
     const requestUrl = new URL(request.url());
     const normalizedRequestPath = normalizePathname(requestUrl.pathname);
-
-    const pathMatches = isPrefixMatch
-      ? normalizedRequestPath.startsWith(normalizedMockPath)
-      : normalizedRequestPath === normalizedMockPath;
+    const pathMatches = pathEndsWithEndpoint(normalizedRequestPath, normalizedEndpoint);
 
     if (!pathMatches) {
+      if (isApiLikePath(normalizedRequestPath)) {
+        unmatchedApiRequests.push(`${request.method()} ${requestUrl.toString()}`);
+        if (unmatchedApiRequests.length > 5) {
+          unmatchedApiRequests.shift();
+        }
+      }
       await route.fallback();
       return;
     }
@@ -81,37 +88,28 @@ async function mockJson(
 
   return {
     getHitCount: () => hitCount,
+    getDiagnostics: () =>
+      unmatchedApiRequests.length > 0
+        ? unmatchedApiRequests.join("\n")
+        : "No unmatched API-like requests recorded.",
   };
 }
 
-function resolveApiMockPath(pathname: string): string {
-  const configuredApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
-  if (!configuredApiBaseUrl || !pathname.startsWith("/api/")) {
-    return pathname;
+function pathEndsWithEndpoint(requestPath: string, endpoint: string): boolean {
+  const normalizedRequestPath = normalizePathname(requestPath);
+  const normalizedEndpoint = normalizePathname(endpoint);
+  if (!normalizedRequestPath.endsWith(normalizedEndpoint)) {
+    return false;
   }
 
-  const normalizeBasePath = (basePath: string) => {
-    const trimmed = basePath.trim();
-    if (!trimmed) {
-      return "/api";
-    }
+  const boundaryIndex = normalizedRequestPath.length - normalizedEndpoint.length;
+  return boundaryIndex === 0 || normalizedRequestPath[boundaryIndex - 1] === "/";
+}
 
-    const withoutTrailingSlash = trimmed.replace(/\/+$/, "");
-    return withoutTrailingSlash.length > 0 ? withoutTrailingSlash : "/";
-  };
-
-  if (configuredApiBaseUrl.startsWith("/")) {
-    const normalizedBasePath = normalizeBasePath(configuredApiBaseUrl);
-    return pathname.replace(/^\/api(?=\/)/, normalizedBasePath);
-  }
-
-  try {
-    const url = new URL(configuredApiBaseUrl);
-    const normalizedBasePath = normalizeBasePath(url.pathname);
-    return pathname.replace(/^\/api(?=\/)/, normalizedBasePath);
-  } catch {
-    return pathname;
-  }
+function isApiLikePath(pathname: string): boolean {
+  return ["/search", "/me", "/watch-releases", "/notifications"].some((segment) =>
+    pathname.includes(segment),
+  );
 }
 
 async function mockChromeData(page: Page) {
@@ -210,7 +208,7 @@ test.describe("accessibility regression audit", () => {
 
     await expect
       .poll(() => searchRunMock.getHitCount(), {
-        message: "Expected /search POST mock to be intercepted at least once",
+        message: `Expected /search POST mock to be intercepted at least once.\nRecent unmatched API requests:\n${searchRunMock.getDiagnostics()}`,
       })
       .toBeGreaterThan(0);
 
@@ -224,7 +222,7 @@ test.describe("accessibility regression audit", () => {
 
     await expect
       .poll(() => saveAlertMock.getHitCount(), {
-        message: "Expected /search/save-alert POST mock to be intercepted at least once",
+        message: `Expected /search/save-alert POST mock to be intercepted at least once.\nRecent unmatched API requests:\n${saveAlertMock.getDiagnostics()}`,
       })
       .toBeGreaterThan(0);
 
@@ -266,7 +264,7 @@ test.describe("accessibility regression audit", () => {
 
     await expect
       .poll(() => updateProfileMock.getHitCount(), {
-        message: "Expected /me PATCH mock to be intercepted on profile save",
+        message: `Expected /me PATCH mock to be intercepted on profile save.\nRecent unmatched API requests:\n${updateProfileMock.getDiagnostics()}`,
       })
       .toBeGreaterThan(0);
 
@@ -313,7 +311,7 @@ test.describe("accessibility regression audit", () => {
 
     await expect
       .poll(() => watchReleaseDetailMock.getHitCount(), {
-        message: "Expected watchlist detail GET mock to be intercepted",
+        message: `Expected watchlist detail GET mock to be intercepted.\nRecent unmatched API requests:\n${watchReleaseDetailMock.getDiagnostics()}`,
       })
       .toBeGreaterThan(0);
 
@@ -340,7 +338,7 @@ test.describe("accessibility regression audit", () => {
     await dialog.getByRole("button", { name: "Disable watchlist item" }).click();
     await expect
       .poll(() => disableWatchReleaseMock.getHitCount(), {
-        message: "Expected watchlist disable DELETE mock to be intercepted",
+        message: `Expected watchlist disable DELETE mock to be intercepted.\nRecent unmatched API requests:\n${disableWatchReleaseMock.getDiagnostics()}`,
       })
       .toBeGreaterThan(0);
     await expect(
@@ -384,7 +382,7 @@ test.describe("accessibility regression audit", () => {
     await confirmButton.click();
     await expect
       .poll(() => hardDeleteMock.getHitCount(), {
-        message: "Expected /me/hard-delete DELETE mock to be intercepted",
+        message: `Expected /me/hard-delete DELETE mock to be intercepted.\nRecent unmatched API requests:\n${hardDeleteMock.getDiagnostics()}`,
       })
       .toBeGreaterThan(0);
 
