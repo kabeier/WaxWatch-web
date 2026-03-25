@@ -2,18 +2,20 @@
 
 ## Verification lock (2026-03-25)
 
-Post-merge full verification rerun completed once in this workspace on **March 25, 2026** using:
-
-- `npm run ci:prod-gates`
+Verification was rerun in this workspace on **March 25, 2026** using CI/release-style commands.
 
 Outcome in this environment: **not green**.
 
-- ✅ `npm run test:coverage` passed (47/47 files, 336/336 tests).
+- ✅ `npm run test:run` passed (47/47 files, 336/336 tests).
+- ✅ `npm run typecheck` passed.
+- ✅ `npm run lint` passed.
+- ✅ `npm run format:check` passed.
 - ✅ `npm run prebuild:prod-env` passed (same-origin defaults accepted).
-- ❌ `npm run build` failed at the `prebuild` hook (`scripts/env-contract.mjs`) because required production env vars were not set (`NODE_ENV`, `APP_BASE_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_RELEASE_VERSION`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_REGION`, `AWS_SECRETS_PREFIX`, `TRUSTED_PROXY_CIDRS`, `LOG_LEVEL`).
-- ⚠️ Downstream gates in `ci:prod-gates` did not execute after the build step failure (`bundle:check`, `a11y:smoke`, `verify:deployment`, `release:checklist`).
+- ❌ `NODE_ENV=production ... npm run build` failed after env contract passed because Next.js attempted to download `@next/swc-linux-x64-gnu` and the network request failed (`ENETUNREACH`).
+- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate` skipped because `origin` was unavailable in this workspace (could not fetch base ref).
+- ⚠️ `NODE_ENV=production ... npm run a11y:smoke` could not run because `start-server-and-test` was unavailable after dependency reinstall attempts failed (`npm install`/`npm ci` returned 403 for `@swc/helpers`).
 
-Because the full suite did not finish green, route statuses/docs are **not** frozen as a frontend release-candidate baseline in this run.
+Because build + downstream gates did not complete, route status/docs are **not** frozen as a release-candidate baseline in this run.
 
 ## Developer quickstart (read this first)
 
