@@ -20,6 +20,26 @@ function isAriaInvalidState(
   return value === true || value === "true" || value === "grammar" || value === "spelling";
 }
 
+function resolveAriaInvalidState({
+  ariaInvalid,
+  error,
+  ariaErrorMessage,
+}: {
+  ariaInvalid: ComponentPropsWithoutRef<"input">["aria-invalid"];
+  error: boolean;
+  ariaErrorMessage?: string;
+}) {
+  if (ariaInvalid !== undefined) {
+    return ariaInvalid;
+  }
+
+  if (error || Boolean(ariaErrorMessage)) {
+    return true;
+  }
+
+  return undefined;
+}
+
 type ButtonVariants = {
   variant?: "primary" | "secondary" | "destructive";
   size?: "sm" | "md" | "lg";
@@ -82,10 +102,18 @@ export function TextInput({
     "aria-errormessage": ariaErrorMessage,
     ...restProps
   } = props;
-  const resolvedAriaInvalid = ariaInvalid ?? (error ? true : undefined);
+  const resolvedAriaInvalid = resolveAriaInvalidState({
+    ariaInvalid,
+    error,
+    ariaErrorMessage,
+  });
   const isInvalid = isAriaInvalidState(resolvedAriaInvalid);
-  const describedByIds = joinAriaIds(ariaDescribedBy, isInvalid ? errorMessageId : undefined);
-  const shouldSetAriaErrorMessage = isInvalid ? (ariaErrorMessage ?? errorMessageId) : undefined;
+  const resolvedErrorMessageId = ariaErrorMessage ?? errorMessageId;
+  const describedByIds = joinAriaIds(
+    ariaDescribedBy,
+    isInvalid ? resolvedErrorMessageId : undefined,
+  );
+  const shouldSetAriaErrorMessage = isInvalid ? resolvedErrorMessageId : undefined;
 
   return (
     <input
@@ -117,10 +145,18 @@ export function Select({
     "aria-errormessage": ariaErrorMessage,
     ...restProps
   } = props;
-  const resolvedAriaInvalid = ariaInvalid ?? (error ? true : undefined);
+  const resolvedAriaInvalid = resolveAriaInvalidState({
+    ariaInvalid,
+    error,
+    ariaErrorMessage,
+  });
   const isInvalid = isAriaInvalidState(resolvedAriaInvalid);
-  const describedByIds = joinAriaIds(ariaDescribedBy, isInvalid ? errorMessageId : undefined);
-  const shouldSetAriaErrorMessage = isInvalid ? (ariaErrorMessage ?? errorMessageId) : undefined;
+  const resolvedErrorMessageId = ariaErrorMessage ?? errorMessageId;
+  const describedByIds = joinAriaIds(
+    ariaDescribedBy,
+    isInvalid ? resolvedErrorMessageId : undefined,
+  );
+  const shouldSetAriaErrorMessage = isInvalid ? resolvedErrorMessageId : undefined;
 
   return (
     <select
