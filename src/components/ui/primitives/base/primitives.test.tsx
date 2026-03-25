@@ -209,6 +209,7 @@ describe("base ui primitives", () => {
 
     const releaseNotes = screen.getByRole("textbox", { name: "Release notes" });
     expect(releaseNotes).toHaveAttribute("aria-invalid", "grammar");
+    expect(releaseNotes).toHaveClass("ww-input--error");
     expect(releaseNotes).toHaveAttribute(
       "aria-describedby",
       "release-note-summary release-note-error",
@@ -231,6 +232,7 @@ describe("base ui primitives", () => {
 
     const alertName = screen.getByRole("textbox", { name: "Alert name" });
     expect(alertName).toHaveAttribute("aria-invalid", "true");
+    expect(alertName).toHaveClass("ww-input--error");
     expect(alertName).toHaveAttribute("aria-describedby", "alert-name-summary alert-name-error");
     expect(alertName).toHaveAttribute("aria-errormessage", "alert-name-error");
   });
