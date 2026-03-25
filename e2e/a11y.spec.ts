@@ -2,26 +2,67 @@ import { expect, test, type Page } from "@playwright/test";
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
+
+type MockHandle = {
+  getHitCount: () => number;
+};
+
+function normalizePathname(pathname: string): string {
+  const withoutQuery = pathname.split("?")[0] ?? pathname;
+  const withLeadingSlash = withoutQuery.startsWith("/") ? withoutQuery : `/${withoutQuery}`;
+  const collapsed = withLeadingSlash.replace(/\/{2,}/g, "/");
+
+  if (collapsed.length > 1 && collapsed.endsWith("/")) {
+    return collapsed.slice(0, -1);
+  }
+
+  return collapsed;
+}
 
 async function mockJson(
   page: Page,
   pathname: string,
   payload: JsonValue,
   status = 200,
-  method?: "GET" | "POST" | "PATCH" | "DELETE",
-) {
+  method?: HttpMethod,
+): Promise<MockHandle> {
   const resolvedPathname = resolveApiMockPath(pathname);
+  const isPrefixMatch = resolvedPathname.endsWith("*");
+  const normalizedMockPath = normalizePathname(
+    isPrefixMatch ? resolvedPathname.slice(0, -1) : resolvedPathname,
+  );
+  let hitCount = 0;
 
-  await page.route(`**${resolvedPathname}`, async (route) => {
-    const origin = route.request().headerValue("origin");
+  await page.route("**/*", async (route) => {
+    const request = route.request();
+    const requestUrl = new URL(request.url());
+    const normalizedRequestPath = normalizePathname(requestUrl.pathname);
+
+    const pathMatches = isPrefixMatch
+      ? normalizedRequestPath.startsWith(normalizedMockPath)
+      : normalizedRequestPath === normalizedMockPath;
+
+    if (!pathMatches) {
+      await route.fallback();
+      return;
+    }
+
+    const requestMethod = request.method();
+    if (method && requestMethod !== method && requestMethod !== "OPTIONS") {
+      await route.fallback();
+      return;
+    }
+
+    const origin = request.headers()["origin"] ?? "http://127.0.0.1:4173";
     const corsHeaders = {
-      "access-control-allow-origin": origin ?? "*",
+      "access-control-allow-origin": origin,
       "access-control-allow-credentials": "true",
       "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS",
       "access-control-allow-headers": "authorization,content-type,x-request-id",
     };
 
-    if (route.request().method() === "OPTIONS") {
+    if (requestMethod === "OPTIONS") {
       await route.fulfill({
         status: 204,
         headers: corsHeaders,
@@ -29,10 +70,7 @@ async function mockJson(
       return;
     }
 
-    if (method && route.request().method() !== method) {
-      await route.fallback();
-      return;
-    }
+    hitCount += 1;
     await route.fulfill({
       status,
       contentType: "application/json",
@@ -40,6 +78,10 @@ async function mockJson(
       body: JSON.stringify(payload),
     });
   });
+
+  return {
+    getHitCount: () => hitCount,
+  };
 }
 
 function resolveApiMockPath(pathname: string): string {
@@ -73,7 +115,7 @@ function resolveApiMockPath(pathname: string): string {
 }
 
 async function mockChromeData(page: Page) {
-  await mockJson(
+  const me = await mockJson(
     page,
     "/api/me*",
     {
@@ -98,15 +140,26 @@ async function mockChromeData(page: Page) {
     200,
     "GET",
   );
-  await mockJson(page, "/api/notifications/unread-count*", { unread_count: 0 }, 200, "GET");
+  const unreadCount = await mockJson(
+    page,
+    "/api/notifications/unread-count*",
+    { unread_count: 0 },
+    200,
+    "GET",
+  );
+
+  return {
+    me,
+    unreadCount,
+  };
 }
 
 test.describe("accessibility regression audit", () => {
   test("/search: keyboard traversal, visible focus, and async status/error announcements", async ({
     page,
   }) => {
-    await mockChromeData(page);
-    await mockJson(
+    const chromeMocks = await mockChromeData(page);
+    const searchRunMock = await mockJson(
       page,
       "/api/search*",
       {
@@ -137,7 +190,7 @@ test.describe("accessibility regression audit", () => {
       200,
       "POST",
     );
-    await mockJson(
+    const saveAlertMock = await mockJson(
       page,
       "/api/search/save-alert*",
       { error: { message: "Save failed" } },
@@ -146,6 +199,12 @@ test.describe("accessibility regression audit", () => {
     );
 
     await page.goto("/search");
+
+    await expect
+      .poll(() => chromeMocks.me.getHitCount(), {
+        message: "Expected /me mock to be intercepted at least once",
+      })
+      .toBeGreaterThan(0);
 
     const searchKeywords = page.locator("#search-keywords");
     await expect(searchKeywords).toBeVisible();
@@ -166,6 +225,12 @@ test.describe("accessibility regression audit", () => {
     await expect(runSearchButton).toBeFocused();
     await runSearchButton.click();
 
+    await expect
+      .poll(() => searchRunMock.getHitCount(), {
+        message: "Expected /search POST mock to be intercepted at least once",
+      })
+      .toBeGreaterThan(0);
+
     await expect(
       page.getByRole("status").filter({ hasText: "Status: Loaded 1 search results." }),
     ).toBeVisible();
@@ -173,6 +238,12 @@ test.describe("accessibility regression audit", () => {
     await page.locator("#save-alert-name").fill("Price watch");
     await page.keyboard.press("Tab");
     await page.keyboard.press("Enter");
+
+    await expect
+      .poll(() => saveAlertMock.getHitCount(), {
+        message: "Expected /search/save-alert POST mock to be intercepted at least once",
+      })
+      .toBeGreaterThan(0);
 
     await expect(
       page.getByRole("alert").filter({ hasText: "Could not save alert." }),
@@ -182,10 +253,22 @@ test.describe("accessibility regression audit", () => {
   test("/settings/profile: keyboard traversal, visible focus, and async error announcement", async ({
     page,
   }) => {
-    await mockChromeData(page);
-    await mockJson(page, "/api/me*", { error: { message: "Update failed" } }, 500, "PATCH");
+    const chromeMocks = await mockChromeData(page);
+    const updateProfileMock = await mockJson(
+      page,
+      "/api/me*",
+      { error: { message: "Update failed" } },
+      500,
+      "PATCH",
+    );
 
     await page.goto("/settings/profile");
+
+    await expect
+      .poll(() => chromeMocks.me.getHitCount(), {
+        message: "Expected /me GET mock to be intercepted before profile interaction",
+      })
+      .toBeGreaterThan(0);
 
     const displayNameInput = page.locator("#profile-display-name");
     await expect(displayNameInput).toBeVisible();
@@ -204,6 +287,12 @@ test.describe("accessibility regression audit", () => {
     await expect(saveButton).toBeFocused();
     await saveButton.press("Enter");
 
+    await expect
+      .poll(() => updateProfileMock.getHitCount(), {
+        message: "Expected /me PATCH mock to be intercepted on profile save",
+      })
+      .toBeGreaterThan(0);
+
     await expect(
       page.getByRole("alert").filter({ hasText: "Could not save profile settings." }),
     ).toBeVisible();
@@ -212,8 +301,8 @@ test.describe("accessibility regression audit", () => {
   test("/watchlist/[id]: dialog focus trap + focus return and async error announcement", async ({
     page,
   }) => {
-    await mockChromeData(page);
-    await mockJson(
+    const chromeMocks = await mockChromeData(page);
+    const watchReleaseDetailMock = await mockJson(
       page,
       "/api/watch-releases/release-1*",
       {
@@ -235,7 +324,7 @@ test.describe("accessibility regression audit", () => {
       200,
       "GET",
     );
-    await mockJson(
+    const disableWatchReleaseMock = await mockJson(
       page,
       "/api/watch-releases/release-1*",
       { error: { message: "Disable failed" } },
@@ -244,6 +333,17 @@ test.describe("accessibility regression audit", () => {
     );
 
     await page.goto("/watchlist/release-1");
+
+    await expect
+      .poll(() => chromeMocks.me.getHitCount(), {
+        message: "Expected /me GET mock to be intercepted for watchlist chrome",
+      })
+      .toBeGreaterThan(0);
+    await expect
+      .poll(() => watchReleaseDetailMock.getHitCount(), {
+        message: "Expected watchlist detail GET mock to be intercepted",
+      })
+      .toBeGreaterThan(0);
 
     const disableTrigger = page.getByRole("button", { name: /^Disable watchlist item/ });
     await expect(disableTrigger).toBeVisible({ timeout: 15_000 });
@@ -266,6 +366,11 @@ test.describe("accessibility regression audit", () => {
 
     await disableTrigger.click();
     await dialog.getByRole("button", { name: "Disable watchlist item" }).click();
+    await expect
+      .poll(() => disableWatchReleaseMock.getHitCount(), {
+        message: "Expected watchlist disable DELETE mock to be intercepted",
+      })
+      .toBeGreaterThan(0);
     await expect(
       page.getByRole("alert").filter({ hasText: "Could not disable watchlist item." }),
     ).toBeVisible();
@@ -274,8 +379,8 @@ test.describe("accessibility regression audit", () => {
   test("/settings/danger: dialog focus trap + return and async status/error announcements", async ({
     page,
   }) => {
-    await mockChromeData(page);
-    await mockJson(
+    const chromeMocks = await mockChromeData(page);
+    const hardDeleteMock = await mockJson(
       page,
       "/api/me/hard-delete*",
       { error: { message: "Delete failed" } },
@@ -284,6 +389,12 @@ test.describe("accessibility regression audit", () => {
     );
 
     await page.goto("/settings/danger");
+
+    await expect
+      .poll(() => chromeMocks.me.getHitCount(), {
+        message: "Expected /me GET mock to be intercepted for danger settings chrome",
+      })
+      .toBeGreaterThan(0);
 
     const deleteTrigger = page.getByRole("button", { name: "Permanently delete account" });
     await deleteTrigger.click();
@@ -305,6 +416,11 @@ test.describe("accessibility regression audit", () => {
 
     await deleteTrigger.click();
     await confirmButton.click();
+    await expect
+      .poll(() => hardDeleteMock.getHitCount(), {
+        message: "Expected /me/hard-delete DELETE mock to be intercepted",
+      })
+      .toBeGreaterThan(0);
 
     await expect(dialog.getByRole("alert").filter({ hasText: "Delete failed" })).toBeVisible();
   });
