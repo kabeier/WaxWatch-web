@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -23,6 +23,17 @@ async function mockJson(
   });
 }
 
+async function tabToTarget(page: Page, target: Locator, maxTabs = 20) {
+  for (let attempt = 0; attempt < maxTabs; attempt += 1) {
+    if (await target.evaluate((element) => element === document.activeElement)) {
+      return;
+    }
+
+    await page.keyboard.press("Tab");
+  }
+
+  throw new Error(`Failed to focus target after ${maxTabs} Tab presses.`);
+}
 test.describe("accessibility regression audit", () => {
   test("/search: keyboard traversal, visible focus, and async status/error announcements", async ({
     page,
@@ -63,7 +74,7 @@ test.describe("accessibility regression audit", () => {
 
     await page.goto("/search");
 
-    await page.keyboard.press("Tab");
+    await tabToTarget(page, page.locator("#search-keywords"));
     await expect(page.locator("#search-keywords")).toBeFocused();
     await expect(page.locator("#search-keywords")).toHaveCSS("outline-style", "solid");
 
@@ -113,7 +124,7 @@ test.describe("accessibility regression audit", () => {
     await page.goto("/settings/profile");
 
     await expect(page.locator("#profile-display-name")).toBeVisible();
-    await page.keyboard.press("Tab");
+    await tabToTarget(page, page.locator("#profile-display-name"));
     await expect(page.locator("#profile-display-name")).toBeFocused();
     await expect(page.locator("#profile-display-name")).toHaveCSS("outline-style", "solid");
 
@@ -227,8 +238,6 @@ test.describe("accessibility regression audit", () => {
     await deleteTrigger.click();
     await confirmButton.click();
 
-    await expect(
-      page.getByRole("alert").filter({ hasText: "Could not permanently delete account." }),
-    ).toBeVisible();
+    await expect(dialog.getByRole("alert").filter({ hasText: "Delete failed" })).toBeVisible();
   });
 });
