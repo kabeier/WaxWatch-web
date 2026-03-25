@@ -17,7 +17,13 @@ const noHandoff = {
 
 describe("/login route", () => {
   it("renders default sign-in success path and redirects after submit", async () => {
-    const fetchMock = vi.fn(async () => new Response(null, { status: 200 })) as typeof fetch;
+    let resolveFetch: ((value: Response) => void) | undefined;
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFetch = resolve;
+        }),
+    ) as typeof fetch;
     const onRedirect = vi.fn();
 
     render(<LoginPageClient handoff={noHandoff} fetchImpl={fetchMock} onRedirect={onRedirect} />);
@@ -28,6 +34,10 @@ describe("/login route", () => {
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeDisabled();
+    expect(screen.getByText(/signing you in/i)).toBeInTheDocument();
+
+    resolveFetch?.(new Response(null, { status: 200 }));
     await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
   });
 

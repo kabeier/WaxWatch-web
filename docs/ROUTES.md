@@ -101,12 +101,10 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ## Verification lock (2026-03-25)
 
-The route summary in this file is locked to the **release-candidate frontend baseline** after rerunning the release-gate sequence in this workspace on March 25, 2026.
+The route summary in this file is locked to the **release-candidate frontend baseline** after rerunning the requested verification sequence in this workspace on March 25, 2026.
 
-- Group A/B/C outputs are merged into this route summary and synchronized with the canonical route status matrix in `docs/DEVELOPER_REFERENCE.md`.
-- Passed: `npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run env:check:template`, `npm run contracts:check`, `npm run lint:api-core-boundaries`, `npm run docs:lint:placeholders`, `npm run prebuild:prod-env` (with production-safe sample values).
-- Route gate script executed: `GITHUB_BASE_REF=main npm run docs:route-status-gate` (reported skip because this workspace has no fetchable `origin` remote).
-- Additional diff-based scripts executed: `npm run test:contract` and `npm run format:check:changed` (both reported skip because `GITHUB_BASE_REF` is not set in this workspace).
-- Environment-limited/pending: `npm run build` passed `prebuild` but failed while Next.js attempted SWC download/lockfile patching (`ENETUNREACH`), and `npm run a11y:smoke` then failed because `npm run start` requires `.next/standalone/server.js`.
+- Passed in this workspace: `npm run test:run`, `npm run typecheck`, `npm run lint`, and `npm run format:check`.
+- Route gate script executed: `GITHUB_BASE_REF=main npm run docs:route-status-gate` (reported skip because `origin` is not configured/fetchable in this workspace).
+- Blocked by environment/network constraints: `npm run build` passed `prebuild` env validation but failed when Next.js attempted SWC download/lockfile patching (`ENETUNREACH`), and `npm run a11y:smoke` then failed because `npm run start` requires `.next/standalone/server.js` from a successful build.
 
 Treat `docs/DEVELOPER_REFERENCE.md` as the canonical matrix and keep this summary synchronized in the same PR; move both docs to a fully completed verification lock only after `build` and `a11y:smoke` pass in network-capable CI/release infrastructure.

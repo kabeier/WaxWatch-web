@@ -69,12 +69,17 @@ describe("/dashboard route", () => {
 
   it("shows success content with dashboard navigation actions", () => {
     render(<DashboardPage />);
+
     expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /open notifications/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /open notifications/i })).toHaveAttribute(
+      "href",
+      "/notifications",
+    );
     expect(screen.getByRole("link", { name: /kind of blue/i })).toHaveAttribute(
       "href",
       "/watchlist/release-1",
     );
+    expect(screen.getByText(/no notifications yet/i)).toBeInTheDocument();
   });
 
   it("shows error, empty, and rate-limited states with retry affordances", () => {
@@ -106,8 +111,11 @@ describe("/dashboard route", () => {
     expect(screen.getByText(/could not load notifications\./i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /retry notifications/i }));
     expect(retryNotifications).toHaveBeenCalledTimes(1);
+
     expect(screen.getByText(/recent matches are temporarily rate limited/i)).toBeInTheDocument();
     expect(screen.getByText(/retry-after:\s*45s/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 45s/i })).toBeDisabled();
+
     expect(screen.getByText(/no watch rules yet/i)).toBeInTheDocument();
   });
 });
