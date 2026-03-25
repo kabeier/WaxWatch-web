@@ -20,8 +20,11 @@ Verified pass gates (rerun in this workspace):
 - `npm run docs:lint:placeholders`
 - `npm run prebuild:prod-env` (production standalone env gate passed with production-safe sample values before build attempts)
 - `GITHUB_BASE_REF=main npm run docs:route-status-gate` (script executed and reported: `Skipping route-status test gate (unable to fetch base ref from origin).`)
-- `npm run test:contract` (script executed and reported: `Skipping test-update contract (GITHUB_BASE_REF not set).`)
-- `npm run format:check:changed` (script executed and reported: `Skipping changed-files format check (GITHUB_BASE_REF not set).`)
+
+Executed but skipped (diff-based gates not evaluated in this workspace):
+
+- `npm run test:contract` (script reported: `Skipping test-update contract (GITHUB_BASE_REF not set).`)
+- `npm run format:check:changed` (script reported: `Skipping changed-files format check (GITHUB_BASE_REF not set).`)
 
 Environment-limited gates (still pending network-capable CI/release verification):
 
