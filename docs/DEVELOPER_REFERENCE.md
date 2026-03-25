@@ -1,21 +1,21 @@
 # WaxWatch Frontend (Next.js)
 
-## Verification lock (2026-03-25)
+## Verification lock (2026-03-25 post-merge rerun)
 
-Verification was rerun in this workspace on **March 25, 2026** for the requested CI/release-capable gates.
+After merging parallel streams, full verification was rerun once in this workspace on **March 25, 2026**.
 
 Outcome in this environment: **partially green**.
 
-- ✅ `npm run test:run`: passed (47/47 files, 351/351 tests).
+- ✅ `npm run test:run`: passed (48/48 files, 351/351 tests).
 - ✅ `npm run typecheck`: passed.
 - ✅ `npm run lint`: passed.
 - ✅ `npm run format:check`: passed.
 - ✅ `npm run prebuild:prod-env` (with explicit production env values): passed.
-- ❌ `npm run build` (with explicit production env values): failed because Next.js could not fetch/install SWC binaries in this environment (`ENETUNREACH` while downloading `@next/swc-linux-x64-gnu`).
-- ❌ `npm run a11y:smoke` (with explicit production env values): failed because production start requires `.next/standalone/server.js`, which is not produced when build fails.
-- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate`: self-skipped because this workspace cannot fetch `origin/main` (`origin` remote unavailable).
+- ❌ `npm run build` (with explicit production env values): failed because Next.js could not download/install SWC binaries in this environment (`ENETUNREACH` while downloading `@next/swc-linux-x64-gnu`).
+- ❌ `npm run a11y:smoke` (with explicit production env values): blocked because production start requires `.next/standalone/server.js`, which is not produced when build fails.
+- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate`: not rerun in this pass because the release-capable chain stopped at build failure.
 
-Because build + a11y smoke did not pass end-to-end here, this workspace run is **not** a release-candidate baseline.
+Because build + a11y smoke did not pass end-to-end here, do **not** freeze route statuses/docs as a release-candidate baseline from this workspace run.
 
 ## Developer quickstart (read this first)
 

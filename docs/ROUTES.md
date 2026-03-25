@@ -99,16 +99,16 @@ Production-ready routes include fully data-backed surfaces such as `/dashboard`,
 
 When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source, and keep this summary aligned when the production-ready route set changes.
 
-## Verification lock (2026-03-25)
+## Verification lock (2026-03-25 post-merge rerun)
 
-Verification was rerun on **March 25, 2026** with the requested CI/release-capable gates.
+After merging parallel streams, verification was rerun once on **March 25, 2026** with the requested release-capable checks.
 
 Result in this workspace: **partially green**.
 
 - ✅ `npm run test:run`, `npm run typecheck`, `npm run lint`, and `npm run format:check` passed.
 - ✅ `npm run prebuild:prod-env` (with explicit production env values) passed.
 - ❌ `npm run build` (with explicit production env values) failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH`).
-- ❌ `npm run a11y:smoke` (with explicit production env values) failed because `.next/standalone/server.js` is unavailable when build fails.
-- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate` self-skipped because `origin/main` could not be fetched from this workspace.
+- ❌ `npm run a11y:smoke` remained blocked because `.next/standalone/server.js` is unavailable when build fails.
+- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate` was not rerun in this pass because verification stopped at the build failure.
 
-Since the release-capable gate run did not complete end-to-end, keep route readiness claims tied to this partial result and only treat the run as release-candidate evidence after a fully green rerun in CI/release infrastructure.
+Since the release-capable gate run did not complete end-to-end, do not freeze route statuses/docs as a release-candidate baseline from this workspace. Treat release-candidate status as pending a fully green rerun in CI/release infrastructure.
