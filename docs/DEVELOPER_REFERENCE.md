@@ -6,7 +6,7 @@ After the parallel streams merge, verification was rerun in this workspace on **
 
 Outcome in this environment: **partially green**.
 
-- ✅ `npm run test:run`: passed (47/47 files, 345/345 tests).
+- ✅ `npm run test:run`: passed (47/47 files, 351/351 tests).
 - ✅ `npm run typecheck`: passed.
 - ✅ `npm run lint`: passed.
 - ✅ `npm run format:check`: passed.
