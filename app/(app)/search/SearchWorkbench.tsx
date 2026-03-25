@@ -168,7 +168,7 @@ export default function SearchWorkbench() {
             value={keywordsInput}
             onChange={(event) => setKeywordsInput(event.currentTarget.value)}
             disabled={isBusy}
-            aria-invalid={Boolean(keywordError)}
+            error={Boolean(keywordError)}
             aria-describedby={keywordError ? "search-keywords-error" : undefined}
           />
           {keywordError ? (
@@ -184,7 +184,7 @@ export default function SearchWorkbench() {
             value={providersInput}
             onChange={(event) => setProvidersInput(event.currentTarget.value)}
             disabled={isBusy}
-            aria-invalid={Boolean(providerError)}
+            error={Boolean(providerError)}
             aria-describedby={providerError ? "search-providers-error" : undefined}
           />
           {providerError ? (
@@ -203,7 +203,7 @@ export default function SearchWorkbench() {
               value={pageInput}
               onChange={(event) => setPageInput(event.currentTarget.value)}
               disabled={isBusy}
-              aria-invalid={Boolean(pageError)}
+              error={Boolean(pageError)}
               aria-describedby={pageError ? "search-page-error" : undefined}
             />
             {pageError ? (
@@ -222,7 +222,7 @@ export default function SearchWorkbench() {
               value={pageSizeInput}
               onChange={(event) => setPageSizeInput(event.currentTarget.value)}
               disabled={isBusy}
-              aria-invalid={Boolean(pageSizeError)}
+              error={Boolean(pageSizeError)}
               aria-describedby={pageSizeError ? "search-page-size-error" : undefined}
             />
             {pageSizeError ? (
@@ -357,7 +357,7 @@ export default function SearchWorkbench() {
               value={alertName}
               onChange={(event) => setAlertName(event.currentTarget.value)}
               disabled={isBusy}
-              aria-invalid={Boolean(alertNameError)}
+              error={Boolean(alertNameError)}
               aria-describedby={alertNameError ? "save-alert-name-error" : undefined}
             />
             {alertNameError ? (
@@ -376,7 +376,7 @@ export default function SearchWorkbench() {
               value={pollIntervalInput}
               onChange={(event) => setPollIntervalInput(event.currentTarget.value)}
               disabled={isBusy}
-              aria-invalid={Boolean(pollIntervalError)}
+              error={Boolean(pollIntervalError)}
               aria-describedby={pollIntervalError ? "save-alert-poll-interval-error" : undefined}
             />
             {pollIntervalError ? (

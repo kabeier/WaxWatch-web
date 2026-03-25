@@ -153,15 +153,22 @@ export default function ProfileSettingsForm() {
             id="profile-display-name"
             value={displayName}
             disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, displayName: event.currentTarget.value }))
-            }
-            aria-invalid={validationState?.field === "displayName"}
+            onChange={(event) => {
+              const nextDisplayName = event.currentTarget.value;
+              setDraft((current) => ({ ...current, displayName: nextDisplayName }));
+            }}
             error={validationState?.field === "displayName"}
             aria-describedby={
-              validationState?.field === "displayName" ? "profile-settings-form-errors" : undefined
+              validationState?.field === "displayName"
+                ? "profile-settings-form-errors profile-display-name-error"
+                : undefined
             }
           />
+          {validationState?.field === "displayName" ? (
+            <p className={pageViewStyles.helpText} id="profile-display-name-error">
+              {validationMessage}
+            </p>
+          ) : null}
         </label>
         <label className={pageViewStyles.labelStack} htmlFor="profile-timezone">
           <span className={pageViewStyles.labelText}>Timezone</span>
@@ -169,15 +176,22 @@ export default function ProfileSettingsForm() {
             id="profile-timezone"
             value={timezone}
             disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, timezone: event.currentTarget.value }))
-            }
-            aria-invalid={validationState?.field === "timezone"}
+            onChange={(event) => {
+              const nextTimezone = event.currentTarget.value;
+              setDraft((current) => ({ ...current, timezone: nextTimezone }));
+            }}
             error={validationState?.field === "timezone"}
             aria-describedby={
-              validationState?.field === "timezone" ? "profile-settings-form-errors" : undefined
+              validationState?.field === "timezone"
+                ? "profile-settings-form-errors profile-timezone-error"
+                : undefined
             }
           />
+          {validationState?.field === "timezone" ? (
+            <p className={pageViewStyles.helpText} id="profile-timezone-error">
+              {validationMessage}
+            </p>
+          ) : null}
         </label>
         <label className={pageViewStyles.labelStack} htmlFor="profile-currency">
           <span className={pageViewStyles.labelText}>Preferred currency</span>
@@ -186,15 +200,22 @@ export default function ProfileSettingsForm() {
             value={currency}
             maxLength={3}
             disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, currency: event.currentTarget.value }))
-            }
-            aria-invalid={validationState?.field === "currency"}
+            onChange={(event) => {
+              const nextCurrency = event.currentTarget.value;
+              setDraft((current) => ({ ...current, currency: nextCurrency }));
+            }}
             error={validationState?.field === "currency"}
             aria-describedby={
-              validationState?.field === "currency" ? "profile-settings-form-errors" : undefined
+              validationState?.field === "currency"
+                ? "profile-settings-form-errors profile-currency-error"
+                : undefined
             }
           />
+          {validationState?.field === "currency" ? (
+            <p className={pageViewStyles.helpText} id="profile-currency-error">
+              {validationMessage}
+            </p>
+          ) : null}
         </label>
       </form>
 
