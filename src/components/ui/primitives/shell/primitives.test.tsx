@@ -36,6 +36,23 @@ function AppChromeSideNav() {
   return <SideNav status={sideNavStatus} />;
 }
 
+function AuthenticatedChromeShell() {
+  const { utilities, sideNavStatus } = useAppShellChromeData();
+
+  return (
+    <AppShell
+      topNav={<TopNav utilityItems={utilities} />}
+      sideNav={<SideNav status={sideNavStatus} />}
+      mobileTabBar={<MobileTabBar />}
+      mobileTabBarVisibility="always"
+    >
+      <ContentContainer>
+        <div>App content</div>
+      </ContentContainer>
+    </AppShell>
+  );
+}
+
 describe("shell primitives", () => {
   beforeEach(() => {
     queryHookMocks.me.mockReset();
@@ -187,7 +204,7 @@ describe("shell primitives", () => {
     expect(screen.queryByText("Account Loading")).not.toBeInTheDocument();
   });
 
-  it("renders loading utility and session values from query-backed chrome data", () => {
+  it("renders loading utility and session values from query-backed chrome data in app-shell composition", () => {
     queryHookMocks.me.mockReturnValue({
       data: undefined,
       isLoading: true,
@@ -203,20 +220,16 @@ describe("shell primitives", () => {
       retry: vi.fn(),
     });
 
-    render(
-      <>
-        <AppChromeTopNav />
-        <AppChromeSideNav />
-      </>,
-    );
+    render(<AuthenticatedChromeShell />);
 
     expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("…");
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Loading");
     expect(screen.getByText("Loading profile")).toBeInTheDocument();
     expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
+    expect(screen.getByRole("main")).toHaveTextContent("App content");
   });
 
-  it("renders error utility and session values from query-backed chrome data", () => {
+  it("renders error utility and session values from query-backed chrome data in app-shell composition", () => {
     queryHookMocks.me.mockReturnValue({
       data: undefined,
       isLoading: false,
@@ -232,17 +245,42 @@ describe("shell primitives", () => {
       retry: vi.fn(),
     });
 
-    render(
-      <>
-        <AppChromeTopNav />
-        <AppChromeSideNav />
-      </>,
-    );
+    render(<AuthenticatedChromeShell />);
 
     expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("—");
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Unavailable");
     expect(screen.getByText("Profile unavailable")).toBeInTheDocument();
     expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
+    expect(screen.getByRole("main")).toHaveTextContent("App content");
+  });
+
+  it("renders success utility and session values from query-backed chrome data in app-shell composition", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: {
+        display_name: "Avery Collector",
+        email: "avery@example.com",
+        is_active: true,
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: { unread_count: 4 },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(<AuthenticatedChromeShell />);
+
+    expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("4");
+    expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Active");
+    expect(screen.getByText("Avery Collector")).toBeInTheDocument();
+    expect(screen.getByText("Account active · 4 unread notifications")).toBeInTheDocument();
+    expect(screen.getByRole("main")).toHaveTextContent("App content");
   });
 
   it("does not render mobile tabs in auto mode without a mobile viewport", () => {
