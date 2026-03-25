@@ -1,12 +1,12 @@
 # WaxWatch Frontend (Next.js)
 
-## Verification lock (2026-03-25 post-merge rerun)
+## Verification lock (2026-03-25 post-merge rerun + final rerun)
 
-After merging parallel streams, full verification was rerun once in this workspace on **March 25, 2026**.
+After merging parallel streams, full verification was rerun once more in this workspace on **March 25, 2026**.
 
 Outcome in this environment: **partially green**.
 
-- ✅ `npm run test:run`: passed (48/48 files, 351/351 tests).
+- ✅ `npm run test:run`: passed (48/48 files, 356/356 tests).
 - ✅ `npm run typecheck`: passed.
 - ✅ `npm run lint`: passed.
 - ✅ `npm run format:check`: passed.
@@ -16,7 +16,7 @@ Outcome in this environment: **partially green**.
 - ⚠️ `npm run docs:route-status-gate`: skipped because `GITHUB_BASE_REF` is not set in this workspace.
 - ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate`: skipped because this workspace has no `origin` remote/base ref to diff against.
 
-Because build + a11y smoke did not pass end-to-end here, do **not** freeze route statuses/docs as a release-candidate baseline from this workspace run.
+Because build + a11y smoke did not pass end-to-end here, do **not** freeze route statuses/docs as a release-candidate frontend baseline from this workspace run.
 
 ## Developer quickstart (read this first)
 
