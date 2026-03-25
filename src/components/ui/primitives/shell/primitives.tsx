@@ -164,14 +164,14 @@ export function AppShell({
 }
 
 const DEFENSIVE_UTILITY_ITEMS: TopNavUtilityItem[] = [
-  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "N/A" },
-  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "N/A" },
+  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "—" },
+  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "Unavailable" },
 ];
 
 const DEFENSIVE_SIDE_NAV_STATUS: SideNavStatus = {
   label: "Session",
-  value: "Status unavailable",
-  meta: "Connect live chrome data",
+  value: "Profile unavailable",
+  meta: "Notifications unavailable",
 };
 
 function getNonEmptyValue(value: string | undefined, fallback: string) {
