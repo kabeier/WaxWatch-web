@@ -168,4 +168,35 @@ describe("useAppShellChromeData", () => {
       meta: "Account active · 0 unread notifications",
     });
   });
+
+  it("avoids loading placeholders after success settles with missing status fields", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: {
+        display_name: null,
+        email: null,
+        is_active: undefined,
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const { result } = renderHook(() => useAppShellChromeData());
+
+    expect(result.current.utilities).toEqual([
+      { href: "/notifications", label: "Inbox", value: "0" },
+      { href: "/settings/profile", label: "Account", value: "Unavailable" },
+    ]);
+    expect(result.current.sideNavStatus).toEqual({
+      label: "Session",
+      value: "Profile unavailable",
+      meta: "Notifications unavailable",
+    });
+  });
 });
