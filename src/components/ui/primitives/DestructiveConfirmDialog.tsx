@@ -73,6 +73,7 @@ export function DestructiveConfirmDialog({
   const titleId = useId();
   const descriptionId = useId();
   const errorId = useId();
+  const pendingStatusId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const pendingRef = useRef(pending);
@@ -207,7 +208,12 @@ export function DestructiveConfirmDialog({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={errorMessage ? `${descriptionId} ${errorId}` : descriptionId}
+        aria-describedby={
+          [descriptionId, pending ? pendingStatusId : null, errorMessage ? errorId : null]
+            .filter(Boolean)
+            .join(" ") || undefined
+        }
+        aria-busy={pending}
         ref={dialogRef}
         tabIndex={-1}
       >
@@ -220,6 +226,11 @@ export function DestructiveConfirmDialog({
         {errorMessage ? (
           <p className="ww-confirm-dialog__error" role="alert" id={errorId}>
             {errorMessage}
+          </p>
+        ) : null}
+        {pending ? (
+          <p className="ww-helper-text" role="status" id={pendingStatusId}>
+            Processing request…
           </p>
         ) : null}
         <DialogActionControls
