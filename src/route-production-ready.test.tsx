@@ -626,6 +626,93 @@ describe("route-level production-ready paths", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("/settings/danger destructive dialogs pair open-close behavior with failure and success status feedback", () => {
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      data: undefined,
+      isPending: false,
+      isError: false,
+      error: null,
+      mutate: vi.fn(),
+    };
+    state.hardDeleteMutation = {
+      ...state.hardDeleteMutation,
+      data: undefined,
+      isPending: false,
+      isError: false,
+      error: null,
+      mutate: vi.fn(),
+    };
+
+    const { rerender } = render(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    const deactivateDialog = screen.getByRole("alertdialog", { name: /deactivate account now\?/i });
+    fireEvent.click(within(deactivateDialog).getByRole("button", { name: /cancel/i }));
+    expect(
+      screen.queryByRole("alertdialog", { name: /deactivate account now\?/i }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "button",
+        { name: /^deactivate account$/i },
+      ),
+    );
+    expect(state.deactivateMutation.mutate).toHaveBeenCalledTimes(1);
+
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      isError: true,
+      error: { kind: "unknown_error", message: "Deactivate failed" },
+    };
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByText(/could not deactivate account\./i)).toBeInTheDocument();
+
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      isError: false,
+      error: null,
+      data: { ok: true },
+    };
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByText(/success: account deactivated\./i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    const deleteDialog = screen.getByRole("alertdialog", { name: /delete account permanently\?/i });
+    fireEvent.click(within(deleteDialog).getByRole("button", { name: /cancel/i }));
+    expect(
+      screen.queryByRole("alertdialog", { name: /delete account permanently\?/i }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
+        "button",
+        { name: /^permanently delete account$/i },
+      ),
+    );
+    expect(state.hardDeleteMutation.mutate).toHaveBeenCalledTimes(1);
+
+    state.hardDeleteMutation = {
+      ...state.hardDeleteMutation,
+      isError: true,
+      error: { kind: "unknown_error", message: "Delete failed" },
+    };
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByText(/could not permanently delete account\./i)).toBeInTheDocument();
+
+    state.hardDeleteMutation = {
+      ...state.hardDeleteMutation,
+      isError: false,
+      error: null,
+      data: { ok: true },
+    };
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByText(/success: account permanently deleted\./i)).toBeInTheDocument();
+  });
+
   it("/settings/danger dialog open and close preserve trigger focus", async () => {
     const user = userEvent.setup();
     render(<DangerSettingsPage />);

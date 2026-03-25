@@ -6,6 +6,7 @@ import type { Notification, WatchRelease, WatchRule } from "@/lib/api/domains/ty
 
 import AccountRemovedPage from "../app/(auth)/account-removed/page";
 import LoginPage from "../app/(auth)/login/page";
+import { LoginPageClient } from "../app/(auth)/login/LoginPageClient";
 import SignedOutPage from "../app/(auth)/signed-out/page";
 import DashboardPage from "../app/(app)/dashboard/page";
 import SettingsLandingPage from "../app/(app)/settings/page";
@@ -35,6 +36,17 @@ type WatchlistMutationState = {
   isPending: boolean;
   isError: boolean;
 };
+
+const noHandoffContext = {
+  returnTo: null,
+  handoffUrl: null,
+  state: null,
+  nonce: null,
+  expiresAt: null,
+  expiresAtEpochMs: null,
+  isExpired: false,
+  hasRequiredSecurityParams: false,
+} as const;
 
 const updateWatchReleaseMutate = vi.hoisted(() => vi.fn());
 const disableWatchReleaseMutate = vi.hoisted(() => vi.fn());
@@ -310,6 +322,37 @@ describe("route shell pages", () => {
     expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
   });
 
+  it("renders /login generic auth failure and rate-limited messages from the sign-in form", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Auth service unavailable." } }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Too many attempts." } }), {
+          status: 429,
+          headers: { "Content-Type": "application/json", "Retry-After": "20" },
+        }),
+      ) as typeof fetch;
+
+    render(<LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/auth service unavailable\./i);
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/too many attempts\./i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/retry-after:\s*20s/i);
+  });
+
   it("renders watchlist item editor route with editable controls", async () => {
     const page = await WatchlistItemPage({
       params: Promise.resolve({ id: "release-1" }),
@@ -495,6 +538,34 @@ describe("route shell pages", () => {
     expect(disableTrigger).toHaveFocus();
   });
 
+  it("renders /dashboard preview panels across error, rate-limited, and empty branches", () => {
+    previewHookMocks.notifications.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      error: { kind: "unknown_error", message: "Notifications unavailable" },
+      retry: vi.fn(),
+    });
+    previewHookMocks.releases.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      error: { kind: "rate_limited", message: "Cooldown active", retryAfterSeconds: 45 },
+      retry: vi.fn(),
+    });
+    previewHookMocks.rules.mockReturnValueOnce({
+      data: [],
+      isLoading: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByText(/could not load notifications\./i)).toBeInTheDocument();
+    expect(screen.getByText(/recent matches are temporarily rate limited/i)).toBeInTheDocument();
+    expect(screen.getByText(/retry-after:\s*45s/i)).toBeInTheDocument();
+    expect(screen.getByText(/no watch rules yet/i)).toBeInTheDocument();
+  });
+
   it("renders dashboard empty cards with current UX labels", () => {
     previewHookMocks.notifications.mockReturnValueOnce({
       data: [],
@@ -552,7 +623,7 @@ describe("route shell pages", () => {
       error: null,
       retry: vi.fn(),
     });
-    const { rerender } = render(<WatchlistItemClient id="release-1" />);
+    const { rerender, unmount } = render(<WatchlistItemClient id="release-1" />);
     expect(screen.getByText(/watchlist item not found\./i)).toBeInTheDocument();
 
     previewHookMocks.watchlistDetail.mockReturnValueOnce({
@@ -645,6 +716,45 @@ describe("route shell pages", () => {
     expect(updateWatchReleaseMutate).toHaveBeenCalledTimes(2);
     expect(screen.getByText(/success: watchlist item updated\./i)).toBeInTheDocument();
     expect(previewHookMocks.routerPush).not.toHaveBeenCalled();
+  });
+
+  it("keeps /watchlist/[id] stable through validation, mutation failure, and success feedback", () => {
+    const updateState = {
+      mutate: updateWatchReleaseMutate,
+      data: undefined as unknown,
+      error: null as unknown,
+      isPending: false,
+      isError: false,
+    };
+    previewHookMocks.updateWatchRelease.mockImplementation(() => updateState);
+
+    const initialRender = render(<WatchlistItemClient id="release-1" />);
+
+    fireEvent.change(screen.getByLabelText(/target price/i), { target: { value: "-10" } });
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(
+      screen.getByText(/please fix the highlighted validation issues before saving\./i),
+    ).toBeInTheDocument();
+    expect(updateWatchReleaseMutate).not.toHaveBeenCalled();
+
+    initialRender.unmount();
+    const { rerender } = render(<WatchlistItemClient id="release-1" />);
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(updateWatchReleaseMutate).toHaveBeenCalledTimes(1);
+
+    updateState.isError = true;
+    updateState.error = { kind: "unknown_error", message: "Save failed" };
+    rerender(<WatchlistItemClient id="release-1" />);
+    expect(screen.getByText(/could not save watchlist item updates\./i)).toBeInTheDocument();
+    expect(previewHookMocks.routerPush).not.toHaveBeenCalled();
+
+    updateState.isError = false;
+    updateState.error = null;
+    updateState.data = { id: "release-1" };
+    rerender(<WatchlistItemClient id="release-1" />);
+    expect(screen.getByText(/success: watchlist item updated\./i)).toBeInTheDocument();
+    expect(previewHookMocks.routerPush).not.toHaveBeenCalled();
+    expect(previewHookMocks.routerRefresh).not.toHaveBeenCalled();
   });
 
   it("keeps watchlist route in place when disable mutation fails", () => {
