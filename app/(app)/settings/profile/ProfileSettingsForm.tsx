@@ -158,11 +158,8 @@ export default function ProfileSettingsForm() {
               setDraft((current) => ({ ...current, displayName: nextDisplayName }));
             }}
             error={validationState?.field === "displayName"}
-            aria-describedby={
-              validationState?.field === "displayName"
-                ? "profile-settings-form-errors profile-display-name-error"
-                : undefined
-            }
+            errorMessageId="profile-display-name-error"
+            aria-describedby={validationMessage ? "profile-settings-form-errors" : undefined}
           />
           {validationState?.field === "displayName" ? (
             <p className={pageViewStyles.helpText} id="profile-display-name-error">
@@ -181,11 +178,8 @@ export default function ProfileSettingsForm() {
               setDraft((current) => ({ ...current, timezone: nextTimezone }));
             }}
             error={validationState?.field === "timezone"}
-            aria-describedby={
-              validationState?.field === "timezone"
-                ? "profile-settings-form-errors profile-timezone-error"
-                : undefined
-            }
+            errorMessageId="profile-timezone-error"
+            aria-describedby={validationMessage ? "profile-settings-form-errors" : undefined}
           />
           {validationState?.field === "timezone" ? (
             <p className={pageViewStyles.helpText} id="profile-timezone-error">
@@ -205,11 +199,8 @@ export default function ProfileSettingsForm() {
               setDraft((current) => ({ ...current, currency: nextCurrency }));
             }}
             error={validationState?.field === "currency"}
-            aria-describedby={
-              validationState?.field === "currency"
-                ? "profile-settings-form-errors profile-currency-error"
-                : undefined
-            }
+            errorMessageId="profile-currency-error"
+            aria-describedby={validationMessage ? "profile-settings-form-errors" : undefined}
           />
           {validationState?.field === "currency" ? (
             <p className={pageViewStyles.helpText} id="profile-currency-error">

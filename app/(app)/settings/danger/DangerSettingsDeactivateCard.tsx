@@ -27,12 +27,16 @@ import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib
 import { useRef, useState, type MouseEvent } from "react";
 
 export default function DangerSettingsDeactivateCard() {
-  const [isDialogOpen, setDialogOpen] = useState(false);
+  const [isDialogRequested, setDialogRequested] = useState(false);
+  const [isConfirmSubmitted, setConfirmSubmitted] = useState(false);
   const deactivateTriggerRef = useRef<HTMLElement | null>(null);
   const meQuery = useMeQuery();
   const deactivateMutation = useDeactivateAccountMutation();
   const hardDeleteMutation = useHardDeleteAccountMutation();
   const isPending = deactivateMutation.isPending || hardDeleteMutation.isPending;
+  const isDialogOpen =
+    isDialogRequested &&
+    !(isConfirmSubmitted && !deactivateMutation.isPending && !deactivateMutation.isError);
 
   return (
     <Card padding="lg">
@@ -80,7 +84,8 @@ export default function DangerSettingsDeactivateCard() {
           disabled={isPending}
           onClick={(event: MouseEvent<HTMLButtonElement>) => {
             deactivateTriggerRef.current = event.currentTarget;
-            setDialogOpen(true);
+            setConfirmSubmitted(false);
+            setDialogRequested(true);
           }}
         >
           {deactivateMutation.isPending ? "Deactivating account…" : "Deactivate account"}
@@ -99,9 +104,12 @@ export default function DangerSettingsDeactivateCard() {
               : undefined
           }
           returnFocusRef={deactivateTriggerRef}
-          onCancel={() => setDialogOpen(false)}
+          onCancel={() => {
+            setDialogRequested(false);
+            setConfirmSubmitted(false);
+          }}
           onConfirm={() => {
-            setDialogOpen(false);
+            setConfirmSubmitted(true);
             deactivateMutation.mutate(undefined);
           }}
         />

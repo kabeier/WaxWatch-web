@@ -16,11 +16,15 @@ import { getErrorMessage } from "@/lib/query/state";
 import { useRef, useState, type MouseEvent } from "react";
 
 export default function DangerSettingsDeleteCard() {
-  const [isDialogOpen, setDialogOpen] = useState(false);
+  const [isDialogRequested, setDialogRequested] = useState(false);
+  const [isConfirmSubmitted, setConfirmSubmitted] = useState(false);
   const deleteTriggerRef = useRef<HTMLElement | null>(null);
   const deactivateMutation = useDeactivateAccountMutation();
   const hardDeleteMutation = useHardDeleteAccountMutation();
   const isPending = deactivateMutation.isPending || hardDeleteMutation.isPending;
+  const isDialogOpen =
+    isDialogRequested &&
+    !(isConfirmSubmitted && !hardDeleteMutation.isPending && !hardDeleteMutation.isError);
 
   return (
     <Card padding="lg">
@@ -40,7 +44,8 @@ export default function DangerSettingsDeleteCard() {
           disabled={isPending}
           onClick={(event: MouseEvent<HTMLButtonElement>) => {
             deleteTriggerRef.current = event.currentTarget;
-            setDialogOpen(true);
+            setConfirmSubmitted(false);
+            setDialogRequested(true);
           }}
         >
           {hardDeleteMutation.isPending
@@ -61,9 +66,12 @@ export default function DangerSettingsDeleteCard() {
               : undefined
           }
           returnFocusRef={deleteTriggerRef}
-          onCancel={() => setDialogOpen(false)}
+          onCancel={() => {
+            setDialogRequested(false);
+            setConfirmSubmitted(false);
+          }}
           onConfirm={() => {
-            setDialogOpen(false);
+            setConfirmSubmitted(true);
             hardDeleteMutation.mutate(undefined);
           }}
         />

@@ -169,7 +169,8 @@ export default function SearchWorkbench() {
             onChange={(event) => setKeywordsInput(event.currentTarget.value)}
             disabled={isBusy}
             error={Boolean(keywordError)}
-            aria-describedby={keywordError ? "search-keywords-error" : undefined}
+            errorMessageId="search-keywords-error"
+            aria-describedby={searchErrors.length > 0 ? "search-form-errors" : undefined}
           />
           {keywordError ? (
             <p className={pageViewStyles.helpText} id="search-keywords-error">
@@ -185,7 +186,8 @@ export default function SearchWorkbench() {
             onChange={(event) => setProvidersInput(event.currentTarget.value)}
             disabled={isBusy}
             error={Boolean(providerError)}
-            aria-describedby={providerError ? "search-providers-error" : undefined}
+            errorMessageId="search-providers-error"
+            aria-describedby={searchErrors.length > 0 ? "search-form-errors" : undefined}
           />
           {providerError ? (
             <p className={pageViewStyles.helpText} id="search-providers-error">
@@ -204,7 +206,8 @@ export default function SearchWorkbench() {
               onChange={(event) => setPageInput(event.currentTarget.value)}
               disabled={isBusy}
               error={Boolean(pageError)}
-              aria-describedby={pageError ? "search-page-error" : undefined}
+              errorMessageId="search-page-error"
+              aria-describedby={searchErrors.length > 0 ? "search-form-errors" : undefined}
             />
             {pageError ? (
               <p className={pageViewStyles.helpText} id="search-page-error">
@@ -223,7 +226,8 @@ export default function SearchWorkbench() {
               onChange={(event) => setPageSizeInput(event.currentTarget.value)}
               disabled={isBusy}
               error={Boolean(pageSizeError)}
-              aria-describedby={pageSizeError ? "search-page-size-error" : undefined}
+              errorMessageId="search-page-size-error"
+              aria-describedby={searchErrors.length > 0 ? "search-form-errors" : undefined}
             />
             {pageSizeError ? (
               <p className={pageViewStyles.helpText} id="search-page-size-error">
@@ -358,7 +362,8 @@ export default function SearchWorkbench() {
               onChange={(event) => setAlertName(event.currentTarget.value)}
               disabled={isBusy}
               error={Boolean(alertNameError)}
-              aria-describedby={alertNameError ? "save-alert-name-error" : undefined}
+              errorMessageId="save-alert-name-error"
+              aria-describedby={saveAlertErrors.length > 0 ? "save-alert-errors" : undefined}
             />
             {alertNameError ? (
               <p className={pageViewStyles.helpText} id="save-alert-name-error">
@@ -377,7 +382,8 @@ export default function SearchWorkbench() {
               onChange={(event) => setPollIntervalInput(event.currentTarget.value)}
               disabled={isBusy}
               error={Boolean(pollIntervalError)}
-              aria-describedby={pollIntervalError ? "save-alert-poll-interval-error" : undefined}
+              errorMessageId="save-alert-poll-interval-error"
+              aria-describedby={saveAlertErrors.length > 0 ? "save-alert-errors" : undefined}
             />
             {pollIntervalError ? (
               <p className={pageViewStyles.helpText} id="save-alert-poll-interval-error">

@@ -67,7 +67,15 @@ describe("base ui primitives", () => {
   it("renders form, badge, list, tabs, and banner primitives", () => {
     render(
       <>
-        <TextInput aria-label="Search term" error defaultValue="wax" />
+        <TextInput
+          aria-label="Search term"
+          error
+          errorMessageId="search-term-error"
+          aria-describedby="search-form-error-summary"
+          defaultValue="wax"
+        />
+        <p id="search-form-error-summary">Fix the highlighted fields.</p>
+        <p id="search-term-error">Search term is required.</p>
         <Select aria-label="Marketplace">
           <option>Discogs</option>
         </Select>
@@ -99,6 +107,14 @@ describe("base ui primitives", () => {
     expect(screen.getByRole("textbox", { name: "Search term" })).toHaveAttribute(
       "aria-invalid",
       "true",
+    );
+    expect(screen.getByRole("textbox", { name: "Search term" })).toHaveAttribute(
+      "aria-errormessage",
+      "search-term-error",
+    );
+    expect(screen.getByRole("textbox", { name: "Search term" })).toHaveAttribute(
+      "aria-describedby",
+      "search-form-error-summary search-term-error",
     );
     expect(screen.getByRole("combobox", { name: "Marketplace" })).toHaveClass("ww-select");
     expect(screen.getByRole("combobox", { name: "Marketplace" })).toHaveAttribute(
