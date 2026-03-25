@@ -1,8 +1,8 @@
 # WaxWatch Frontend (Next.js)
 
-## Verification lock (2026-03-24)
+## Verification lock (2026-03-25)
 
-This reference is locked to outcomes from a full verification-gate rerun that was **directly re-verified** in this workspace on **March 24, 2026**.
+This reference is locked to outcomes from a full verification-gate rerun that was **directly re-verified** in this workspace on **March 25, 2026**.
 
 Verified pass gates:
 
@@ -11,14 +11,13 @@ Verified pass gates:
 - `npm run lint`
 - `npm run format:check`
 - `npm run docs:route-status-gate` (script executed; reports `Skipping route-status test gate (GITHUB_BASE_REF not set).` when no base ref is provided)
-- `GITHUB_BASE_REF=main npm run docs:route-status-gate` (script executed; reports `Skipping route-status test gate (unable to fetch base ref from origin).` in this workspace)
 
 Not fully verifiable in this workspace run:
 
-- `npm run build` could not complete because Next.js attempted to fetch missing SWC binaries and failed with `ENETUNREACH`, so a standalone artifact was not produced.
-- `npm run a11y:smoke` could not complete in this environment because it requires `npm run start`, which requires `.next/standalone/server.js` from a successful build.
+- `npm run build` could not complete because this workspace has no reachable network path for Next.js SWC package download/lockfile patching (`ENETUNREACH`), so a standalone artifact was not produced.
+- `npm run a11y:smoke` could not complete because it requires `npm run start`, and `npm run start` requires `.next/standalone/server.js` from a successful build.
 
-Route maturity statements below therefore remain constrained to test/typecheck/lint/format evidence plus route-level/unit coverage already present in this repo; production-build and a11y-smoke confirmation is pending a network-capable build environment.
+Route maturity statements below therefore remain constrained to test/typecheck/lint/format plus route-level test coverage already present in this repo; production-build and a11y-smoke confirmation is pending a network-capable build environment.
 
 WaxWatch is a record-price alert web app. Users can land on a dashboard, search listings across providers, save searches as alerts, manage alerts/watchlist, connect integrations, and receive notifications.
 

@@ -99,13 +99,12 @@ Production-ready routes include fully data-backed surfaces such as `/dashboard`,
 
 When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source, and keep this summary aligned when the production-ready route set changes.
 
-## Verification lock (2026-03-24)
+## Verification lock (2026-03-25)
 
-The route summary in this file is locked to outcomes from a full verification-gate rerun re-verified in this workspace on March 24, 2026:
+The route summary in this file is locked to outcomes from a full verification-gate rerun re-verified in this workspace on March 25, 2026:
 
 - Passed: `npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`.
 - Route gate script executed: `npm run docs:route-status-gate` (reported skip because `GITHUB_BASE_REF` is not set outside PR/CI).
-- PR-base route gate attempt executed: `GITHUB_BASE_REF=main npm run docs:route-status-gate` (reported skip because this workspace cannot fetch `origin/main`; `fatal: 'origin' does not appear to be a git repository`).
-- Not completed here: `npm run build` (Next.js SWC download failed with `ENETUNREACH`) and therefore `npm run a11y:smoke` (requires built standalone artifact at `.next/standalone/server.js`).
+- Not completed here: `npm run build` (Next.js SWC download/lockfile patch attempt failed with `ENETUNREACH`) and therefore `npm run a11y:smoke` (requires built standalone artifact at `.next/standalone/server.js`).
 
 Treat `docs/DEVELOPER_REFERENCE.md` as the canonical matrix, and consider production-build/a11y confirmation still pending until those two gates pass in a network-capable CI or release environment.
