@@ -210,6 +210,49 @@ describe("/settings/danger route", () => {
     expect(screen.queryByText(/could not deactivate account\./i)).not.toBeInTheDocument();
   });
 
+  it("locks readiness with permanent-delete failure evidence followed by successful retry status", () => {
+    const deleteMutate = vi.fn();
+    hooks.hardDelete.mockReturnValue({
+      mutate: deleteMutate,
+      data: undefined,
+      error: { kind: "unknown_error", message: "Delete failed" },
+      isPending: false,
+      isError: true,
+    });
+
+    const { rerender } = render(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
+        "button",
+        { name: /^permanently delete account$/i },
+      ),
+    );
+    expect(deleteMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/could not permanently delete account\./i)).toBeInTheDocument();
+
+    hooks.hardDelete.mockReturnValue({
+      mutate: deleteMutate,
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+    rerender(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
+        "button",
+        { name: /^permanently delete account$/i },
+      ),
+    );
+    expect(deleteMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("status")).toHaveTextContent(/success: account permanently deleted\./i);
+    expect(screen.queryByText(/could not permanently delete account\./i)).not.toBeInTheDocument();
+  });
+
   it("traps focus in the confirmation dialog and restores focus to the trigger on close", async () => {
     const user = userEvent.setup();
     render(<DangerSettingsPage />);

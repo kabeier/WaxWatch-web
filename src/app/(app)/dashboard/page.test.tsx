@@ -206,6 +206,35 @@ describe("/dashboard route", () => {
     expect(screen.queryByText(/could not load notifications\./i)).not.toBeInTheDocument();
   });
 
+  it("locks readiness with explicit unread-count failure evidence before successful metric recovery", () => {
+    hookMocks.unreadCount.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Unread unavailable" },
+      retry: vi.fn(),
+    });
+
+    const { rerender } = render(<DashboardPage />);
+
+    expect(screen.getByText(/unread count unavailable/i)).toBeInTheDocument();
+    expect(screen.queryByText(/unread notifications/i)).not.toBeInTheDocument();
+
+    hookMocks.unreadCount.mockReturnValueOnce({
+      data: { unread_count: 7 },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    rerender(<DashboardPage />);
+
+    expect(screen.getByText(/unread notifications/i)).toBeInTheDocument();
+    expect(screen.getByText(/^7$/)).toBeInTheDocument();
+    expect(screen.queryByText(/unread count unavailable/i)).not.toBeInTheDocument();
+  });
+
   it("recovers from recent-matches API failure to a successful linked result after retry", () => {
     const retryReleases = vi.fn();
 

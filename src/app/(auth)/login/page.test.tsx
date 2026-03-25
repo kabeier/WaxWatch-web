@@ -53,6 +53,34 @@ describe("/login route", () => {
     expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
   });
 
+  it("shows expired handoff failure copy before allowing a fresh login success path", async () => {
+    const expiredPage = await LoginPage({
+      searchParams: Promise.resolve({
+        handoff: "waxwatch://auth/callback",
+        state: "state-1",
+        nonce: "nonce-1",
+        expires_at: "2026-01-01T00:00:00.000Z",
+      }),
+    });
+    const { unmount } = render(expiredPage);
+    expect(screen.getByRole("heading", { name: /secure handoff required/i })).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/handoff link has expired/i);
+    expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
+    unmount();
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+    const onRedirect = vi.fn();
+    render(<LoginPageClient handoff={noHandoff} fetchImpl={fetchMock} onRedirect={onRedirect} />);
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
+  });
+
   it("covers API errors and cooldown state messaging", async () => {
     const fetchMock = vi
       .fn()
