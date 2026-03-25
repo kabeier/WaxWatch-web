@@ -1,16 +1,19 @@
 # WaxWatch Frontend (Next.js)
 
-## Verification lock (2026-03-25 post-merge full verification rerun)
+## Verification lock (2026-03-25 CI/release suite rerun)
 
-Full verification was rerun once in this workspace on **March 25, 2026** after merge convergence.
+CI/release-capable verification was rerun in this workspace on **March 25, 2026**.
 
-Outcome in this environment: **partially green (build-network blocked)**.
+Outcome in this environment: **partially green (infrastructure/network limited)**.
 
-- ✅ `npm run test:coverage`: passed (48/48 files, 364/364 tests).
-- ✅ `NODE_ENV=production ... npm run prebuild:prod-env`: passed.
-- ✅ `NODE_ENV=production ... npm run build` reached Next.js build startup with env-contract satisfied.
-- ❌ `NODE_ENV=production ... npm run build`: failed because Next.js could not download/install SWC binaries in this environment (`ENETUNREACH` while downloading `@next/swc-linux-x64-gnu`).
-- ⚠️ `npm run bundle:check`, `npm run a11y:smoke`, `npm run verify:deployment`, and `npm run release:checklist`: not executed because the chain stops at the build failure.
+- ✅ `npm run test:run`: passed (48/48 files, 364/364 tests).
+- ✅ `npm run typecheck`: passed.
+- ✅ `npm run lint`: passed.
+- ✅ `npm run format:check`: passed.
+- ✅ `NODE_ENV=production ... npm run build` passed env-contract prebuild validation.
+- ❌ `NODE_ENV=production ... npm run build`: failed because Next.js attempted to fetch missing SWC binary `@next/swc-linux-x64-gnu` and the environment could not reach the package host (`ENETUNREACH`).
+- ⚠️ `npm run a11y:smoke`: failed downstream because `npm run start` requires `.next/standalone/server.js`, which is only produced after a successful build.
+- ⚠️ `npm run docs:route-status-gate`: skipped in local workspace context (`GITHUB_BASE_REF` not set by default; with `GITHUB_BASE_REF=main`, gate still skips because `origin` remote is unavailable).
 
 Because full release-capable verification did not complete end-to-end, route-status/docs freeze is **not** promoted to release-candidate frontend baseline from this workspace run.
 
