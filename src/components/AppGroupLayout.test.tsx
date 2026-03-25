@@ -53,6 +53,10 @@ describe("AppGroupLayout", () => {
     expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
     expect(screen.queryByText("Profile unavailable")).not.toBeInTheDocument();
     expect(screen.queryByText("Notifications unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /inbox/i })).not.toHaveTextContent("N/A");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent("N/A");
   });
 
   it("renders live error chrome values through app group layout composition", () => {
@@ -84,6 +88,9 @@ describe("AppGroupLayout", () => {
     expect(screen.getByText("Profile unavailable")).toBeInTheDocument();
     expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
     expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /inbox/i })).not.toHaveTextContent("N/A");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent("N/A");
   });
 
   it("renders live success chrome values through app group layout composition", () => {
@@ -119,5 +126,8 @@ describe("AppGroupLayout", () => {
     expect(screen.getByText("Avery Collector")).toBeInTheDocument();
     expect(screen.getByText("Account active · 5 unread notifications")).toBeInTheDocument();
     expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /inbox/i })).not.toHaveTextContent("N/A");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent("N/A");
   });
 });
