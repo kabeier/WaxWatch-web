@@ -80,6 +80,7 @@ describe("Layout", () => {
 
     expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("…");
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Loading");
+    expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Loading profile")).toBeInTheDocument();
     expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
     expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
@@ -113,6 +114,7 @@ describe("Layout", () => {
 
     expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("—");
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Unavailable");
+    expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Profile unavailable")).toBeInTheDocument();
     expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
     expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
@@ -150,6 +152,7 @@ describe("Layout", () => {
 
     expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("7");
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Active");
+    expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Avery Collector")).toBeInTheDocument();
     expect(screen.getByText("Account active · 7 unread notifications")).toBeInTheDocument();
     expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
