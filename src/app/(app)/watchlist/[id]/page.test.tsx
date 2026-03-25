@@ -193,6 +193,41 @@ describe("/watchlist/[id] route", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/could not disable watchlist item\./i);
   });
 
+  it("supports mutation retry flow from save failure to save success messaging", async () => {
+    const mutateFirstAttempt = vi.fn();
+    const mutateSecondAttempt = vi.fn();
+    state.update.mockReturnValueOnce({
+      mutate: mutateFirstAttempt,
+      data: undefined,
+      error: { kind: "unknown_error", message: "Save failed" },
+      isPending: false,
+      isError: true,
+    });
+
+    const { rerender } = render(
+      await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(mutateFirstAttempt).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("alert")).toHaveTextContent(/could not save watchlist item updates\./i);
+
+    state.update.mockReturnValueOnce({
+      mutate: mutateSecondAttempt,
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+
+    expect(mutateSecondAttempt).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("status")).toHaveTextContent(/success: watchlist item updated\./i);
+    expect(screen.queryByText(/could not save watchlist item updates\./i)).not.toBeInTheDocument();
+  });
+
   it("returns focus to disable trigger when dialog closes with escape", async () => {
     const user = userEvent.setup();
     render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));

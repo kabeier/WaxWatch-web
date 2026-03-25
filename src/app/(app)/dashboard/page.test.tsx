@@ -205,4 +205,55 @@ describe("/dashboard route", () => {
     expect(screen.getByText(/match_found/i)).toBeInTheDocument();
     expect(screen.queryByText(/could not load notifications\./i)).not.toBeInTheDocument();
   });
+
+  it("recovers from recent-matches API failure to a successful linked result after retry", () => {
+    const retryReleases = vi.fn();
+
+    hookMocks.releases.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Releases unavailable" },
+      retry: retryReleases,
+    });
+
+    const { rerender } = render(<DashboardPage />);
+
+    expect(screen.getByText(/could not load recent matches\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry recent matches/i }));
+    expect(retryReleases).toHaveBeenCalledTimes(1);
+
+    hookMocks.releases.mockReturnValueOnce({
+      data: [
+        {
+          id: "release-2",
+          user_id: "user-1",
+          discogs_release_id: 2,
+          discogs_master_id: null,
+          match_mode: "exact_release",
+          title: "Blue Train",
+          artist: "John Coltrane",
+          year: 1957,
+          target_price: 30,
+          currency: "USD",
+          min_condition: "VG+",
+          is_active: true,
+          created_at: "2026-03-22T08:00:00.000Z",
+          updated_at: "2026-03-22T11:00:00.000Z",
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    rerender(<DashboardPage />);
+
+    expect(screen.getByRole("link", { name: /blue train/i })).toHaveAttribute(
+      "href",
+      "/watchlist/release-2",
+    );
+    expect(screen.queryByText(/could not load recent matches\./i)).not.toBeInTheDocument();
+  });
 });
