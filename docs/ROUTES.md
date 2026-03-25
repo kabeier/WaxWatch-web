@@ -101,8 +101,13 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ## Verification lock (2026-03-25)
 
-Post-merge full verification rerun completed once on **March 25, 2026** with `npm run ci:prod-gates`.
+Verification was rerun on **March 25, 2026** with CI/release-style commands.
 
-Result: **not green** in this workspace. `test:coverage` and `prebuild:prod-env` passed, but `npm run build` failed at `prebuild` because required production env vars were missing (`NODE_ENV`, `APP_BASE_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_RELEASE_VERSION`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_REGION`, `AWS_SECRETS_PREFIX`, `TRUSTED_PROXY_CIDRS`, `LOG_LEVEL`).
+Result: **not green** in this workspace.
 
-Since the gate run did not complete end-to-end, keep route status/docs unfrozen for now and only mark a frontend release-candidate baseline after a fully green `npm run ci:prod-gates` run in CI/release infrastructure with complete production env configuration.
+- `npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`, and `npm run prebuild:prod-env` passed.
+- `NODE_ENV=production ... npm run build` failed after env validation because Next.js could not download `@next/swc-linux-x64-gnu` (`ENETUNREACH`).
+- `GITHUB_BASE_REF=main npm run docs:route-status-gate` skipped due missing `origin` remote access.
+- `NODE_ENV=production ... npm run a11y:smoke` could not execute because `start-server-and-test` was unavailable after failed dependency reinstall attempts (`npm install`/`npm ci` hit 403 on `@swc/helpers`).
+
+Since the gate run did not complete end-to-end, keep route status/docs unfrozen for now and only mark a frontend release-candidate baseline after a fully green rerun in CI/release infrastructure.
