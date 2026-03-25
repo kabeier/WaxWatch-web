@@ -9,6 +9,7 @@ import LoginPage from "../app/(auth)/login/page";
 import { LoginPageClient } from "../app/(auth)/login/LoginPageClient";
 import SignedOutPage from "../app/(auth)/signed-out/page";
 import DashboardPage from "../app/(app)/dashboard/page";
+import DangerSettingsPage from "../app/(app)/settings/danger/page";
 import SettingsLandingPage from "../app/(app)/settings/page";
 import WatchlistItemPage from "../app/(app)/watchlist/[id]/page";
 import WatchlistItemClient from "../app/(app)/watchlist/[id]/WatchlistItemClient";
@@ -155,6 +156,37 @@ vi.mock("@/lib/query/hooks", () => ({
   useUnreadNotificationCountQuery: previewHookMocks.unreadCount,
   useDashboardWatchReleasesPreviewQuery: previewHookMocks.releases,
   useDashboardWatchRulesPreviewQuery: previewHookMocks.rules,
+  useMeQuery: () => ({
+    data: {
+      preferences: {
+        delivery_frequency: "instant",
+        notification_timezone: "UTC",
+        quiet_hours_start: 22,
+        quiet_hours_end: 7,
+        notifications_email: true,
+        notifications_push: false,
+      },
+      integrations: [{ provider: "discogs" }],
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+    retry: vi.fn(),
+  }),
+  useDeactivateAccountMutation: () => ({
+    mutate: vi.fn(),
+    data: undefined,
+    error: null,
+    isPending: false,
+    isError: false,
+  }),
+  useHardDeleteAccountMutation: () => ({
+    mutate: vi.fn(),
+    data: undefined,
+    error: null,
+    isPending: false,
+    isError: false,
+  }),
 }));
 
 vi.mock("../app/(app)/watchlist/[id]/watchlistItemQueryHooks", () => ({
@@ -596,6 +628,22 @@ describe("route shell pages", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps /dashboard recoverable after an error by offering a visible retry path", () => {
+    const retryNotifications = vi.fn();
+    previewHookMocks.notifications.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      error: { kind: "unknown_error", message: "Notifications unavailable" },
+      retry: retryNotifications,
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByText(/could not load notifications\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry notifications/i }));
+    expect(retryNotifications).toHaveBeenCalledTimes(1);
+  });
+
   it("renders watchlist item detail generic-error branch and retries without route changes", () => {
     const retryWatchlistLoad = vi.fn();
     previewHookMocks.watchlistDetail.mockReturnValueOnce({
@@ -865,5 +913,16 @@ describe("route shell pages", () => {
 
     expect(previewHookMocks.routerPush).toHaveBeenCalledWith("/watchlist");
     expect(previewHookMocks.routerRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders /settings/danger route shell metadata and destructive action affordances", () => {
+    render(<DangerSettingsPage />);
+
+    expect(screen.getByRole("heading", { name: /danger zone/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^deactivate account$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^permanently delete account$/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/danger-zone request status/i)).toBeInTheDocument();
   });
 });
