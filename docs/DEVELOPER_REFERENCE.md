@@ -4,14 +4,27 @@
 
 This reference is locked to the **release-candidate frontend baseline** after rerunning the release-gate sequence in this workspace on **March 25, 2026**.
 
-Verified pass gates:
+Merged output status:
+
+- Group A/B/C outputs are consolidated in this release-candidate baseline, with route readiness statuses finalized to the canonical matrix in this document.
+
+Verified pass gates (rerun in this workspace):
 
 - `npm run test:run`
 - `npm run typecheck`
 - `npm run lint`
 - `npm run format:check`
+- `npm run env:check:template`
+- `npm run contracts:check`
+- `npm run lint:api-core-boundaries`
+- `npm run docs:lint:placeholders`
 - `npm run prebuild:prod-env` (production standalone env gate passed with production-safe sample values before build attempts)
 - `GITHUB_BASE_REF=main npm run docs:route-status-gate` (script executed and reported: `Skipping route-status test gate (unable to fetch base ref from origin).`)
+
+Executed but skipped (diff-based gates not evaluated in this workspace):
+
+- `npm run test:contract` (script reported: `Skipping test-update contract (GITHUB_BASE_REF not set).`)
+- `npm run format:check:changed` (script reported: `Skipping changed-files format check (GITHUB_BASE_REF not set).`)
 
 Environment-limited gates (still pending network-capable CI/release verification):
 
