@@ -259,4 +259,18 @@ describe("base ui primitives", () => {
       "watchlist-form-errors watchlist-active-error",
     );
   });
+
+  it("does not infer checkbox invalid state from a stable errorMessageId alone", () => {
+    render(
+      <>
+        <CheckboxRow errorMessageId="watchlist-active-error">Watchlist item active</CheckboxRow>
+        <p id="watchlist-active-error">Confirm whether this watchlist item should stay active.</p>
+      </>,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: /watchlist item active/i });
+    expect(checkbox).not.toHaveAttribute("aria-invalid");
+    expect(checkbox).not.toHaveAttribute("aria-errormessage");
+    expect(checkbox).not.toHaveAttribute("aria-describedby");
+  });
 });

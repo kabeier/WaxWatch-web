@@ -213,7 +213,7 @@ export function CheckboxRow({
   const resolvedAriaInvalid = resolveAriaInvalidState({
     ariaInvalid: inputAriaInvalid,
     error: error || Boolean(errorText),
-    ariaErrorMessage: resolvedErrorMessageId,
+    ariaErrorMessage: inputAriaErrorMessage,
   });
   const isInvalid = isAriaInvalidState(resolvedAriaInvalid);
   const ariaDescribedBy = joinAriaIds(
