@@ -2,7 +2,7 @@
 
 ## Verification lock (2026-03-25)
 
-This reference is locked to the **release-candidate frontend baseline** after merging Group A/B/C gate outputs and rerunning the release-gate sequence in this workspace on **March 25, 2026**.
+This reference is locked to the **release-candidate frontend baseline** after rerunning the release-gate sequence in this workspace on **March 25, 2026**.
 
 Verified pass gates:
 
@@ -10,8 +10,8 @@ Verified pass gates:
 - `npm run typecheck`
 - `npm run lint`
 - `npm run format:check`
-- `npm run docs:route-status-gate` (script executed and reported: `Skipping route-status test gate (GITHUB_BASE_REF not set).`)
 - `npm run prebuild:prod-env` (production standalone env gate passed with production-safe sample values before build attempts)
+- `GITHUB_BASE_REF=main npm run docs:route-status-gate` (script executed and reported: `Skipping route-status test gate (unable to fetch base ref from origin).`)
 
 Environment-limited gates (still pending network-capable CI/release verification):
 
