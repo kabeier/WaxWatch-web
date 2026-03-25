@@ -2,7 +2,7 @@
 
 ## Verification lock (2026-03-25)
 
-This reference is locked to a release-gate rerun executed in this workspace on **March 25, 2026**.
+This reference is locked to the **release-candidate frontend baseline** after merging Group A/B/C gate outputs and rerunning the release-gate sequence in this workspace on **March 25, 2026**.
 
 Verified pass gates:
 
@@ -11,13 +11,14 @@ Verified pass gates:
 - `npm run lint`
 - `npm run format:check`
 - `npm run docs:route-status-gate` (script executed and reported: `Skipping route-status test gate (GITHUB_BASE_REF not set).`)
+- `npm run prebuild:prod-env` (production standalone env gate passed with production-safe sample values before build attempts)
 
 Environment-limited gates (still pending network-capable CI/release verification):
 
 - `npm run build` was executed with production-safe env values and passed `prebuild`, but Next.js failed while patching/downloading SWC artifacts (`ENETUNREACH`), so no standalone artifact was generated.
 - `npm run a11y:smoke` was executed with the same production-safe env values and failed as expected because `npm run start` requires `.next/standalone/server.js`, which is unavailable until `npm run build` succeeds.
 
-Route maturity statements below therefore remain constrained to the passing gates above plus route-level test coverage already present in this repo. Promote this lock to fully completed verification only after `build` and `a11y:smoke` pass in a network-capable CI/release environment.
+Route maturity statements below therefore remain constrained to the passing gates above plus route-level test coverage already present in this repo. This lock is the release-candidate baseline for frontend route maturity as of March 25, 2026; promote it to fully completed verification only after `build` and `a11y:smoke` pass in a network-capable CI/release environment.
 
 ## Developer quickstart (read this first)
 

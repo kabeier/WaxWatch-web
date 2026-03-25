@@ -101,9 +101,9 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ## Verification lock (2026-03-25)
 
-The route summary in this file is locked to a release-gate rerun executed in this workspace on March 25, 2026.
+The route summary in this file is locked to the **release-candidate frontend baseline** after merging Group A/B/C gate outputs and rerunning the release-gate sequence in this workspace on March 25, 2026.
 
-- Passed: `npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`.
+- Passed: `npm run test:run`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run prebuild:prod-env` (with production-safe sample values).
 - Route gate script executed: `npm run docs:route-status-gate` (reported skip because `GITHUB_BASE_REF` is not set outside PR/CI).
 - Environment-limited/pending: `npm run build` passed `prebuild` but failed while Next.js attempted SWC download/lockfile patching (`ENETUNREACH`), and `npm run a11y:smoke` then failed because `npm run start` requires `.next/standalone/server.js`.
 
