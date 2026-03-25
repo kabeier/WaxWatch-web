@@ -69,7 +69,12 @@ describe("/settings/danger route", () => {
     expect(screen.getByRole("heading", { name: /danger zone/i })).toBeInTheDocument();
     expect(screen.getByText(/success: account deactivated\./i)).toHaveAttribute("role", "status");
     expect(screen.getByRole("button", { name: /deactivate account/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /permanently deleting account/i })).toBeDisabled();
+    expect(
+      screen.getAllByRole("button", { name: /permanently deleting account/i }).length,
+    ).toBeGreaterThan(0);
+    for (const button of screen.getAllByRole("button", { name: /permanently deleting account/i })) {
+      expect(button).toBeDisabled();
+    }
   });
 
   it("covers API error/retry, empty state, and cooldown disabled controls", () => {
@@ -251,6 +256,54 @@ describe("/settings/danger route", () => {
     expect(deleteMutate).toHaveBeenCalledTimes(2);
     expect(screen.getByRole("status")).toHaveTextContent(/success: account permanently deleted\./i);
     expect(screen.queryByText(/could not permanently delete account\./i)).not.toBeInTheDocument();
+  });
+
+  it("keeps destructive controls disabled while delete is pending and then clears failure on successful retry", () => {
+    const deleteMutate = vi.fn();
+    hooks.hardDelete.mockReturnValue({
+      mutate: deleteMutate,
+      data: undefined,
+      error: { kind: "rate_limited", message: "Delete cooldown", retryAfterSeconds: 12 },
+      isPending: false,
+      isError: true,
+    });
+
+    const { rerender } = render(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
+        "button",
+        { name: /^permanently delete account$/i },
+      ),
+    );
+    expect(deleteMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByText(/delete cooldown/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/retry-after:\s*12s/i)).toBeInTheDocument();
+
+    hooks.hardDelete.mockReturnValue({
+      mutate: deleteMutate,
+      data: undefined,
+      error: null,
+      isPending: true,
+      isError: false,
+    });
+    rerender(<DangerSettingsPage />);
+    for (const button of screen.getAllByRole("button", { name: /permanently deleting account/i })) {
+      expect(button).toBeDisabled();
+    }
+    expect(screen.getByRole("button", { name: /deactivate account/i })).toBeDisabled();
+
+    hooks.hardDelete.mockReturnValue({
+      mutate: deleteMutate,
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByRole("status")).toHaveTextContent(/success: account permanently deleted\./i);
+    expect(screen.queryByText(/delete cooldown/i)).not.toBeInTheDocument();
   });
 
   it("traps focus in the confirmation dialog and restores focus to the trigger on close", async () => {

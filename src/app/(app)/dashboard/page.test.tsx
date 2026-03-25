@@ -235,6 +235,35 @@ describe("/dashboard route", () => {
     expect(screen.queryByText(/unread count unavailable/i)).not.toBeInTheDocument();
   });
 
+  it("shows unread-count cooldown failure evidence, then restores metric success on recovery", () => {
+    hookMocks.unreadCount.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "Unread cooldown", retryAfterSeconds: 30 },
+      retry: vi.fn(),
+    });
+
+    const { rerender } = render(<DashboardPage />);
+
+    expect(screen.getByText(/unread count unavailable/i)).toBeInTheDocument();
+    expect(screen.queryByText(/unread notifications/i)).not.toBeInTheDocument();
+
+    hookMocks.unreadCount.mockReturnValueOnce({
+      data: { unread_count: 4 },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    rerender(<DashboardPage />);
+
+    expect(screen.getByText(/unread notifications/i)).toBeInTheDocument();
+    expect(screen.getByText(/^4$/)).toBeInTheDocument();
+    expect(screen.queryByText(/unread count unavailable/i)).not.toBeInTheDocument();
+  });
+
   it("recovers from recent-matches API failure to a successful linked result after retry", () => {
     const retryReleases = vi.fn();
 
