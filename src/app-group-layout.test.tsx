@@ -1,27 +1,124 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/components/Layout", () => ({
-  default: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="app-shell-layout">{children}</div>
-  ),
-}));
-
-vi.mock("@/components/SseControllerBootstrap", () => ({
-  default: () => <div data-testid="sse-controller-bootstrap" />,
-}));
+import AppProviders from "@/components/AppProviders";
+import { __setPathname, __setSearchParams } from "@/test/mocks/next-navigation";
 
 import AppGroupLayout from "../app/(app)/layout";
 
+const queryHookMocks = vi.hoisted(() => ({
+  me: vi.fn(),
+  unread: vi.fn(),
+}));
+
+vi.mock("@/lib/query/hooks", () => ({
+  useMeQuery: queryHookMocks.me,
+  useUnreadNotificationCountQuery: queryHookMocks.unread,
+}));
+
 describe("AppGroupLayout", () => {
-  it("renders the deferred SSE bootstrap alongside the shared layout wrapper", () => {
+  beforeEach(() => {
+    __setPathname("/search");
+    __setSearchParams({});
+    queryHookMocks.me.mockReset();
+    queryHookMocks.unread.mockReset();
+  });
+
+  it("renders loading app-shell chrome from live hook-backed utility and status props", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
     render(
-      <AppGroupLayout>
-        <div>App content</div>
-      </AppGroupLayout>,
+      <AppProviders>
+        <AppGroupLayout>
+          <div>App body</div>
+        </AppGroupLayout>
+      </AppProviders>,
     );
 
-    expect(screen.getByTestId("sse-controller-bootstrap")).toBeInTheDocument();
-    expect(screen.getByTestId("app-shell-layout")).toHaveTextContent("App content");
+    expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("…");
+    expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Loading");
+    expect(screen.getByRole("complementary")).toHaveTextContent("Session");
+    expect(screen.getByText("Loading profile")).toBeInTheDocument();
+    expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
+  });
+
+  it("renders error app-shell chrome from live hook-backed utility and status props", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("profile unavailable"),
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: new Error("notifications unavailable"),
+      retry: vi.fn(),
+    });
+
+    render(
+      <AppProviders>
+        <AppGroupLayout>
+          <div>App body</div>
+        </AppGroupLayout>
+      </AppProviders>,
+    );
+
+    expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("—");
+    expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Unavailable");
+    expect(screen.getByRole("complementary")).toHaveTextContent("Session");
+    expect(screen.getByText("Profile unavailable")).toBeInTheDocument();
+    expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
+  });
+
+  it("renders success app-shell chrome from live hook-backed utility and status props", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: {
+        display_name: "Avery Collector",
+        email: "avery@example.com",
+        is_active: true,
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: { unread_count: 9 },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(
+      <AppProviders>
+        <AppGroupLayout>
+          <div>App body</div>
+        </AppGroupLayout>
+      </AppProviders>,
+    );
+
+    expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("9");
+    expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Active");
+    expect(screen.getByRole("complementary")).toHaveTextContent("Session");
+    expect(screen.getByText("Avery Collector")).toBeInTheDocument();
+    expect(screen.getByText("Account active · 9 unread notifications")).toBeInTheDocument();
+    expect(screen.getByRole("main")).toHaveTextContent("App body");
   });
 });

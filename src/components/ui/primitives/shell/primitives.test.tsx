@@ -169,6 +169,26 @@ describe("shell primitives", () => {
     expect(screen.getByText("Account active · 7 unread notifications")).toBeInTheDocument();
   });
 
+  it("keeps blank defensive fallback values limited to primitive-only usage", () => {
+    const { container } = render(
+      <>
+        <TopNav />
+        <SideNav />
+      </>,
+    );
+
+    const utilityValues = Array.from(container.querySelectorAll("span.top-nav__utility-value"));
+    const statusLabel = container.querySelector("span.side-nav__status-label");
+    const statusValue = container.querySelector("strong.side-nav__status-value");
+
+    expect(utilityValues).toHaveLength(2);
+    expect(utilityValues.map((node) => node.textContent)).toEqual(["", ""]);
+    expect(statusLabel).toHaveTextContent("");
+    expect(statusValue).toHaveTextContent("");
+    expect(screen.queryByText("Session")).not.toBeInTheDocument();
+    expect(screen.queryByText("Loading profile")).not.toBeInTheDocument();
+  });
+
   it("renders dynamic shell utility and status values from query-backed chrome data", () => {
     queryHookMocks.me.mockReturnValue({
       data: {
@@ -224,6 +244,8 @@ describe("shell primitives", () => {
 
     expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("…");
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Loading");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent(/^\s*$/);
+    expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Loading profile")).toBeInTheDocument();
     expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveTextContent("App content");
@@ -249,6 +271,8 @@ describe("shell primitives", () => {
 
     expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("—");
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Unavailable");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent(/^\s*$/);
+    expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Profile unavailable")).toBeInTheDocument();
     expect(screen.getByText("Notifications unavailable")).toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveTextContent("App content");
@@ -278,6 +302,8 @@ describe("shell primitives", () => {
 
     expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("4");
     expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Active");
+    expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent(/^\s*$/);
+    expect(screen.getByRole("complementary")).toHaveTextContent("Session");
     expect(screen.getByText("Avery Collector")).toBeInTheDocument();
     expect(screen.getByText("Account active · 4 unread notifications")).toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveTextContent("App content");
