@@ -887,8 +887,8 @@ describe("route-level production-ready paths", () => {
     state.hardDeleteMutation = {
       ...state.hardDeleteMutation,
       data: undefined,
-      isError: true,
-      error: { kind: "unknown_error", message: "Delete failed" },
+      isError: false,
+      error: null,
       mutate: deleteMutate,
     };
 
@@ -949,6 +949,14 @@ describe("route-level production-ready paths", () => {
       ),
     );
     expect(deleteMutate).toHaveBeenCalledTimes(1);
+    state.hardDeleteMutation = {
+      ...state.hardDeleteMutation,
+      isError: true,
+      error: { kind: "unknown_error", message: "Delete failed" },
+      data: undefined,
+      mutate: deleteMutate,
+    };
+    rerender(<DangerSettingsPage />);
     expect(screen.getByText(/could not permanently delete account\./i)).toBeInTheDocument();
 
     state.hardDeleteMutation = {
