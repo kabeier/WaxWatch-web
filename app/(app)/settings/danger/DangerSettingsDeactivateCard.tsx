@@ -11,6 +11,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  LiveRegion,
 } from "@/components/ui/primitives/base";
 import {
   StateEmpty,
@@ -90,6 +91,15 @@ export default function DangerSettingsDeactivateCard() {
         >
           {deactivateMutation.isPending ? "Deactivating account…" : "Deactivate account"}
         </Button>
+        {deactivateMutation.isPending ? (
+          <LiveRegion>Status: Deactivating account.</LiveRegion>
+        ) : null}
+        {isConfirmSubmitted && deactivateMutation.isError ? (
+          <LiveRegion politeness="assertive">
+            Error: Could not deactivate account.{" "}
+            {getErrorMessage(deactivateMutation.error, "Request failed")}
+          </LiveRegion>
+        ) : null}
         <DestructiveConfirmDialog
           open={isDialogOpen}
           title="Deactivate account now?"

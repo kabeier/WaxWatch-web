@@ -40,6 +40,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
   const [isDisableDialogOpen, setDisableDialogOpen] = useState(false);
   const [isDisableConfirmSubmitted, setDisableConfirmSubmitted] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [submitAttemptCount, setSubmitAttemptCount] = useState(0);
   const disableTriggerRef = useRef<HTMLElement | null>(null);
 
   const disableRequestRef = useRef<{ requestedId: string | null; sawPending: boolean }>({
@@ -163,6 +164,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
         event.preventDefault();
         if (validationText) {
           setSubmitAttempted(true);
+          setSubmitAttemptCount((current) => current + 1);
           return;
         }
 
@@ -181,7 +183,11 @@ export default function WatchlistItemClient({ id }: { id: string }) {
       }}
     >
       {validationText ? (
-        <FocusOnRender id="watchlist-item-form-errors" enabled={submitAttempted}>
+        <FocusOnRender
+          id="watchlist-item-form-errors"
+          enabled={submitAttempted}
+          focusKey={submitAttemptCount}
+        >
           <StateError
             message="Please fix the highlighted validation issues before saving."
             detail={validationText}
@@ -269,7 +275,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
         <Link href="/watchlist" className={pageViewStyles.listLink}>
           Cancel
         </Link>
-        <Button type="submit" disabled={Boolean(validationText) || isPending}>
+        <Button type="submit" disabled={isPending}>
           {updateWatchReleaseMutation.isPending
             ? "Saving watchlist updates…"
             : "Save watchlist updates"}

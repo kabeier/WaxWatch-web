@@ -10,6 +10,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  LiveRegion,
 } from "@/components/ui/primitives/base";
 import { useDeactivateAccountMutation, useHardDeleteAccountMutation } from "@/lib/query/hooks";
 import { getErrorMessage } from "@/lib/query/state";
@@ -52,6 +53,15 @@ export default function DangerSettingsDeleteCard() {
             ? "Permanently deleting account…"
             : "Permanently delete account"}
         </Button>
+        {hardDeleteMutation.isPending ? (
+          <LiveRegion>Status: Permanently deleting account.</LiveRegion>
+        ) : null}
+        {isConfirmSubmitted && hardDeleteMutation.isError ? (
+          <LiveRegion politeness="assertive">
+            Error: Could not permanently delete account.{" "}
+            {getErrorMessage(hardDeleteMutation.error, "Request failed")}
+          </LiveRegion>
+        ) : null}
         <DestructiveConfirmDialog
           open={isDialogOpen}
           title="Delete account permanently?"
