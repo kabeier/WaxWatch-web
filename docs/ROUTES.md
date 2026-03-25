@@ -99,17 +99,15 @@ Production-ready routes include fully data-backed surfaces such as `/dashboard`,
 
 When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source, and keep this summary aligned when the production-ready route set changes.
 
-## Verification lock (2026-03-25 CI/release-capable rerun)
+## Verification lock (2026-03-25 post-merge full verification rerun)
 
-Verification was rerun on **March 25, 2026** with the requested release-capable checks in this workspace.
+Full verification was rerun once on **March 25, 2026** in this workspace after merge convergence.
 
-Result in this workspace: **partially green**.
+Result in this workspace: **partially green (network-blocked build step)**.
 
-- ✅ `npm run test:run` (48/48 files, 356/356 tests), `npm run typecheck`, `npm run lint`, and `npm run format:check` passed.
-- ✅ `npm run prebuild:prod-env` (with explicit production env values) passed.
-- ❌ `npm run build` (with explicit production env values) failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH`).
-- ❌ `npm run a11y:smoke` remained blocked because `.next/standalone/server.js` is unavailable when build fails.
-- ⚠️ `npm run docs:route-status-gate` skipped because `GITHUB_BASE_REF` is not set in this workspace.
-- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate` skipped because this workspace has no `origin` remote/base ref to diff against.
+- ✅ `npm run test:coverage` passed (48/48 files, 364/364 tests).
+- ✅ `NODE_ENV=production ... npm run prebuild:prod-env` passed with explicit production env values.
+- ❌ `NODE_ENV=production ... npm run build` failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH`).
+- ⚠️ `bundle:check`, `a11y:smoke`, `verify:deployment`, and `release:checklist` did not run because the verification chain stops after the build failure.
 
-Since the release-capable gate run did not complete end-to-end, do not freeze route statuses/docs as a release-candidate frontend baseline from this workspace. Treat release-candidate status as pending a fully green rerun in CI/release infrastructure.
+Since the full release-capable gate run still did not complete end-to-end, do not freeze route statuses/docs as a release-candidate frontend baseline from this workspace. Treat release-candidate frontend baseline as pending a fully green rerun in CI/release infrastructure.

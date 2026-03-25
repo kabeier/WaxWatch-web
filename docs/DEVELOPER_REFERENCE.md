@@ -1,22 +1,18 @@
 # WaxWatch Frontend (Next.js)
 
-## Verification lock (2026-03-25 CI/release-capable rerun)
+## Verification lock (2026-03-25 post-merge full verification rerun)
 
-Release-capable verification was rerun in this workspace on **March 25, 2026**.
+Full verification was rerun once in this workspace on **March 25, 2026** after merge convergence.
 
-Outcome in this environment: **partially green**.
+Outcome in this environment: **partially green (build-network blocked)**.
 
-- ✅ `npm run test:run`: passed (48/48 files, 356/356 tests).
-- ✅ `npm run typecheck`: passed.
-- ✅ `npm run lint`: passed.
-- ✅ `npm run format:check`: passed.
-- ✅ `npm run prebuild:prod-env` (with explicit production env values): passed.
-- ❌ `npm run build` (with explicit production env values): failed because Next.js could not download/install SWC binaries in this environment (`ENETUNREACH` while downloading `@next/swc-linux-x64-gnu`).
-- ❌ `npm run a11y:smoke` (with explicit production env values): blocked because production start requires `.next/standalone/server.js`, which is not produced when build fails.
-- ⚠️ `npm run docs:route-status-gate`: skipped because `GITHUB_BASE_REF` is not set in this workspace.
-- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate`: skipped because this workspace has no `origin` remote/base ref to diff against.
+- ✅ `npm run test:coverage`: passed (48/48 files, 364/364 tests).
+- ✅ `NODE_ENV=production ... npm run prebuild:prod-env`: passed.
+- ✅ `NODE_ENV=production ... npm run build` reached Next.js build startup with env-contract satisfied.
+- ❌ `NODE_ENV=production ... npm run build`: failed because Next.js could not download/install SWC binaries in this environment (`ENETUNREACH` while downloading `@next/swc-linux-x64-gnu`).
+- ⚠️ `npm run bundle:check`, `npm run a11y:smoke`, `npm run verify:deployment`, and `npm run release:checklist`: not executed because the chain stops at the build failure.
 
-Because build + a11y smoke did not pass end-to-end here, do **not** freeze route statuses/docs as a release-candidate frontend baseline from this workspace run.
+Because full release-capable verification did not complete end-to-end, route-status/docs freeze is **not** promoted to release-candidate frontend baseline from this workspace run.
 
 ## Developer quickstart (read this first)
 
