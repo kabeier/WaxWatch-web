@@ -197,7 +197,15 @@ describe("/settings/danger route", () => {
       isError: false,
     });
     rerender(<DangerSettingsPage />);
+    fireEvent.click(screen.getAllByRole("button", { name: /^deactivate account$/i })[0]);
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "button",
+        { name: /^deactivate account$/i },
+      ),
+    );
 
+    expect(deactivateMutate).toHaveBeenCalledTimes(2);
     expect(screen.getByRole("status")).toHaveTextContent(/success: account deactivated\./i);
     expect(screen.queryByText(/could not deactivate account\./i)).not.toBeInTheDocument();
   });

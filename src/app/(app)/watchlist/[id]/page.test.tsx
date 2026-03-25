@@ -220,7 +220,9 @@ describe("/watchlist/[id] route", () => {
     });
 
     rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
 
+    expect(mutate).toHaveBeenCalledTimes(2);
     expect(screen.getByRole("status")).toHaveTextContent(/success: watchlist item updated\./i);
     expect(screen.queryByText(/could not save watchlist item updates\./i)).not.toBeInTheDocument();
   });
