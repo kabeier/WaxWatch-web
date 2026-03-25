@@ -92,6 +92,38 @@ export function DestructiveConfirmDialog({
     const returnFocusElement = returnFocusRef?.current ?? null;
     cancelButtonRef.current?.focus();
 
+    let isRepositioningFocus = false;
+
+    const focusDialog = (useLastFocusable = false) => {
+      const focusableNodes = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+
+      if (!focusableNodes || focusableNodes.length === 0) {
+        const fallbackNode = dialogRef.current;
+        if (!fallbackNode || document.activeElement === fallbackNode) {
+          return;
+        }
+
+        isRepositioningFocus = true;
+        fallbackNode.focus();
+        isRepositioningFocus = false;
+        return;
+      }
+
+      const first = focusableNodes[0];
+      const last = focusableNodes[focusableNodes.length - 1];
+      const nextFocusTarget = useLastFocusable ? last : first;
+
+      if (document.activeElement === nextFocusTarget) {
+        return;
+      }
+
+      isRepositioningFocus = true;
+      nextFocusTarget.focus();
+      isRepositioningFocus = false;
+    };
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -110,7 +142,7 @@ export function DestructiveConfirmDialog({
 
       if (!focusableNodes || focusableNodes.length === 0) {
         event.preventDefault();
-        dialogRef.current?.focus();
+        focusDialog();
         return;
       }
 
@@ -120,12 +152,7 @@ export function DestructiveConfirmDialog({
 
       if (!activeElement || !dialogRef.current?.contains(activeElement)) {
         event.preventDefault();
-        if (event.shiftKey) {
-          last.focus();
-          return;
-        }
-
-        first.focus();
+        focusDialog(event.shiftKey);
         return;
       }
 
@@ -141,10 +168,27 @@ export function DestructiveConfirmDialog({
       }
     };
 
+    const handleFocusIn = (event: FocusEvent) => {
+      if (isRepositioningFocus) {
+        return;
+      }
+
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (!dialogRef.current?.contains(target)) {
+        focusDialog();
+      }
+    };
+
     document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("focusin", handleFocusIn);
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("focusin", handleFocusIn);
       const focusTarget = returnFocusElement ?? previousActiveElement;
       if (focusTarget instanceof HTMLElement && focusTarget.isConnected) {
         focusTarget.focus();
