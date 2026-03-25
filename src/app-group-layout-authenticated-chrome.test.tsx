@@ -96,6 +96,53 @@ describe("AppGroupLayout authenticated chrome", () => {
     expect(screen.getByRole("link", { name: /account/i })).not.toHaveTextContent("N/A");
   });
 
+  it("keeps defensive fallback constants hidden during authenticated route navigation", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: {
+        display_name: "Avery Collector",
+        email: "avery@example.com",
+        is_active: true,
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: { unread_count: 3 },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    const { rerender } = render(
+      <AppProviders>
+        <AppGroupLayout>
+          <div>App content</div>
+        </AppGroupLayout>
+      </AppProviders>,
+    );
+
+    ["/dashboard", "/search", "/notifications", "/watchlist", "/settings"].forEach((pathname) => {
+      __setPathname(pathname);
+      rerender(
+        <AppProviders>
+          <AppGroupLayout>
+            <div>App content</div>
+          </AppGroupLayout>
+        </AppProviders>,
+      );
+
+      expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("3");
+      expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Active");
+      expect(screen.getByText("Avery Collector")).toBeInTheDocument();
+      expect(screen.getByText("Account active · 3 unread notifications")).toBeInTheDocument();
+      expect(screen.queryByText("N/A")).not.toBeInTheDocument();
+      expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+      expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    });
+  });
   it("renders success top-nav and side-nav chrome from useAppShellChromeData", () => {
     queryHookMocks.me.mockReturnValue({
       data: {
