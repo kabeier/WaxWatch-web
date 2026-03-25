@@ -118,7 +118,7 @@ export function TextInput({
   return (
     <input
       type={type}
-      className={joinClassNames("ww-input", error && "ww-input--error", className)}
+      className={joinClassNames("ww-input", isInvalid && "ww-input--error", className)}
       aria-invalid={resolvedAriaInvalid}
       aria-describedby={describedByIds}
       aria-errormessage={shouldSetAriaErrorMessage}
@@ -160,7 +160,7 @@ export function Select({
 
   return (
     <select
-      className={joinClassNames("ww-input", "ww-select", error && "ww-input--error", className)}
+      className={joinClassNames("ww-input", "ww-select", isInvalid && "ww-input--error", className)}
       aria-invalid={resolvedAriaInvalid}
       aria-describedby={describedByIds}
       aria-errormessage={shouldSetAriaErrorMessage}

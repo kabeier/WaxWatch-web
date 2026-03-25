@@ -207,6 +207,30 @@ describe("/watchlist/[id] route", () => {
     expect(disableButton).toHaveFocus();
   });
 
+  it("supports keyboard traversal and field-level error associations", async () => {
+    const user = userEvent.setup();
+    render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
+    const targetPrice = screen.getByRole("spinbutton", { name: /target price/i });
+    const minCondition = screen.getByRole("textbox", { name: /minimum condition/i });
+    const matchMode = screen.getByRole("combobox", { name: /match mode/i });
+
+    targetPrice.focus();
+    await user.tab();
+    expect(minCondition).toHaveFocus();
+    await user.tab();
+    expect(matchMode).toHaveFocus();
+
+    await user.clear(targetPrice);
+    await user.type(targetPrice, "-1");
+    expect(targetPrice).toHaveAttribute("aria-invalid", "true");
+    expect(targetPrice).toHaveAttribute("aria-errormessage", "watchlist-item-target-price-error");
+    expect(targetPrice).toHaveAttribute(
+      "aria-describedby",
+      "watchlist-item-form-errors watchlist-item-target-price-error",
+    );
+  });
+
   it("locks form controls while save mutation is pending", async () => {
     state.update.mockReturnValue({
       mutate: vi.fn(),
