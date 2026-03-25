@@ -1,4 +1,12 @@
-import { expect, test, type Page } from "@playwright/test";
+import {
+  expect,
+  test,
+  type ConsoleMessage,
+  type Page,
+  type Request,
+  type Response,
+  type TestInfo,
+} from "@playwright/test";
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -7,6 +15,14 @@ type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
 type MockHandle = {
   getHitCount: () => number;
   getDiagnostics: () => string;
+};
+
+type BrowserDiagnostics = {
+  requestLogs: string[];
+  responseLogs: string[];
+  consoleLogs: string[];
+  locationLogs: string[];
+  stop: () => void;
 };
 
 function normalizePathname(pathname: string): string {
@@ -112,6 +128,70 @@ function isApiLikePath(pathname: string): boolean {
   );
 }
 
+function shouldTrackRequestUrl(rawUrl: string): boolean {
+  return (
+    /(search|me|watch-releases|notifications)/i.test(rawUrl) && !rawUrl.includes("/_next/static/")
+  );
+}
+
+function startBrowserDiagnostics(page: Page): BrowserDiagnostics {
+  const requestLogs: string[] = [];
+  const responseLogs: string[] = [];
+  const consoleLogs: string[] = [];
+  const locationLogs: string[] = [];
+
+  const onRequest = (request: Request) => {
+    const url = request.url() as string;
+    if (!shouldTrackRequestUrl(url)) return;
+    requestLogs.push(`${request.method()} ${url}`);
+  };
+  const onResponse = (response: Response) => {
+    const url = response.url() as string;
+    if (!shouldTrackRequestUrl(url)) return;
+    responseLogs.push(`${response.status()} ${url}`);
+  };
+  const onConsole = (message: ConsoleMessage) => {
+    consoleLogs.push(`${message.type()}: ${message.text()}`);
+  };
+
+  page.on("request", onRequest);
+  page.on("response", onResponse);
+  page.on("console", onConsole);
+
+  return {
+    requestLogs,
+    responseLogs,
+    consoleLogs,
+    locationLogs,
+    stop: () => {
+      page.off("request", onRequest);
+      page.off("response", onResponse);
+      page.off("console", onConsole);
+    },
+  };
+}
+
+async function attachDiagnostics(testInfo: TestInfo, diagnostics: BrowserDiagnostics) {
+  const content = [
+    "=== Location ===",
+    ...diagnostics.locationLogs,
+    "",
+    "=== Requests ===",
+    ...(diagnostics.requestLogs.length > 0 ? diagnostics.requestLogs : ["(none captured)"]),
+    "",
+    "=== Responses ===",
+    ...(diagnostics.responseLogs.length > 0 ? diagnostics.responseLogs : ["(none captured)"]),
+    "",
+    "=== Console ===",
+    ...(diagnostics.consoleLogs.length > 0 ? diagnostics.consoleLogs : ["(none captured)"]),
+  ].join("\n");
+
+  await testInfo.attach("browser-network-diagnostics", {
+    body: content,
+    contentType: "text/plain",
+  });
+}
+
 async function mockChromeData(page: Page) {
   await mockJson(
     page,
@@ -144,7 +224,8 @@ async function mockChromeData(page: Page) {
 test.describe("accessibility regression audit", () => {
   test("/search: keyboard traversal, visible focus, and async status/error announcements", async ({
     page,
-  }) => {
+  }, testInfo) => {
+    const diagnostics = startBrowserDiagnostics(page);
     await mockChromeData(page);
     const searchRunMock = await mockJson(
       page,
@@ -185,50 +266,63 @@ test.describe("accessibility regression audit", () => {
       "POST",
     );
 
-    await page.goto("/search");
+    try {
+      await page.goto("/search");
+      diagnostics.locationLogs.push(
+        `before-click: ${await page.evaluate(() => window.location.href)}`,
+      );
+      await expect(page.getByRole("heading", { name: /search/i })).toBeVisible();
+      await expect(page).not.toHaveURL(/\/(signed-out|account-removed)/);
 
-    const searchKeywords = page.locator("#search-keywords");
-    await expect(searchKeywords).toBeVisible();
-    await searchKeywords.focus();
-    await expect(searchKeywords).toBeFocused();
+      const searchKeywords = page.locator("#search-keywords");
+      await expect(searchKeywords).toBeVisible();
+      await searchKeywords.focus();
+      await expect(searchKeywords).toBeFocused();
 
-    await page.keyboard.press("Tab");
-    await expect(page.locator("#search-providers")).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(page.locator("#search-providers")).toBeFocused();
 
-    await page.keyboard.press("Tab");
-    await expect(page.locator("#search-page")).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(page.locator("#search-page")).toBeFocused();
 
-    await page.keyboard.press("Tab");
-    await expect(page.locator("#search-page-size")).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(page.locator("#search-page-size")).toBeFocused();
 
-    const runSearchButton = page.getByRole("button", { name: "Run search" });
-    await page.keyboard.press("Tab");
-    await expect(runSearchButton).toBeFocused();
-    await runSearchButton.click();
+      const runSearchButton = page.getByRole("button", { name: "Run search" });
+      await page.keyboard.press("Tab");
+      await expect(runSearchButton).toBeFocused();
+      await runSearchButton.click();
+      diagnostics.locationLogs.push(
+        `after-click: ${await page.evaluate(() => window.location.href)}`,
+      );
 
-    await expect
-      .poll(() => searchRunMock.getHitCount(), {
-        message: `Expected /search POST mock to be intercepted at least once.\nRecent unmatched API requests:\n${searchRunMock.getDiagnostics()}`,
-      })
-      .toBeGreaterThan(0);
+      await expect
+        .poll(() => searchRunMock.getHitCount(), {
+          message: `Expected /search POST mock to be intercepted at least once.\nRecent unmatched API requests:\n${searchRunMock.getDiagnostics()}`,
+        })
+        .toBeGreaterThan(0);
 
-    await expect(
-      page.getByRole("status").filter({ hasText: "Status: Loaded 1 search results." }),
-    ).toBeVisible();
+      await expect(
+        page.getByRole("status").filter({ hasText: "Status: Loaded 1 search results." }),
+      ).toBeVisible();
 
-    await page.locator("#save-alert-name").fill("Price watch");
-    await page.keyboard.press("Tab");
-    await page.keyboard.press("Enter");
+      await page.locator("#save-alert-name").fill("Price watch");
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Enter");
 
-    await expect
-      .poll(() => saveAlertMock.getHitCount(), {
-        message: `Expected /search/save-alert POST mock to be intercepted at least once.\nRecent unmatched API requests:\n${saveAlertMock.getDiagnostics()}`,
-      })
-      .toBeGreaterThan(0);
+      await expect
+        .poll(() => saveAlertMock.getHitCount(), {
+          message: `Expected /search/save-alert POST mock to be intercepted at least once.\nRecent unmatched API requests:\n${saveAlertMock.getDiagnostics()}`,
+        })
+        .toBeGreaterThan(0);
 
-    await expect(
-      page.getByRole("alert").filter({ hasText: "Could not save alert." }),
-    ).toBeVisible();
+      await expect(
+        page.getByRole("alert").filter({ hasText: "Could not save alert." }),
+      ).toBeVisible();
+    } finally {
+      diagnostics.stop();
+      await attachDiagnostics(testInfo, diagnostics);
+    }
   });
 
   test("/settings/profile: keyboard traversal, visible focus, and async error announcement", async ({
