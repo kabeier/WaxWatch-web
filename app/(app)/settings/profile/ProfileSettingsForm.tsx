@@ -153,9 +153,10 @@ export default function ProfileSettingsForm() {
             id="profile-display-name"
             value={displayName}
             disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, displayName: event.currentTarget.value }))
-            }
+            onChange={(event) => {
+              const nextDisplayName = event.currentTarget.value;
+              setDraft((current) => ({ ...current, displayName: nextDisplayName }));
+            }}
             error={validationState?.field === "displayName"}
             aria-describedby={
               validationState?.field === "displayName" ? "profile-display-name-error" : undefined
@@ -173,9 +174,10 @@ export default function ProfileSettingsForm() {
             id="profile-timezone"
             value={timezone}
             disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, timezone: event.currentTarget.value }))
-            }
+            onChange={(event) => {
+              const nextTimezone = event.currentTarget.value;
+              setDraft((current) => ({ ...current, timezone: nextTimezone }));
+            }}
             error={validationState?.field === "timezone"}
             aria-describedby={
               validationState?.field === "timezone" ? "profile-timezone-error" : undefined
@@ -194,9 +196,10 @@ export default function ProfileSettingsForm() {
             value={currency}
             maxLength={3}
             disabled={!isFormReady || meQuery.isLoading || updateProfileMutation.isPending}
-            onChange={(event) =>
-              setDraft((current) => ({ ...current, currency: event.currentTarget.value }))
-            }
+            onChange={(event) => {
+              const nextCurrency = event.currentTarget.value;
+              setDraft((current) => ({ ...current, currency: nextCurrency }));
+            }}
             error={validationState?.field === "currency"}
             aria-describedby={
               validationState?.field === "currency" ? "profile-currency-error" : undefined

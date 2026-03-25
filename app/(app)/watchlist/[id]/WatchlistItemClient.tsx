@@ -192,9 +192,10 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           min={0}
           step="0.01"
           value={targetPriceInput}
-          onChange={(event) =>
-            setDraft((current) => ({ ...current, targetPrice: event.currentTarget.value }))
-          }
+          onChange={(event) => {
+            const nextTargetPrice = event.currentTarget.value;
+            setDraft((current) => ({ ...current, targetPrice: nextTargetPrice }));
+          }}
           disabled={isPending}
           error={validationField === "targetPrice"}
           aria-describedby={
@@ -213,9 +214,10 @@ export default function WatchlistItemClient({ id }: { id: string }) {
         <TextInput
           id="watchlist-item-min-condition"
           value={minCondition}
-          onChange={(event) =>
-            setDraft((current) => ({ ...current, minCondition: event.currentTarget.value }))
-          }
+          onChange={(event) => {
+            const nextMinCondition = event.currentTarget.value;
+            setDraft((current) => ({ ...current, minCondition: nextMinCondition }));
+          }}
           disabled={isPending}
           error={validationField === "minCondition"}
           aria-describedby={
@@ -234,12 +236,13 @@ export default function WatchlistItemClient({ id }: { id: string }) {
         <Select
           id="watchlist-item-match-mode"
           value={matchMode}
-          onChange={(event) =>
+          onChange={(event) => {
+            const nextMatchMode = event.currentTarget.value as "exact_release" | "master_release";
             setDraft((current) => ({
               ...current,
-              matchMode: event.currentTarget.value as "exact_release" | "master_release",
-            }))
-          }
+              matchMode: nextMatchMode,
+            }));
+          }}
           disabled={isPending}
         >
           <option value="exact_release">Exact release</option>
@@ -249,9 +252,10 @@ export default function WatchlistItemClient({ id }: { id: string }) {
 
       <CheckboxRow
         checked={isActive}
-        onChange={(event) =>
-          setDraft((current) => ({ ...current, isActive: event.currentTarget.checked }))
-        }
+        onChange={(event) => {
+          const nextIsActive = event.currentTarget.checked;
+          setDraft((current) => ({ ...current, isActive: nextIsActive }));
+        }}
         disabled={isPending}
         helperText="Paused watchlist items stay visible but stop matching new listings."
       >
