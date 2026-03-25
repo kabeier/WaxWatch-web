@@ -6,7 +6,7 @@ This reference is locked to outcomes from a full verification-gate rerun that wa
 
 Verified pass gates:
 
-- `npm run test:run`
+- `npm run test`
 - `npm run typecheck`
 - `npm run lint`
 - `npm run format:check`
@@ -14,8 +14,8 @@ Verified pass gates:
 
 Not fully verifiable in this workspace run:
 
-- `npm run build` could not complete because this workspace has no reachable network path for Next.js SWC package download/lockfile patching (`ENETUNREACH`), so a standalone artifact was not produced.
-- `npm run a11y:smoke` could not complete because it requires `npm run start`, and `npm run start` requires `.next/standalone/server.js` from a successful build.
+- `npm run build` was run with production-safe env values to satisfy `prebuild`, but Next.js failed while attempting SWC download/lockfile patching due `ENETUNREACH`, so a standalone artifact was not produced.
+- `npm run a11y:smoke` was run with the same env values; it failed because `npm run start` correctly requires `.next/standalone/server.js`, which was unavailable after the failed build.
 
 Route maturity statements below therefore remain constrained to test/typecheck/lint/format plus route-level test coverage already present in this repo; production-build and a11y-smoke confirmation is pending a network-capable build environment.
 
