@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { Button, LiveRegion, TextInput } from "@/components/ui/primitives/base";
+import { FocusOnRender } from "@/components/ui/primitives/client/FocusOnRender";
 import {
   StateEmpty,
   StateError,
@@ -55,6 +56,8 @@ export default function SearchWorkbench() {
   const [alertName, setAlertName] = useState("Saved from search");
   const [pollIntervalInput, setPollIntervalInput] = useState("600");
   const [lastSubmittedQuery, setLastSubmittedQuery] = useState<SearchRequest | null>(null);
+  const [searchSubmitAttempted, setSearchSubmitAttempted] = useState(false);
+  const [saveAlertSubmitAttempted, setSaveAlertSubmitAttempted] = useState(false);
 
   const page = Number(pageInput);
   const pageSize = Number(pageSizeInput);
@@ -138,13 +141,13 @@ export default function SearchWorkbench() {
       </div>
 
       {searchErrors.length > 0 ? (
-        <div id="search-form-errors">
+        <FocusOnRender id="search-form-errors" enabled={searchSubmitAttempted}>
           <StateError
             title="Search validation issue"
             message="Please fix search validation issues before submitting."
             detail={searchErrors.join(" ")}
           />
-        </div>
+        </FocusOnRender>
       ) : null}
 
       <form
@@ -154,9 +157,11 @@ export default function SearchWorkbench() {
         onSubmit={(event) => {
           event.preventDefault();
           if (searchErrors.length > 0) {
+            setSearchSubmitAttempted(true);
             return;
           }
 
+          setSearchSubmitAttempted(false);
           setLastSubmittedQuery(queryPayload);
           searchMutation.mutate(queryPayload);
         }}
@@ -326,13 +331,13 @@ export default function SearchWorkbench() {
       ) : null}
 
       {saveAlertErrors.length > 0 ? (
-        <div id="save-alert-errors">
+        <FocusOnRender id="save-alert-errors" enabled={saveAlertSubmitAttempted}>
           <StateError
             title="Save-alert validation issue"
             message="Please fix save-alert validation issues before submitting."
             detail={saveAlertErrors.join(" ")}
           />
-        </div>
+        </FocusOnRender>
       ) : null}
 
       <form
@@ -342,9 +347,13 @@ export default function SearchWorkbench() {
         onSubmit={(event) => {
           event.preventDefault();
           if (saveAlertErrors.length > 0 || searchErrors.length > 0) {
+            if (saveAlertErrors.length > 0) {
+              setSaveAlertSubmitAttempted(true);
+            }
             return;
           }
 
+          setSaveAlertSubmitAttempted(false);
           const sourceQuery = lastSubmittedQuery ?? queryPayload;
           saveAlertMutation.mutate({
             name: alertName.trim(),

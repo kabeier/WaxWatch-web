@@ -9,6 +9,7 @@ import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { DestructiveConfirmDialog } from "@/components/ui/primitives/DestructiveConfirmDialog";
 import { Button, CheckboxRow, Select, TextInput } from "@/components/ui/primitives/base/controls";
 import { LiveRegion } from "@/components/ui/primitives/base/feedback";
+import { FocusOnRender } from "@/components/ui/primitives/client/FocusOnRender";
 import {
   StateEmpty,
   StateError,
@@ -38,6 +39,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
   }>({});
   const [isDisableDialogOpen, setDisableDialogOpen] = useState(false);
   const [isDisableConfirmSubmitted, setDisableConfirmSubmitted] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const disableTriggerRef = useRef<HTMLElement | null>(null);
 
   const disableRequestRef = useRef<{ requestedId: string | null; sawPending: boolean }>({
@@ -160,9 +162,11 @@ export default function WatchlistItemClient({ id }: { id: string }) {
       onSubmit={(event) => {
         event.preventDefault();
         if (validationText) {
+          setSubmitAttempted(true);
           return;
         }
 
+        setSubmitAttempted(false);
         const normalizedTargetPrice = targetPriceInput.trim();
         const parsedTargetPrice =
           normalizedTargetPrice.length > 0 ? Number.parseFloat(normalizedTargetPrice) : null;
@@ -177,12 +181,12 @@ export default function WatchlistItemClient({ id }: { id: string }) {
       }}
     >
       {validationText ? (
-        <div id="watchlist-item-form-errors">
+        <FocusOnRender id="watchlist-item-form-errors" enabled={submitAttempted}>
           <StateError
             message="Please fix the highlighted validation issues before saving."
             detail={validationText}
           />
-        </div>
+        </FocusOnRender>
       ) : null}
 
       <label className={pageViewStyles.labelStack} htmlFor="watchlist-item-target-price">

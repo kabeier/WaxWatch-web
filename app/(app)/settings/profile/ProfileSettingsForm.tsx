@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { Button, LiveRegion, TextInput } from "@/components/ui/primitives/base";
+import { FocusOnRender } from "@/components/ui/primitives/client/FocusOnRender";
 import {
   StateEmpty,
   StateError,
@@ -29,6 +30,7 @@ export default function ProfileSettingsForm() {
   const meQuery = useMeQuery();
   const updateProfileMutation = useUpdateProfileMutation();
   const [draft, setDraft] = useState<ProfileDraft>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const displayName = draft.displayName ?? meQuery.data?.display_name ?? "";
   const timezone = draft.timezone ?? meQuery.data?.preferences?.timezone ?? "UTC";
@@ -124,13 +126,13 @@ export default function ProfileSettingsForm() {
       ) : null}
 
       {validationMessage ? (
-        <div id="profile-settings-form-errors">
+        <FocusOnRender id="profile-settings-form-errors" enabled={submitAttempted}>
           <StateError
             title="Profile validation issue"
             message="Please fix profile validation issues before saving."
             detail={validationMessage}
           />
-        </div>
+        </FocusOnRender>
       ) : null}
 
       <form
@@ -141,9 +143,13 @@ export default function ProfileSettingsForm() {
         onSubmit={(event) => {
           event.preventDefault();
           if (isSaveDisabled) {
+            if (validationMessage) {
+              setSubmitAttempted(true);
+            }
             return;
           }
 
+          setSubmitAttempted(false);
           updateProfileMutation.mutate(savePayload);
         }}
       >
