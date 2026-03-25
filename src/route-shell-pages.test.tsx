@@ -623,7 +623,7 @@ describe("route shell pages", () => {
       error: null,
       retry: vi.fn(),
     });
-    const { rerender, unmount } = render(<WatchlistItemClient id="release-1" />);
+    const { rerender } = render(<WatchlistItemClient id="release-1" />);
     expect(screen.getByText(/watchlist item not found\./i)).toBeInTheDocument();
 
     previewHookMocks.watchlistDetail.mockReturnValueOnce({
