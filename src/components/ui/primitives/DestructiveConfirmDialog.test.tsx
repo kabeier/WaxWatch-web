@@ -52,6 +52,11 @@ describe("DestructiveConfirmDialog", () => {
     expect(confirmButton).toBeDisabled();
     expect(confirmButton).toHaveClass("ww-button", "ww-button--destructive", "ww-button--md");
     expect(confirmButton).toHaveAttribute("type", "button");
+    expect(screen.getByRole("status")).toHaveTextContent("Processing request…");
+    expect(screen.getByRole("alertdialog", { name: "Delete item?" })).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
   });
 
   it("keeps focus trapped in dialog when pending disables all buttons", () => {
@@ -265,6 +270,26 @@ describe("DestructiveConfirmDialog", () => {
     expect(describedByIds).toHaveLength(2);
     expect(screen.getByText("This action is permanent.").id).toBe(describedByIds[0]);
     expect(screen.getByRole("alert").id).toBe(describedByIds[1]);
+  });
+
+  it("includes pending request status in aria-describedby while loading", () => {
+    render(
+      <DestructiveConfirmDialog
+        open
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        pending
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    const dialog = screen.getByRole("alertdialog", { name: "Delete account?" });
+    const describedByIds = dialog.getAttribute("aria-describedby")?.split(" ") ?? [];
+    expect(describedByIds).toHaveLength(2);
+    expect(screen.getByText("This action is permanent.").id).toBe(describedByIds[0]);
+    expect(screen.getByRole("status").id).toBe(describedByIds[1]);
   });
 
   it("announces provided errors via an alert region", () => {
