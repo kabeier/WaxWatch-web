@@ -141,4 +141,31 @@ describe("useAppShellChromeData", () => {
       meta: "Account needs attention · Notifications cooling down",
     });
   });
+
+  it("treats blank profile fields as missing and keeps status text non-empty", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: {
+        display_name: "   ",
+        email: "  ",
+        is_active: true,
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: { unread_count: 0 },
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const { result } = renderHook(() => useAppShellChromeData());
+
+    expect(result.current.sideNavStatus).toEqual({
+      label: "Session",
+      value: "Profile unavailable",
+      meta: "Account active · 0 unread notifications",
+    });
+  });
 });
