@@ -99,7 +99,7 @@ export default function DangerSettingsDeactivateCard() {
           confirmVariant="destructive"
           pending={deactivateMutation.isPending}
           errorMessage={
-            deactivateMutation.isError
+            isConfirmSubmitted && deactivateMutation.isError
               ? getErrorMessage(deactivateMutation.error, "Request failed")
               : undefined
           }

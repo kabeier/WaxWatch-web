@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import WatchlistItemPage from "../../../../../app/(app)/watchlist/[id]/page";
@@ -136,5 +137,35 @@ describe("/watchlist/[id] route", () => {
     });
     rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
     expect(screen.getByText(/could not save watchlist item updates\./i)).toBeInTheDocument();
+  });
+
+  it("returns focus to disable trigger when dialog closes with escape", async () => {
+    const user = userEvent.setup();
+    render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
+    const disableButton = screen.getByRole("button", { name: /^disable watchlist item$/i });
+    await user.click(disableButton);
+    const dialog = screen.getByRole("alertdialog", { name: /disable watchlist item\?/i });
+    expect(within(dialog).getByRole("button", { name: /^cancel$/i })).toHaveFocus();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("alertdialog", { name: /disable watchlist item\?/i })).toBeNull();
+    expect(disableButton).toHaveFocus();
+  });
+
+  it("only shows disable errors after a confirm attempt", async () => {
+    const user = userEvent.setup();
+    state.disable.mockReturnValue({
+      mutate: vi.fn(),
+      data: undefined,
+      error: { kind: "unknown_error", message: "Disable failed" },
+      isPending: false,
+      isError: true,
+    });
+
+    render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    await user.click(screen.getByRole("button", { name: /^disable watchlist item$/i }));
+
+    expect(screen.queryByText(/disable failed/i)).not.toBeInTheDocument();
   });
 });

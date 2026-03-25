@@ -37,6 +37,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
     isActive?: boolean;
   }>({});
   const [isDisableDialogOpen, setDisableDialogOpen] = useState(false);
+  const [isDisableConfirmSubmitted, setDisableConfirmSubmitted] = useState(false);
   const disableTriggerRef = useRef<HTMLElement | null>(null);
 
   const disableRequestRef = useRef<{ requestedId: string | null; sawPending: boolean }>({
@@ -275,6 +276,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           disabled={isPending}
           onClick={(event: MouseEvent<HTMLButtonElement>) => {
             disableTriggerRef.current = event.currentTarget;
+            setDisableConfirmSubmitted(false);
             setDisableDialogOpen(true);
           }}
         >
@@ -291,13 +293,17 @@ export default function WatchlistItemClient({ id }: { id: string }) {
         pendingLabel="Disabling watchlist item…"
         pending={disableWatchReleaseMutation.isPending}
         errorMessage={
-          disableWatchReleaseMutation.isError
+          isDisableConfirmSubmitted && disableWatchReleaseMutation.isError
             ? getErrorMessage(disableWatchReleaseMutation.error, "Request failed")
             : undefined
         }
-        onCancel={() => setDisableDialogOpen(false)}
+        onCancel={() => {
+          setDisableDialogOpen(false);
+          setDisableConfirmSubmitted(false);
+        }}
         returnFocusRef={disableTriggerRef}
         onConfirm={() => {
+          setDisableConfirmSubmitted(true);
           disableRequestRef.current = { requestedId: id, sawPending: false };
           disableWatchReleaseMutation.mutate(undefined);
         }}
