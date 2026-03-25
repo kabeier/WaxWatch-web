@@ -109,6 +109,7 @@ Result in this workspace: **partially green**.
 - ✅ `npm run prebuild:prod-env` (with explicit production env values) passed.
 - ❌ `npm run build` (with explicit production env values) failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH`).
 - ❌ `npm run a11y:smoke` remained blocked because `.next/standalone/server.js` is unavailable when build fails.
-- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate` was not rerun in this pass because verification stopped at the build failure.
+- ⚠️ `npm run docs:route-status-gate` skipped because `GITHUB_BASE_REF` is not set in this workspace.
+- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate` skipped because this workspace has no `origin` remote/base ref to diff against.
 
 Since the release-capable gate run did not complete end-to-end, do not freeze route statuses/docs as a release-candidate baseline from this workspace. Treat release-candidate status as pending a fully green rerun in CI/release infrastructure.
