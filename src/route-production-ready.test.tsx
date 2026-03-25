@@ -1302,6 +1302,272 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/could not load watchlist/i)).toBeInTheDocument();
   });
 
+  it("/dashboard route-level states cover success, empty data, api error, and cooldown retry affordances", () => {
+    const retryNotifications = vi.fn();
+    state.notificationsQuery = {
+      data: [{ id: "n-success", event_type: "match.created", is_read: false }],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: retryNotifications,
+    };
+    state.watchReleasesQuery = {
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    };
+    state.watchRulesQuery = {
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    };
+
+    const { rerender } = render(<DashboardPage />);
+    expect(screen.getByText(/match\.created/i)).toBeInTheDocument();
+    expect(screen.getByText(/no recent matches yet/i)).toBeInTheDocument();
+
+    state.notificationsQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "notifications unavailable" },
+      retry: retryNotifications,
+    };
+    rerender(<DashboardPage />);
+    expect(screen.getByText(/could not load notifications\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry notifications/i }));
+    expect(retryNotifications).toHaveBeenCalledTimes(1);
+
+    state.notificationsQuery = {
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    };
+    state.watchReleasesQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "cooldown active", retryAfterSeconds: 40 },
+      retry: vi.fn(),
+    };
+    rerender(<DashboardPage />);
+
+    expect(screen.getByText(/recent matches are temporarily rate limited/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 40s/i })).toBeDisabled();
+  });
+
+  it("/watchlist/[id] route-level states cover empty data, api/cooldown errors, and mutation failure then retry", async () => {
+    const retryDetail = vi.fn();
+    const updateMutate = vi.fn();
+    state.watchReleaseDetailQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: retryDetail,
+    };
+    state.updateWatchReleaseMutation = {
+      data: undefined,
+      isPending: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "save failed" },
+      mutate: updateMutate,
+    };
+
+    const { rerender } = render(
+      await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }),
+    );
+    expect(screen.getByText(/watchlist item not found\./i)).toBeInTheDocument();
+
+    state.watchReleaseDetailQuery = {
+      ...state.watchReleaseDetailQuery,
+      isError: true,
+      error: { kind: "unknown_error", message: "detail unavailable" },
+    };
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    fireEvent.click(screen.getByRole("button", { name: /retry watchlist item load/i }));
+    expect(retryDetail).toHaveBeenCalledTimes(1);
+
+    state.watchReleaseDetailQuery = {
+      ...state.watchReleaseDetailQuery,
+      isError: true,
+      error: { kind: "rate_limited", message: "slow down", retryAfterSeconds: 35 },
+    };
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    expect(screen.getByText(/retry-after:\s*35s/i)).toBeInTheDocument();
+
+    state.watchReleaseDetailQuery = {
+      ...state.watchReleaseDetailQuery,
+      data: {
+        id: "release-1",
+        user_id: "user-1",
+        discogs_release_id: 1,
+        discogs_master_id: null,
+        match_mode: "exact_release",
+        title: "Kind of Blue",
+        artist: "Miles Davis",
+        year: 1959,
+        target_price: 25,
+        currency: "USD",
+        min_condition: "VG+",
+        is_active: true,
+        created_at: "2026-03-21T08:00:00.000Z",
+        updated_at: "2026-03-22T10:00:00.000Z",
+      },
+      isError: false,
+      error: null,
+    };
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(screen.getByText(/could not save watchlist item updates\./i)).toBeInTheDocument();
+
+    state.updateWatchReleaseMutation = {
+      ...state.updateWatchReleaseMutation,
+      data: { ok: true },
+      isError: false,
+      error: null,
+    };
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(updateMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("status")).toHaveTextContent(/success: watchlist item updated\./i);
+  });
+
+  it("/login route-level flow covers handoff-empty, api error, cooldown alert, and eventual redirect", async () => {
+    const blockedPage = await LoginPage({
+      searchParams: Promise.resolve({
+        handoff: "waxwatch://auth/callback",
+        state: "missing-nonce",
+      }),
+    });
+    const blockedRender = render(blockedPage);
+    expect(screen.getByRole("alert")).toHaveTextContent(/missing required security parameters/i);
+    blockedRender.unmount();
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Auth unavailable." } }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Too many attempts." } }), {
+          status: 429,
+          headers: { "Content-Type": "application/json", "Retry-After": "30" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(
+      <LoginPageClient
+        handoff={{
+          returnTo: null,
+          handoffUrl: null,
+          state: null,
+          nonce: null,
+          expiresAt: null,
+          expiresAtEpochMs: null,
+          isExpired: false,
+          hasRequiredSecurityParams: false,
+        }}
+        fetchImpl={fetchMock}
+        onRedirect={onRedirect}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/auth unavailable/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/too many attempts/i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/retry-after:\s*30s/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
+  });
+
+  it("/settings/danger route-level flow covers empty data, api error, cooldown, mutation failure, and retry success", () => {
+    const retryLoad = vi.fn();
+    const deactivateMutate = vi.fn();
+    state.meQuery = {
+      ...state.meQuery,
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "load failed" },
+      retry: retryLoad,
+    };
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      data: undefined,
+      isPending: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "deactivate failed" },
+      mutate: deactivateMutate,
+    };
+
+    const { rerender } = render(<DangerSettingsPage />);
+    expect(screen.getByText(/could not load danger-zone settings/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry danger-zone load/i }));
+    expect(retryLoad).toHaveBeenCalledTimes(1);
+
+    state.meQuery = {
+      ...state.meQuery,
+      data: undefined,
+      isError: true,
+      error: { kind: "rate_limited", message: "slow down", retryAfterSeconds: 20 },
+    };
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByRole("button", { name: /retry available in 20s/i })).toBeDisabled();
+
+    state.meQuery = { ...state.meQuery, data: undefined, isError: false, error: null };
+    rerender(<DangerSettingsPage />);
+    expect(screen.getByText(/no danger-zone actions available\./i)).toBeInTheDocument();
+
+    state.meQuery = { ...state.meQuery, data: { id: "user-1" }, isError: false, error: null };
+    rerender(<DangerSettingsPage />);
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "button",
+        { name: /^deactivate account$/i },
+      ),
+    );
+    expect(deactivateMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/could not deactivate account\./i)).toBeInTheDocument();
+
+    state.deactivateMutation = {
+      ...state.deactivateMutation,
+      data: { ok: true },
+      isError: false,
+      error: null,
+      mutate: deactivateMutate,
+    };
+    rerender(<DangerSettingsPage />);
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "button",
+        { name: /^deactivate account$/i },
+      ),
+    );
+    expect(deactivateMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("status")).toHaveTextContent(/success: account deactivated\./i);
+  });
+
   it("/settings/profile success", () => {
     render(<ProfileSettingsPage />);
     expect(screen.getByText(/signed in as/i)).toBeInTheDocument();
