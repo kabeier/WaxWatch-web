@@ -7,12 +7,13 @@ function getAccountStatusLabel(args: {
   isActive?: boolean;
   isLoading: boolean;
   hasError: boolean;
+  hasData: boolean;
 }) {
   if (args.hasError) {
     return "Unavailable";
   }
 
-  if (args.isLoading) {
+  if (args.isLoading || !args.hasData) {
     return "Loading";
   }
 
@@ -44,6 +45,7 @@ function getSessionValue(args: {
   email?: string | null;
   isLoading: boolean;
   hasError: boolean;
+  hasData: boolean;
 }) {
   const normalizedDisplayName = args.displayName?.trim();
   const normalizedEmail = args.email?.trim();
@@ -56,12 +58,12 @@ function getSessionValue(args: {
     return normalizedEmail;
   }
 
-  if (args.isLoading) {
-    return "Loading profile";
-  }
-
   if (args.hasError) {
     return "Profile unavailable";
+  }
+
+  if (args.isLoading || !args.hasData) {
+    return "Loading profile";
   }
 
   return "Profile unavailable";
@@ -73,12 +75,13 @@ function getSessionMeta(args: {
   unreadIsLoading: boolean;
   unreadHasError: boolean;
   unreadError: unknown;
+  unreadHasData: boolean;
 }) {
   const activityLabel = args.unreadHasError
     ? isRateLimitedError(args.unreadError)
       ? "Notifications cooling down"
       : "Notifications unavailable"
-    : args.unreadIsLoading
+    : args.unreadIsLoading || !args.unreadHasData
       ? "Notifications syncing"
       : typeof args.unreadCount === "number"
         ? `${args.unreadCount ?? 0} unread notification${args.unreadCount === 1 ? "" : "s"}`
@@ -116,6 +119,7 @@ export function useAppShellChromeData() {
         isActive: meQuery.data?.is_active,
         isLoading: meQuery.isLoading,
         hasError: meQuery.isError,
+        hasData: Boolean(meQuery.data),
       }),
     },
   ];
@@ -127,6 +131,7 @@ export function useAppShellChromeData() {
       email: meQuery.data?.email,
       isLoading: meQuery.isLoading,
       hasError: meQuery.isError,
+      hasData: Boolean(meQuery.data),
     }),
     meta: getSessionMeta({
       isActive: meQuery.data?.is_active,
@@ -134,6 +139,7 @@ export function useAppShellChromeData() {
       unreadIsLoading: unreadCountQuery.isLoading,
       unreadHasError: unreadCountQuery.isError,
       unreadError: unreadCountQuery.error,
+      unreadHasData: Boolean(unreadCountQuery.data),
     }),
   };
 

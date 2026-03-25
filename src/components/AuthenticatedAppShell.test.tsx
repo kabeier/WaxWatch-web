@@ -93,6 +93,50 @@ describe("AuthenticatedAppShell", () => {
     expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
   });
 
+  it("keeps authenticated chrome on live loading defaults when queries are idle during navigation", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    const { rerender } = render(
+      <AppProviders>
+        <AuthenticatedAppShell>
+          <div>App content</div>
+        </AuthenticatedAppShell>
+      </AppProviders>,
+    );
+
+    ["/dashboard", "/search", "/notifications", "/watchlist", "/settings"].forEach((pathname) => {
+      __setPathname(pathname);
+      rerender(
+        <AppProviders>
+          <AuthenticatedAppShell>
+            <div>App content</div>
+          </AuthenticatedAppShell>
+        </AppProviders>,
+      );
+
+      expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Loading");
+      expect(screen.getByText("Loading profile")).toBeInTheDocument();
+      expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
+      expect(screen.queryByText("Unavailable")).not.toBeInTheDocument();
+      expect(screen.queryByText("Profile unavailable")).not.toBeInTheDocument();
+      expect(screen.queryByText("Status unavailable")).not.toBeInTheDocument();
+      expect(screen.queryByText("Connect live chrome data")).not.toBeInTheDocument();
+    });
+  });
+
   it("renders error chrome values from useAppShellChromeData", () => {
     queryHookMocks.me.mockReturnValue({
       data: undefined,

@@ -56,6 +56,33 @@ describe("useAppShellChromeData", () => {
     });
   });
 
+  it("uses loading chrome values when profile and unread queries are idle with no data yet", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+    });
+
+    const { result } = renderHook(() => useAppShellChromeData());
+
+    expect(result.current.utilities).toEqual([
+      { href: "/notifications", label: "Inbox", value: "0" },
+      { href: "/settings/profile", label: "Account", value: "Loading" },
+    ]);
+    expect(result.current.sideNavStatus).toEqual({
+      label: "Session",
+      value: "Loading profile",
+      meta: "Notifications syncing",
+    });
+  });
+
   it("returns error utility and status values when queries fail", () => {
     queryHookMocks.me.mockReturnValue({
       data: undefined,
@@ -169,7 +196,7 @@ describe("useAppShellChromeData", () => {
     });
   });
 
-  it("avoids loading placeholders after success settles with missing status fields", () => {
+  it("keeps notification activity in syncing state when unread has not loaded", () => {
     queryHookMocks.me.mockReturnValue({
       data: {
         display_name: null,
@@ -196,7 +223,7 @@ describe("useAppShellChromeData", () => {
     expect(result.current.sideNavStatus).toEqual({
       label: "Session",
       value: "Profile unavailable",
-      meta: "Notifications unavailable",
+      meta: "Notifications syncing",
     });
   });
 });
