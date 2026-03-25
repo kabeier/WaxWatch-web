@@ -82,4 +82,17 @@ describe("/settings/profile route", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Could not save profile settings.");
     expect(screen.getByText(/request failed/i)).toBeInTheDocument();
   });
+
+  it("announces successful profile saves through status semantics", () => {
+    hooks.update.mockReturnValue({
+      mutate: vi.fn(),
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+
+    render(<ProfileSettingsPage />);
+    expect(screen.getByRole("status")).toHaveTextContent(/success: profile settings saved\./i);
+  });
 });
