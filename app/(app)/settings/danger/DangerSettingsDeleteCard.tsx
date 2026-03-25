@@ -61,7 +61,7 @@ export default function DangerSettingsDeleteCard() {
           confirmVariant="destructive"
           pending={hardDeleteMutation.isPending}
           errorMessage={
-            hardDeleteMutation.isError
+            isConfirmSubmitted && hardDeleteMutation.isError
               ? getErrorMessage(hardDeleteMutation.error, "Request failed")
               : undefined
           }
