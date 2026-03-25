@@ -2,22 +2,19 @@
 
 ## Verification lock (2026-03-25)
 
-Post-merge gate rerun completed in this workspace on **March 25, 2026** using the full release gate sequence (`npm run ci:prod-gates`) with explicit CI-like env values.
+Requested gate-suite rerun completed in this workspace on **March 25, 2026**.
 
-Verification outcomes from this workspace:
+Verified outcomes in this environment:
 
-- `npm run test:coverage` passed (329/329 tests).
-- `npm run prebuild:prod-env` passed.
-- `npm run build` reached SWC bootstrap, but failed while patching/downloading SWC artifacts (`ENETUNREACH`) before standalone output was generated.
+- ✅ `npm run test:run` passed (329/329 tests).
+- ✅ `npm run typecheck` passed.
+- ✅ `npm run lint` passed.
+- ✅ `npm run format:check` passed.
+- ✅ `npm run docs:route-status-gate` completed with local skip output: `Skipping route-status test gate (GITHUB_BASE_REF not set).`
+- ⚠️ `npm run build` failed while Next.js attempted SWC download/lockfile patching (`ENETUNREACH`), so `.next/standalone/server.js` was not produced.
+- ⚠️ `npm run a11y:smoke` could not run to completion because `npm run start` requires `.next/standalone/server.js`.
 
-Environment-limited downstream gates (blocked because `build` could not complete in this workspace):
-
-- `npm run bundle:check`
-- `npm run a11y:smoke`
-- `npm run verify:deployment`
-- `npm run release:checklist`
-
-Route maturity statements below remain constrained to the passing gates above plus route-level test coverage already present in this repo. Promote this lock to a fully green release-candidate baseline only after `npm run ci:prod-gates` passes end-to-end in a network-capable CI/release environment.
+Route maturity statements below remain backed by passing tests/typecheck/lint/format and existing route-level coverage, while build-coupled readiness checks remain environment-blocked until the SWC download step can complete in network-capable CI/release infrastructure.
 
 ## Developer quickstart (read this first)
 
