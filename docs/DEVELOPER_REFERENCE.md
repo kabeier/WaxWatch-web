@@ -2,22 +2,22 @@
 
 ## Verification lock (2026-03-25)
 
-This reference is locked to the **release-candidate frontend baseline** after rerunning the requested verification sequence in this workspace on **March 25, 2026**.
+Post-merge gate rerun completed in this workspace on **March 25, 2026** using the full release gate sequence (`npm run ci:prod-gates`) with explicit CI-like env values.
 
 Verification outcomes from this workspace:
 
-- `npm run test:run`
-- `npm run typecheck`
-- `npm run lint`
-- `npm run format:check`
-- `GITHUB_BASE_REF=main npm run docs:route-status-gate` (script executed and reported: `Skipping route-status test gate (unable to fetch base ref from origin).`)
+- `npm run test:coverage` passed (329/329 tests).
+- `npm run prebuild:prod-env` passed.
+- `npm run build` reached SWC bootstrap, but failed while patching/downloading SWC artifacts (`ENETUNREACH`) before standalone output was generated.
 
-Environment-limited gates (still pending network-capable CI/release verification):
+Environment-limited downstream gates (blocked because `build` could not complete in this workspace):
 
-- `npm run build` was executed with CI-like production env values and passed `prebuild`, but Next.js failed while patching/downloading SWC artifacts (`ENETUNREACH`), so no standalone artifact was generated.
-- `npm run a11y:smoke` was executed with the same production-safe env values and failed as expected because `npm run start` requires `.next/standalone/server.js`, which is unavailable until `npm run build` succeeds.
+- `npm run bundle:check`
+- `npm run a11y:smoke`
+- `npm run verify:deployment`
+- `npm run release:checklist`
 
-Route maturity statements below therefore remain constrained to the passing gates above plus route-level test coverage already present in this repo. This lock is the release-candidate baseline for frontend route maturity as of March 25, 2026; promote it to fully completed verification only after `build` and `a11y:smoke` pass in a network-capable CI/release environment.
+Route maturity statements below remain constrained to the passing gates above plus route-level test coverage already present in this repo. Promote this lock to a fully green release-candidate baseline only after `npm run ci:prod-gates` passes end-to-end in a network-capable CI/release environment.
 
 ## Developer quickstart (read this first)
 
