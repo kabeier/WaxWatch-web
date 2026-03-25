@@ -245,6 +245,25 @@ describe("DestructiveConfirmDialog", () => {
     expect(screen.getByRole("alert").id).toBe(describedByIds[1]);
   });
 
+  it("announces provided errors via an alert region", () => {
+    render(
+      <DestructiveConfirmDialog
+        open
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        errorMessage="Delete failed."
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Delete failed.");
+    expect(
+      screen.getByRole("alertdialog", { name: "Delete account?" }),
+    ).toHaveAccessibleDescription("This action is permanent. Delete failed.");
+  });
+
   it("cycles focus with tab and shift+tab when controls are enabled", async () => {
     const user = userEvent.setup();
 
