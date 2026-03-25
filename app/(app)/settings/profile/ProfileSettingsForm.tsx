@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
-import { Button, LiveRegion, TextInput } from "@/components/ui/primitives/base";
+import { Button, FocusOnRender, LiveRegion, TextInput } from "@/components/ui/primitives/base";
 import {
   StateEmpty,
   StateError,
@@ -124,13 +124,13 @@ export default function ProfileSettingsForm() {
       ) : null}
 
       {validationMessage ? (
-        <div id="profile-settings-form-errors">
+        <FocusOnRender id="profile-settings-form-errors">
           <StateError
             title="Profile validation issue"
             message="Please fix profile validation issues before saving."
             detail={validationMessage}
           />
-        </div>
+        </FocusOnRender>
       ) : null}
 
       <form

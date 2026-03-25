@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 import pageViewStyles from "@/components/page-view/PageView.module.css";
-import { Button, LiveRegion, TextInput } from "@/components/ui/primitives/base";
+import { Button, FocusOnRender, LiveRegion, TextInput } from "@/components/ui/primitives/base";
 import {
   StateEmpty,
   StateError,
@@ -138,13 +138,13 @@ export default function SearchWorkbench() {
       </div>
 
       {searchErrors.length > 0 ? (
-        <div id="search-form-errors">
+        <FocusOnRender id="search-form-errors">
           <StateError
             title="Search validation issue"
             message="Please fix search validation issues before submitting."
             detail={searchErrors.join(" ")}
           />
-        </div>
+        </FocusOnRender>
       ) : null}
 
       <form
@@ -326,13 +326,13 @@ export default function SearchWorkbench() {
       ) : null}
 
       {saveAlertErrors.length > 0 ? (
-        <div id="save-alert-errors">
+        <FocusOnRender id="save-alert-errors">
           <StateError
             title="Save-alert validation issue"
             message="Please fix save-alert validation issues before submitting."
             detail={saveAlertErrors.join(" ")}
           />
-        </div>
+        </FocusOnRender>
       ) : null}
 
       <form
