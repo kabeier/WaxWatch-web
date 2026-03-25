@@ -67,7 +67,7 @@ describe("/settings/danger route", () => {
     render(<DangerSettingsPage />);
 
     expect(screen.getByRole("heading", { name: /danger zone/i })).toBeInTheDocument();
-    expect(screen.getByText(/success: account deactivated\./i)).toBeInTheDocument();
+    expect(screen.getByText(/success: account deactivated\./i)).toHaveAttribute("role", "status");
     expect(screen.getByRole("button", { name: /deactivate account/i })).toBeDisabled();
     expect(screen.getByRole("button", { name: /permanently deleting account/i })).toBeDisabled();
   });
@@ -86,6 +86,7 @@ describe("/settings/danger route", () => {
     const { rerender } = render(<DangerSettingsPage />);
 
     expect(screen.getByText(/could not load danger-zone settings\./i)).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent(/could not load danger-zone settings\./i);
     fireEvent.click(screen.getByRole("button", { name: /retry danger-zone load/i }));
     expect(retryMe).toHaveBeenCalledTimes(1);
 

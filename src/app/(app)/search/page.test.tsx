@@ -69,4 +69,33 @@ describe("/search route", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Could not run search.");
     expect(screen.getByText(/request failed/i)).toBeInTheDocument();
   });
+
+  it("announces successful async search updates through status semantics", () => {
+    hooks.search.mockReturnValue({
+      mutate: vi.fn(),
+      data: {
+        items: [
+          {
+            id: "release-1",
+            title: "Kind of Blue",
+            provider: "discogs",
+            price: 25,
+            currency: "USD",
+            condition: "VG+",
+            seller: "seller-1",
+            location: "US",
+            public_url: "https://example.com/release-1",
+          },
+        ],
+        providers_searched: ["discogs"],
+        pagination: { page: 1, page_size: 24, total: 1, returned: 1 },
+      },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+
+    render(<SearchPage />);
+    expect(screen.getByRole("status")).toHaveTextContent(/loaded 1 search results\./i);
+  });
 });

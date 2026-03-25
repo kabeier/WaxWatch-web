@@ -163,6 +163,32 @@ describe("base ui primitives", () => {
     expect(profile).toHaveFocus();
   });
 
+  it("keeps inactive tabs out of tab order by default", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <button type="button">Before tabs</button>
+        <PageTabs label="Settings sections">
+          <PageTab active>Profile</PageTab>
+          <PageTab>Alerts</PageTab>
+          <PageTab>Danger zone</PageTab>
+        </PageTabs>
+      </>,
+    );
+
+    const profile = screen.getByRole("tab", { name: "Profile" });
+    const alerts = screen.getByRole("tab", { name: "Alerts" });
+    const danger = screen.getByRole("tab", { name: "Danger zone" });
+
+    expect(profile).toHaveAttribute("tabindex", "0");
+    expect(alerts).toHaveAttribute("tabindex", "-1");
+    expect(danger).toHaveAttribute("tabindex", "-1");
+
+    await user.tab();
+    await user.tab();
+    expect(profile).toHaveFocus();
+  });
+
   it("preserves explicit aria-invalid states like grammar without coercing to true", () => {
     render(
       <>

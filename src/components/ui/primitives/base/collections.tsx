@@ -143,11 +143,14 @@ type PageTabProps = ComponentPropsWithoutRef<"button"> & {
 };
 
 export function PageTab({ className, active = false, type = "button", ...props }: PageTabProps) {
+  const resolvedTabIndex = props.tabIndex ?? (active ? 0 : -1);
+
   return (
     <button
       type={type}
       role="tab"
       aria-selected={active}
+      tabIndex={resolvedTabIndex}
       className={joinClassNames("ww-page-tab", active && "ww-page-tab--active", className)}
       {...props}
     />

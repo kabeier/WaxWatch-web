@@ -171,6 +171,28 @@ describe("/watchlist/[id] route", () => {
     expect(screen.getAllByText(/disabling watchlist item/i).length).toBeGreaterThan(0);
   });
 
+  it("announces async success and failure states with status/alert semantics", async () => {
+    state.update.mockReturnValue({
+      mutate: vi.fn(),
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+    state.disable.mockReturnValue({
+      mutate: vi.fn(),
+      data: undefined,
+      error: { kind: "unknown_error", message: "Disable failed" },
+      isPending: false,
+      isError: true,
+    });
+
+    render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(/success: watchlist item updated\./i);
+    expect(screen.getByRole("alert")).toHaveTextContent(/could not disable watchlist item\./i);
+  });
+
   it("returns focus to disable trigger when dialog closes with escape", async () => {
     const user = userEvent.setup();
     render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
