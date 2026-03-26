@@ -28,8 +28,13 @@ function getAccountStatusLabel(args: {
   return "Unavailable";
 }
 
-function getInboxValue(args: { unreadCount?: number; isLoading: boolean; hasError: boolean }) {
-  if (args.isLoading) {
+function getInboxValue(args: {
+  unreadCount?: number;
+  isLoading: boolean;
+  hasError: boolean;
+  hasSettled: boolean;
+}) {
+  if (args.isLoading || !args.hasSettled) {
     return "…";
   }
 
@@ -120,6 +125,7 @@ export function useAppShellChromeData() {
         unreadCount: unreadCountQuery.data?.unread_count,
         isLoading: unreadCountQuery.isLoading,
         hasError: unreadCountQuery.isError,
+        hasSettled: unreadHasSettled,
       }),
     },
     {
