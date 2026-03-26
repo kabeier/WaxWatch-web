@@ -115,6 +115,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
   }, [minCondition, targetPriceInput]);
   const validationField = validationMessage?.field;
   const validationText = validationMessage?.message;
+  const showValidationSummary = submitAttempted && Boolean(validationText);
 
   const isPending = updateWatchReleaseMutation.isPending || disableWatchReleaseMutation.isPending;
 
@@ -161,7 +162,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
   return (
     <form
       className={pageViewStyles.formStack}
-      aria-describedby={validationText ? "watchlist-item-form-errors" : undefined}
+      aria-describedby={showValidationSummary ? "watchlist-item-form-errors" : undefined}
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
@@ -185,10 +186,10 @@ export default function WatchlistItemClient({ id }: { id: string }) {
         });
       }}
     >
-      {validationText ? (
+      {showValidationSummary ? (
         <FocusOnRender
           id="watchlist-item-form-errors"
-          enabled={submitAttempted}
+          enabled={showValidationSummary}
           focusKey={submitAttemptCount}
         >
           <StateError
@@ -213,7 +214,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           disabled={isPending}
           error={validationField === "targetPrice"}
           errorMessageId="watchlist-item-target-price-error"
-          errorSummaryId="watchlist-item-form-errors"
+          errorSummaryId={showValidationSummary ? "watchlist-item-form-errors" : undefined}
         />
         {validationField === "targetPrice" ? (
           <p className={pageViewStyles.helpText} id="watchlist-item-target-price-error">
@@ -234,7 +235,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           disabled={isPending}
           error={validationField === "minCondition"}
           errorMessageId="watchlist-item-min-condition-error"
-          errorSummaryId="watchlist-item-form-errors"
+          errorSummaryId={showValidationSummary ? "watchlist-item-form-errors" : undefined}
         />
         {validationField === "minCondition" ? (
           <p className={pageViewStyles.helpText} id="watchlist-item-min-condition-error">

@@ -482,4 +482,34 @@ describe("DestructiveConfirmDialog", () => {
 
     trigger.remove();
   });
+
+  it("locks and restores body scrolling while the dialog is open", () => {
+    document.body.style.overflow = "auto";
+
+    const { rerender } = render(
+      <DestructiveConfirmDialog
+        open
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    expect(document.body.style.overflow).toBe("hidden");
+
+    rerender(
+      <DestructiveConfirmDialog
+        open={false}
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    expect(document.body.style.overflow).toBe("auto");
+  });
 });

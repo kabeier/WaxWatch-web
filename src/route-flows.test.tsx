@@ -231,6 +231,10 @@ describe("route flow regressions", () => {
     fireEvent.change(pageInput, { target: { value: "0" } });
 
     expect(pageInput).toHaveAttribute("aria-invalid", "true");
+    expect(pageInput).toHaveAttribute("aria-describedby", "search-page-error");
+    expect(screen.queryByText(/please fix search validation issues before submitting/i)).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /run search/i }));
     expect(pageInput).toHaveAttribute("aria-describedby", "search-form-errors search-page-error");
     expect(
       screen.getByText(/please fix search validation issues before submitting/i),

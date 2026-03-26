@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -46,6 +46,12 @@ describe("/search route", () => {
     await user.clear(keywords);
     expect(keywords).toHaveAttribute("aria-invalid", "true");
     expect(keywords).toHaveAttribute("aria-errormessage", "search-keywords-error");
+    expect(keywords).toHaveAttribute("aria-describedby", "search-keywords-error");
+
+    await user.click(screen.getByRole("button", { name: /run search/i }));
+    expect(
+      screen.getByText(/please fix search validation issues before submitting\./i),
+    ).toBeVisible();
     expect(keywords).toHaveAttribute(
       "aria-describedby",
       "search-form-errors search-keywords-error",
@@ -71,6 +77,17 @@ describe("/search route", () => {
 
     expect(alertName).toHaveAttribute("aria-invalid", "true");
     expect(alertName).toHaveAttribute("aria-errormessage", "save-alert-name-error");
+    expect(alertName).toHaveAttribute("aria-describedby", "save-alert-name-error");
+
+    const saveAlertForm = alertName.closest("form");
+    expect(saveAlertForm).not.toBeNull();
+    if (saveAlertForm) {
+      fireEvent.submit(saveAlertForm);
+    }
+
+    expect(
+      screen.getByText(/please fix save-alert validation issues before submitting\./i),
+    ).toBeVisible();
     expect(alertName).toHaveAttribute(
       "aria-describedby",
       "save-alert-errors save-alert-name-error",

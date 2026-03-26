@@ -413,6 +413,9 @@ describe("/watchlist/[id] route", () => {
     await user.type(targetPrice, "-1");
     expect(targetPrice).toHaveAttribute("aria-invalid", "true");
     expect(targetPrice).toHaveAttribute("aria-errormessage", "watchlist-item-target-price-error");
+    expect(targetPrice).toHaveAttribute("aria-describedby", "watchlist-item-target-price-error");
+
+    await user.click(screen.getByRole("button", { name: /save watchlist updates/i }));
     expect(targetPrice).toHaveAttribute(
       "aria-describedby",
       "watchlist-item-form-errors watchlist-item-target-price-error",
