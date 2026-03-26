@@ -117,7 +117,7 @@ export function useAppShellChromeData() {
       ? unreadFetchedFlag
       : Boolean(unreadCountQuery.data) || unreadCountQuery.isError;
 
-  const utilities: TopNavUtilityItem[] = [
+  const utilityItems: TopNavUtilityItem[] = [
     {
       href: "/notifications",
       label: "Inbox",
@@ -140,7 +140,7 @@ export function useAppShellChromeData() {
     },
   ];
 
-  const sideNavStatus: SideNavStatus = {
+  const status: SideNavStatus = {
     label: "Session",
     value: getSessionValue({
       displayName: meQuery.data?.display_name,
@@ -160,7 +160,7 @@ export function useAppShellChromeData() {
   };
 
   return {
-    utilities,
-    sideNavStatus,
+    utilityItems,
+    status,
   };
 }

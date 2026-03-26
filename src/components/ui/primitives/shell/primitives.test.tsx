@@ -25,24 +25,24 @@ vi.mock("@/lib/query/hooks", () => ({
 }));
 
 function AppChromeTopNav() {
-  const { utilities } = useAppShellChromeData();
+  const { utilityItems } = useAppShellChromeData();
 
-  return <TopNav utilityItems={utilities} />;
+  return <TopNav utilityItems={utilityItems} />;
 }
 
 function AppChromeSideNav() {
-  const { sideNavStatus } = useAppShellChromeData();
+  const { status } = useAppShellChromeData();
 
-  return <SideNav status={sideNavStatus} />;
+  return <SideNav status={status} />;
 }
 
 function AuthenticatedChromeShell() {
-  const { utilities, sideNavStatus } = useAppShellChromeData();
+  const { utilityItems, status } = useAppShellChromeData();
 
   return (
     <AppShell
-      topNav={<TopNav utilityItems={utilities} />}
-      sideNav={<SideNav status={sideNavStatus} />}
+      topNav={<TopNav utilityItems={utilityItems} />}
+      sideNav={<SideNav status={status} />}
       mobileTabBar={<MobileTabBar />}
       mobileTabBarVisibility="always"
     >
