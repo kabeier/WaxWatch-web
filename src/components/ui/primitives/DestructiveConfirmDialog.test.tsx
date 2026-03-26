@@ -294,6 +294,51 @@ describe("DestructiveConfirmDialog", () => {
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
 
+  it("invokes cancel and confirm actions only when enabled", async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn();
+
+    const { rerender } = render(
+      <DestructiveConfirmDialog
+        open
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    const cancelButton = screen.getByRole("button", { name: "Cancel" });
+    const confirmButton = screen.getByRole("button", { name: "Delete" });
+
+    await user.click(cancelButton);
+    confirmButton.focus();
+    await user.keyboard("{Enter}");
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <DestructiveConfirmDialog
+        open
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        pending
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    const pendingConfirmButton = screen.getByRole("button", { name: "Delete" });
+    pendingConfirmButton.focus();
+    await user.keyboard("{Enter}");
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
   it("includes both description and error text in aria-describedby when an error is shown", () => {
     render(
       <DestructiveConfirmDialog
@@ -332,6 +377,23 @@ describe("DestructiveConfirmDialog", () => {
     expect(describedByIds).toHaveLength(2);
     expect(screen.getByText("This action is permanent.").id).toBe(describedByIds[0]);
     expect(screen.getByRole("status").id).toBe(describedByIds[1]);
+  });
+
+  it("uses confirm label as the pending button label when no pendingLabel is provided", () => {
+    render(
+      <DestructiveConfirmDialog
+        open
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        pending
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Delete" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Deleting…" })).not.toBeInTheDocument();
   });
 
   it("announces provided errors via an alert region", () => {
