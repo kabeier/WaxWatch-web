@@ -11,16 +11,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/primitives/base";
-import { useDeactivateAccountMutation, useHardDeleteAccountMutation } from "@/lib/query/hooks";
 import { getErrorMessage } from "@/lib/query/state";
 import { useRef, useState, type MouseEvent } from "react";
+import { useDangerMutations } from "./DangerMutationsContext";
 
 export default function DangerSettingsDeleteCard() {
   const [isDialogRequested, setDialogRequested] = useState(false);
   const [isConfirmSubmitted, setConfirmSubmitted] = useState(false);
   const deleteTriggerRef = useRef<HTMLElement | null>(null);
-  const deactivateMutation = useDeactivateAccountMutation();
-  const hardDeleteMutation = useHardDeleteAccountMutation();
+  const { deactivateMutation, hardDeleteMutation } = useDangerMutations();
   const isPending = deactivateMutation.isPending || hardDeleteMutation.isPending;
   const isDialogOpen =
     isDialogRequested &&

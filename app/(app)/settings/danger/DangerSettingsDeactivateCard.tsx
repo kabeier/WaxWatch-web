@@ -18,21 +18,17 @@ import {
   StateLoading,
   StateRateLimited,
 } from "@/components/ui/primitives/state";
-import {
-  useDeactivateAccountMutation,
-  useHardDeleteAccountMutation,
-  useMeQuery,
-} from "@/lib/query/hooks";
+import { useMeQuery } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
 import { useRef, useState, type MouseEvent } from "react";
+import { useDangerMutations } from "./DangerMutationsContext";
 
 export default function DangerSettingsDeactivateCard() {
   const [isDialogRequested, setDialogRequested] = useState(false);
   const [isConfirmSubmitted, setConfirmSubmitted] = useState(false);
   const deactivateTriggerRef = useRef<HTMLElement | null>(null);
   const meQuery = useMeQuery();
-  const deactivateMutation = useDeactivateAccountMutation();
-  const hardDeleteMutation = useHardDeleteAccountMutation();
+  const { deactivateMutation, hardDeleteMutation } = useDangerMutations();
   const isPending = deactivateMutation.isPending || hardDeleteMutation.isPending;
   const isDialogOpen =
     isDialogRequested &&

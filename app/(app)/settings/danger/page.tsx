@@ -10,6 +10,7 @@ import {
 import { routeViewModels } from "@/lib/view-models/routes";
 
 import DangerRequestStatus from "./DangerRequestStatus";
+import { DangerMutationsProvider } from "./DangerMutationsContext";
 import DangerSettingsDeactivateCard from "./DangerSettingsDeactivateCard";
 import DangerSettingsDeleteCard from "./DangerSettingsDeleteCard";
 import DangerSettingsTabs from "./DangerSettingsTabs";
@@ -29,24 +30,26 @@ export default function DangerSettingsPage() {
         </span>
       }
     >
-      <PageCardGroup columns="two">
-        <DangerSettingsDeactivateCard />
-        <DangerSettingsDeleteCard />
-      </PageCardGroup>
+      <DangerMutationsProvider>
+        <PageCardGroup columns="two">
+          <DangerSettingsDeactivateCard />
+          <DangerSettingsDeleteCard />
+        </PageCardGroup>
 
-      <ActiveDivider />
+        <ActiveDivider />
 
-      <Card padding="lg">
-        <CardHeader>
-          <CardTitle>Danger-zone request status</CardTitle>
-          <CardDescription>
-            Keep follow-up loading, error, and success states grouped in their own card.
-          </CardDescription>
-        </CardHeader>
-        <CardBody className={pageViewStyles.cardStack}>
-          <DangerRequestStatus />
-        </CardBody>
-      </Card>
+        <Card padding="lg">
+          <CardHeader>
+            <CardTitle>Danger-zone request status</CardTitle>
+            <CardDescription>
+              Keep follow-up loading, error, and success states grouped in their own card.
+            </CardDescription>
+          </CardHeader>
+          <CardBody className={pageViewStyles.cardStack}>
+            <DangerRequestStatus />
+          </CardBody>
+        </Card>
+      </DangerMutationsProvider>
     </PageView>
   );
 }

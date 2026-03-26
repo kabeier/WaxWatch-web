@@ -969,6 +969,11 @@ hr {
   box-shadow: 0 0 22px var(--ww-glow-subtle);
 }
 
+.ww-checkbox-row:focus-within {
+  outline: 2px solid var(--ww-focus-ring);
+  outline-offset: 2px;
+}
+
 .ww-checkbox-row--error {
   border-color: var(--ww-error);
 }
@@ -1167,6 +1172,12 @@ hr {
 .ww-page-tab:focus-visible {
   color: var(--ww-text-primary);
   border-color: color-mix(in srgb, var(--ww-stripe-gold) 18%, var(--ww-border-subtle));
+}
+
+.ww-page-tab:focus-visible {
+  outline: 2px solid var(--ww-focus-ring);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 1px var(--ww-focus-ring);
 }
 
 .ww-page-tab--active {
