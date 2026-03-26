@@ -76,12 +76,7 @@ export default function DangerSettingsDeleteCard() {
           }}
           onConfirm={() => {
             setConfirmSubmitted(true);
-            hardDeleteMutation.mutate(undefined, {
-              onSuccess: () => {
-                setDialogRequested(false);
-                setConfirmSubmitted(false);
-              },
-            });
+            hardDeleteMutation.mutate(undefined);
           }}
         />
       </CardFooter>
