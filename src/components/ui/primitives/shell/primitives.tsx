@@ -163,15 +163,15 @@ export function AppShell({
   );
 }
 
-const DEFENSIVE_UTILITY_ITEMS: TopNavUtilityItem[] = [
-  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "N/A" },
-  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "N/A" },
+const DEFAULT_UTILITY_ITEMS: TopNavUtilityItem[] = [
+  { href: NOTIFICATIONS_PATH, label: "Inbox", value: "…" },
+  { href: SETTINGS_PROFILE_PATH, label: "Account", value: "Loading" },
 ];
 
-const DEFENSIVE_SIDE_NAV_STATUS: SideNavStatus = {
-  label: "Status unavailable",
-  value: "Connect live chrome data",
-  meta: undefined,
+const DEFAULT_SIDE_NAV_STATUS: SideNavStatus = {
+  label: "Session",
+  value: "Loading profile",
+  meta: "Notifications syncing",
 };
 
 function getNonEmptyValue(value: string | undefined, fallback: string) {
@@ -195,8 +195,8 @@ export function TopNav({
         {showUtilities ? (
           <nav className="top-nav__utilities" aria-label={utilityLabel}>
             {utilities ??
-              // Defensive fallback only: authenticated shells should pass live utilityItems
-              (utilityItems ?? DEFENSIVE_UTILITY_ITEMS).map((item) => (
+              // Loading-safe fallback for non-auth shell compositions
+              (utilityItems ?? DEFAULT_UTILITY_ITEMS).map((item) => (
                 <ShellUtilityLink
                   key={`${item.href}-${item.label}`}
                   href={item.href}
@@ -222,8 +222,7 @@ export function ShellHeaderBand() {
 export function SideNav({
   items = APP_NAV_ITEMS,
   footer,
-  // Defensive fallback only: authenticated shells should pass live status
-  status = DEFENSIVE_SIDE_NAV_STATUS,
+  status = DEFAULT_SIDE_NAV_STATUS,
 }: SideNavProps) {
   return (
     <aside className="side-nav">
