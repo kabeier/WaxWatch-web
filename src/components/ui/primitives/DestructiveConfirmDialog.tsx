@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/primitives/base";
 import { joinClassNames } from "./base/shared";
 
 type DestructiveConfirmDialogProps = {
+  id?: string;
   open: boolean;
   title: string;
   description: string;
@@ -56,6 +57,7 @@ function DialogActionControls({
 }
 
 export function DestructiveConfirmDialog({
+  id,
   open,
   title,
   description,
@@ -205,6 +207,7 @@ export function DestructiveConfirmDialog({
   return createPortal(
     <div className="ww-confirm-dialog__backdrop">
       <div
+        id={id}
         className={joinClassNames("ww-confirm-dialog", className)}
         role="alertdialog"
         aria-modal="true"

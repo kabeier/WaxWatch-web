@@ -27,6 +27,7 @@ export default function DangerSettingsDeactivateCard() {
   const [isDialogRequested, setDialogRequested] = useState(false);
   const [isConfirmSubmitted, setConfirmSubmitted] = useState(false);
   const deactivateTriggerRef = useRef<HTMLElement | null>(null);
+  const deactivateDialogId = "danger-deactivate-confirm-dialog";
   const meQuery = useMeQuery();
   const { deactivateMutation, hardDeleteMutation } = useDangerMutations();
   const isPending = deactivateMutation.isPending || hardDeleteMutation.isPending;
@@ -78,6 +79,9 @@ export default function DangerSettingsDeactivateCard() {
         <Button
           variant="secondary"
           disabled={isPending}
+          aria-haspopup="dialog"
+          aria-expanded={isDialogOpen}
+          aria-controls={deactivateDialogId}
           onClick={(event: MouseEvent<HTMLButtonElement>) => {
             deactivateTriggerRef.current = event.currentTarget;
             setConfirmSubmitted(false);
@@ -87,6 +91,7 @@ export default function DangerSettingsDeactivateCard() {
           {deactivateMutation.isPending ? "Deactivating account…" : "Deactivate account"}
         </Button>
         <DestructiveConfirmDialog
+          id={deactivateDialogId}
           open={isDialogOpen}
           title="Deactivate account now?"
           description="This immediately signs out the current session and pauses account access until you reactivate later."
