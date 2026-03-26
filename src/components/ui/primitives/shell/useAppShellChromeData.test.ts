@@ -172,6 +172,44 @@ describe("useAppShellChromeData", () => {
     });
   });
 
+  it("never returns loading or fallback placeholders once authenticated data is available", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: {
+        display_name: "Jordan Analyst",
+        email: "jordan@example.com",
+        is_active: false,
+      },
+      isLoading: false,
+      isError: false,
+      isFetched: true,
+      error: null,
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: { unread_count: 11 },
+      isLoading: false,
+      isError: false,
+      isFetched: true,
+      error: null,
+    });
+
+    const { result } = renderHook(() => useAppShellChromeData());
+    const chromeValues = [
+      ...result.current.utilityItems.map((item) => item.value),
+      result.current.status.value,
+      result.current.status.meta,
+    ].filter(Boolean);
+
+    expect(chromeValues).toEqual([
+      "11",
+      "Attention",
+      "Jordan Analyst",
+      "Account needs attention · 11 unread notifications",
+    ]);
+    expect(chromeValues).not.toEqual(
+      expect.arrayContaining(["…", "Loading", "Loading profile", "Notifications syncing", "—"]),
+    );
+  });
+
   it("prefers live unread and account values when refetching reports loading", () => {
     queryHookMocks.me.mockReturnValue({
       data: {

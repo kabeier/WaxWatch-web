@@ -343,6 +343,47 @@ describe("shell primitives", () => {
     expect(screen.getByRole("main")).toHaveTextContent("App content");
   });
 
+  it("does not leak fallback utility or status placeholders in authenticated normal flow", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: {
+        display_name: "Jordan Analyst",
+        email: "jordan@example.com",
+        is_active: false,
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: { unread_count: 11 },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(<AuthenticatedChromeShell />);
+
+    expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("11");
+    expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Attention");
+    expect(screen.getByText("Jordan Analyst")).toBeInTheDocument();
+    expect(
+      screen.getByText("Account needs attention · 11 unread notifications"),
+    ).toBeInTheDocument();
+
+    [
+      "…",
+      "Loading",
+      "Loading profile",
+      "Notifications syncing",
+      "Profile unavailable",
+      "—",
+    ].forEach((fallbackCopy) => {
+      expect(screen.queryByText(fallbackCopy)).not.toBeInTheDocument();
+    });
+  });
+
   it("does not render mobile tabs in auto mode without a mobile viewport", () => {
     const { container } = render(
       <AppShell mobileTabBar={<MobileTabBar />} topNav={<TopNav />}>
