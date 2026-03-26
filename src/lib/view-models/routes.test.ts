@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { MOBILE_NAV_ITEMS } from "@/components/ui/primitives/shell/primitives";
+
 import { mobileNavigationRouteKeys, routeViewModels } from "./routes";
 
 const expectedMobileTabRouteKeys = [
@@ -24,6 +26,21 @@ describe("mobileNavigationRouteKeys", () => {
 
     expect(routeKeysWithMobileNavigationLabel).toEqual(expectedMobileTabRouteKeys);
     expect(mobileNavigationRouteKeys).toEqual(routeKeysWithMobileNavigationLabel);
+  });
+
+  it("matches rendered MobileTabBar navigation definitions in route order and labels", () => {
+    const expectedTabs = mobileNavigationRouteKeys.map((routeKey) => {
+      const route = routeViewModels[routeKey];
+
+      return {
+        href: route.path,
+        label: route.mobileNavigationLabel ?? route.navigationLabel ?? route.heading,
+      };
+    });
+
+    expect(MOBILE_NAV_ITEMS.map((item) => ({ href: item.href, label: item.label }))).toEqual(
+      expectedTabs,
+    );
   });
 
   it("matches the documented mobile navigation sequence in docs/ROUTES.md", () => {

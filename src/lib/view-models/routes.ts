@@ -317,3 +317,5 @@ export const settingsNavigationRouteKeys = [
   "settingsAlerts",
   "settingsDanger",
 ] as const;
+
+export type RouteKey = keyof typeof routeViewModels;

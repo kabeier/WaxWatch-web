@@ -98,8 +98,10 @@ via `showUtilities={false}`.
 
 ### Mobile primary nav (currently rendered tab set)
 
-Mobile primary navigation is the currently rendered bottom-tab set from `MOBILE_NAV_ITEMS` in
-`src/components/ui/primitives/shell/primitives.tsx`. Tabs are rendered in `AppShell` and shown only
+Mobile primary navigation is the bottom-tab set defined by
+`mobileNavigationRouteKeys` in `src/lib/view-models/routes.ts` and rendered via
+`MOBILE_NAV_ITEMS` in `src/components/ui/primitives/shell/primitives.tsx`. Tabs are rendered in
+`AppShell` and shown only
 for mobile viewport widths (`max-width: 767px`) when `mobileTabBarVisibility` is `auto` (the current
 authenticated-shell behavior). The tab set includes exactly:
 
