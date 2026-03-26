@@ -1,22 +1,21 @@
 # WaxWatch Frontend (Next.js)
 
-## Verification lock (2026-03-25 CI/release suite rerun)
+## Verification lock (2026-03-26 local full-script rerun)
 
-CI/release-capable verification was rerun in this workspace on **March 25, 2026**.
+Requested full verification (`test`, `typecheck`, `lint`, `format:check`, `build`, `a11y:smoke`, `docs:route-status-gate`) was rerun in this workspace on **March 26, 2026**.
 
 Outcome in this environment: **partially green (infrastructure/network limited)**.
 
-- ✅ `npm run test:run`: passed (48/48 files, 364/364 tests).
+- ✅ `npm run test`: passed (48/48 files, 372/372 tests).
 - ✅ `npm run typecheck`: passed.
 - ✅ `npm run lint`: passed.
 - ✅ `npm run format:check`: passed.
-- ✅ `NODE_ENV=production ... npm run prebuild:prod-env`: passed (same-origin API + CSP standalone gate checks).
-- ✅ `NODE_ENV=production ... npm run build` passed env-contract prebuild validation (`npm run prebuild` hook).
-- ❌ `NODE_ENV=production ... npm run build`: failed because Next.js attempted to fetch missing SWC binary `@next/swc-linux-x64-gnu` and the environment could not reach the package host (`ENETUNREACH`).
-- ⚠️ `npm run a11y:smoke`: failed downstream because `npm run start` requires `.next/standalone/server.js`, which is only produced after a successful build.
-- ⚠️ `npm run docs:route-status-gate`: skipped in local workspace context (`GITHUB_BASE_REF` not set by default; with `GITHUB_BASE_REF=main`, gate still skips because `origin` remote is unavailable).
+- ✅ `npm run build`: `prebuild` env-contract validation passed once required env vars were supplied.
+- ❌ `npm run build`: failed because Next.js attempted to download missing SWC binary `@next/swc-linux-x64-gnu` and the environment could not reach the package host (`ENETUNREACH`).
+- ⚠️ `npm run a11y:smoke`: cannot pass in this workspace because `npm run start` requires `.next/standalone/server.js`, which depends on a successful `npm run build`.
+- ⚠️ `npm run docs:route-status-gate`: skipped in local workspace context (`GITHUB_BASE_REF` unset). With `GITHUB_BASE_REF` set, this workspace still cannot fetch `origin/<base>` because no `origin` remote is configured.
 
-Because full release-capable verification did not complete end-to-end, route-status/docs freeze is **not** promoted to release-candidate frontend baseline from this workspace run.
+Because the full gate set did not complete end-to-end, treat route readiness as **not newly promoted/finalized** from this local run.
 
 ## Developer quickstart (read this first)
 
