@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __setPathname } from "@/test/mocks/next-navigation";
+import { mobileNavigationRouteKeys, routeViewModels } from "@/lib/view-models/routes";
 
 import { useAppShellChromeData } from "./useAppShellChromeData";
 import {
@@ -131,6 +132,31 @@ describe("shell primitives", () => {
     expect(
       within(mobileNav as HTMLElement).queryByRole("link", { name: /Search/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps rendered mobile tabs aligned with route metadata contracts", () => {
+    __setPathname("/dashboard");
+    render(<MobileTabBar />);
+
+    const mobileNav = screen.getByRole("navigation", { name: "Mobile primary" });
+    const mobileLinks = within(mobileNav).getAllByRole("link");
+
+    const expectedTabs = mobileNavigationRouteKeys.map((routeKey) => {
+      const route = routeViewModels[routeKey];
+
+      return {
+        href: route.path,
+        label: route.mobileNavigationLabel ?? route.navigationLabel ?? route.heading,
+      };
+    });
+
+    expect(mobileLinks).toHaveLength(expectedTabs.length);
+    expect(mobileLinks.map((link) => link.getAttribute("href"))).toEqual(
+      expectedTabs.map((tab) => tab.href),
+    );
+    mobileLinks.forEach((link, index) => {
+      expect(link).toHaveTextContent(expectedTabs[index].label);
+    });
   });
 
   it("keeps integrations as the only active item on integrations routes", () => {
