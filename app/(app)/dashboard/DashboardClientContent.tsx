@@ -88,6 +88,14 @@ type DashboardDenseListRowViewModel = {
   trailing?: ReactNode;
   metaValues: string[];
 };
+type DashboardCollectionContentProps = {
+  copy: DashboardTransitionCopy;
+  isLoading: boolean;
+  error: unknown;
+  itemCount: number;
+  onRetry: () => void;
+  children: ReactNode;
+};
 
 type DashboardTimestampedItem = {
   id?: string | number;
@@ -158,15 +166,23 @@ function formatKeywords(values?: Array<string | number | null | undefined>) {
 }
 
 function DashboardListTitle({ children }: { children: ReactNode }) {
-  return <ListText>{children}</ListText>;
+  return <ListText truncate>{children}</ListText>;
 }
 
 function DashboardListTrailing({ children }: { children: ReactNode }) {
-  return <ListText className={pageViewStyles.mutedText}>{children}</ListText>;
+  return (
+    <ListText truncate className={pageViewStyles.mutedText}>
+      {children}
+    </ListText>
+  );
 }
 
 function DashboardMetaItem({ children }: { children: ReactNode }) {
-  return <ListText className={pageViewStyles.mutedText}>{children}</ListText>;
+  return (
+    <ListText truncate className={pageViewStyles.mutedText}>
+      {children}
+    </ListText>
+  );
 }
 
 function DashboardMetaSeparator() {
@@ -187,7 +203,11 @@ function DashboardMetric({ value, label }: { value: number | string; label: stri
 }
 
 function DashboardListDescription({ children }: { children: ReactNode }) {
-  return <ListText className={pageViewStyles.mutedText}>{children}</ListText>;
+  return (
+    <ListText truncate className={pageViewStyles.mutedText}>
+      {children}
+    </ListText>
+  );
 }
 
 function DashboardListMeta({ values }: { values: string[] }) {
@@ -346,14 +366,7 @@ function DashboardCollectionTransition({
   itemCount,
   onRetry,
   children,
-}: {
-  copy: DashboardTransitionCopy;
-  isLoading: boolean;
-  error: unknown;
-  itemCount: number;
-  onRetry: () => void;
-  children: ReactNode;
-}) {
+}: DashboardCollectionContentProps) {
   const state = resolveDashboardCollectionState({
     isLoading,
     hasError: Boolean(error),
@@ -382,14 +395,7 @@ function DashboardListContent({
   itemCount,
   onRetry,
   children,
-}: {
-  copy: DashboardTransitionCopy;
-  isLoading: boolean;
-  error: unknown;
-  itemCount: number;
-  onRetry: () => void;
-  children: ReactNode;
-}) {
+}: DashboardCollectionContentProps) {
   return (
     <DashboardCollectionTransition
       copy={copy}
@@ -400,6 +406,34 @@ function DashboardListContent({
     >
       <ListContainer dense>{children}</ListContainer>
     </DashboardCollectionTransition>
+  );
+}
+
+function DashboardCollectionPanel({
+  copy,
+  rows,
+  isLoading,
+  error,
+  onRetry,
+}: {
+  copy: DashboardTransitionCopy;
+  rows: DashboardDenseListRowViewModel[];
+  isLoading: boolean;
+  error: unknown;
+  onRetry: () => void;
+}) {
+  return (
+    <DashboardListContent
+      copy={copy}
+      isLoading={isLoading}
+      error={error}
+      itemCount={rows.length}
+      onRetry={onRetry}
+    >
+      {rows.map((row) => (
+        <DashboardDenseListRow key={row.id} row={row} />
+      ))}
+    </DashboardListContent>
   );
 }
 
@@ -446,35 +480,19 @@ function DashboardNotificationsPanel({
   error,
   onRetry,
 }: {
-  rows: DashboardNotificationRow[];
+  rows: DashboardDenseListRowViewModel[];
   isLoading: boolean;
   error: unknown;
   onRetry: () => void;
 }) {
-  const listRows = useMemo(
-    () =>
-      rows.map((notification) => ({
-        id: notification.id,
-        title: notification.event_type,
-        description: notification.description,
-        trailing: notification.readState,
-        metaValues: notification.metaValues,
-      })),
-    [rows],
-  );
-
   return (
-    <DashboardListContent
+    <DashboardCollectionPanel
       copy={DASHBOARD_TRANSITION_COPY.notifications}
+      rows={rows}
       isLoading={isLoading}
       error={error}
-      itemCount={rows.length}
       onRetry={onRetry}
-    >
-      {listRows.map((row) => (
-        <DashboardDenseListRow key={row.id} row={row} />
-      ))}
-    </DashboardListContent>
+    />
   );
 }
 
@@ -484,42 +502,19 @@ function DashboardMatchesPanel({
   error,
   onRetry,
 }: {
-  rows: DashboardReleaseRow[];
+  rows: DashboardDenseListRowViewModel[];
   isLoading: boolean;
   error: unknown;
   onRetry: () => void;
 }) {
-  const listRows = useMemo(
-    () =>
-      rows.map((release) => ({
-        id: release.id,
-        title: (
-          <Link
-            className={pageViewStyles.listLink}
-            href={`${routeViewModels.watchlist.path}/${release.id}`}
-          >
-            <ListText>{release.title}</ListText>
-          </Link>
-        ),
-        description: `${release.artist} · ${release.matchModeLabel}`,
-        trailing: release.activeState,
-        metaValues: [release.targetPriceLabel, release.updatedLabel],
-      })),
-    [rows],
-  );
-
   return (
-    <DashboardListContent
+    <DashboardCollectionPanel
       copy={DASHBOARD_TRANSITION_COPY.matches}
+      rows={rows}
       isLoading={isLoading}
       error={error}
-      itemCount={rows.length}
       onRetry={onRetry}
-    >
-      {listRows.map((row) => (
-        <DashboardDenseListRow key={row.id} row={row} />
-      ))}
-    </DashboardListContent>
+    />
   );
 }
 
@@ -529,42 +524,19 @@ function DashboardRulesPanel({
   error,
   onRetry,
 }: {
-  rows: DashboardRuleRow[];
+  rows: DashboardDenseListRowViewModel[];
   isLoading: boolean;
   error: unknown;
   onRetry: () => void;
 }) {
-  const listRows = useMemo(
-    () =>
-      rows.map((rule) => ({
-        id: rule.id,
-        title: (
-          <Link
-            className={pageViewStyles.listLink}
-            href={`${routeViewModels.alerts.path}/${rule.id}`}
-          >
-            <ListText>{rule.name}</ListText>
-          </Link>
-        ),
-        description: rule.keywordsLabel,
-        trailing: rule.activeState,
-        metaValues: [rule.pollLabel, rule.nextRunLabel],
-      })),
-    [rows],
-  );
-
   return (
-    <DashboardListContent
+    <DashboardCollectionPanel
       copy={DASHBOARD_TRANSITION_COPY.rules}
+      rows={rows}
       isLoading={isLoading}
       error={error}
-      itemCount={rows.length}
       onRetry={onRetry}
-    >
-      {listRows.map((row) => (
-        <DashboardDenseListRow key={row.id} row={row} />
-      ))}
-    </DashboardListContent>
+    />
   );
 }
 
@@ -592,6 +564,17 @@ export default function DashboardClientContent() {
     const recentNotifications = sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT);
     return buildNotificationRows(recentNotifications);
   }, [notifications]);
+  const notificationListRows = useMemo<DashboardDenseListRowViewModel[]>(
+    () =>
+      notificationRows.map((notification) => ({
+        id: notification.id,
+        title: notification.event_type,
+        description: notification.description,
+        trailing: notification.readState,
+        metaValues: notification.metaValues,
+      })),
+    [notificationRows],
+  );
   const watchRulesSummary = useMemo(() => {
     const { recentItems, activeItemCount, totalItemCount } = summarizeDashboardItems(
       watchRules,
@@ -616,6 +599,42 @@ export default function DashboardClientContent() {
       rows: buildReleaseRows(recentItems),
     };
   }, [watchReleases]);
+  const watchReleaseListRows = useMemo<DashboardDenseListRowViewModel[]>(
+    () =>
+      watchReleasesSummary.rows.map((release) => ({
+        id: release.id,
+        title: (
+          <Link
+            className={pageViewStyles.listLink}
+            href={`${routeViewModels.watchlist.path}/${release.id}`}
+          >
+            <ListText truncate>{release.title}</ListText>
+          </Link>
+        ),
+        description: `${release.artist} · ${release.matchModeLabel}`,
+        trailing: release.activeState,
+        metaValues: [release.targetPriceLabel, release.updatedLabel],
+      })),
+    [watchReleasesSummary.rows],
+  );
+  const watchRuleListRows = useMemo<DashboardDenseListRowViewModel[]>(
+    () =>
+      watchRulesSummary.rows.map((rule) => ({
+        id: rule.id,
+        title: (
+          <Link
+            className={pageViewStyles.listLink}
+            href={`${routeViewModels.alerts.path}/${rule.id}`}
+          >
+            <ListText truncate>{rule.name}</ListText>
+          </Link>
+        ),
+        description: rule.keywordsLabel,
+        trailing: rule.activeState,
+        metaValues: [rule.pollLabel, rule.nextRunLabel],
+      })),
+    [watchRulesSummary.rows],
+  );
   const unreadCountSummary = useMemo(
     () => ({
       value: unreadCountQuery.isLoading
@@ -700,7 +719,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardMatchesPanel
-              rows={watchReleasesSummary.rows}
+              rows={watchReleaseListRows}
               isLoading={watchReleasesQuery.isLoading}
               error={watchReleasesQuery.error}
               onRetry={retryWatchReleases}
@@ -721,7 +740,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardRulesPanel
-              rows={watchRulesSummary.rows}
+              rows={watchRuleListRows}
               isLoading={watchRulesQuery.isLoading}
               error={watchRulesQuery.error}
               onRetry={retryWatchRules}
@@ -745,7 +764,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardNotificationsPanel
-              rows={notificationRows}
+              rows={notificationListRows}
               isLoading={notificationsQuery.isLoading}
               error={notificationsQuery.error}
               onRetry={retryNotifications}
