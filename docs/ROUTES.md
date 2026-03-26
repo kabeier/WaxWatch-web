@@ -101,14 +101,14 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 ## Verification lock (2026-03-26 local full-script rerun)
 
-Requested full verification (`test`, `typecheck`, `lint`, `format:check`, `build`, `a11y:smoke`, `docs:route-status-gate`) was rerun on **March 26, 2026** in this workspace.
+Requested full verification (`test:run`, `typecheck`, `lint`, `format:check`, `build`, `a11y:smoke`, `docs:route-status-gate`) was rerun on **March 26, 2026** in this workspace.
 
-Result in this workspace: **partially green (local environment configuration limited)**.
+Result in this workspace: **partially green (environment/network limited)**.
 
-- ✅ `npm run test:run` passed (50/50 files, 413/413 tests).
+- ✅ `npm run test:run` passed (51/51 files, 432/432 tests).
 - ✅ `npm run typecheck`, `npm run lint`, and `npm run format:check` all passed.
-- ❌ `npm run build` failed in `prebuild` env-contract validation because required runtime env vars were unset (`NODE_ENV`, `APP_BASE_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_RELEASE_VERSION`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_REGION`, `AWS_SECRETS_PREFIX`, `TRUSTED_PROXY_CIDRS`, `LOG_LEVEL`).
-- ⚠️ `npm run a11y:smoke` failed before browser checks because `npm run start` exited on missing required runtime env vars (`APP_BASE_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_RELEASE_VERSION`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_REGION`, `AWS_SECRETS_PREFIX`, `TRUSTED_PROXY_CIDRS`, `LOG_LEVEL`).
-- ⚠️ `npm run docs:route-status-gate` skipped without `GITHUB_BASE_REF` (script no-op by design).
+- ❌ `npm run build` passed env-contract validation, then failed while downloading Next.js SWC binary `@next/swc-linux-x64-gnu` (`ENETUNREACH`), so standalone build output was not generated.
+- ⚠️ `npm run a11y:smoke` failed before browser checks because `npm run start` exited with `startup_missing_build_artifact` (`.next/standalone/server.js` missing).
+- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate` exited with skip because the script could not fetch `origin/main` (`fatal: 'origin' does not appear to be a git repository`).
 
 Since the full gate run did not complete end-to-end, do not newly finalize route maturity promotions from this workspace run.
