@@ -57,10 +57,10 @@ describe("ProfileSettingsForm", () => {
     await user.clear(currency);
     await user.type(currency, "US");
 
-    expect(currency).not.toHaveAttribute("aria-invalid");
+    expect(currency).toHaveAttribute("aria-invalid", "true");
     expect(
-      screen.queryByText(/currency must be a valid 3-letter iso code \(for example: usd\)\./i),
-    ).not.toBeInTheDocument();
+      screen.getByText(/currency must be a valid 3-letter iso code \(for example: usd\)\./i),
+    ).toBeVisible();
 
     await user.click(screen.getByRole("button", { name: /save profile changes/i }));
 

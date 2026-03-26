@@ -63,7 +63,7 @@ export default function ProfileSettingsForm() {
   }, [currency, displayName, timezone]);
   const validationMessage = validationState?.message;
   const showValidationSummary = submitAttempted && Boolean(validationMessage);
-  const showFieldErrors = submitAttempted;
+  const showFieldErrors = true;
 
   const isFormReady = Boolean(meQuery.data);
   const rateLimitedLoadError =
@@ -181,7 +181,7 @@ export default function ProfileSettingsForm() {
             errorSummaryId={showValidationSummary ? "profile-settings-form-errors" : undefined}
           />
           {showFieldErrors && validationState?.field === "displayName" ? (
-            <p className={pageViewStyles.helpText} id="profile-display-name-error">
+            <p className={pageViewStyles.helpText} id="profile-display-name-error" role="alert">
               {validationMessage}
             </p>
           ) : null}
@@ -201,7 +201,7 @@ export default function ProfileSettingsForm() {
             errorSummaryId={showValidationSummary ? "profile-settings-form-errors" : undefined}
           />
           {showFieldErrors && validationState?.field === "timezone" ? (
-            <p className={pageViewStyles.helpText} id="profile-timezone-error">
+            <p className={pageViewStyles.helpText} id="profile-timezone-error" role="alert">
               {validationMessage}
             </p>
           ) : null}
@@ -222,7 +222,7 @@ export default function ProfileSettingsForm() {
             errorSummaryId={showValidationSummary ? "profile-settings-form-errors" : undefined}
           />
           {showFieldErrors && validationState?.field === "currency" ? (
-            <p className={pageViewStyles.helpText} id="profile-currency-error">
+            <p className={pageViewStyles.helpText} id="profile-currency-error" role="alert">
               {validationMessage}
             </p>
           ) : null}
