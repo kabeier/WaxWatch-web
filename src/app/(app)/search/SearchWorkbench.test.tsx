@@ -113,4 +113,72 @@ describe("SearchWorkbench", () => {
       page_size: 24,
     });
   });
+
+  it("saves alerts from the last submitted search query and shows success feedback", async () => {
+    const user = userEvent.setup();
+    const searchMutate = vi.fn();
+    const saveAlertMutate = vi.fn();
+    hooks.search.mockReturnValue({
+      mutate: searchMutate,
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+    hooks.saveAlert.mockReturnValue({
+      mutate: saveAlertMutate,
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+
+    render(<SearchWorkbench />);
+
+    await user.clear(screen.getByRole("textbox", { name: /keywords/i }));
+    await user.type(screen.getByRole("textbox", { name: /keywords/i }), "jazz, soul");
+    await user.click(screen.getByRole("button", { name: /run search/i }));
+    await user.click(screen.getByRole("button", { name: /save as alert/i }));
+
+    expect(searchMutate).toHaveBeenCalledWith({
+      keywords: ["jazz", "soul"],
+      providers: ["discogs"],
+      page: 1,
+      page_size: 24,
+    });
+    expect(saveAlertMutate).toHaveBeenCalledWith({
+      name: "Saved from search",
+      query: {
+        keywords: ["jazz", "soul"],
+        providers: ["discogs"],
+        page: 1,
+        page_size: 24,
+      },
+      poll_interval_seconds: 600,
+    });
+    expect(screen.getByRole("status")).toHaveTextContent(/success: alert saved from search\./i);
+  });
+
+  it("surfaces save-alert validation errors and blocks save action", async () => {
+    const user = userEvent.setup();
+    const saveAlertMutate = vi.fn();
+    hooks.saveAlert.mockReturnValue({
+      mutate: saveAlertMutate,
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+
+    render(<SearchWorkbench />);
+
+    const alertName = screen.getByRole("textbox", { name: /alert name/i });
+    await user.clear(alertName);
+    const saveAlertButton = screen.getByRole("button", { name: /save as alert/i });
+    expect(saveAlertButton).toBeDisabled();
+    await user.click(saveAlertButton);
+
+    expect(screen.getByText(/alert name must be between 1 and 120 characters\./i)).toBeVisible();
+    expect(saveAlertMutate).not.toHaveBeenCalled();
+  });
 });
