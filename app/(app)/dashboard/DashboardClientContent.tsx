@@ -303,7 +303,7 @@ function DashboardListEmptyState({ title, message }: { title: string; message: s
       <ListContainer dense aria-hidden>
         <ListRow
           title={<DashboardListTitle>No items yet</DashboardListTitle>}
-          description={<DashboardListDescription>{message}</DashboardListDescription>}
+          description={<DashboardListDescription>Awaiting first activity</DashboardListDescription>}
           trailing={<DashboardListTrailing>Waiting</DashboardListTrailing>}
         >
           <DashboardListMeta values={["No recent activity", "Check back soon"]} />
