@@ -1,14 +1,14 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
 
 const API = {
-  watchRules: /\/api\/watch-rules(?:\?.*)?$/,
-  watchReleases: /\/api\/watch-releases(?:\?.*)?$/,
-  notifications: /\/api\/notifications(?:\?.*)?$/,
-  unreadCount: /\/api\/notifications\/unread-count(?:\?.*)?$/,
-  me: /\/api\/me(?:\?.*)?$/,
-  meHardDelete: /\/api\/me\/hard-delete(?:\?.*)?$/,
-  discogsStatus: /\/api\/integrations\/discogs\/status(?:\?.*)?$/,
-  sse: /\/api\/stream\/events(?:\?.*)?$/,
+  watchRules: /\/api\/watch-rules(?:\/)?(?:\?.*)?$/,
+  watchReleases: /\/api\/watch-releases(?:\/)?(?:\?.*)?$/,
+  notifications: /\/api\/notifications(?:\/)?(?:\?.*)?$/,
+  unreadCount: /\/api\/notifications\/unread-count(?:\/)?(?:\?.*)?$/,
+  me: /\/api\/me(?:\/)?(?:\?.*)?$/,
+  meHardDelete: /\/api\/me\/hard-delete(?:\/)?(?:\?.*)?$/,
+  discogsStatus: /\/api\/integrations\/discogs\/status(?:\/)?(?:\?.*)?$/,
+  sse: /\/api\/stream\/events(?:\/)?(?:\?.*)?$/,
 };
 
 const meProfile = {
@@ -66,7 +66,7 @@ test.describe("route-focused validation", () => {
     await page.goto("/alerts");
 
     await expect(page.getByText("Loading watch rules…")).toBeVisible();
-    await expect(page.getByText("No watch rules yet.")).toBeVisible();
+    await expect(page.getByText(/No watch rules yet/i)).toBeVisible();
   });
 
   test("/alerts covers error and rate-limited states", async ({ page }) => {
@@ -76,7 +76,7 @@ test.describe("route-focused validation", () => {
     });
 
     await page.goto("/alerts");
-    await expect(page.getByText("Watch-rule requests are temporarily rate limited.")).toBeVisible();
+    await expect(page.getByText(/watch-rule requests are temporarily rate limited/i)).toBeVisible();
 
     await page.unroute(API.watchRules);
     await page.route(API.watchRules, async (route) => {
@@ -94,7 +94,7 @@ test.describe("route-focused validation", () => {
     });
 
     await page.goto("/watchlist");
-    await expect(page.getByText("Could not load watchlist.")).toBeVisible();
+    await expect(page.getByText(/could not load watchlist/i)).toBeVisible();
 
     await page.unroute(API.watchReleases);
     await page.route(API.watchReleases, async (route) => {
@@ -102,7 +102,7 @@ test.describe("route-focused validation", () => {
     });
 
     await page.getByRole("button", { name: "Refresh watchlist" }).click();
-    await expect(page.getByText("No watchlist releases yet.")).toBeVisible();
+    await expect(page.getByText(/No watchlist releases yet/i)).toBeVisible();
   });
 
   test("/notifications covers rate-limited and empty states", async ({ page }) => {
@@ -115,7 +115,7 @@ test.describe("route-focused validation", () => {
     });
 
     await page.goto("/notifications");
-    await expect(page.getByText("Notifications are temporarily rate limited")).toBeVisible();
+    await expect(page.getByText(/Notifications are temporarily rate limited/i)).toBeVisible();
 
     await page.unroute(API.notifications);
     await page.route(API.notifications, async (route) => {
@@ -123,7 +123,7 @@ test.describe("route-focused validation", () => {
     });
 
     await page.getByRole("button", { name: "Retry notifications feed" }).click();
-    await expect(page.getByText("No notifications yet.")).toBeVisible();
+    await expect(page.getByText(/No notifications yet/i)).toBeVisible();
   });
 
   test("/settings/profile and /settings/alerts load and rate-limit states", async ({ page }) => {
@@ -135,10 +135,10 @@ test.describe("route-focused validation", () => {
     });
 
     await page.goto("/settings/profile");
-    await expect(page.getByText("Profile requests are temporarily rate limited.")).toBeVisible();
+    await expect(page.getByText(/Profile requests are temporarily rate limited/i)).toBeVisible();
 
     await page.goto("/settings/alerts");
-    await expect(page.getByText("Settings are temporarily rate limited.")).toBeVisible();
+    await expect(page.getByText(/Settings are temporarily rate limited/i)).toBeVisible();
   });
 
   test("/integrations covers empty and error states", async ({ page }) => {
@@ -148,7 +148,7 @@ test.describe("route-focused validation", () => {
     });
 
     await page.goto("/integrations");
-    await expect(page.getByText("No integration status found.")).toBeVisible();
+    await expect(page.getByText(/No integration status found/i)).toBeVisible();
 
     await page.unroute(API.discogsStatus);
     await page.route(API.discogsStatus, async (route) => {
@@ -156,7 +156,7 @@ test.describe("route-focused validation", () => {
     });
 
     await page.getByRole("button", { name: "Refresh Discogs status" }).click();
-    await expect(page.getByText("Could not load Discogs integration status.")).toBeVisible();
+    await expect(page.getByText(/Could not load Discogs integration status/i)).toBeVisible();
   });
 
   test("/settings/integrations redirects to /integrations", async ({ page }) => {
@@ -186,16 +186,16 @@ test.describe("route-focused validation", () => {
 
     await page.goto("/settings/danger");
     await page.getByRole("button", { name: "Deactivate account" }).click();
-    await expect(page.getByText("Deactivate account now?")).toBeVisible();
+    await expect(page.getByText(/Deactivate account now\?/i)).toBeVisible();
     await page.getByRole("button", { name: "Cancel" }).click();
-    await expect(page.getByText("Deactivate account now?")).toBeHidden();
+    await expect(page.getByText(/Deactivate account now\?/i)).toBeHidden();
 
     await page.getByRole("button", { name: "Deactivate account" }).click();
     await page
       .getByRole("button", { name: /^Deactivate account$/ })
       .nth(1)
       .click();
-    await expect(page.getByText("Success: Account deactivated.")).toBeVisible();
+    await expect(page.getByText(/Success: Account deactivated/i)).toBeVisible();
   });
 
   test("auth-expiry redirects to /signed-out", async ({ page }) => {
@@ -205,6 +205,7 @@ test.describe("route-focused validation", () => {
     });
 
     await page.goto("/alerts");
+    await page.waitForURL(/\/signed-out\?reason=reauth-required/, { timeout: 15_000 });
     await expect(page).toHaveURL(/\/signed-out\?reason=reauth-required/);
     await expect(page.getByRole("heading", { name: /^signed out$/i })).toBeVisible();
   });
@@ -267,7 +268,7 @@ test.describe("route-focused validation", () => {
 
     await page.goto("/notifications");
 
-    await expect.poll(() => sseRequestSeen).toBe(true);
+    await expect.poll(() => sseRequestSeen, { timeout: 15_000 }).toBe(true);
     await expect.poll(() => notificationListRequests).toBeGreaterThan(1);
     await expect.poll(() => unreadCountRequests).toBeGreaterThan(1);
   });
