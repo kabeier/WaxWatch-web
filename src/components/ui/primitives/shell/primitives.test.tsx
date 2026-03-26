@@ -169,7 +169,7 @@ describe("shell primitives", () => {
     expect(screen.getByText("Account active · 7 unread notifications")).toBeInTheDocument();
   });
 
-  it("renders primitive-only defensive fallback values when live chrome props are omitted", () => {
+  it("renders loading defaults when live chrome props are omitted", () => {
     const { container } = render(
       <>
         <TopNav />
@@ -182,10 +182,10 @@ describe("shell primitives", () => {
     const statusValue = container.querySelector("strong.side-nav__status-value");
 
     expect(utilityValues).toHaveLength(2);
-    expect(utilityValues.map((node) => node.textContent)).toEqual(["N/A", "N/A"]);
-    expect(statusLabel).toHaveTextContent("Status unavailable");
-    expect(statusValue).toHaveTextContent("Connect live chrome data");
-    expect(screen.queryByText("Notifications syncing")).not.toBeInTheDocument();
+    expect(utilityValues.map((node) => node.textContent)).toEqual(["…", "Loading"]);
+    expect(statusLabel).toHaveTextContent("Session");
+    expect(statusValue).toHaveTextContent("Loading profile");
+    expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
   });
 
   it("renders dynamic shell utility and status values from query-backed chrome data", () => {
