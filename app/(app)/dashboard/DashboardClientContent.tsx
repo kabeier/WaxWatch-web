@@ -280,6 +280,10 @@ function resolveDashboardCollectionState({
   hasError: boolean;
   itemCount: number;
 }): DashboardCollectionState {
+  if (itemCount > 0) {
+    return "content";
+  }
+
   if (isLoading && itemCount === 0) {
     return "loading";
   }
@@ -574,25 +578,17 @@ export default function DashboardClientContent() {
   const notificationsQuery = useDashboardNotificationsPreviewQuery(DASHBOARD_NOTIFICATION_LIMIT);
   const unreadCountQuery = useUnreadNotificationCountQuery();
 
-  const notifications = useMemo(
-    () => toDashboardArray(notificationsQuery.data, EMPTY_NOTIFICATIONS),
-    [notificationsQuery.data],
-  );
-  const watchRules = useMemo(
-    () => toDashboardArray(watchRulesQuery.data, EMPTY_RULES),
-    [watchRulesQuery.data],
-  );
-  const watchReleases = useMemo(
-    () => toDashboardArray(watchReleasesQuery.data, EMPTY_RELEASES),
-    [watchReleasesQuery.data],
-  );
-
   const notificationsSummary = useMemo<DashboardSummaryViewModel>(() => {
-    const recentNotifications = sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT);
-    const rows = buildNotificationRows(recentNotifications);
+    const notifications = toDashboardArray(notificationsQuery.data, EMPTY_NOTIFICATIONS);
+    const { recentItems } = summarizeDashboardItems(notifications, DASHBOARD_NOTIFICATION_LIMIT);
+    const rows = buildNotificationRows(recentItems);
+
     return {
       totalCount: notifications.length,
-      activeCount: rows.reduce((count, row) => count + (row.is_read ? 0 : 1), 0),
+      activeCount: notifications.reduce(
+        (count, notification) => count + (notification.is_read ? 0 : 1),
+        0,
+      ),
       rows: toDenseRows(rows, (notification) => ({
         title: notification.event_type,
         description: notification.description,
@@ -600,17 +596,18 @@ export default function DashboardClientContent() {
         metaValues: notification.metaValues,
       })),
     };
-  }, [notifications]);
+  }, [notificationsQuery.data]);
   const watchRulesSummary = useMemo<DashboardSummaryViewModel>(() => {
+    const watchRules = toDashboardArray(watchRulesQuery.data, EMPTY_RULES);
     const { recentItems, activeItemCount, totalItemCount } = summarizeDashboardItems(
       watchRules,
       DASHBOARD_RULE_LIMIT,
     );
-    const rows = buildRuleRows(recentItems);
+
     return {
       totalCount: totalItemCount,
       activeCount: activeItemCount,
-      rows: toDenseRows(rows, (rule) => ({
+      rows: toDenseRows(buildRuleRows(recentItems), (rule) => ({
         title: (
           <DashboardLinkTitle href={`${routeViewModels.alerts.path}/${rule.id}`}>
             {rule.name}
@@ -621,17 +618,18 @@ export default function DashboardClientContent() {
         metaValues: [rule.pollLabel, rule.nextRunLabel],
       })),
     };
-  }, [watchRules]);
+  }, [watchRulesQuery.data]);
   const watchReleasesSummary = useMemo<DashboardSummaryViewModel>(() => {
+    const watchReleases = toDashboardArray(watchReleasesQuery.data, EMPTY_RELEASES);
     const { recentItems, activeItemCount, totalItemCount } = summarizeDashboardItems(
       watchReleases,
       DASHBOARD_RELEASE_LIMIT,
     );
-    const rows = buildReleaseRows(recentItems);
+
     return {
       totalCount: totalItemCount,
       activeCount: activeItemCount,
-      rows: toDenseRows(rows, (release) => ({
+      rows: toDenseRows(buildReleaseRows(recentItems), (release) => ({
         title: (
           <DashboardLinkTitle href={`${routeViewModels.watchlist.path}/${release.id}`}>
             {release.title}
@@ -642,7 +640,7 @@ export default function DashboardClientContent() {
         metaValues: [release.targetPriceLabel, release.updatedLabel],
       })),
     };
-  }, [watchReleases]);
+  }, [watchReleasesQuery.data]);
   const unreadCountSummary = useMemo(
     () => ({
       value: unreadCountQuery.isLoading

@@ -307,6 +307,34 @@ describe("DashboardClientContent", () => {
     expect(screen.queryByText("Loading Notifications")).not.toBeInTheDocument();
   });
 
+  it("keeps rendered feed content visible when a background refresh errors", () => {
+    hookMocks.notifications.mockReturnValue({
+      data: [
+        {
+          id: "notification-stale-content",
+          user_id: "user-1",
+          event_id: "event-3",
+          event_type: "match.updated",
+          channel: "email",
+          status: "delivered",
+          is_read: false,
+          created_at: "2026-03-24T09:00:00.000Z",
+          read_at: null,
+        },
+      ],
+      isLoading: false,
+      isError: true,
+      error: new Error("Transient fetch error"),
+      retry: vi.fn(),
+    });
+
+    render(<DashboardClientContent />);
+
+    expect(screen.getByText("match.updated")).toBeInTheDocument();
+    expect(screen.getByText("email · delivered")).toBeInTheDocument();
+    expect(screen.queryByText("Notifications failed to load")).not.toBeInTheDocument();
+  });
+
   it("falls back to empty collections when preview payloads are not arrays", () => {
     hookMocks.notifications.mockReturnValue({
       data: null,
