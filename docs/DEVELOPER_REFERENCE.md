@@ -102,9 +102,14 @@ Route maturity/status guidance is canonical in this reference's **Route matrix**
 
 - Next.js **App Router**
 - TypeScript
-- Supabase Auth (client session) + WaxWatch Backend API (JWT bearer)
+- Backend-managed auth sessions: web uses `httpOnly` cookies (`credentials: include`), mobile/native uses JWT bearer transport
 - TanStack Query for server state (Option A: SPA-style dashboard)
 - SSE for realtime notifications
+
+Auth implementation anchors:
+
+- `src/lib/auth-session.ts` (web auth adapter, signed-out/account-removed redirects, legacy token cleanup)
+- `app/(auth)/login/LoginPageClient.tsx` (`POST /auth/login` form submit with cookie credentials + secure handoff guardrails)
 
 ## Architecture layering: api core vs web query
 

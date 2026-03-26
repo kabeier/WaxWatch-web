@@ -2,10 +2,15 @@
 
 ## Responsibility split
 
-- Supabase owns login + refresh for user sessions.
+- Backend auth endpoints own web login/session issuance and refresh semantics for browser flows.
 - **Web** uses server-managed `httpOnly` session cookies for API auth; browser JavaScript does not read bearer tokens from storage.
 - **Mobile/native** continues to use bearer JWTs via secure native storage and transport.
 - The shared API client is the canonical place where auth lifecycle side effects are triggered.
+
+Implementation anchors:
+
+- `src/lib/auth-session.ts` defines the web `AuthSessionAdapter` (cookie-backed access token behavior, lifecycle event emission, redirect targets).
+- `app/(auth)/login/LoginPageClient.tsx` performs `POST /auth/login` with `credentials: include` and enforces secure handoff parameter validation.
 
 ## Canonical auth lifecycle (web + mobile)
 
@@ -45,7 +50,7 @@ Do not duplicate these transitions in feature code (SSE controllers, screens, pa
 
 - Provide a platform-specific `AuthSessionAdapter` implementation.
 - Web and mobile adapters must preserve the same ordering and event semantics listed above.
-- Do not attempt to "fix" tokens client-side beyond Supabase refresh/session APIs.
+- Do not implement ad-hoc token/session repair logic in feature code; rely on backend auth endpoints and the shared API-client adapter lifecycle.
 
 ## Mobile handoff
 
