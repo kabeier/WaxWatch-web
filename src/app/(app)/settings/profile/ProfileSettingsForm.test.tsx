@@ -57,13 +57,17 @@ describe("ProfileSettingsForm", () => {
     await user.clear(currency);
     await user.type(currency, "US");
 
-    expect(currency).toHaveAttribute("aria-invalid", "true");
+    expect(currency).not.toHaveAttribute("aria-invalid");
     expect(
-      screen.getByText(/currency must be a valid 3-letter iso code \(for example: usd\)\./i),
-    ).toBeVisible();
+      screen.queryByText(/currency must be a valid 3-letter iso code \(for example: usd\)\./i),
+    ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /save profile changes/i }));
 
+    expect(currency).toHaveAttribute("aria-invalid", "true");
+    expect(
+      screen.getAllByText(/currency must be a valid 3-letter iso code \(for example: usd\)\./i),
+    ).toHaveLength(2);
     expect(screen.getByRole("heading", { name: /profile validation issue/i })).toBeVisible();
     expect(
       screen.getByText(/please fix profile validation issues before saving\./i, {

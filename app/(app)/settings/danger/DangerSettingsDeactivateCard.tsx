@@ -111,7 +111,12 @@ export default function DangerSettingsDeactivateCard() {
           }}
           onConfirm={() => {
             setConfirmSubmitted(true);
-            deactivateMutation.mutate(undefined);
+            deactivateMutation.mutate(undefined, {
+              onSuccess: () => {
+                setDialogRequested(false);
+                setConfirmSubmitted(false);
+              },
+            });
           }}
         />
       </CardFooter>

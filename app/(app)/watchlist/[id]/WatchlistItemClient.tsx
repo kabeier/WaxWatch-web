@@ -116,6 +116,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
   const validationField = validationMessage?.field;
   const validationText = validationMessage?.message;
   const showValidationSummary = submitAttempted && Boolean(validationText);
+  const showFieldErrors = submitAttempted;
 
   const isPending = updateWatchReleaseMutation.isPending || disableWatchReleaseMutation.isPending;
 
@@ -212,16 +213,12 @@ export default function WatchlistItemClient({ id }: { id: string }) {
             setDraft((current) => ({ ...current, targetPrice: nextTargetPrice }));
           }}
           disabled={isPending}
-          error={validationField === "targetPrice"}
+          error={showFieldErrors && validationField === "targetPrice"}
           errorMessageId="watchlist-item-target-price-error"
           errorSummaryId={showValidationSummary ? "watchlist-item-form-errors" : undefined}
         />
-        {validationField === "targetPrice" ? (
-          <p
-            className={pageViewStyles.helpText}
-            id="watchlist-item-target-price-error"
-            role="alert"
-          >
+        {showFieldErrors && validationField === "targetPrice" ? (
+          <p className={pageViewStyles.helpText} id="watchlist-item-target-price-error">
             {validationText}
           </p>
         ) : null}
@@ -237,16 +234,12 @@ export default function WatchlistItemClient({ id }: { id: string }) {
             setDraft((current) => ({ ...current, minCondition: nextMinCondition }));
           }}
           disabled={isPending}
-          error={validationField === "minCondition"}
+          error={showFieldErrors && validationField === "minCondition"}
           errorMessageId="watchlist-item-min-condition-error"
           errorSummaryId={showValidationSummary ? "watchlist-item-form-errors" : undefined}
         />
-        {validationField === "minCondition" ? (
-          <p
-            className={pageViewStyles.helpText}
-            id="watchlist-item-min-condition-error"
-            role="alert"
-          >
+        {showFieldErrors && validationField === "minCondition" ? (
+          <p className={pageViewStyles.helpText} id="watchlist-item-min-condition-error">
             {validationText}
           </p>
         ) : null}

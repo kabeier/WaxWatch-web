@@ -132,6 +132,8 @@ export default function SearchWorkbench() {
   const searchPagination = searchMutation.data?.pagination;
   const showSearchValidationSummary = searchSubmitAttempted && searchErrors.length > 0;
   const showSaveAlertValidationSummary = saveAlertSubmitAttempted && saveAlertErrors.length > 0;
+  const showSearchFieldErrors = searchSubmitAttempted;
+  const showSaveAlertFieldErrors = saveAlertSubmitAttempted;
 
   return (
     <div className={pageViewStyles.cardStack}>
@@ -182,12 +184,12 @@ export default function SearchWorkbench() {
             value={keywordsInput}
             onChange={(event) => setKeywordsInput(event.currentTarget.value)}
             disabled={isBusy}
-            error={Boolean(keywordError)}
+            error={showSearchFieldErrors && Boolean(keywordError)}
             errorMessageId="search-keywords-error"
             errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
           />
-          {keywordError ? (
-            <p className={pageViewStyles.helpText} id="search-keywords-error" role="alert">
+          {showSearchFieldErrors && keywordError ? (
+            <p className={pageViewStyles.helpText} id="search-keywords-error">
               {keywordError}
             </p>
           ) : null}
@@ -199,12 +201,12 @@ export default function SearchWorkbench() {
             value={providersInput}
             onChange={(event) => setProvidersInput(event.currentTarget.value)}
             disabled={isBusy}
-            error={Boolean(providerError)}
+            error={showSearchFieldErrors && Boolean(providerError)}
             errorMessageId="search-providers-error"
             errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
           />
-          {providerError ? (
-            <p className={pageViewStyles.helpText} id="search-providers-error" role="alert">
+          {showSearchFieldErrors && providerError ? (
+            <p className={pageViewStyles.helpText} id="search-providers-error">
               {providerError}
             </p>
           ) : null}
@@ -219,12 +221,12 @@ export default function SearchWorkbench() {
               value={pageInput}
               onChange={(event) => setPageInput(event.currentTarget.value)}
               disabled={isBusy}
-              error={Boolean(pageError)}
+              error={showSearchFieldErrors && Boolean(pageError)}
               errorMessageId="search-page-error"
               errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
             />
-            {pageError ? (
-              <p className={pageViewStyles.helpText} id="search-page-error" role="alert">
+            {showSearchFieldErrors && pageError ? (
+              <p className={pageViewStyles.helpText} id="search-page-error">
                 {pageError}
               </p>
             ) : null}
@@ -239,12 +241,12 @@ export default function SearchWorkbench() {
               value={pageSizeInput}
               onChange={(event) => setPageSizeInput(event.currentTarget.value)}
               disabled={isBusy}
-              error={Boolean(pageSizeError)}
+              error={showSearchFieldErrors && Boolean(pageSizeError)}
               errorMessageId="search-page-size-error"
               errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
             />
-            {pageSizeError ? (
-              <p className={pageViewStyles.helpText} id="search-page-size-error" role="alert">
+            {showSearchFieldErrors && pageSizeError ? (
+              <p className={pageViewStyles.helpText} id="search-page-size-error">
                 {pageSizeError}
               </p>
             ) : null}
@@ -388,12 +390,12 @@ export default function SearchWorkbench() {
               value={alertName}
               onChange={(event) => setAlertName(event.currentTarget.value)}
               disabled={isBusy}
-              error={Boolean(alertNameError)}
+              error={showSaveAlertFieldErrors && Boolean(alertNameError)}
               errorMessageId="save-alert-name-error"
               errorSummaryId={showSaveAlertValidationSummary ? "save-alert-errors" : undefined}
             />
-            {alertNameError ? (
-              <p className={pageViewStyles.helpText} id="save-alert-name-error" role="alert">
+            {showSaveAlertFieldErrors && alertNameError ? (
+              <p className={pageViewStyles.helpText} id="save-alert-name-error">
                 {alertNameError}
               </p>
             ) : null}
@@ -408,16 +410,12 @@ export default function SearchWorkbench() {
               value={pollIntervalInput}
               onChange={(event) => setPollIntervalInput(event.currentTarget.value)}
               disabled={isBusy}
-              error={Boolean(pollIntervalError)}
+              error={showSaveAlertFieldErrors && Boolean(pollIntervalError)}
               errorMessageId="save-alert-poll-interval-error"
               errorSummaryId={showSaveAlertValidationSummary ? "save-alert-errors" : undefined}
             />
-            {pollIntervalError ? (
-              <p
-                className={pageViewStyles.helpText}
-                id="save-alert-poll-interval-error"
-                role="alert"
-              >
+            {showSaveAlertFieldErrors && pollIntervalError ? (
+              <p className={pageViewStyles.helpText} id="save-alert-poll-interval-error">
                 {pollIntervalError}
               </p>
             ) : null}
@@ -427,11 +425,7 @@ export default function SearchWorkbench() {
           The last submitted query is saved when available; otherwise the current form values are
           used.
         </p>
-        <Button
-          type="submit"
-          variant="secondary"
-          disabled={isBusy || saveAlertErrors.length > 0 || searchErrors.length > 0}
-        >
+        <Button type="submit" variant="secondary" disabled={isBusy}>
           {saveAlertMutation.isPending ? "Saving alert…" : "Save as alert"}
         </Button>
       </form>
