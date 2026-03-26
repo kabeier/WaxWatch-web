@@ -44,6 +44,7 @@ const DASHBOARD_EMPTY_TITLE_PREFIX = "No";
 const EMPTY_NOTIFICATIONS: Notification[] = [];
 const EMPTY_RELEASES: WatchRelease[] = [];
 const EMPTY_RULES: WatchRule[] = [];
+const DASHBOARD_LOADING_META_VALUES = ["Fetching summary", "Refreshing timeline"];
 const DASHBOARD_TRANSITION_COPY = {
   notifications: {
     title: "Notifications",
@@ -64,6 +65,12 @@ type DashboardTransitionCopy = {
   emptyMessage: string;
 };
 
+type DashboardTimestampedItem = {
+  id?: string | number;
+  created_at?: string;
+  updated_at?: string;
+};
+
 function toTimestamp(value?: string) {
   if (!value) {
     return Number.NEGATIVE_INFINITY;
@@ -73,9 +80,7 @@ function toTimestamp(value?: string) {
   return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
 }
 
-function sortByNewest<
-  TItem extends { id?: string | number; created_at?: string; updated_at?: string },
->(items: TItem[]) {
+function sortByNewest<TItem extends DashboardTimestampedItem>(items: TItem[]) {
   return items
     .map((item, index) => ({
       item,
@@ -97,6 +102,27 @@ function sortByNewest<
     .map(({ item }) => item);
 }
 
+function toDashboardArray<TItem>(value: TItem[] | undefined, fallback: TItem[]) {
+  return Array.isArray(value) ? value : fallback;
+}
+
+function summarizeDashboardItems<TItem extends DashboardTimestampedItem & { is_active?: boolean }>(
+  items: TItem[],
+  limit: number,
+) {
+  const recentItems = sortByNewest(items).slice(0, limit);
+  const activeItemCount = items.reduce(
+    (count, item) => count + (item.is_active === true ? 1 : 0),
+    0,
+  );
+
+  return {
+    recentItems,
+    activeItemCount,
+    totalItemCount: items.length,
+  };
+}
+
 function formatKeywords(values?: Array<string | number | null | undefined>) {
   const filtered =
     values?.filter(
@@ -112,11 +138,19 @@ function DashboardListTitle({ children }: { children: ReactNode }) {
 }
 
 function DashboardListTrailing({ children }: { children: ReactNode }) {
-  return <ListText className={pageViewStyles.mutedText}>{children}</ListText>;
+  return (
+    <ListText className={pageViewStyles.mutedText} truncate={false}>
+      {children}
+    </ListText>
+  );
 }
 
 function DashboardMetaItem({ children }: { children: ReactNode }) {
-  return <ListText className={pageViewStyles.mutedText}>{children}</ListText>;
+  return (
+    <ListText className={pageViewStyles.mutedText} truncate={false}>
+      {children}
+    </ListText>
+  );
 }
 
 function DashboardMetaSeparator() {
@@ -137,11 +171,11 @@ function DashboardMetric({ value, label }: { value: number | string; label: stri
 }
 
 function DashboardListDescription({ children }: { children: ReactNode }) {
-  return <ListText>{children}</ListText>;
+  return <ListText truncate={false}>{children}</ListText>;
 }
 
 function DashboardListMeta({ values }: { values: string[] }) {
-  const renderedValues = values.filter((value) => value.trim().length > 0);
+  const renderedValues = useMemo(() => values.filter((value) => value.trim().length > 0), [values]);
 
   return (
     <ListMeta>
@@ -241,7 +275,7 @@ function DashboardListLoadingState({ title }: { title: string }) {
             description={<DashboardListDescription>Preparing preview row</DashboardListDescription>}
             trailing={<ListText className={pageViewStyles.mutedText}>Updating…</ListText>}
           >
-            <DashboardListMeta values={["Fetching summary", "Refreshing timeline"]} />
+            <DashboardListMeta values={DASHBOARD_LOADING_META_VALUES} />
           </ListRow>
         ))}
       </ListContainer>
@@ -295,6 +329,34 @@ function DashboardCollectionTransition({
   return <>{children}</>;
 }
 
+function DashboardListContent({
+  copy,
+  isLoading,
+  error,
+  itemCount,
+  onRetry,
+  children,
+}: {
+  copy: DashboardTransitionCopy;
+  isLoading: boolean;
+  error: unknown;
+  itemCount: number;
+  onRetry: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <DashboardCollectionTransition
+      copy={copy}
+      isLoading={isLoading}
+      error={error}
+      itemCount={itemCount}
+      onRetry={onRetry}
+    >
+      <ListContainer dense>{children}</ListContainer>
+    </DashboardCollectionTransition>
+  );
+}
+
 function DashboardNotificationsPanel({
   notifications,
   isLoading,
@@ -320,28 +382,26 @@ function DashboardNotificationsPanel({
     [notifications],
   );
   return (
-    <DashboardCollectionTransition
+    <DashboardListContent
       copy={DASHBOARD_TRANSITION_COPY.notifications}
       isLoading={isLoading}
       error={error}
       itemCount={notificationRows.length}
       onRetry={onRetry}
     >
-      <ListContainer dense>
-        {notificationRows.map((notification) => (
-          <ListRow
-            key={notification.id}
-            title={<DashboardListTitle>{notification.event_type}</DashboardListTitle>}
-            description={
-              <DashboardListDescription>{notification.description}</DashboardListDescription>
-            }
-            trailing={<DashboardListTrailing>{notification.readState}</DashboardListTrailing>}
-          >
-            <DashboardListMeta values={notification.metaValues} />
-          </ListRow>
-        ))}
-      </ListContainer>
-    </DashboardCollectionTransition>
+      {notificationRows.map((notification) => (
+        <ListRow
+          key={notification.id}
+          title={<DashboardListTitle>{notification.event_type}</DashboardListTitle>}
+          description={
+            <DashboardListDescription>{notification.description}</DashboardListDescription>
+          }
+          trailing={<DashboardListTrailing>{notification.readState}</DashboardListTrailing>}
+        >
+          <DashboardListMeta values={notification.metaValues} />
+        </ListRow>
+      ))}
+    </DashboardListContent>
   );
 }
 
@@ -372,37 +432,35 @@ function DashboardMatchesPanel({
     [releases],
   );
   return (
-    <DashboardCollectionTransition
+    <DashboardListContent
       copy={DASHBOARD_TRANSITION_COPY.matches}
       isLoading={isLoading}
       error={error}
       itemCount={releaseRows.length}
       onRetry={onRetry}
     >
-      <ListContainer dense>
-        {releaseRows.map((release) => (
-          <ListRow
-            key={release.id}
-            title={
-              <Link
-                className={pageViewStyles.listLink}
-                href={`${routeViewModels.watchlist.path}/${release.id}`}
-              >
-                <DashboardListTitle>{release.title}</DashboardListTitle>
-              </Link>
-            }
-            description={
-              <DashboardListDescription>
-                {release.artist} · {release.matchModeLabel}
-              </DashboardListDescription>
-            }
-            trailing={<DashboardListTrailing>{release.activeState}</DashboardListTrailing>}
-          >
-            <DashboardListMeta values={[release.targetPriceLabel, release.updatedLabel]} />
-          </ListRow>
-        ))}
-      </ListContainer>
-    </DashboardCollectionTransition>
+      {releaseRows.map((release) => (
+        <ListRow
+          key={release.id}
+          title={
+            <Link
+              className={pageViewStyles.listLink}
+              href={`${routeViewModels.watchlist.path}/${release.id}`}
+            >
+              <DashboardListTitle>{release.title}</DashboardListTitle>
+            </Link>
+          }
+          description={
+            <DashboardListDescription>
+              {release.artist} · {release.matchModeLabel}
+            </DashboardListDescription>
+          }
+          trailing={<DashboardListTrailing>{release.activeState}</DashboardListTrailing>}
+        >
+          <DashboardListMeta values={[release.targetPriceLabel, release.updatedLabel]} />
+        </ListRow>
+      ))}
+    </DashboardListContent>
   );
 }
 
@@ -431,33 +489,31 @@ function DashboardRulesPanel({
     [rules],
   );
   return (
-    <DashboardCollectionTransition
+    <DashboardListContent
       copy={DASHBOARD_TRANSITION_COPY.rules}
       isLoading={isLoading}
       error={error}
       itemCount={ruleRows.length}
       onRetry={onRetry}
     >
-      <ListContainer dense>
-        {ruleRows.map((rule) => (
-          <ListRow
-            key={rule.id}
-            title={
-              <Link
-                className={pageViewStyles.listLink}
-                href={`${routeViewModels.alerts.path}/${rule.id}`}
-              >
-                <DashboardListTitle>{rule.name}</DashboardListTitle>
-              </Link>
-            }
-            description={<DashboardListDescription>{rule.keywordsLabel}</DashboardListDescription>}
-            trailing={<DashboardListTrailing>{rule.activeState}</DashboardListTrailing>}
-          >
-            <DashboardListMeta values={[rule.pollLabel, rule.nextRunLabel]} />
-          </ListRow>
-        ))}
-      </ListContainer>
-    </DashboardCollectionTransition>
+      {ruleRows.map((rule) => (
+        <ListRow
+          key={rule.id}
+          title={
+            <Link
+              className={pageViewStyles.listLink}
+              href={`${routeViewModels.alerts.path}/${rule.id}`}
+            >
+              <DashboardListTitle>{rule.name}</DashboardListTitle>
+            </Link>
+          }
+          description={<DashboardListDescription>{rule.keywordsLabel}</DashboardListDescription>}
+          trailing={<DashboardListTrailing>{rule.activeState}</DashboardListTrailing>}
+        >
+          <DashboardListMeta values={[rule.pollLabel, rule.nextRunLabel]} />
+        </ListRow>
+      ))}
+    </DashboardListContent>
   );
 }
 
@@ -469,15 +525,15 @@ export default function DashboardClientContent() {
   const unreadCountQuery = useUnreadNotificationCountQuery();
 
   const notifications = useMemo(
-    () => (Array.isArray(notificationsQuery.data) ? notificationsQuery.data : EMPTY_NOTIFICATIONS),
+    () => toDashboardArray(notificationsQuery.data, EMPTY_NOTIFICATIONS),
     [notificationsQuery.data],
   );
   const watchRules = useMemo(
-    () => (Array.isArray(watchRulesQuery.data) ? watchRulesQuery.data : EMPTY_RULES),
+    () => toDashboardArray(watchRulesQuery.data, EMPTY_RULES),
     [watchRulesQuery.data],
   );
   const watchReleases = useMemo(
-    () => (Array.isArray(watchReleasesQuery.data) ? watchReleasesQuery.data : EMPTY_RELEASES),
+    () => toDashboardArray(watchReleasesQuery.data, EMPTY_RELEASES),
     [watchReleasesQuery.data],
   );
 
@@ -486,26 +542,25 @@ export default function DashboardClientContent() {
     [notifications],
   );
   const watchRulesSummary = useMemo(() => {
-    const recentRules = sortByNewest(watchRules).slice(0, DASHBOARD_RULE_LIMIT);
-    const activeRuleCount = watchRules.reduce((count, rule) => count + (rule.is_active ? 1 : 0), 0);
-
+    const { recentItems, activeItemCount, totalItemCount } = summarizeDashboardItems(
+      watchRules,
+      DASHBOARD_RULE_LIMIT,
+    );
     return {
-      recentRules,
-      activeRuleCount,
-      totalRuleCount: watchRules.length,
+      recentRules: recentItems,
+      activeRuleCount: activeItemCount,
+      totalRuleCount: totalItemCount,
     };
   }, [watchRules]);
   const watchReleasesSummary = useMemo(() => {
-    const recentMatches = sortByNewest(watchReleases).slice(0, DASHBOARD_RELEASE_LIMIT);
-    const activeMatchCount = watchReleases.reduce(
-      (count, release) => count + (release.is_active ? 1 : 0),
-      0,
+    const { recentItems, activeItemCount, totalItemCount } = summarizeDashboardItems(
+      watchReleases,
+      DASHBOARD_RELEASE_LIMIT,
     );
-
     return {
-      recentMatches,
-      activeMatchCount,
-      totalReleaseCount: watchReleases.length,
+      recentMatches: recentItems,
+      activeMatchCount: activeItemCount,
+      totalReleaseCount: totalItemCount,
     };
   }, [watchReleases]);
   const unreadCountSummary = useMemo(
