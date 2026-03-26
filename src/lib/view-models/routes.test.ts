@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { MOBILE_NAV_ITEMS } from "@/components/ui/primitives/shell/primitives";
+
 import { mobileNavigationRouteKeys, routeViewModels } from "./routes";
 
 const expectedMobileTabRouteKeys = [
@@ -47,5 +49,14 @@ describe("mobileNavigationRouteKeys", () => {
     const documentedMobileRouteKeys = documentedMobilePaths.map((path) => routePathToKey[path]);
 
     expect(documentedMobileRouteKeys).toEqual([...mobileNavigationRouteKeys]);
+  });
+
+  it("stays in parity with rendered MobileTabBar item definitions", () => {
+    const routePathToKey = Object.fromEntries(
+      Object.entries(routeViewModels).map(([routeKey, route]) => [route.path, routeKey]),
+    );
+    const mobileTabBarRouteKeys = MOBILE_NAV_ITEMS.map((item) => routePathToKey[item.href]);
+
+    expect(mobileTabBarRouteKeys).toEqual([...mobileNavigationRouteKeys]);
   });
 });

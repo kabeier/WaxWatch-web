@@ -2,6 +2,7 @@ import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import Link from "next/link";
 
 import { WaveTrace } from "@/components/WaveTrace";
+import { mobileNavigationRouteKeys, routeViewModels } from "@/lib/view-models/routes";
 
 import { ShellNavLink, ShellUtilityLink, type ShellNavItem } from "./ShellNavLink";
 import MobileOnlySlot from "./MobileOnlySlot";
@@ -86,23 +87,34 @@ const APP_NAV_ITEMS: ShellNavItem[] = [
   },
 ];
 
-const MOBILE_NAV_ITEMS: ShellNavItem[] = [
-  {
-    href: DASHBOARD_PATH,
-    label: "Home",
-    shortLabel: "DB",
-    matchMode: "dashboard",
-  },
-  { href: ALERTS_PATH, label: "Alerts", shortLabel: "AL" },
-  { href: WATCHLIST_PATH, label: "Watchlist", shortLabel: "WL" },
-  { href: NOTIFICATIONS_PATH, label: "Notifications", shortLabel: "NT" },
-  {
-    href: SETTINGS_PATH,
-    label: "Settings",
-    shortLabel: "ST",
-    matchMode: "settings-without-legacy",
-  },
-];
+const MOBILE_TAB_MATCH_MODE_BY_ROUTE_KEY: Partial<
+  Record<(typeof mobileNavigationRouteKeys)[number], ShellNavItem["matchMode"]>
+> = {
+  dashboard: "dashboard",
+  settings: "settings-without-legacy",
+};
+
+const MOBILE_TAB_SHORT_LABEL_BY_ROUTE_KEY: Record<
+  (typeof mobileNavigationRouteKeys)[number],
+  string
+> = {
+  dashboard: "DB",
+  alerts: "AL",
+  watchlist: "WL",
+  notifications: "NT",
+  settings: "ST",
+};
+
+export const MOBILE_NAV_ITEMS: ShellNavItem[] = mobileNavigationRouteKeys.map((routeKey) => {
+  const route = routeViewModels[routeKey];
+
+  return {
+    href: route.path,
+    label: route.mobileNavigationLabel ?? route.navigationLabel ?? route.heading,
+    shortLabel: MOBILE_TAB_SHORT_LABEL_BY_ROUTE_KEY[routeKey],
+    matchMode: MOBILE_TAB_MATCH_MODE_BY_ROUTE_KEY[routeKey],
+  };
+});
 
 function joinClassNames(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");

@@ -93,8 +93,10 @@ surface. Utility links are rendered by `TopNav` utility items. Default utility i
 
 ### Mobile primary nav (currently rendered tab set)
 
-Mobile primary navigation is the currently rendered tab set from `MOBILE_NAV_ITEMS` in
-`src/components/ui/primitives/shell/primitives.tsx` and includes exactly:
+Canonical mobile tab ordering is defined in `mobileNavigationRouteKeys` in
+`src/lib/view-models/routes.ts`; `MOBILE_NAV_ITEMS` in
+`src/components/ui/primitives/shell/primitives.tsx` is derived from that metadata and rendered by
+`MobileTabBar`. The current tab set includes exactly:
 
 1. Home (`/dashboard`)
 2. Alerts (`/alerts`)
