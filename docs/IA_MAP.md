@@ -5,7 +5,8 @@
 ### Desktop primary nav (sidebar route set)
 
 Desktop primary navigation is the sidebar route set rendered from `APP_NAV_ITEMS` in
-`src/components/ui/primitives/shell/primitives.tsx` and includes exactly:
+`src/components/ui/primitives/shell/primitives.tsx`. In the authenticated shell, this sidebar is
+always present and is the primary destination map on desktop/tablet widths. It includes exactly:
 
 1. Dashboard (`/dashboard`)
 2. Search (`/search`)
@@ -17,11 +18,14 @@ Desktop primary navigation is the sidebar route set rendered from `APP_NAV_ITEMS
 
 ### Top nav (utility/account status area)
 
-Top nav is not the primary route map. It is the utility/account status surface: brand/home access plus
-utility links rendered via `TopNav` utility items:
+Top nav is not the primary route map. Where utilities are enabled, it is the utility/account surface:
+brand/home access plus utility links rendered via `TopNav` utility items:
 
 - Inbox (`/notifications`)
 - Account (`/settings/profile`)
+
+In auth pages (`app/(auth)`), top nav still renders brand/home but utilities are intentionally hidden
+via `showUtilities={false}`.
 
 ### Mobile primary nav (currently rendered tab set)
 
@@ -29,6 +33,10 @@ Canonical mobile tab ordering is defined in `mobileNavigationRouteKeys` in
 `src/lib/view-models/routes.ts`; `MOBILE_NAV_ITEMS` in
 `src/components/ui/primitives/shell/primitives.tsx` is derived from that metadata and rendered by
 `MobileTabBar`. The current tab set includes exactly:
+Mobile primary navigation is the currently rendered bottom-tab set from `MOBILE_NAV_ITEMS` in
+`src/components/ui/primitives/shell/primitives.tsx`. Tabs are rendered in `AppShell` and shown only
+for mobile viewport widths (`max-width: 767px`) when `mobileTabBarVisibility` is `auto` (the current
+authenticated-shell behavior). The tab set includes exactly:
 
 1. Home (`/dashboard`)
 2. Alerts (`/alerts`)
