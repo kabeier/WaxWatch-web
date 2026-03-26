@@ -459,4 +459,47 @@ describe("/settings/danger route", () => {
     expect(screen.getByRole("button", { name: /^deactivate account$/i })).toBeEnabled();
     expect(screen.getByRole("button", { name: /^permanently delete account$/i })).toBeEnabled();
   });
+
+  it("shows permanent-delete cooldown then success after a follow-up confirmation", () => {
+    const deleteMutate = vi.fn();
+    hooks.hardDelete.mockReturnValue({
+      mutate: deleteMutate,
+      data: undefined,
+      error: { kind: "rate_limited", message: "Delete cooldown", retryAfterSeconds: 30 },
+      isPending: false,
+      isError: true,
+    });
+
+    const { rerender } = render(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
+        "button",
+        { name: /^permanently delete account$/i },
+      ),
+    );
+    expect(deleteMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByText(/delete cooldown/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/retry-after:\s*30s/i)).toBeInTheDocument();
+
+    hooks.hardDelete.mockReturnValue({
+      mutate: deleteMutate,
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+    rerender(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^permanently delete account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /delete account permanently\?/i })).getByRole(
+        "button",
+        { name: /^permanently delete account$/i },
+      ),
+    );
+    expect(deleteMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("status")).toHaveTextContent(/success: account permanently deleted\./i);
+  });
 });

@@ -18,6 +18,7 @@ const mockSearchMutate = vi.fn();
 const mockSaveAlertMutate = vi.fn();
 const mockUpdateMutate = vi.fn();
 const mockDeleteMutate = vi.fn();
+const mockUpdateProfileMutate = vi.fn();
 const mockRetry = vi.fn();
 const mockPush = vi.fn();
 const mockRefresh = vi.fn();
@@ -97,7 +98,7 @@ const hooksState: HookState = {
     error: null,
     isPending: false,
     isError: false,
-    mutate: vi.fn(),
+    mutate: mockUpdateProfileMutate,
   } satisfies MockMutation,
 };
 
@@ -189,7 +190,7 @@ describe("route flow regressions", () => {
       error: null,
       isPending: false,
       isError: false,
-      mutate: vi.fn(),
+      mutate: mockUpdateProfileMutate,
     };
   });
 
@@ -256,6 +257,64 @@ describe("route flow regressions", () => {
     expect(
       screen.getByText(/no results matched this query\. adjust keywords or providers and retry\./i),
     ).toBeInTheDocument();
+  });
+
+  it("renders search API error and retries the query from a user-facing action", () => {
+    hooksState.searchMutation = {
+      ...hooksState.searchMutation,
+      isError: true,
+      error: { kind: "unknown_error", message: "Search backend unavailable" },
+    };
+
+    render(<SearchPage />);
+
+    expect(screen.getByText(/could not run search\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry search/i }));
+    expect(mockSearchMutate).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders search cooldown state and keeps retry disabled during rate limiting", () => {
+    hooksState.searchMutation = {
+      ...hooksState.searchMutation,
+      isError: true,
+      error: { kind: "rate_limited", message: "Slow down", retryAfterSeconds: 30 },
+    };
+
+    render(<SearchPage />);
+
+    expect(screen.getByText(/search is temporarily rate limited\./i)).toBeInTheDocument();
+    expect(screen.getByText(/retry-after:\s*30s/i)).toBeInTheDocument();
+    const retryButton = screen.getByRole("button", { name: /retry search/i });
+    expect(retryButton).toBeEnabled();
+    fireEvent.click(retryButton);
+    expect(mockSearchMutate).toHaveBeenCalledTimes(1);
+  });
+
+  it("supports save-alert mutation failure, retry submit, and success feedback", () => {
+    const { rerender } = render(<SearchPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /save as alert/i }));
+    expect(mockSaveAlertMutate).toHaveBeenCalledTimes(1);
+
+    hooksState.saveAlertMutation = {
+      ...hooksState.saveAlertMutation,
+      isError: true,
+      error: { kind: "unknown_error", message: "Save failed" },
+    };
+    rerender(<SearchPage />);
+    expect(screen.getByText(/could not save alert\./i)).toBeInTheDocument();
+
+    hooksState.saveAlertMutation = {
+      ...hooksState.saveAlertMutation,
+      isError: false,
+      error: null,
+      data: { id: "alert-1" },
+    };
+    fireEvent.click(screen.getByRole("button", { name: /save as alert/i }));
+    rerender(<SearchPage />);
+
+    expect(mockSaveAlertMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByText(/success: alert saved from search\./i)).toBeInTheDocument();
   });
 
   it("redirects to alerts after a successful delete mutation", () => {
@@ -490,6 +549,73 @@ describe("route flow regressions", () => {
       screen.getByText(/profile requests are temporarily rate limited\./i),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /retry profile load/i })).toBeInTheDocument();
+  });
+
+  it("renders profile empty and API error states with a visible retry path", () => {
+    hooksState.meQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: mockRetry,
+    };
+
+    const { rerender } = render(<ProfileSettingsPage />);
+    expect(screen.getByText(/no profile found\./i)).toBeInTheDocument();
+
+    hooksState.meQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Profile service unavailable" },
+      retry: mockRetry,
+    };
+    rerender(<ProfileSettingsPage />);
+
+    expect(screen.getByText(/could not load profile\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry profile load/i }));
+    expect(mockRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it("supports profile save failure, retry, and success transitions", () => {
+    hooksState.meQuery = {
+      data: {
+        email: "person@example.com",
+        display_name: "Person",
+        preferences: {
+          timezone: "UTC",
+          currency: "USD",
+        },
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+    };
+
+    const { rerender } = render(<ProfileSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /save profile changes/i }));
+    expect(mockUpdateProfileMutate).toHaveBeenCalledTimes(1);
+
+    hooksState.updateProfileMutation = {
+      ...hooksState.updateProfileMutation,
+      isError: true,
+      error: { kind: "unknown_error", message: "Save failed" },
+    };
+    rerender(<ProfileSettingsPage />);
+    expect(screen.getByText(/could not save profile settings\./i)).toBeInTheDocument();
+
+    hooksState.updateProfileMutation = {
+      ...hooksState.updateProfileMutation,
+      isError: false,
+      error: null,
+      data: { id: "profile-1" },
+    };
+    fireEvent.click(screen.getByRole("button", { name: /save profile changes/i }));
+    rerender(<ProfileSettingsPage />);
+
+    expect(mockUpdateProfileMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByText(/success: profile settings saved\./i)).toBeInTheDocument();
   });
 
   it("marks only the invalid profile field with invalid semantics", () => {
