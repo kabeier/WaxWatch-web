@@ -424,4 +424,51 @@ describe("/dashboard route", () => {
     );
     expect(screen.queryByText(/could not load recent matches\./i)).not.toBeInTheDocument();
   });
+
+  it("recovers watch-rules card from API failure after user retry", () => {
+    const retryRules = vi.fn();
+
+    hookMocks.rules.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "Rules unavailable" },
+      retry: retryRules,
+    });
+
+    const { rerender } = render(<DashboardPage />);
+
+    expect(screen.getByText(/could not load watch rules\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry watch rules/i }));
+    expect(retryRules).toHaveBeenCalledTimes(1);
+
+    hookMocks.rules.mockReturnValueOnce({
+      data: [
+        {
+          id: "rule-2",
+          user_id: "user-1",
+          name: "Soul Jazz",
+          query: { keywords: ["soul", "jazz"] },
+          is_active: true,
+          poll_interval_seconds: 300,
+          last_run_at: null,
+          next_run_at: "2026-03-22T11:00:00.000Z",
+          created_at: "2026-03-20T08:00:00.000Z",
+          updated_at: "2026-03-22T08:00:00.000Z",
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    rerender(<DashboardPage />);
+
+    expect(screen.getByRole("link", { name: /soul jazz/i })).toHaveAttribute(
+      "href",
+      "/alerts/rule-2",
+    );
+    expect(screen.queryByText(/could not load watch rules\./i)).not.toBeInTheDocument();
+  });
 });
