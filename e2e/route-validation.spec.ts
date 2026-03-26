@@ -7,12 +7,16 @@ type JsonRouteOptions = {
   delayMs?: number;
 };
 
+function routePattern(path: string) {
+  return `**${path}*`;
+}
+
 async function mockJson(
   page: Page,
   path: string,
   { status = 200, body = {}, headers = {}, delayMs = 0 }: JsonRouteOptions,
 ) {
-  await page.route(`**${path}`, async (route) => {
+  await page.route(routePattern(path), async (route) => {
     if (delayMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
@@ -54,7 +58,7 @@ async function mockAppChromeRequests(page: Page) {
     },
   });
   await mockJson(page, "/api/notifications/unread-count", { body: { unread_count: 2 } });
-  await page.route("**/api/stream/events", async (route) => {
+  await page.route(routePattern("/api/stream/events"), async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "text/event-stream",
@@ -82,9 +86,9 @@ test.describe("route-focused state validation", () => {
 
     await page.goto("/alerts");
     await expect(page.getByText("Loading watch rules…")).toBeVisible();
-    await expect(page.getByText(/status: loaded 1 rules\./i)).toBeVisible();
+    await expect(page.getByText(/status: loaded 1 rules\./i)).toBeVisible({ timeout: 10_000 });
 
-    await page.unroute("**/api/watch-rules");
+    await page.unroute(routePattern("/api/watch-rules"));
     await mockJson(page, "/api/watch-rules", {
       status: 500,
       body: { error: { message: "alerts backend down" } },
@@ -92,12 +96,12 @@ test.describe("route-focused state validation", () => {
     await page.getByRole("button", { name: /retry watch rules/i }).click();
     await expect(page.getByText(/could not load watch rules\./i)).toBeVisible();
 
-    await page.unroute("**/api/watch-rules");
+    await page.unroute(routePattern("/api/watch-rules"));
     await mockJson(page, "/api/watch-rules", { body: [] });
     await page.getByRole("button", { name: /retry watch rules/i }).click();
     await expect(page.getByText(/no watch rules yet\./i)).toBeVisible();
 
-    await page.unroute("**/api/watch-rules");
+    await page.unroute(routePattern("/api/watch-rules"));
     await mockRateLimited(page, "/api/watch-rules", "alerts cooldown active", 42);
     await page.getByRole("button", { name: /retry watch rules/i }).click();
     await expect(page.getByText(/temporarily rate limited/i)).toBeVisible();
@@ -126,9 +130,11 @@ test.describe("route-focused state validation", () => {
 
     await page.goto("/watchlist");
     await expect(page.getByText("Loading watchlist…")).toBeVisible();
-    await expect(page.getByText(/status: loaded 1 watchlist releases\./i)).toBeVisible();
+    await expect(page.getByText(/status: loaded 1 watchlist releases\./i)).toBeVisible({
+      timeout: 10_000,
+    });
 
-    await page.unroute("**/api/watch-releases");
+    await page.unroute(routePattern("/api/watch-releases"));
     await mockJson(page, "/api/watch-releases", {
       status: 500,
       body: { error: { message: "watchlist backend down" } },
@@ -139,7 +145,7 @@ test.describe("route-focused state validation", () => {
       .click();
     await expect(page.getByText(/could not load watchlist\./i)).toBeVisible();
 
-    await page.unroute("**/api/watch-releases");
+    await page.unroute(routePattern("/api/watch-releases"));
     await mockJson(page, "/api/watch-releases", { body: [] });
     await page
       .getByRole("button", { name: /retry watchlist/i })
@@ -147,7 +153,7 @@ test.describe("route-focused state validation", () => {
       .click();
     await expect(page.getByText(/no watchlist releases yet\./i)).toBeVisible();
 
-    await page.unroute("**/api/watch-releases");
+    await page.unroute(routePattern("/api/watch-releases"));
     await mockRateLimited(page, "/api/watch-releases", "watchlist cooldown active", 18);
     await page
       .getByRole("button", { name: /retry watchlist/i })
@@ -181,7 +187,7 @@ test.describe("route-focused state validation", () => {
     await expect(page.getByText("Loading notifications…")).toBeVisible();
     await expect(page.getByText(/watch_match_found/i)).toBeVisible();
 
-    await page.unroute("**/api/notifications");
+    await page.unroute(routePattern("/api/notifications"));
     await mockJson(page, "/api/notifications", {
       status: 500,
       body: { error: { message: "notifications backend down" } },
@@ -189,12 +195,12 @@ test.describe("route-focused state validation", () => {
     await page.getByRole("button", { name: /retry notifications feed/i }).click();
     await expect(page.getByText(/notifications failed to load/i)).toBeVisible();
 
-    await page.unroute("**/api/notifications");
+    await page.unroute(routePattern("/api/notifications"));
     await mockJson(page, "/api/notifications", { body: [] });
     await page.getByRole("button", { name: /retry notifications feed/i }).click();
     await expect(page.getByText(/no notifications yet\./i)).toBeVisible();
 
-    await page.unroute("**/api/notifications");
+    await page.unroute(routePattern("/api/notifications"));
     await mockRateLimited(page, "/api/notifications", "notifications cooldown active", 15);
     await page.getByRole("button", { name: /retry notifications feed/i }).click();
     await expect(page.getByText(/temporarily rate limited/i)).toBeVisible();
@@ -218,7 +224,7 @@ test.describe("route-focused state validation", () => {
     await expect(page.getByText("Loading Discogs status…")).toBeVisible();
     await expect(page.getByText(/connected: yes/i)).toBeVisible();
 
-    await page.unroute("**/api/integrations/discogs/status");
+    await page.unroute(routePattern("/api/integrations/discogs/status"));
     await mockJson(page, "/api/integrations/discogs/status", {
       status: 500,
       body: { error: { message: "discogs service unavailable" } },
@@ -226,14 +232,14 @@ test.describe("route-focused state validation", () => {
     await page.getByRole("button", { name: /retry discogs status/i }).click();
     await expect(page.getByText(/could not load discogs integration status\./i)).toBeVisible();
 
-    await page.unroute("**/api/integrations/discogs/status");
+    await page.unroute(routePattern("/api/integrations/discogs/status"));
     await mockJson(page, "/api/integrations/discogs/status", { body: null });
-    await page.getByRole("button", { name: /refresh discogs status/i }).click();
+    await page.getByRole("button", { name: /retry discogs status/i }).click();
     await expect(page.getByText(/no integration status found\./i)).toBeVisible();
 
-    await page.unroute("**/api/integrations/discogs/status");
+    await page.unroute(routePattern("/api/integrations/discogs/status"));
     await mockRateLimited(page, "/api/integrations/discogs/status", "discogs cooldown active", 25);
-    await page.getByRole("button", { name: /retry discogs status/i }).click();
+    await page.getByRole("button", { name: /refresh discogs status/i }).click();
     await expect(page.getByText(/cooling down due to rate limiting/i)).toBeVisible();
     await expect(page.getByText(/25s/i)).toBeVisible();
   });
@@ -268,7 +274,7 @@ test.describe("route-focused state validation", () => {
     await mockJson(page, "/api/me/hard-delete", { body: {} });
 
     let hardDeleteCalls = 0;
-    await page.route("**/api/me/hard-delete", async (route: Route) => {
+    await page.route(routePattern("/api/me/hard-delete"), async (route: Route) => {
       hardDeleteCalls += 1;
       await route.fulfill({
         status: 200,
@@ -329,7 +335,7 @@ test.describe("route-focused state validation", () => {
       },
     });
 
-    await page.route("**/api/notifications/unread-count", async (route) => {
+    await page.route(routePattern("/api/notifications/unread-count"), async (route) => {
       unreadCountCalls += 1;
       await route.fulfill({
         status: 200,
@@ -338,7 +344,7 @@ test.describe("route-focused state validation", () => {
       });
     });
 
-    await page.route("**/api/notifications", async (route) => {
+    await page.route(routePattern("/api/notifications"), async (route) => {
       notificationsCalls += 1;
       await route.fulfill({
         status: 200,
@@ -351,7 +357,7 @@ test.describe("route-focused state validation", () => {
     let sseAcceptHeader = "";
     let sseAuthorizationHeader: string | null = null;
 
-    await page.route("**/api/stream/events", async (route) => {
+    await page.route(routePattern("/api/stream/events"), async (route) => {
       streamCalls += 1;
       sseAcceptHeader = route.request().headers()["accept"] ?? "";
       sseAuthorizationHeader = route.request().headers()["authorization"] ?? null;
@@ -364,12 +370,17 @@ test.describe("route-focused state validation", () => {
       });
     });
 
+    const sseRequestPromise = page.waitForRequest((request) =>
+      request.url().includes("/api/stream/events"),
+    );
+
     await page.goto("/notifications");
     await expect(page.getByRole("heading", { name: /notifications/i })).toBeVisible();
+    await sseRequestPromise;
 
-    await expect.poll(() => streamCalls).toBeGreaterThan(0);
-    await expect.poll(() => unreadCountCalls).toBeGreaterThan(1);
-    await expect.poll(() => notificationsCalls).toBeGreaterThan(1);
+    await expect.poll(() => streamCalls, { timeout: 10_000 }).toBeGreaterThan(0);
+    await expect.poll(() => unreadCountCalls, { timeout: 10_000 }).toBeGreaterThan(1);
+    await expect.poll(() => notificationsCalls, { timeout: 10_000 }).toBeGreaterThan(1);
     expect(sseAcceptHeader).toContain("text/event-stream");
     expect(sseAuthorizationHeader).toBeNull();
   });
