@@ -138,7 +138,7 @@ async function installApiMocks(page: Page) {
       if (mode === "rate-limited") {
         await fulfillJson(route, {
           status: 429,
-          headers: { "retry-after": "15" },
+          headers: { "retry-after": "1" },
           body: { error: { type: "rate_limited", message: "cooldown" } },
         });
         return;
