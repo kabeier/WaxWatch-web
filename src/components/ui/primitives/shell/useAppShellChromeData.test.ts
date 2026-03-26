@@ -45,11 +45,11 @@ describe("useAppShellChromeData", () => {
 
     const { result } = renderHook(() => useAppShellChromeData());
 
-    expect(result.current.utilities).toEqual([
+    expect(result.current.utilityItems).toEqual([
       { href: "/notifications", label: "Inbox", value: "…" },
       { href: "/settings/profile", label: "Account", value: "Loading" },
     ]);
-    expect(result.current.sideNavStatus).toEqual({
+    expect(result.current.status).toEqual({
       label: "Session",
       value: "Loading profile",
       meta: "Notifications syncing",
@@ -74,11 +74,11 @@ describe("useAppShellChromeData", () => {
 
     const { result } = renderHook(() => useAppShellChromeData());
 
-    expect(result.current.utilities).toEqual([
+    expect(result.current.utilityItems).toEqual([
       { href: "/notifications", label: "Inbox", value: "…" },
       { href: "/settings/profile", label: "Account", value: "Loading" },
     ]);
-    expect(result.current.sideNavStatus).toEqual({
+    expect(result.current.status).toEqual({
       label: "Session",
       value: "Loading profile",
       meta: "Notifications syncing",
@@ -103,11 +103,11 @@ describe("useAppShellChromeData", () => {
 
     const { result } = renderHook(() => useAppShellChromeData());
 
-    expect(result.current.utilities).toEqual([
+    expect(result.current.utilityItems).toEqual([
       { href: "/notifications", label: "Inbox", value: "0" },
       { href: "/settings/profile", label: "Account", value: "Unavailable" },
     ]);
-    expect(result.current.sideNavStatus).toEqual({
+    expect(result.current.status).toEqual({
       label: "Session",
       value: "Profile unavailable",
       meta: "Notifications unavailable",
@@ -130,11 +130,11 @@ describe("useAppShellChromeData", () => {
 
     const { result } = renderHook(() => useAppShellChromeData());
 
-    expect(result.current.utilities).toEqual([
+    expect(result.current.utilityItems).toEqual([
       { href: "/notifications", label: "Inbox", value: "—" },
       { href: "/settings/profile", label: "Account", value: "Unavailable" },
     ]);
-    expect(result.current.sideNavStatus).toEqual({
+    expect(result.current.status).toEqual({
       label: "Session",
       value: "Profile unavailable",
       meta: "Notifications unavailable",
@@ -161,11 +161,11 @@ describe("useAppShellChromeData", () => {
 
     const { result } = renderHook(() => useAppShellChromeData());
 
-    expect(result.current.utilities).toEqual([
+    expect(result.current.utilityItems).toEqual([
       { href: "/notifications", label: "Inbox", value: "3" },
       { href: "/settings/profile", label: "Account", value: "Active" },
     ]);
-    expect(result.current.sideNavStatus).toEqual({
+    expect(result.current.status).toEqual({
       label: "Session",
       value: "Avery Collector",
       meta: "Account active · 3 unread notifications",
@@ -193,7 +193,7 @@ describe("useAppShellChromeData", () => {
 
     const { result } = renderHook(() => useAppShellChromeData());
 
-    expect(result.current.sideNavStatus).toEqual({
+    expect(result.current.status).toEqual({
       label: "Session",
       value: "avery@example.com",
       meta: "Account needs attention · Notifications cooling down",
@@ -220,7 +220,7 @@ describe("useAppShellChromeData", () => {
 
     const { result } = renderHook(() => useAppShellChromeData());
 
-    expect(result.current.sideNavStatus).toEqual({
+    expect(result.current.status).toEqual({
       label: "Session",
       value: "Profile unavailable",
       meta: "Account active · 0 unread notifications",
@@ -247,11 +247,11 @@ describe("useAppShellChromeData", () => {
 
     const { result } = renderHook(() => useAppShellChromeData());
 
-    expect(result.current.utilities).toEqual([
+    expect(result.current.utilityItems).toEqual([
       { href: "/notifications", label: "Inbox", value: "…" },
       { href: "/settings/profile", label: "Account", value: "Unavailable" },
     ]);
-    expect(result.current.sideNavStatus).toEqual({
+    expect(result.current.status).toEqual({
       label: "Session",
       value: "Profile unavailable",
       meta: "Notifications syncing",

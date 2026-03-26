@@ -18,12 +18,12 @@ type AuthenticatedAppShellProps = {
 };
 
 export default function AuthenticatedAppShell({ children, banner }: AuthenticatedAppShellProps) {
-  const { utilities, sideNavStatus } = useAppShellChromeData();
+  const { utilityItems, status } = useAppShellChromeData();
 
   return (
     <AppShell
-      topNav={<TopNav utilityItems={utilities} />}
-      sideNav={<SideNav status={sideNavStatus} />}
+      topNav={<TopNav utilityItems={utilityItems} />}
+      sideNav={<SideNav status={status} />}
       headerBand={<ShellHeaderBand />}
       mobileTabBar={<MobileTabBar />}
       banner={banner}
