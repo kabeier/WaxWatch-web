@@ -214,7 +214,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           disabled={isPending}
           error={validationField === "targetPrice"}
           errorMessageId="watchlist-item-target-price-error"
-          errorSummaryId="watchlist-item-form-errors"
+          errorSummaryId={showValidationSummary ? "watchlist-item-form-errors" : undefined}
         />
         {validationField === "targetPrice" ? (
           <p className={pageViewStyles.helpText} id="watchlist-item-target-price-error">
@@ -235,7 +235,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           disabled={isPending}
           error={validationField === "minCondition"}
           errorMessageId="watchlist-item-min-condition-error"
-          errorSummaryId="watchlist-item-form-errors"
+          errorSummaryId={showValidationSummary ? "watchlist-item-form-errors" : undefined}
         />
         {validationField === "minCondition" ? (
           <p className={pageViewStyles.helpText} id="watchlist-item-min-condition-error">

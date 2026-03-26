@@ -184,7 +184,7 @@ export default function SearchWorkbench() {
             disabled={isBusy}
             error={Boolean(keywordError)}
             errorMessageId="search-keywords-error"
-            errorSummaryId="search-form-errors"
+            errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
           />
           {keywordError ? (
             <p className={pageViewStyles.helpText} id="search-keywords-error">
@@ -201,7 +201,7 @@ export default function SearchWorkbench() {
             disabled={isBusy}
             error={Boolean(providerError)}
             errorMessageId="search-providers-error"
-            errorSummaryId="search-form-errors"
+            errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
           />
           {providerError ? (
             <p className={pageViewStyles.helpText} id="search-providers-error">
@@ -221,7 +221,7 @@ export default function SearchWorkbench() {
               disabled={isBusy}
               error={Boolean(pageError)}
               errorMessageId="search-page-error"
-              errorSummaryId="search-form-errors"
+              errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
             />
             {pageError ? (
               <p className={pageViewStyles.helpText} id="search-page-error">
@@ -241,7 +241,7 @@ export default function SearchWorkbench() {
               disabled={isBusy}
               error={Boolean(pageSizeError)}
               errorMessageId="search-page-size-error"
-              errorSummaryId="search-form-errors"
+              errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
             />
             {pageSizeError ? (
               <p className={pageViewStyles.helpText} id="search-page-size-error">
@@ -390,7 +390,7 @@ export default function SearchWorkbench() {
               disabled={isBusy}
               error={Boolean(alertNameError)}
               errorMessageId="save-alert-name-error"
-              errorSummaryId="save-alert-errors"
+              errorSummaryId={showSaveAlertValidationSummary ? "save-alert-errors" : undefined}
             />
             {alertNameError ? (
               <p className={pageViewStyles.helpText} id="save-alert-name-error">
@@ -410,7 +410,7 @@ export default function SearchWorkbench() {
               disabled={isBusy}
               error={Boolean(pollIntervalError)}
               errorMessageId="save-alert-poll-interval-error"
-              errorSummaryId="save-alert-errors"
+              errorSummaryId={showSaveAlertValidationSummary ? "save-alert-errors" : undefined}
             />
             {pollIntervalError ? (
               <p className={pageViewStyles.helpText} id="save-alert-poll-interval-error">

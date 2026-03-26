@@ -43,14 +43,20 @@ describe("ProfileSettingsForm accessibility", () => {
     await user.type(currencyInput, "US");
 
     const error = document.getElementById("profile-currency-error");
+    const saveButton = screen.getByRole("button", { name: /save profile changes/i });
 
     expect(currencyInput).toHaveAttribute("aria-invalid", "true");
+    expect(currencyInput).toHaveAttribute("aria-describedby", "profile-currency-error");
+    expect(error).toHaveTextContent(
+      "Currency must be a valid 3-letter ISO code (for example: USD).",
+    );
+
+    await user.click(saveButton);
+
+    expect(screen.getByText(/please fix profile validation issues before saving\./i)).toBeVisible();
     expect(currencyInput).toHaveAttribute(
       "aria-describedby",
       "profile-settings-form-errors profile-currency-error",
-    );
-    expect(error).toHaveTextContent(
-      "Currency must be a valid 3-letter ISO code (for example: USD).",
     );
   });
 });

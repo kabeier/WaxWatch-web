@@ -177,7 +177,7 @@ export default function ProfileSettingsForm() {
             }}
             error={validationState?.field === "displayName"}
             errorMessageId="profile-display-name-error"
-            errorSummaryId="profile-settings-form-errors"
+            errorSummaryId={showValidationSummary ? "profile-settings-form-errors" : undefined}
           />
           {validationState?.field === "displayName" ? (
             <p className={pageViewStyles.helpText} id="profile-display-name-error">
@@ -197,7 +197,7 @@ export default function ProfileSettingsForm() {
             }}
             error={validationState?.field === "timezone"}
             errorMessageId="profile-timezone-error"
-            errorSummaryId="profile-settings-form-errors"
+            errorSummaryId={showValidationSummary ? "profile-settings-form-errors" : undefined}
           />
           {validationState?.field === "timezone" ? (
             <p className={pageViewStyles.helpText} id="profile-timezone-error">
@@ -218,7 +218,7 @@ export default function ProfileSettingsForm() {
             }}
             error={validationState?.field === "currency"}
             errorMessageId="profile-currency-error"
-            errorSummaryId="profile-settings-form-errors"
+            errorSummaryId={showValidationSummary ? "profile-settings-form-errors" : undefined}
           />
           {validationState?.field === "currency" ? (
             <p className={pageViewStyles.helpText} id="profile-currency-error">
