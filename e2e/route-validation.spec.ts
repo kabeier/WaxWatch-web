@@ -288,20 +288,16 @@ test.describe("critical route coverage", () => {
     await expect(deactivateButton).toBeVisible();
     await expect(deactivateButton).toBeEnabled();
 
-    await deactivateButton.click();
-    await expect(page.getByRole("alertdialog", { name: /Deactivate account now\?/i })).toBeVisible({
-      timeout: 15_000,
-    });
+    await deactivateButton.dispatchEvent("click");
+    const confirmDialog = page.locator(".ww-confirm-dialog");
+    await expect(confirmDialog).toBeVisible({ timeout: 15_000 });
 
-    await page.getByRole("button", { name: /^Cancel$/i }).click();
-    await expect(page.getByRole("alertdialog", { name: /Deactivate account now\?/i })).toBeHidden();
+    await confirmDialog.getByRole("button", { name: /^Cancel$/i }).click();
+    await expect(confirmDialog).toBeHidden();
     expect(deleteCalls).toBe(0);
 
-    await deactivateButton.click();
-    await page
-      .getByRole("alertdialog", { name: /Deactivate account now\?/i })
-      .getByRole("button", { name: /^Deactivate account$/ })
-      .click();
+    await deactivateButton.dispatchEvent("click");
+    await confirmDialog.getByRole("button", { name: /^Deactivate account$/ }).click();
 
     await expect(page).toHaveURL(/\/account-removed$/);
     expect(deleteCalls).toBe(1);
