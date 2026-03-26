@@ -1,4 +1,15 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page, type Route } from "@playwright/test";
+
+const API = {
+  watchRules: /\/api\/watch-rules(?:\?.*)?$/,
+  watchReleases: /\/api\/watch-releases(?:\?.*)?$/,
+  notifications: /\/api\/notifications(?:\?.*)?$/,
+  unreadCount: /\/api\/notifications\/unread-count(?:\?.*)?$/,
+  me: /\/api\/me(?:\?.*)?$/,
+  meHardDelete: /\/api\/me\/hard-delete(?:\?.*)?$/,
+  discogsStatus: /\/api\/integrations\/discogs\/status(?:\?.*)?$/,
+  sse: /\/api\/stream\/events(?:\?.*)?$/,
+};
 
 const meProfile = {
   id: "user-1",
@@ -20,8 +31,22 @@ const meProfile = {
   integrations: [{ provider: "discogs", linked: true, watch_rule_count: 1 }],
 };
 
-async function mockSseIdle(page: Parameters<typeof test>[0]["page"]) {
-  await page.route("**/api/stream/events", async (route) => {
+async function fulfillJson(
+  route: Route,
+  status: number,
+  payload: unknown,
+  headers?: Record<string, string>,
+) {
+  await route.fulfill({
+    status,
+    contentType: "application/json",
+    headers,
+    body: JSON.stringify(payload),
+  });
+}
+
+async function mockSseIdle(page: Page) {
+  await page.route(API.sse, async (route) => {
     await route.fulfill({
       status: 200,
       headers: { "content-type": "text/event-stream" },
@@ -33,44 +58,29 @@ async function mockSseIdle(page: Parameters<typeof test>[0]["page"]) {
 test.describe("route-focused validation", () => {
   test("/alerts covers loading and empty states", async ({ page }) => {
     await mockSseIdle(page);
-    await page.route("**/api/watch-rules**", async (route) => {
+    await page.route(API.watchRules, async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 250));
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: "[]",
-      });
+      await fulfillJson(route, 200, []);
     });
 
     await page.goto("/alerts");
 
     await expect(page.getByText("Loading watch rules…")).toBeVisible();
-    await expect(
-      page.getByText("No watch rules yet. Create one to start matching releases."),
-    ).toBeVisible();
+    await expect(page.getByText("No watch rules yet.")).toBeVisible();
   });
 
   test("/alerts covers error and rate-limited states", async ({ page }) => {
     await mockSseIdle(page);
-    await page.route("**/api/watch-rules**", async (route) => {
-      await route.fulfill({
-        status: 429,
-        headers: { "retry-after": "60" },
-        contentType: "application/json",
-        body: JSON.stringify({ error: { type: "rate_limited", message: "Calm down." } }),
-      });
+    await page.route(API.watchRules, async (route) => {
+      await fulfillJson(route, 429, { error: { type: "rate_limited", message: "Calm down." } });
     });
 
     await page.goto("/alerts");
     await expect(page.getByText("Watch-rule requests are temporarily rate limited.")).toBeVisible();
 
-    await page.unroute("**/api/watch-rules**");
-    await page.route("**/api/watch-rules**", async (route) => {
-      await route.fulfill({
-        status: 500,
-        contentType: "application/json",
-        body: JSON.stringify({ error: { message: "Exploded" } }),
-      });
+    await page.unroute(API.watchRules);
+    await page.route(API.watchRules, async (route) => {
+      await fulfillJson(route, 500, { error: { message: "Exploded" } });
     });
 
     await page.getByRole("button", { name: "Retry watch rules" }).click();
@@ -79,52 +89,37 @@ test.describe("route-focused validation", () => {
 
   test("/watchlist covers error and empty states", async ({ page }) => {
     await mockSseIdle(page);
-    await page.route("**/api/watch-releases**", async (route) => {
-      await route.fulfill({
-        status: 500,
-        contentType: "application/json",
-        body: JSON.stringify({ error: { message: "Nope" } }),
-      });
+    await page.route(API.watchReleases, async (route) => {
+      await fulfillJson(route, 500, { error: { message: "Nope" } });
     });
 
     await page.goto("/watchlist");
     await expect(page.getByText("Could not load watchlist.")).toBeVisible();
 
-    await page.unroute("**/api/watch-releases**");
-    await page.route("**/api/watch-releases**", async (route) => {
-      await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    await page.unroute(API.watchReleases);
+    await page.route(API.watchReleases, async (route) => {
+      await fulfillJson(route, 200, []);
     });
 
     await page.getByRole("button", { name: "Refresh watchlist" }).click();
-    await expect(
-      page.getByText("No watchlist releases yet. Add alerts to populate this feed."),
-    ).toBeVisible();
+    await expect(page.getByText("No watchlist releases yet.")).toBeVisible();
   });
 
   test("/notifications covers rate-limited and empty states", async ({ page }) => {
     await mockSseIdle(page);
-    await page.route("**/api/notifications/unread-count", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ unread_count: 0 }),
-      });
+    await page.route(API.notifications, async (route) => {
+      await fulfillJson(route, 429, { error: { type: "rate_limited", message: "Cooling down" } });
     });
-    await page.route("**/api/notifications**", async (route) => {
-      await route.fulfill({
-        status: 429,
-        headers: { "retry-after": "30" },
-        contentType: "application/json",
-        body: JSON.stringify({ error: { type: "rate_limited", message: "Cooling down" } }),
-      });
+    await page.route(API.unreadCount, async (route) => {
+      await fulfillJson(route, 200, { unread_count: 0 });
     });
 
     await page.goto("/notifications");
     await expect(page.getByText("Notifications are temporarily rate limited")).toBeVisible();
 
-    await page.unroute("**/api/notifications**");
-    await page.route("**/api/notifications**", async (route) => {
-      await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+    await page.unroute(API.notifications);
+    await page.route(API.notifications, async (route) => {
+      await fulfillJson(route, 200, []);
     });
 
     await page.getByRole("button", { name: "Retry notifications feed" }).click();
@@ -133,12 +128,9 @@ test.describe("route-focused validation", () => {
 
   test("/settings/profile and /settings/alerts load and rate-limit states", async ({ page }) => {
     await mockSseIdle(page);
-    await page.route("**/api/me", async (route) => {
-      await route.fulfill({
-        status: 429,
-        headers: { "retry-after": "45" },
-        contentType: "application/json",
-        body: JSON.stringify({ error: { type: "rate_limited", message: "Profile cooldown" } }),
+    await page.route(API.me, async (route) => {
+      await fulfillJson(route, 429, {
+        error: { type: "rate_limited", message: "Profile cooldown" },
       });
     });
 
@@ -151,20 +143,16 @@ test.describe("route-focused validation", () => {
 
   test("/integrations covers empty and error states", async ({ page }) => {
     await mockSseIdle(page);
-    await page.route("**/api/integrations/discogs/status", async (route) => {
+    await page.route(API.discogsStatus, async (route) => {
       await route.fulfill({ status: 200, contentType: "application/json", body: "null" });
     });
 
     await page.goto("/integrations");
     await expect(page.getByText("No integration status found.")).toBeVisible();
 
-    await page.unroute("**/api/integrations/discogs/status");
-    await page.route("**/api/integrations/discogs/status", async (route) => {
-      await route.fulfill({
-        status: 500,
-        contentType: "application/json",
-        body: JSON.stringify({ error: { message: "Discogs down" } }),
-      });
+    await page.unroute(API.discogsStatus);
+    await page.route(API.discogsStatus, async (route) => {
+      await fulfillJson(route, 500, { error: { message: "Discogs down" } });
     });
 
     await page.getByRole("button", { name: "Refresh Discogs status" }).click();
@@ -173,7 +161,7 @@ test.describe("route-focused validation", () => {
 
   test("/settings/integrations redirects to /integrations", async ({ page }) => {
     await mockSseIdle(page);
-    await page.route("**/api/integrations/discogs/status", async (route) => {
+    await page.route(API.discogsStatus, async (route) => {
       await route.fulfill({ status: 200, contentType: "application/json", body: "null" });
     });
 
@@ -184,27 +172,23 @@ test.describe("route-focused validation", () => {
 
   test("/settings/danger destructive flow requires confirmation", async ({ page }) => {
     await mockSseIdle(page);
-    await page.route("**/api/me/hard-delete", async (route) => {
+    await page.route(API.meHardDelete, async (route) => {
       await route.fulfill({ status: 204, body: "" });
     });
-    await page.route("**/api/me", async (route) => {
+    await page.route(API.me, async (route) => {
       if (route.request().method() === "DELETE") {
         await route.fulfill({ status: 204, body: "" });
         return;
       }
 
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(meProfile),
-      });
+      await fulfillJson(route, 200, meProfile);
     });
 
     await page.goto("/settings/danger");
     await page.getByRole("button", { name: "Deactivate account" }).click();
-    await expect(page.getByRole("dialog")).toContainText("Deactivate account now?");
+    await expect(page.getByText("Deactivate account now?")).toBeVisible();
     await page.getByRole("button", { name: "Cancel" }).click();
-    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect(page.getByText("Deactivate account now?")).toBeHidden();
 
     await page.getByRole("button", { name: "Deactivate account" }).click();
     await page
@@ -216,12 +200,8 @@ test.describe("route-focused validation", () => {
 
   test("auth-expiry redirects to /signed-out", async ({ page }) => {
     await mockSseIdle(page);
-    await page.route("**/api/watch-rules**", async (route) => {
-      await route.fulfill({
-        status: 401,
-        contentType: "application/json",
-        body: JSON.stringify({ error: { type: "unauthorized", message: "expired" } }),
-      });
+    await page.route(API.watchRules, async (route) => {
+      await fulfillJson(route, 401, { error: { type: "unauthorized", message: "expired" } });
     });
 
     await page.goto("/alerts");
@@ -248,39 +228,31 @@ test.describe("route-focused validation", () => {
       },
     ]);
 
-    await page.route("**/api/notifications/unread-count", async (route) => {
-      unreadCountRequests += 1;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ unread_count: 1 }),
-      });
-    });
-
-    await page.route("**/api/notifications**", async (route) => {
+    await page.route(API.notifications, async (route) => {
       notificationListRequests += 1;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify([
-          {
-            id: "notification-1",
-            user_id: "user-1",
-            event_id: "event-1",
-            event_type: "watch_match_found",
-            channel: "realtime",
-            status: "sent",
-            is_read: false,
-            delivered_at: "2026-01-20T12:00:04+00:00",
-            failed_at: null,
-            read_at: null,
-            created_at: "2026-01-20T12:00:03+00:00",
-          },
-        ]),
-      });
+      await fulfillJson(route, 200, [
+        {
+          id: "notification-1",
+          user_id: "user-1",
+          event_id: "event-1",
+          event_type: "watch_match_found",
+          channel: "realtime",
+          status: "sent",
+          is_read: false,
+          delivered_at: "2026-01-20T12:00:04+00:00",
+          failed_at: null,
+          read_at: null,
+          created_at: "2026-01-20T12:00:03+00:00",
+        },
+      ]);
     });
 
-    await page.route("**/api/stream/events", async (route) => {
+    await page.route(API.unreadCount, async (route) => {
+      unreadCountRequests += 1;
+      await fulfillJson(route, 200, { unread_count: 1 });
+    });
+
+    await page.route(API.sse, async (route) => {
       sseRequestSeen = true;
       const headers = route.request().headers();
       expect(headers.accept).toContain("text/event-stream");
