@@ -229,6 +229,39 @@ describe("/watchlist/[id] route", () => {
     expect(screen.queryByText(/could not save watchlist item updates\./i)).not.toBeInTheDocument();
   });
 
+  it("shows save cooldown state and keeps retrying once cooldown clears", async () => {
+    const mutate = vi.fn();
+    state.update.mockReturnValueOnce({
+      mutate,
+      data: undefined,
+      error: { kind: "rate_limited", message: "Save cooldown", retryAfterSeconds: 9 },
+      isPending: false,
+      isError: true,
+    });
+
+    const { rerender } = render(
+      await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(mutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/saving watchlist item updates is rate limited/i)).toBeInTheDocument();
+    expect(screen.getByText(/retry-after:\s*9s/i)).toBeInTheDocument();
+
+    state.update.mockReturnValueOnce({
+      mutate,
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
+    fireEvent.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+    expect(mutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("status")).toHaveTextContent(/success: watchlist item updated\./i);
+  });
+
   it("retries disable mutation after a failure and then redirects on successful retry", async () => {
     const disableMutate = vi.fn();
     state.disable.mockReturnValue({

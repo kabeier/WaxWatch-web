@@ -167,6 +167,25 @@ describe("/dashboard route", () => {
     expect(retryRules).toHaveBeenCalledTimes(1);
   });
 
+  it("shows rule cooldown messaging with disabled retry until window expires", () => {
+    const retryRules = vi.fn();
+    hookMocks.rules.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "Rules cooldown", retryAfterSeconds: 18 },
+      retry: retryRules,
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByText(/watch rules are temporarily rate limited/i)).toBeInTheDocument();
+    const cooldownButton = screen.getByRole("button", { name: /retry available in 18s/i });
+    expect(cooldownButton).toBeDisabled();
+    fireEvent.click(cooldownButton);
+    expect(retryRules).not.toHaveBeenCalled();
+  });
+
   it("shows failure messaging first, then success evidence after retry-driven refresh", () => {
     hookMocks.notifications.mockReturnValueOnce({
       data: undefined,

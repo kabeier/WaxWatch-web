@@ -306,6 +306,50 @@ describe("/settings/danger route", () => {
     expect(screen.queryByText(/delete cooldown/i)).not.toBeInTheDocument();
   });
 
+  it("surfaces deactivate cooldown status and clears it after a successful retry", () => {
+    const deactivateMutate = vi.fn();
+    hooks.deactivate.mockReturnValue({
+      mutate: deactivateMutate,
+      data: undefined,
+      error: { kind: "rate_limited", message: "Deactivate cooldown", retryAfterSeconds: 14 },
+      isPending: false,
+      isError: true,
+    });
+
+    const { rerender } = render(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "button",
+        { name: /^deactivate account$/i },
+      ),
+    );
+    expect(deactivateMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getAllByText(/deactivate cooldown/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/retry-after:\s*14s/i)).toBeInTheDocument();
+
+    hooks.deactivate.mockReturnValue({
+      mutate: deactivateMutate,
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+    rerender(<DangerSettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^deactivate account$/i }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog", { name: /deactivate account now\?/i })).getByRole(
+        "button",
+        { name: /^deactivate account$/i },
+      ),
+    );
+    expect(deactivateMutate).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("status")).toHaveTextContent(/success: account deactivated\./i);
+    expect(screen.queryByText(/deactivate cooldown/i)).not.toBeInTheDocument();
+  });
+
   it("traps focus for permanent-delete confirmation and restores focus to its trigger", async () => {
     const user = userEvent.setup();
     render(<DangerSettingsPage />);
