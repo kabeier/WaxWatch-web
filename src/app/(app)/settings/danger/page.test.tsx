@@ -429,4 +429,34 @@ describe("/settings/danger route", () => {
     expect(screen.queryByRole("alertdialog", { name: /deactivate account now\?/i })).toBeNull();
     expect(trigger).toHaveFocus();
   });
+
+  it("recovers from account-query cooldown and restores destructive actions for retry", () => {
+    const retryMe = vi.fn();
+    hooks.meQuery.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "Cooldown active", retryAfterSeconds: 7 },
+      retry: retryMe,
+    });
+
+    const { rerender } = render(<DangerSettingsPage />);
+
+    expect(screen.getByText(/settings are temporarily rate limited\./i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 7s/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^deactivate account$/i })).toBeEnabled();
+
+    hooks.meQuery.mockReturnValueOnce({
+      data: { id: "user-1" },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    rerender(<DangerSettingsPage />);
+
+    expect(screen.queryByText(/temporarily rate limited/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^deactivate account$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^permanently delete account$/i })).toBeEnabled();
+  });
 });

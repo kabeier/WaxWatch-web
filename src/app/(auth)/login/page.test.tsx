@@ -336,4 +336,34 @@ describe("/login route", () => {
     resolveFetch?.(new Response(null, { status: 200 }));
     await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
   });
+
+  it("redirects to returnTo after retrying from an API failure without handoff", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Auth backend unavailable." } }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+    const onRedirect = vi.fn();
+    const returnToHandoff = { ...noHandoff, returnTo: "/dashboard" } as const;
+
+    render(
+      <LoginPageClient handoff={returnToHandoff} fetchImpl={fetchMock} onRedirect={onRedirect} />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/auth backend unavailable/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/dashboard"));
+    expect(screen.queryByText(/auth backend unavailable/i)).not.toBeInTheDocument();
+  });
 });

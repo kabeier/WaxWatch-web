@@ -437,4 +437,24 @@ describe("/watchlist/[id] route", () => {
     expect(screen.getByRole("button", { name: /^disable watchlist item$/i })).toBeDisabled();
     expect(screen.getByRole("spinbutton", { name: /target price/i })).toBeDisabled();
   });
+
+  it("shows not-found empty state copy with a clear path back to the watchlist route", async () => {
+    state.detail.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(await WatchlistItemPage({ params: Promise.resolve({ id: "missing-release" }) }));
+
+    expect(screen.getByText(/watchlist item not found\./i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /save watchlist updates/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /disable watchlist item/i }),
+    ).not.toBeInTheDocument();
+  });
 });

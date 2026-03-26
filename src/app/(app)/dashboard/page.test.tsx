@@ -471,4 +471,52 @@ describe("/dashboard route", () => {
     );
     expect(screen.queryByText(/could not load watch rules\./i)).not.toBeInTheDocument();
   });
+
+  it("clears notifications cooldown state after refresh and restores the open-notifications action", () => {
+    hookMocks.notifications.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "Notifications cooldown", retryAfterSeconds: 9 },
+      retry: vi.fn(),
+    });
+
+    const { rerender } = render(<DashboardPage />);
+
+    expect(screen.getByText(/notifications are temporarily rate limited/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 9s/i })).toBeDisabled();
+    expect(screen.getByRole("link", { name: /open notifications/i })).toHaveAttribute(
+      "href",
+      "/notifications",
+    );
+
+    hookMocks.notifications.mockReturnValueOnce({
+      data: [
+        {
+          id: "notification-3",
+          user_id: "user-1",
+          event_type: "rule_triggered",
+          payload: {},
+          channel: "email",
+          status: "sent",
+          is_read: false,
+          created_at: "2026-03-22T10:00:00.000Z",
+          read_at: null,
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    rerender(<DashboardPage />);
+
+    expect(screen.queryByText(/temporarily rate limited/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /open notifications/i })).toHaveAttribute(
+      "href",
+      "/notifications",
+    );
+    expect(screen.getByText(/rule_triggered/i)).toBeInTheDocument();
+  });
 });
