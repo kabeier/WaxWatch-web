@@ -104,10 +104,14 @@ describe("/watchlist/[id] route", () => {
       isLoading: false,
       isError: true,
       error: { kind: "rate_limited", message: "Cooldown active", retryAfterSeconds: 40 },
-      retry: vi.fn(),
+      retry: retryLoad,
     });
     rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
     expect(screen.getByText(/retry-after:\s*40s/i)).toBeInTheDocument();
+    const retryButton = screen.getByRole("button", { name: /retry available in 40s/i });
+    expect(retryButton).toBeDisabled();
+    fireEvent.click(retryButton);
+    expect(retryLoad).toHaveBeenCalledTimes(1);
   });
 
   it("shows mutation failures and allows retrying save/disable actions", async () => {

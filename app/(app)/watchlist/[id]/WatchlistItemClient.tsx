@@ -122,13 +122,15 @@ export default function WatchlistItemClient({ id }: { id: string }) {
   }
 
   if (watchReleaseDetailQuery.isError && isRateLimitedError(watchReleaseDetailQuery.error)) {
+    const retryAfterSeconds = getRetryAfterSeconds(watchReleaseDetailQuery.error);
     return (
       <StateRateLimited
         message={watchReleaseDetailQuery.error.message}
-        retryAfterSeconds={getRetryAfterSeconds(watchReleaseDetailQuery.error)}
+        retryAfterSeconds={retryAfterSeconds}
         action={
           <RetryAction
             label="Retry watchlist item load"
+            retryAfterSeconds={retryAfterSeconds}
             onRetry={() => watchReleaseDetailQuery.retry()}
           />
         }

@@ -186,6 +186,26 @@ describe("/dashboard route", () => {
     expect(retryRules).not.toHaveBeenCalled();
   });
 
+  it("shows notifications cooldown messaging with disabled retry action", () => {
+    const retryNotifications = vi.fn();
+    hookMocks.notifications.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "Notifications cooldown", retryAfterSeconds: 12 },
+      retry: retryNotifications,
+    });
+
+    render(<DashboardPage />);
+
+    expect(screen.getByText(/notifications are temporarily rate limited/i)).toBeInTheDocument();
+    expect(screen.getByText(/retry-after:\s*12s/i)).toBeInTheDocument();
+    const cooldownButton = screen.getByRole("button", { name: /retry available in 12s/i });
+    expect(cooldownButton).toBeDisabled();
+    fireEvent.click(cooldownButton);
+    expect(retryNotifications).not.toHaveBeenCalled();
+  });
+
   it("shows failure messaging first, then success evidence after retry-driven refresh", () => {
     hookMocks.notifications.mockReturnValueOnce({
       data: undefined,

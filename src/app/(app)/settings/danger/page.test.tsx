@@ -104,7 +104,10 @@ describe("/settings/danger route", () => {
     });
     rerender(<DangerSettingsPage />);
     expect(screen.getByText(/settings are temporarily rate limited\./i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /retry available in 20s/i })).toBeDisabled();
+    const cooldownButton = screen.getByRole("button", { name: /retry available in 20s/i });
+    expect(cooldownButton).toBeDisabled();
+    fireEvent.click(cooldownButton);
+    expect(retryMe).toHaveBeenCalledTimes(1);
 
     hooks.meQuery.mockReturnValueOnce({
       data: undefined,
