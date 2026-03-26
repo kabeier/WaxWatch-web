@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -385,6 +385,35 @@ describe("route shell pages", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/retry-after:\s*20s/i);
   });
 
+  it("supports /login retry from invalid credentials to successful redirect", async () => {
+    const onRedirect = vi.fn();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Invalid email or password." } }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+
+    render(
+      <LoginPageClient handoff={noHandoffContext} fetchImpl={fetchMock} onRedirect={onRedirect} />,
+    );
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/invalid email or password\./i);
+    expect(onRedirect).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
+  });
+
   it("renders watchlist item editor route with editable controls", async () => {
     const page = await WatchlistItemPage({
       params: Promise.resolve({ id: "release-1" }),
@@ -646,6 +675,26 @@ describe("route shell pages", () => {
     expect(screen.getByText(/could not load notifications\./i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /retry notifications/i }));
     expect(retryNotifications).toHaveBeenCalledTimes(1);
+  });
+
+  it("transitions /dashboard notifications from cooldown state back to loaded content", () => {
+    const notificationsState = {
+      data: undefined as Notification[] | undefined,
+      isLoading: false,
+      error: { kind: "rate_limited", message: "Cooldown active", retryAfterSeconds: 10 } as unknown,
+      retry: vi.fn(),
+    };
+    previewHookMocks.notifications.mockImplementation(() => notificationsState);
+
+    const { rerender } = render(<DashboardPage />);
+    expect(screen.getByText(/notifications are temporarily rate limited/i)).toBeInTheDocument();
+
+    notificationsState.error = null;
+    notificationsState.data = dashboardFixtures.notifications;
+    rerender(<DashboardPage />);
+
+    expect(screen.getByText(/recent notifications/i)).toBeInTheDocument();
+    expect(screen.getByText(/match\.created/i)).toBeInTheDocument();
   });
 
   it("renders watchlist item detail generic-error branch and retries without route changes", () => {
