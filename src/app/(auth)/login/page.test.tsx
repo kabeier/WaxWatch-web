@@ -203,4 +203,44 @@ describe("/login route", () => {
     await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("renders API validation errors and then redirects to secure handoff destination after retry", async () => {
+    const handoff = {
+      returnTo: "/watchlist/release-1",
+      handoffUrl: "waxwatch://auth/callback",
+      state: "state-1",
+      nonce: "nonce-1",
+      expiresAt: "2035-01-01T00:00:00.000Z",
+      expiresAtEpochMs: Date.parse("2035-01-01T00:00:00.000Z"),
+      isExpired: false,
+      hasRequiredSecurityParams: true,
+    } as const;
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Email is required." } }), {
+          status: 422,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 })) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(<LoginPageClient handoff={handoff} fetchImpl={fetchMock} onRedirect={onRedirect} />);
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/email is required\./i);
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    await waitFor(() =>
+      expect(onRedirect).toHaveBeenCalledWith(
+        "waxwatch://auth/callback?state=state-1&nonce=nonce-1&expires_at=2035-01-01T00%3A00%3A00.000Z&return_to=%2Fwatchlist%2Frelease-1&status=success",
+      ),
+    );
+  });
 });
