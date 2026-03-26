@@ -91,7 +91,6 @@ export function DestructiveConfirmDialog({
 
     const previousActiveElement = document.activeElement;
     const returnFocusElement = returnFocusRef?.current ?? null;
-    cancelButtonRef.current?.focus();
 
     let isRepositioningFocus = false;
 
@@ -183,6 +182,8 @@ export function DestructiveConfirmDialog({
         focusDialog();
       }
     };
+
+    focusDialog();
 
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("focusin", handleFocusIn);

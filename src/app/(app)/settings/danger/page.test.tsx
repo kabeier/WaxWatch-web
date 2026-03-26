@@ -306,6 +306,30 @@ describe("/settings/danger route", () => {
     expect(screen.queryByText(/delete cooldown/i)).not.toBeInTheDocument();
   });
 
+  it("traps focus for permanent-delete confirmation and restores focus to its trigger", async () => {
+    const user = userEvent.setup();
+    render(<DangerSettingsPage />);
+
+    const trigger = screen.getByRole("button", { name: /^permanently delete account$/i });
+    await user.click(trigger);
+
+    const dialog = screen.getByRole("alertdialog", { name: /delete account permanently\?/i });
+    const cancelButton = within(dialog).getByRole("button", { name: /^cancel$/i });
+    const confirmButton = within(dialog).getByRole("button", {
+      name: /^permanently delete account$/i,
+    });
+
+    expect(cancelButton).toHaveFocus();
+    await user.tab();
+    expect(confirmButton).toHaveFocus();
+    await user.tab();
+    expect(cancelButton).toHaveFocus();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("alertdialog", { name: /delete account permanently\?/i })).toBeNull();
+    expect(trigger).toHaveFocus();
+  });
+
   it("traps focus in the confirmation dialog and restores focus to the trigger on close", async () => {
     const user = userEvent.setup();
     render(<DangerSettingsPage />);
