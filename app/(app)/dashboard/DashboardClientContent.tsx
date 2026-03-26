@@ -64,6 +64,23 @@ type DashboardTransitionCopy = {
   title: string;
   emptyMessage: string;
 };
+type DashboardNotificationRow = Notification & {
+  description: string;
+  readState: string;
+  metaValues: string[];
+};
+type DashboardReleaseRow = WatchRelease & {
+  matchModeLabel: string;
+  activeState: string;
+  targetPriceLabel: string;
+  updatedLabel: string;
+};
+type DashboardRuleRow = WatchRule & {
+  keywordsLabel: string;
+  activeState: string;
+  pollLabel: string;
+  nextRunLabel: string;
+};
 
 type DashboardTimestampedItem = {
   id?: string | number;
@@ -138,24 +155,16 @@ function DashboardListTitle({ children }: { children: ReactNode }) {
 }
 
 function DashboardListTrailing({ children }: { children: ReactNode }) {
-  return (
-    <ListText className={pageViewStyles.mutedText} truncate={false}>
-      {children}
-    </ListText>
-  );
+  return <ListText className={pageViewStyles.mutedText}>{children}</ListText>;
 }
 
 function DashboardMetaItem({ children }: { children: ReactNode }) {
-  return (
-    <ListText className={pageViewStyles.mutedText} truncate={false}>
-      {children}
-    </ListText>
-  );
+  return <ListText className={pageViewStyles.mutedText}>{children}</ListText>;
 }
 
 function DashboardMetaSeparator() {
   return (
-    <ListText className={pageViewStyles.mutedText} truncate={false} aria-hidden>
+    <ListText className={pageViewStyles.mutedText} aria-hidden>
       •
     </ListText>
   );
@@ -171,7 +180,7 @@ function DashboardMetric({ value, label }: { value: number | string; label: stri
 }
 
 function DashboardListDescription({ children }: { children: ReactNode }) {
-  return <ListText truncate={false}>{children}</ListText>;
+  return <ListText>{children}</ListText>;
 }
 
 function DashboardListMeta({ values }: { values: string[] }) {
@@ -271,9 +280,9 @@ function DashboardListLoadingState({ title }: { title: string }) {
         {placeholderRows.map((index) => (
           <ListRow
             key={`loading-${title}-${index}`}
-            title={<ListText>Loading…</ListText>}
+            title={<DashboardListTitle>Loading…</DashboardListTitle>}
             description={<DashboardListDescription>Preparing preview row</DashboardListDescription>}
-            trailing={<ListText className={pageViewStyles.mutedText}>Updating…</ListText>}
+            trailing={<DashboardListTrailing>Updating…</DashboardListTrailing>}
           >
             <DashboardListMeta values={DASHBOARD_LOADING_META_VALUES} />
           </ListRow>
@@ -285,11 +294,22 @@ function DashboardListLoadingState({ title }: { title: string }) {
 
 function DashboardListEmptyState({ title, message }: { title: string; message: string }) {
   return (
-    <StateEmpty
-      title={`${DASHBOARD_EMPTY_TITLE_PREFIX} ${title.toLowerCase()} yet`}
-      message={message}
-      detail="This card will automatically populate once matching activity is available."
-    />
+    <>
+      <StateEmpty
+        title={`${DASHBOARD_EMPTY_TITLE_PREFIX} ${title.toLowerCase()} yet`}
+        message={message}
+        detail="This card will automatically populate once matching activity is available."
+      />
+      <ListContainer dense aria-hidden>
+        <ListRow
+          title={<DashboardListTitle>No items yet</DashboardListTitle>}
+          description={<DashboardListDescription>{message}</DashboardListDescription>}
+          trailing={<DashboardListTrailing>Waiting</DashboardListTrailing>}
+        >
+          <DashboardListMeta values={["No recent activity", "Check back soon"]} />
+        </ListRow>
+      </ListContainer>
+    </>
   );
 }
 
@@ -357,39 +377,63 @@ function DashboardListContent({
   );
 }
 
+function buildNotificationRows(notifications: Notification[]): DashboardNotificationRow[] {
+  return notifications.map((notification) => ({
+    ...notification,
+    description: `${notification.channel} · ${notification.status}`,
+    readState: notification.is_read ? "Read" : "Unread",
+    metaValues: [
+      `Created ${formatDateTime(notification.created_at)}`,
+      notification.read_at ? `Read ${formatDateTime(notification.read_at)}` : "Pending review",
+    ],
+  }));
+}
+
+function buildReleaseRows(releases: WatchRelease[]): DashboardReleaseRow[] {
+  return releases.map((release) => ({
+    ...release,
+    matchModeLabel: release.match_mode === "master_release" ? "Master release" : "Exact release",
+    activeState: release.is_active ? "Active" : "Paused",
+    targetPriceLabel:
+      release.target_price !== null
+        ? `${release.currency} ${release.target_price}`
+        : "No target price",
+    updatedLabel: `Updated ${formatDateTime(release.updated_at)}`,
+  }));
+}
+
+function buildRuleRows(rules: WatchRule[]): DashboardRuleRow[] {
+  return rules.map((rule) => ({
+    ...rule,
+    keywordsLabel: formatKeywords(rule.query?.keywords),
+    activeState: rule.is_active ? "Active" : "Paused",
+    pollLabel: `Every ${rule.poll_interval_seconds}s`,
+    nextRunLabel: rule.next_run_at
+      ? `Next run ${formatDateTime(rule.next_run_at)}`
+      : "Schedule pending",
+  }));
+}
+
 function DashboardNotificationsPanel({
-  notifications,
+  rows,
   isLoading,
   error,
   onRetry,
 }: {
-  notifications: Notification[];
+  rows: DashboardNotificationRow[];
   isLoading: boolean;
   error: unknown;
   onRetry: () => void;
 }) {
-  const notificationRows = useMemo(
-    () =>
-      notifications.map((notification) => ({
-        ...notification,
-        description: `${notification.channel} · ${notification.status}`,
-        readState: notification.is_read ? "Read" : "Unread",
-        metaValues: [
-          `Created ${formatDateTime(notification.created_at)}`,
-          notification.read_at ? `Read ${formatDateTime(notification.read_at)}` : "Pending review",
-        ],
-      })),
-    [notifications],
-  );
   return (
     <DashboardListContent
       copy={DASHBOARD_TRANSITION_COPY.notifications}
       isLoading={isLoading}
       error={error}
-      itemCount={notificationRows.length}
+      itemCount={rows.length}
       onRetry={onRetry}
     >
-      {notificationRows.map((notification) => (
+      {rows.map((notification) => (
         <ListRow
           key={notification.id}
           title={<DashboardListTitle>{notification.event_type}</DashboardListTitle>}
@@ -406,40 +450,25 @@ function DashboardNotificationsPanel({
 }
 
 function DashboardMatchesPanel({
-  releases,
+  rows,
   isLoading,
   error,
   onRetry,
 }: {
-  releases: WatchRelease[];
+  rows: DashboardReleaseRow[];
   isLoading: boolean;
   error: unknown;
   onRetry: () => void;
 }) {
-  const releaseRows = useMemo(
-    () =>
-      releases.map((release) => ({
-        ...release,
-        matchModeLabel:
-          release.match_mode === "master_release" ? "Master release" : "Exact release",
-        activeState: release.is_active ? "Active" : "Paused",
-        targetPriceLabel:
-          release.target_price !== null
-            ? `${release.currency} ${release.target_price}`
-            : "No target price",
-        updatedLabel: `Updated ${formatDateTime(release.updated_at)}`,
-      })),
-    [releases],
-  );
   return (
     <DashboardListContent
       copy={DASHBOARD_TRANSITION_COPY.matches}
       isLoading={isLoading}
       error={error}
-      itemCount={releaseRows.length}
+      itemCount={rows.length}
       onRetry={onRetry}
     >
-      {releaseRows.map((release) => (
+      {rows.map((release) => (
         <ListRow
           key={release.id}
           title={
@@ -465,38 +494,25 @@ function DashboardMatchesPanel({
 }
 
 function DashboardRulesPanel({
-  rules,
+  rows,
   isLoading,
   error,
   onRetry,
 }: {
-  rules: WatchRule[];
+  rows: DashboardRuleRow[];
   isLoading: boolean;
   error: unknown;
   onRetry: () => void;
 }) {
-  const ruleRows = useMemo(
-    () =>
-      rules.map((rule) => ({
-        ...rule,
-        keywordsLabel: formatKeywords(rule.query?.keywords),
-        activeState: rule.is_active ? "Active" : "Paused",
-        pollLabel: `Every ${rule.poll_interval_seconds}s`,
-        nextRunLabel: rule.next_run_at
-          ? `Next run ${formatDateTime(rule.next_run_at)}`
-          : "Schedule pending",
-      })),
-    [rules],
-  );
   return (
     <DashboardListContent
       copy={DASHBOARD_TRANSITION_COPY.rules}
       isLoading={isLoading}
       error={error}
-      itemCount={ruleRows.length}
+      itemCount={rows.length}
       onRetry={onRetry}
     >
-      {ruleRows.map((rule) => (
+      {rows.map((rule) => (
         <ListRow
           key={rule.id}
           title={
@@ -541,6 +557,10 @@ export default function DashboardClientContent() {
     () => sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT),
     [notifications],
   );
+  const notificationRows = useMemo(
+    () => buildNotificationRows(recentNotifications),
+    [recentNotifications],
+  );
   const watchRulesSummary = useMemo(() => {
     const { recentItems, activeItemCount, totalItemCount } = summarizeDashboardItems(
       watchRules,
@@ -563,6 +583,14 @@ export default function DashboardClientContent() {
       totalReleaseCount: totalItemCount,
     };
   }, [watchReleases]);
+  const releaseRows = useMemo(
+    () => buildReleaseRows(watchReleasesSummary.recentMatches),
+    [watchReleasesSummary.recentMatches],
+  );
+  const ruleRows = useMemo(
+    () => buildRuleRows(watchRulesSummary.recentRules),
+    [watchRulesSummary.recentRules],
+  );
   const unreadCountSummary = useMemo(
     () => ({
       value: unreadCountQuery.isLoading
@@ -637,7 +665,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardMatchesPanel
-              releases={watchReleasesSummary.recentMatches}
+              rows={releaseRows}
               isLoading={watchReleasesQuery.isLoading}
               error={watchReleasesQuery.error}
               onRetry={() => void watchReleasesQuery.retry()}
@@ -658,7 +686,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardRulesPanel
-              rules={watchRulesSummary.recentRules}
+              rows={ruleRows}
               isLoading={watchRulesQuery.isLoading}
               error={watchRulesQuery.error}
               onRetry={() => void watchRulesQuery.retry()}
@@ -682,7 +710,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardNotificationsPanel
-              notifications={recentNotifications}
+              rows={notificationRows}
               isLoading={notificationsQuery.isLoading}
               error={notificationsQuery.error}
               onRetry={() => {
