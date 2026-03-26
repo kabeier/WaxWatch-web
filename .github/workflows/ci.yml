@@ -114,10 +114,13 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: E2E tests
+      # NOTE: `e2e/home.spec.ts` and `e2e/a11y.spec.ts` are smoke-only checks.
+      # Route-depth UX/state validation lives in `e2e/route-validation.spec.ts`.
+      - name: E2E tests (smoke + deep route validation)
         run: npm run e2e:ci
 
-      - name: Accessibility smoke
+      # Accessibility command intentionally runs smoke-only checks (`e2e/a11y.spec.ts`).
+      - name: Accessibility smoke-only
         run: npm run a11y:smoke
 
       - name: Deployment verification

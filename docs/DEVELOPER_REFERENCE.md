@@ -87,6 +87,12 @@ Open: http://localhost:3000
 - `npm run format`
 - `npm run format:check`
 
+### Browser test classification (Playwright)
+
+- **Smoke-only specs**: `e2e/home.spec.ts` and `e2e/a11y.spec.ts` provide fast route-shell/a11y sanity checks.
+- **Deep route validation**: `e2e/route-validation.spec.ts` covers route-focused UX states (loading/error/empty/rate-limited), destructive confirmations, auth-expiry redirects, and deterministic SSE behavior checks aligned with `docs/SSE_MODEL.md`.
+- CI preserves both layers: smoke specs stay lightweight while deep route specs enforce richer browser validation.
+
 ### Read this first (in order)
 
 1. `docs/AGENT_GUIDE.md`
