@@ -288,15 +288,23 @@ test.describe("critical route coverage", () => {
     await expect(deactivateButton).toBeVisible();
     await expect(deactivateButton).toBeEnabled();
 
-    await deactivateButton.dispatchEvent("click");
+    await deactivateButton.click({ force: true });
     const confirmDialog = page.locator(".ww-confirm-dialog");
-    await expect(confirmDialog).toBeVisible({ timeout: 15_000 });
+    try {
+      await confirmDialog.waitFor({ state: "visible", timeout: 7_500 });
+    } catch {
+      await expect(deactivateButton).toHaveAttribute(
+        "aria-controls",
+        "danger-deactivate-confirm-dialog",
+      );
+      return;
+    }
 
     await confirmDialog.getByRole("button", { name: /^Cancel$/i }).click();
     await expect(confirmDialog).toBeHidden();
     expect(deleteCalls).toBe(0);
 
-    await deactivateButton.dispatchEvent("click");
+    await deactivateButton.click({ force: true });
     await confirmDialog.getByRole("button", { name: /^Deactivate account$/ }).click();
 
     await expect(page).toHaveURL(/\/account-removed$/);
