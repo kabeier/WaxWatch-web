@@ -192,6 +192,24 @@ describe("DashboardClientContent", () => {
     expect(screen.getByText("Pending review")).toHaveClass("ww-list-row__text-truncate");
   });
 
+  it("applies shared truncation styling to dashboard row link titles", () => {
+    render(<DashboardClientContent />);
+
+    const matchLink = screen.getByRole("link", { name: "Alpha" });
+    const ruleLink = screen.getByRole("link", { name: "Blue Note" });
+
+    expect(within(matchLink).getByText("Alpha")).toHaveClass("ww-list-row__text-truncate");
+    expect(within(ruleLink).getByText("Blue Note")).toHaveClass("ww-list-row__text-truncate");
+  });
+
+  it("renders summary metrics from memoized total and active counts", () => {
+    render(<DashboardClientContent />);
+
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(screen.getByText("2 active recent matches")).toBeInTheDocument();
+    expect(screen.getByText("1 active recent watch rules")).toBeInTheDocument();
+  });
+
   it("uses standardized empty states across dashboard feed cards", () => {
     hookMocks.notifications.mockReturnValue({
       data: [],
