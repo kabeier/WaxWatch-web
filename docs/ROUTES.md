@@ -72,6 +72,9 @@ All new route implementation/migration work must compose shared primitives first
 
 ### Desktop side nav (primary route navigation)
 
+Desktop primary navigation is rendered from `APP_NAV_ITEMS` in
+`src/components/ui/primitives/shell/primitives.tsx` and includes exactly:
+
 1. Dashboard (`/dashboard`)
 2. Search (`/search`)
 3. Alerts (`/alerts`)
@@ -80,15 +83,18 @@ All new route implementation/migration work must compose shared primitives first
 6. Integrations (`/integrations`)
 7. Settings (`/settings`)
 
-### Top nav (utility/account area)
+### Top nav (utility/status area)
 
-Top nav is utility/account chrome (brand + utility links), not the primary route navigation surface.
-Default utility items are:
+Top nav is the utility/status chrome (brand + utility links), not the primary route navigation
+surface. Utility links are rendered by `TopNav` utility items. Default utility items are:
 
 - Inbox (`/notifications`)
 - Account (`/settings/profile`)
 
 ### Mobile bottom navigation
+
+Mobile tab navigation is rendered from `MOBILE_NAV_ITEMS` in
+`src/components/ui/primitives/shell/primitives.tsx` and includes exactly:
 
 1. Home (`/dashboard`)
 2. Alerts (`/alerts`)
