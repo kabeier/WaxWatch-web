@@ -7,6 +7,70 @@ type JsonRouteOptions = {
   delayMs?: number;
 };
 
+const meProfileFixture = {
+  id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+  email: "listener@example.com",
+  is_active: true,
+  created_at: "2026-01-20T11:52:00+00:00",
+  updated_at: "2026-01-20T12:00:00+00:00",
+  display_name: "Wax Collector",
+  preferences: {
+    timezone: "America/Chicago",
+    currency: "USD",
+    notifications_email: true,
+    notifications_push: false,
+    quiet_hours_start: 23,
+    quiet_hours_end: 7,
+    notification_timezone: "America/Chicago",
+    delivery_frequency: "daily",
+  },
+  integrations: [{ provider: "discogs", linked: true, watch_rule_count: 3 }],
+};
+
+const watchRuleFixture = {
+  id: "80dc6333-3c3c-49b8-a803-938783fbeb99",
+  user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+  name: "Rare techno under $40",
+  query: { sources: ["discogs"], q: "detroit techno", max_price: 40 },
+  is_active: true,
+  poll_interval_seconds: 600,
+  last_run_at: "2026-01-20T12:00:00+00:00",
+  next_run_at: "2026-01-20T12:10:00+00:00",
+  created_at: "2026-01-20T11:52:00+00:00",
+  updated_at: "2026-01-20T12:00:00+00:00",
+};
+
+const watchReleaseFixture = {
+  id: "24550438-0dfc-4f1f-a19b-3b8b682b5f6f",
+  user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+  discogs_release_id: 1001,
+  discogs_master_id: 5001,
+  match_mode: "master_release",
+  title: "Demo Want",
+  artist: "Artist A",
+  year: 1999,
+  target_price: 45,
+  currency: "USD",
+  min_condition: "vg+",
+  is_active: true,
+  created_at: "2026-01-20T10:00:00+00:00",
+  updated_at: "2026-01-20T10:00:00+00:00",
+};
+
+const notificationFixture = {
+  id: "4c8d9157-4a8c-4ea8-9d27-3ad2fc1e8f95",
+  user_id: "8f2a5009-c0a2-4f90-8f1b-c1716c26bf06",
+  event_id: "f2eec3e4-1f39-4a9f-9f39-2359f3983be0",
+  event_type: "watch_match_found",
+  channel: "realtime",
+  status: "sent",
+  is_read: false,
+  delivered_at: "2026-01-20T12:00:04+00:00",
+  failed_at: null,
+  read_at: null,
+  created_at: "2026-01-20T12:00:03+00:00",
+};
+
 function routePattern(path: string) {
   return `**${path}*`;
 }
@@ -46,17 +110,7 @@ async function mockRateLimited(page: Page, path: string, message: string, retryA
 }
 
 async function mockAppChromeRequests(page: Page) {
-  await mockJson(page, "/api/me", {
-    body: {
-      id: "me-1",
-      email: "tester@example.com",
-      display_name: "Wax Tester",
-      timezone: "UTC",
-      currency: "USD",
-      notifications_email: true,
-      notifications_push: false,
-    },
-  });
+  await mockJson(page, "/api/me", { body: meProfileFixture });
   await mockJson(page, "/api/notifications/unread-count", { body: { unread_count: 2 } });
   await page.route(routePattern("/api/stream/events"), async (route) => {
     await route.fulfill({
@@ -67,26 +121,16 @@ async function mockAppChromeRequests(page: Page) {
   });
 }
 
-function watchRuleFixture() {
-  return [
-    {
-      id: "rule-1",
-      name: "Ambient LPs",
-      poll_interval_seconds: 300,
-      query: { keywords: ["ambient", "vinyl"] },
-      is_active: true,
-    },
-  ];
-}
-
 test.describe("route-focused state validation", () => {
   test("/alerts supports loading, error, empty, and rate-limited states", async ({ page }) => {
     await mockAppChromeRequests(page);
-    await mockJson(page, "/api/watch-rules", { body: watchRuleFixture(), delayMs: 800 });
+    await mockJson(page, "/api/watch-rules", { body: [watchRuleFixture], delayMs: 800 });
 
     await page.goto("/alerts");
     await expect(page.getByText("Loading watch rules…")).toBeVisible();
-    await expect(page.getByText(/status: loaded 1 rules\./i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("link", { name: /rare techno under \$40/i })).toBeVisible({
+      timeout: 10_000,
+    });
 
     await page.unroute(routePattern("/api/watch-rules"));
     await mockJson(page, "/api/watch-rules", {
@@ -111,26 +155,13 @@ test.describe("route-focused state validation", () => {
   test("/watchlist supports loading, error, empty, and rate-limited states", async ({ page }) => {
     await mockAppChromeRequests(page);
     await mockJson(page, "/api/watch-releases", {
-      body: [
-        {
-          id: "release-1",
-          title: "Selected Ambient Works",
-          artist: "Aphex Twin",
-          year: 1994,
-          target_price: 35,
-          currency: "USD",
-          match_mode: "keyword",
-          is_active: true,
-          created_at: "2026-01-01T00:00:00.000Z",
-          updated_at: "2026-01-01T00:00:00.000Z",
-        },
-      ],
+      body: [watchReleaseFixture],
       delayMs: 800,
     });
 
     await page.goto("/watchlist");
     await expect(page.getByText("Loading watchlist…")).toBeVisible();
-    await expect(page.getByText(/status: loaded 1 watchlist releases\./i)).toBeVisible({
+    await expect(page.getByRole("link", { name: /demo want/i })).toBeVisible({
       timeout: 10_000,
     });
 
@@ -168,24 +199,13 @@ test.describe("route-focused state validation", () => {
   }) => {
     await mockAppChromeRequests(page);
     await mockJson(page, "/api/notifications", {
-      body: [
-        {
-          id: "notif-1",
-          event_type: "watch_match_found",
-          channel: "email",
-          status: "sent",
-          is_read: false,
-          created_at: "2026-03-01T00:00:00.000Z",
-          updated_at: "2026-03-01T00:00:00.000Z",
-          read_at: null,
-        },
-      ],
+      body: [notificationFixture],
       delayMs: 800,
     });
 
     await page.goto("/notifications");
     await expect(page.getByText("Loading notifications…")).toBeVisible();
-    await expect(page.getByText(/watch_match_found/i)).toBeVisible();
+    await expect(page.getByText(/watch_match_found/i)).toBeVisible({ timeout: 10_000 });
 
     await page.unroute(routePattern("/api/notifications"));
     await mockJson(page, "/api/notifications", {
@@ -214,8 +234,10 @@ test.describe("route-focused state validation", () => {
     await mockJson(page, "/api/integrations/discogs/status", {
       body: {
         connected: true,
+        provider: "discogs",
         connected_at: "2026-02-01T12:00:00.000Z",
         external_user_id: "waxwatch_discogs_007",
+        has_access_token: true,
       },
       delayMs: 800,
     });
@@ -248,7 +270,7 @@ test.describe("route-focused state validation", () => {
     page,
   }) => {
     await mockAppChromeRequests(page);
-    await mockJson(page, "/api/watch-rules", { body: watchRuleFixture() });
+    await mockJson(page, "/api/watch-rules", { body: [watchRuleFixture] });
 
     await page.goto("/settings");
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
@@ -326,13 +348,7 @@ test.describe("route-focused state validation", () => {
     let notificationsCalls = 0;
 
     await mockJson(page, "/api/me", {
-      body: {
-        id: "me-1",
-        email: "tester@example.com",
-        display_name: "Wax Tester",
-        timezone: "UTC",
-        currency: "USD",
-      },
+      body: meProfileFixture,
     });
 
     await page.route(routePattern("/api/notifications/unread-count"), async (route) => {
@@ -370,13 +386,8 @@ test.describe("route-focused state validation", () => {
       });
     });
 
-    const sseRequestPromise = page.waitForRequest((request) =>
-      request.url().includes("/api/stream/events"),
-    );
-
     await page.goto("/notifications");
     await expect(page.getByRole("heading", { name: /notifications/i })).toBeVisible();
-    await sseRequestPromise;
 
     await expect.poll(() => streamCalls, { timeout: 10_000 }).toBeGreaterThan(0);
     await expect.poll(() => unreadCountCalls, { timeout: 10_000 }).toBeGreaterThan(1);
