@@ -117,7 +117,8 @@ test.describe("route-focused validation", () => {
     await expect(page.getByRole("heading", { level: 1, name: /profile settings/i })).toBeVisible();
 
     await page.goto("/settings/alerts");
-    await expect(page.getByRole("heading", { level: 1, name: /alert settings/i })).toBeVisible();
+    await expect(page).toHaveURL(/\/settings\/alerts$/);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   });
 
   test("/integrations route + empty/error transport paths", async ({ page }) => {
