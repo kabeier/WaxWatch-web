@@ -34,6 +34,13 @@ describe("/login route", () => {
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
 
+    expect(screen.getByLabelText(/email/i)).toHaveClass("ww-input");
+    expect(screen.getByLabelText(/password/i)).toHaveClass("ww-input");
+    expect(screen.getByRole("button", { name: /sign in/i })).toHaveClass(
+      "ww-button",
+      "ww-button--primary",
+      "ww-button--md",
+    );
     expect(screen.getByRole("button", { name: /sign in/i })).toBeDisabled();
     expect(screen.getByText(/signing you in/i)).toBeInTheDocument();
 

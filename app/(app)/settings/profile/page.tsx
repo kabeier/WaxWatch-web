@@ -1,8 +1,7 @@
-import Link from "next/link";
-
 import pageViewStyles from "@/components/page-view/PageView.module.css";
 import { ActiveDivider, PageCardGroup, PageView } from "@/components/page-view/PageView";
 import {
+  ButtonLink,
   Card,
   CardBody,
   CardDescription,
@@ -26,9 +25,9 @@ export default function ProfileSettingsPage() {
       meta={
         <>
           <span>Integrations are managed at the top-level route.</span>
-          <Link href="/integrations" className="ww-button ww-button--secondary ww-button--md">
+          <ButtonLink href="/integrations" variant="secondary">
             Open integrations
-          </Link>
+          </ButtonLink>
         </>
       }
     >
