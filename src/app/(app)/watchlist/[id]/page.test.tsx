@@ -206,6 +206,22 @@ describe("/watchlist/[id] route", () => {
     expect(screen.getByText(/retry-after:\s*15s/i)).toBeInTheDocument();
   });
 
+  it("announces inline validation errors for watchlist fields", async () => {
+    const user = userEvent.setup();
+    render(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
+    const targetPrice = screen.getByRole("spinbutton", { name: /target price/i });
+    await user.clear(targetPrice);
+    await user.type(targetPrice, "-1");
+    await user.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+
+    expect(
+      screen.getByText(/target price must be empty or a number greater than or equal to 0\./i, {
+        selector: "#watchlist-item-target-price-error",
+      }),
+    ).toHaveAttribute("role", "alert");
+  });
+
   it("shows pending disable state with user-visible disabled controls", async () => {
     state.disable.mockReturnValue({
       mutate: vi.fn(),

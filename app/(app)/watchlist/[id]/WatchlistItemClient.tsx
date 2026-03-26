@@ -217,7 +217,11 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           errorSummaryId={showValidationSummary ? "watchlist-item-form-errors" : undefined}
         />
         {validationField === "targetPrice" ? (
-          <p className={pageViewStyles.helpText} id="watchlist-item-target-price-error">
+          <p
+            className={pageViewStyles.helpText}
+            id="watchlist-item-target-price-error"
+            role="alert"
+          >
             {validationText}
           </p>
         ) : null}
@@ -238,7 +242,11 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           errorSummaryId={showValidationSummary ? "watchlist-item-form-errors" : undefined}
         />
         {validationField === "minCondition" ? (
-          <p className={pageViewStyles.helpText} id="watchlist-item-min-condition-error">
+          <p
+            className={pageViewStyles.helpText}
+            id="watchlist-item-min-condition-error"
+            role="alert"
+          >
             {validationText}
           </p>
         ) : null}

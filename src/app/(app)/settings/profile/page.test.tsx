@@ -64,6 +64,9 @@ describe("/settings/profile route", () => {
     expect(currency).toHaveAttribute("aria-invalid", "true");
     expect(currency).toHaveAttribute("aria-errormessage", "profile-currency-error");
     expect(currency).toHaveAttribute("aria-describedby", "profile-currency-error");
+    expect(
+      screen.getByText(/currency must be a valid 3-letter iso code \(for example: usd\)\./i),
+    ).toHaveAttribute("role", "alert");
 
     await user.click(screen.getByRole("button", { name: /save profile changes/i }));
     expect(currency).toHaveAttribute(

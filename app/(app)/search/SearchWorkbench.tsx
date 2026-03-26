@@ -187,7 +187,7 @@ export default function SearchWorkbench() {
             errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
           />
           {keywordError ? (
-            <p className={pageViewStyles.helpText} id="search-keywords-error">
+            <p className={pageViewStyles.helpText} id="search-keywords-error" role="alert">
               {keywordError}
             </p>
           ) : null}
@@ -204,7 +204,7 @@ export default function SearchWorkbench() {
             errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
           />
           {providerError ? (
-            <p className={pageViewStyles.helpText} id="search-providers-error">
+            <p className={pageViewStyles.helpText} id="search-providers-error" role="alert">
               {providerError}
             </p>
           ) : null}
@@ -224,7 +224,7 @@ export default function SearchWorkbench() {
               errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
             />
             {pageError ? (
-              <p className={pageViewStyles.helpText} id="search-page-error">
+              <p className={pageViewStyles.helpText} id="search-page-error" role="alert">
                 {pageError}
               </p>
             ) : null}
@@ -244,7 +244,7 @@ export default function SearchWorkbench() {
               errorSummaryId={showSearchValidationSummary ? "search-form-errors" : undefined}
             />
             {pageSizeError ? (
-              <p className={pageViewStyles.helpText} id="search-page-size-error">
+              <p className={pageViewStyles.helpText} id="search-page-size-error" role="alert">
                 {pageSizeError}
               </p>
             ) : null}
@@ -393,7 +393,7 @@ export default function SearchWorkbench() {
               errorSummaryId={showSaveAlertValidationSummary ? "save-alert-errors" : undefined}
             />
             {alertNameError ? (
-              <p className={pageViewStyles.helpText} id="save-alert-name-error">
+              <p className={pageViewStyles.helpText} id="save-alert-name-error" role="alert">
                 {alertNameError}
               </p>
             ) : null}
@@ -413,7 +413,11 @@ export default function SearchWorkbench() {
               errorSummaryId={showSaveAlertValidationSummary ? "save-alert-errors" : undefined}
             />
             {pollIntervalError ? (
-              <p className={pageViewStyles.helpText} id="save-alert-poll-interval-error">
+              <p
+                className={pageViewStyles.helpText}
+                id="save-alert-poll-interval-error"
+                role="alert"
+              >
                 {pollIntervalError}
               </p>
             ) : null}
