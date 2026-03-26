@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("a11y smoke: main landmark and heading are present", async ({ page }) => {
+test("smoke-only a11y: main landmark and heading are present", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("main")).toBeVisible();

@@ -114,10 +114,10 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: E2E tests
+      - name: E2E tests (smoke-only baseline + route-depth suite)
         run: npm run e2e:ci
 
-      - name: Accessibility smoke
+      - name: Accessibility smoke (smoke-only)
         run: npm run a11y:smoke
 
       - name: Deployment verification
