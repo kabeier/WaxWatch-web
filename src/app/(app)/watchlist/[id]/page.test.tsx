@@ -295,6 +295,60 @@ describe("/watchlist/[id] route", () => {
     expect(screen.queryByText(/could not save watchlist item updates\./i)).not.toBeInTheDocument();
   });
 
+  it("lets users edit fields, then surfaces save failure and success outcomes", async () => {
+    const user = userEvent.setup();
+    const mutate = vi.fn();
+    state.update.mockReturnValue({
+      mutate,
+      data: undefined,
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+
+    const { rerender } = render(
+      await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }),
+    );
+
+    await user.clear(screen.getByRole("spinbutton", { name: /target price/i }));
+    await user.type(screen.getByRole("spinbutton", { name: /target price/i }), "19.99");
+    await user.clear(screen.getByRole("textbox", { name: /minimum condition/i }));
+    await user.type(screen.getByRole("textbox", { name: /minimum condition/i }), "NM");
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: /match mode/i }),
+      "master_release",
+    );
+    await user.click(screen.getByRole("checkbox", { name: /watchlist item active/i }));
+    await user.click(screen.getByRole("button", { name: /save watchlist updates/i }));
+
+    expect(mutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("spinbutton", { name: /target price/i })).toHaveValue(19.99);
+    expect(screen.getByRole("textbox", { name: /minimum condition/i })).toHaveValue("NM");
+    expect(screen.getByRole("combobox", { name: /match mode/i })).toHaveValue("master_release");
+    expect(screen.getByRole("checkbox", { name: /watchlist item active/i })).not.toBeChecked();
+
+    state.update.mockReturnValue({
+      mutate,
+      data: undefined,
+      error: { kind: "unknown_error", message: "Save failed" },
+      isPending: false,
+      isError: true,
+    });
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    expect(screen.getByRole("alert")).toHaveTextContent(/could not save watchlist item updates\./i);
+
+    state.update.mockReturnValue({
+      mutate,
+      data: { ok: true },
+      error: null,
+      isPending: false,
+      isError: false,
+    });
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+    expect(screen.getByRole("status")).toHaveTextContent(/success: watchlist item updated\./i);
+    expect(screen.queryByText(/could not save watchlist item updates\./i)).not.toBeInTheDocument();
+  });
+
   it("shows save cooldown state and keeps retrying once cooldown clears", async () => {
     const mutate = vi.fn();
     state.update.mockReturnValueOnce({
