@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import DashboardClientContent from "../app/(app)/dashboard/DashboardClientContent";
@@ -307,5 +308,33 @@ describe("DashboardClientContent", () => {
     expect(screen.getByText("No notifications yet")).toBeInTheDocument();
     expect(screen.getByText("No recent matches yet")).toBeInTheDocument();
     expect(screen.getByText("No watch rules yet")).toBeInTheDocument();
+  });
+
+  it("retries both notifications and unread-count queries from notifications card error state", async () => {
+    const notificationsRetry = vi.fn();
+    const unreadRetry = vi.fn();
+
+    hookMocks.notifications.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: true,
+      error: new Error("Notifications unavailable"),
+      retry: notificationsRetry,
+    });
+    hookMocks.unreadCount.mockReturnValue({
+      data: { unread_count: 0 },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: unreadRetry,
+    });
+
+    render(<DashboardClientContent />);
+
+    const retryButton = screen.getByRole("button", { name: "Retry notifications" });
+    await userEvent.click(retryButton);
+
+    expect(notificationsRetry).toHaveBeenCalledTimes(1);
+    expect(unreadRetry).toHaveBeenCalledTimes(1);
   });
 });
