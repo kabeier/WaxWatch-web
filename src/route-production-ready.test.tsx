@@ -1606,6 +1606,7 @@ describe("route-level production-ready paths", () => {
     render(<ProfileSettingsPage />);
 
     fireEvent.change(screen.getByLabelText(/preferred currency/i), { target: { value: "US" } });
+    fireEvent.click(screen.getByRole("button", { name: /save profile changes/i }));
 
     const summary = screen.getByText(/please fix profile validation issues before saving\./i);
     expect(summary).toBeInTheDocument();
