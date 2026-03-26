@@ -159,12 +159,16 @@ describe("base ui primitives", () => {
     profile.focus();
     await user.keyboard("{ArrowRight}");
     expect(alerts).toHaveFocus();
+    expect(profile).toHaveAttribute("tabindex", "-1");
+    expect(alerts).toHaveAttribute("tabindex", "0");
     await user.keyboard("{End}");
     expect(danger).toHaveFocus();
+    expect(danger).toHaveAttribute("tabindex", "0");
     await user.keyboard("{ArrowLeft}");
     expect(alerts).toHaveFocus();
     await user.keyboard("{Home}");
     expect(profile).toHaveFocus();
+    expect(profile).toHaveAttribute("tabindex", "0");
   });
 
   it("keeps inactive tabs out of tab order by default", async () => {

@@ -2,12 +2,11 @@
 
 import { StateError, StateLoading, StateRateLimited } from "@/components/ui/primitives/state";
 import { LiveRegion } from "@/components/ui/primitives/base";
-import { useDeactivateAccountMutation, useHardDeleteAccountMutation } from "@/lib/query/hooks";
 import { getErrorMessage, getRetryAfterSeconds, isRateLimitedError } from "@/lib/query/state";
+import { useDangerMutations } from "./DangerMutationsContext";
 
 export default function DangerRequestStatus() {
-  const deactivateMutation = useDeactivateAccountMutation();
-  const hardDeleteMutation = useHardDeleteAccountMutation();
+  const { deactivateMutation, hardDeleteMutation } = useDangerMutations();
 
   return (
     <>

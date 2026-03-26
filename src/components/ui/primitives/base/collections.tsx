@@ -77,6 +77,12 @@ type PageTabsProps = ComponentPropsWithoutRef<"div"> & {
 
 export function PageTabs({ className, label = "Page tabs", ...props }: PageTabsProps) {
   const { onKeyDown, ...restProps } = props;
+  const setRovingTabIndex = (tabs: HTMLElement[], nextTab: HTMLElement) => {
+    for (const tab of tabs) {
+      tab.tabIndex = tab === nextTab ? 0 : -1;
+    }
+  };
+
   const handleKeyDown: ComponentPropsWithoutRef<"div">["onKeyDown"] = (event) => {
     onKeyDown?.(event);
     if (event.defaultPrevented) {
@@ -113,27 +119,64 @@ export function PageTabs({ className, label = "Page tabs", ...props }: PageTabsP
 
     event.preventDefault();
     if (event.key === "Home") {
-      tabs[0]?.focus();
+      const firstTab = tabs[0];
+      if (firstTab) {
+        setRovingTabIndex(tabs, firstTab);
+        firstTab.focus();
+      }
       return;
     }
     if (event.key === "End") {
-      tabs[tabs.length - 1]?.focus();
+      const lastTab = tabs[tabs.length - 1];
+      if (lastTab) {
+        setRovingTabIndex(tabs, lastTab);
+        lastTab.focus();
+      }
       return;
     }
 
     const direction = event.key === "ArrowRight" ? 1 : -1;
     const nextIndex = (currentIndex + direction + tabs.length) % tabs.length;
-    tabs[nextIndex]?.focus();
+    const nextTab = tabs[nextIndex];
+    if (nextTab) {
+      setRovingTabIndex(tabs, nextTab);
+      nextTab.focus();
+    }
+  };
+
+  const handleFocus: ComponentPropsWithoutRef<"div">["onFocus"] = (event) => {
+    props.onFocus?.(event);
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    const target =
+      event.target instanceof HTMLElement ? event.target.closest('[role="tab"]') : null;
+    const tablist = event.currentTarget;
+    if (!target || !tablist.contains(target)) {
+      return;
+    }
+
+    const tabs = Array.from(tablist.querySelectorAll<HTMLElement>('[role="tab"]')).filter(
+      (tab) => !tab.hasAttribute("disabled"),
+    );
+    if (tabs.length === 0) {
+      return;
+    }
+
+    setRovingTabIndex(tabs, target as HTMLElement);
   };
 
   return (
     <div
       {...restProps}
       role="tablist"
+      aria-orientation="horizontal"
       aria-label={label}
       className={joinClassNames("ww-page-tabs", className)}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
+      onFocus={handleFocus}
     />
   );
 }
