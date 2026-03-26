@@ -75,7 +75,7 @@ describe("useAppShellChromeData", () => {
     const { result } = renderHook(() => useAppShellChromeData());
 
     expect(result.current.utilities).toEqual([
-      { href: "/notifications", label: "Inbox", value: "0" },
+      { href: "/notifications", label: "Inbox", value: "…" },
       { href: "/settings/profile", label: "Account", value: "Loading" },
     ]);
     expect(result.current.sideNavStatus).toEqual({
@@ -248,7 +248,7 @@ describe("useAppShellChromeData", () => {
     const { result } = renderHook(() => useAppShellChromeData());
 
     expect(result.current.utilities).toEqual([
-      { href: "/notifications", label: "Inbox", value: "0" },
+      { href: "/notifications", label: "Inbox", value: "…" },
       { href: "/settings/profile", label: "Account", value: "Unavailable" },
     ]);
     expect(result.current.sideNavStatus).toEqual({

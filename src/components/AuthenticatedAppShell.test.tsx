@@ -127,6 +127,7 @@ describe("AuthenticatedAppShell", () => {
         </AppProviders>,
       );
 
+      expect(screen.getByRole("link", { name: /inbox/i })).toHaveTextContent("…");
       expect(screen.getByRole("link", { name: /account/i })).toHaveTextContent("Loading");
       expect(screen.getByText("Loading profile")).toBeInTheDocument();
       expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
