@@ -95,20 +95,21 @@ Users reach Search from in-route links/CTAs (for example Dashboard quick actions
 
 Route maturity definitions and the up-to-date status matrix are maintained in `docs/DEVELOPER_REFERENCE.md` under **Route matrix**.
 
-Production-ready routes include fully data-backed surfaces such as `/dashboard`, `/watchlist/[id]`, `/search`, `/settings/profile`, and `/settings/danger`, plus account-state/auth pages like `/login`, `/signed-out`, and `/account-removed` (see the canonical matrix in `docs/DEVELOPER_REFERENCE.md`).
+Route maturity promotion/finalization requires fully green gate evidence (`build` + `a11y:smoke` + route-status gate). Until that evidence is available, treat the canonical matrix as the current working status snapshot (not a newly finalized release baseline).
 
 When route statuses change, update that matrix in the same PR so this repo keeps a single canonical status source, and keep this summary aligned when the production-ready route set changes.
 
-## Verification lock (2026-03-25 post-merge rerun)
+## Verification lock (2026-03-26 local full-script rerun)
 
-Full verification was rerun on **March 25, 2026** in this workspace after concurrent tracks merged.
+Requested full verification (`test`, `typecheck`, `lint`, `format:check`, `build`, `a11y:smoke`, `docs:route-status-gate`) was rerun on **March 26, 2026** in this workspace.
 
-Result in this workspace: **still partially green (infrastructure/network limited)**.
+Result in this workspace: **partially green (infrastructure/network limited)**.
 
-- ✅ `npm run test:run` passed (48/48 files, 365/365 tests).
+- ✅ `npm run test` passed (48/48 files, 372/372 tests).
 - ✅ `npm run typecheck`, `npm run lint`, and `npm run format:check` all passed.
-- ✅ `NODE_ENV=test ... npm run ci:prod-gates` passed `test:coverage` (48/48 files, 365/365 tests) and `prebuild:prod-env`.
-- ❌ `NODE_ENV=test ... npm run ci:prod-gates` failed at `npm run build` while Next.js attempted to download missing SWC binaries (`ENETUNREACH` reaching the SWC package host).
-- ⚠️ `npm run a11y:smoke`, `npm run verify:deployment`, and `npm run release:checklist` did not execute because `ci:prod-gates` stops at the first failing gate.
+- ✅ `npm run build` passed env-contract `prebuild` validation when required env vars were supplied.
+- ❌ `npm run build` failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH` reaching the SWC package host).
+- ⚠️ `npm run a11y:smoke` could not pass because `.next/standalone/server.js` was unavailable (depends on successful `npm run build`).
+- ⚠️ `npm run docs:route-status-gate` skipped: `GITHUB_BASE_REF` is not set locally; with it set, this workspace still cannot fetch `origin/<base>` because no `origin` remote is configured.
 
-Since the full release-capable gate run still did not complete end-to-end, do not freeze route statuses/docs as a release-candidate frontend baseline from this workspace. Treat release-candidate frontend baseline as pending a fully green rerun in CI/release infrastructure.
+Since the full gate run did not complete end-to-end, do not newly finalize route maturity promotions from this workspace run.
