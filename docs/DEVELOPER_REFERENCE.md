@@ -115,7 +115,7 @@ Route maturity/status guidance is canonical in this reference's **Route matrix**
 Auth implementation anchors:
 
 - `src/lib/auth-session.ts` (web auth adapter, signed-out/account-removed redirects, legacy token cleanup)
-- `app/(auth)/login/LoginPageClient.tsx` (`POST /auth/login` form submit with cookie credentials + secure handoff guardrails)
+- `app/(auth)/login/LoginPageClient.tsx` (`POST ${resolveApiBaseUrl()}/auth/login`; default `/api/auth/login`; cookie credentials + secure handoff guardrails)
 
 ## Architecture layering: api core vs web query
 
