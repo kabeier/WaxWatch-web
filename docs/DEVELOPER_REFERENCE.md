@@ -2,17 +2,17 @@
 
 ## Verification lock (2026-03-26 local full-script rerun)
 
-Requested full verification (`test`, `typecheck`, `lint`, `format:check`, `build`, `a11y:smoke`, `docs:route-status-gate`) was rerun in this workspace on **March 26, 2026**.
+Requested full verification (`test:run`, `typecheck`, `lint`, `format:check`, `build`, `a11y:smoke`, `docs:route-status-gate`) was rerun in this workspace on **March 26, 2026**.
 
-Outcome in this environment: **partially green (local environment configuration limited)**.
+Outcome in this environment: **partially green (environment/network limited)**.
 
-- ✅ `npm run test:run`: passed (50/50 files, 413/413 tests).
+- ✅ `npm run test:run`: passed (51/51 files, 432/432 tests).
 - ✅ `npm run typecheck`: passed.
 - ✅ `npm run lint`: passed.
 - ✅ `npm run format:check`: passed.
-- ❌ `npm run build`: failed in `prebuild` env-contract validation because required runtime env vars were unset (`NODE_ENV`, `APP_BASE_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_RELEASE_VERSION`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_REGION`, `AWS_SECRETS_PREFIX`, `TRUSTED_PROXY_CIDRS`, `LOG_LEVEL`).
-- ⚠️ `npm run a11y:smoke`: failed before browser checks because `npm run start` exited on missing required runtime env vars (`APP_BASE_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_RELEASE_VERSION`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_REGION`, `AWS_SECRETS_PREFIX`, `TRUSTED_PROXY_CIDRS`, `LOG_LEVEL`).
-- ⚠️ `npm run docs:route-status-gate`: skipped in local workspace context (`GITHUB_BASE_REF` unset).
+- ❌ `npm run build`: env-contract validation passed, but Next.js build failed while downloading `@next/swc-linux-x64-gnu` (`ENETUNREACH`), so `.next/standalone` was not produced.
+- ⚠️ `npm run a11y:smoke`: failed before browser checks because `npm run start` exited with `startup_missing_build_artifact` (`.next/standalone/server.js` missing after build failure).
+- ⚠️ `GITHUB_BASE_REF=main npm run docs:route-status-gate`: exited with skip because the script could not fetch `origin/main` (`fatal: 'origin' does not appear to be a git repository`).
 
 Because the full gate set did not complete end-to-end, treat route readiness as **not newly promoted/finalized** from this local run.
 
