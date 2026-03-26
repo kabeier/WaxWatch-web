@@ -183,6 +183,15 @@ describe("DashboardClientContent", () => {
     expect(screen.getByText("Pending review")).toBeInTheDocument();
   });
 
+  it("applies shared truncation styling to dashboard row text primitives", () => {
+    render(<DashboardClientContent />);
+
+    expect(screen.getByText("match.created")).toHaveClass("ww-list-row__text-truncate");
+    expect(screen.getByText("email · sent")).toHaveClass("ww-list-row__text-truncate");
+    expect(screen.getByText("Unread")).toHaveClass("ww-list-row__text-truncate");
+    expect(screen.getByText("Pending review")).toHaveClass("ww-list-row__text-truncate");
+  });
+
   it("uses standardized empty states across dashboard feed cards", () => {
     hookMocks.notifications.mockReturnValue({
       data: [],
