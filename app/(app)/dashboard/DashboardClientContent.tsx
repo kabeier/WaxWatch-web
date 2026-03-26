@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useMemo, type ReactNode } from "react";
+import { Fragment, useCallback, useMemo, type ReactNode } from "react";
 
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
@@ -80,6 +80,13 @@ type DashboardRuleRow = WatchRule & {
   activeState: string;
   pollLabel: string;
   nextRunLabel: string;
+};
+type DashboardDenseListRowViewModel = {
+  id: string | number;
+  title: ReactNode;
+  description?: ReactNode;
+  trailing?: ReactNode;
+  metaValues: string[];
 };
 
 type DashboardTimestampedItem = {
@@ -180,7 +187,7 @@ function DashboardMetric({ value, label }: { value: number | string; label: stri
 }
 
 function DashboardListDescription({ children }: { children: ReactNode }) {
-  return <ListText>{children}</ListText>;
+  return <ListText className={pageViewStyles.mutedText}>{children}</ListText>;
 }
 
 function DashboardListMeta({ values }: { values: string[] }) {
@@ -195,6 +202,25 @@ function DashboardListMeta({ values }: { values: string[] }) {
         </Fragment>
       ))}
     </ListMeta>
+  );
+}
+
+function DashboardDenseListRow({ row }: { row: DashboardDenseListRowViewModel }) {
+  return (
+    <ListRow
+      key={row.id}
+      title={<DashboardListTitle>{row.title}</DashboardListTitle>}
+      description={
+        row.description ? (
+          <DashboardListDescription>{row.description}</DashboardListDescription>
+        ) : undefined
+      }
+      trailing={
+        row.trailing ? <DashboardListTrailing>{row.trailing}</DashboardListTrailing> : undefined
+      }
+    >
+      <DashboardListMeta values={row.metaValues} />
+    </ListRow>
   );
 }
 
@@ -425,6 +451,18 @@ function DashboardNotificationsPanel({
   error: unknown;
   onRetry: () => void;
 }) {
+  const listRows = useMemo(
+    () =>
+      rows.map((notification) => ({
+        id: notification.id,
+        title: notification.event_type,
+        description: notification.description,
+        trailing: notification.readState,
+        metaValues: notification.metaValues,
+      })),
+    [rows],
+  );
+
   return (
     <DashboardListContent
       copy={DASHBOARD_TRANSITION_COPY.notifications}
@@ -433,17 +471,8 @@ function DashboardNotificationsPanel({
       itemCount={rows.length}
       onRetry={onRetry}
     >
-      {rows.map((notification) => (
-        <ListRow
-          key={notification.id}
-          title={<DashboardListTitle>{notification.event_type}</DashboardListTitle>}
-          description={
-            <DashboardListDescription>{notification.description}</DashboardListDescription>
-          }
-          trailing={<DashboardListTrailing>{notification.readState}</DashboardListTrailing>}
-        >
-          <DashboardListMeta values={notification.metaValues} />
-        </ListRow>
+      {listRows.map((row) => (
+        <DashboardDenseListRow key={row.id} row={row} />
       ))}
     </DashboardListContent>
   );
@@ -460,6 +489,25 @@ function DashboardMatchesPanel({
   error: unknown;
   onRetry: () => void;
 }) {
+  const listRows = useMemo(
+    () =>
+      rows.map((release) => ({
+        id: release.id,
+        title: (
+          <Link
+            className={pageViewStyles.listLink}
+            href={`${routeViewModels.watchlist.path}/${release.id}`}
+          >
+            <ListText>{release.title}</ListText>
+          </Link>
+        ),
+        description: `${release.artist} · ${release.matchModeLabel}`,
+        trailing: release.activeState,
+        metaValues: [release.targetPriceLabel, release.updatedLabel],
+      })),
+    [rows],
+  );
+
   return (
     <DashboardListContent
       copy={DASHBOARD_TRANSITION_COPY.matches}
@@ -468,26 +516,8 @@ function DashboardMatchesPanel({
       itemCount={rows.length}
       onRetry={onRetry}
     >
-      {rows.map((release) => (
-        <ListRow
-          key={release.id}
-          title={
-            <Link
-              className={pageViewStyles.listLink}
-              href={`${routeViewModels.watchlist.path}/${release.id}`}
-            >
-              <DashboardListTitle>{release.title}</DashboardListTitle>
-            </Link>
-          }
-          description={
-            <DashboardListDescription>
-              {release.artist} · {release.matchModeLabel}
-            </DashboardListDescription>
-          }
-          trailing={<DashboardListTrailing>{release.activeState}</DashboardListTrailing>}
-        >
-          <DashboardListMeta values={[release.targetPriceLabel, release.updatedLabel]} />
-        </ListRow>
+      {listRows.map((row) => (
+        <DashboardDenseListRow key={row.id} row={row} />
       ))}
     </DashboardListContent>
   );
@@ -504,6 +534,25 @@ function DashboardRulesPanel({
   error: unknown;
   onRetry: () => void;
 }) {
+  const listRows = useMemo(
+    () =>
+      rows.map((rule) => ({
+        id: rule.id,
+        title: (
+          <Link
+            className={pageViewStyles.listLink}
+            href={`${routeViewModels.alerts.path}/${rule.id}`}
+          >
+            <ListText>{rule.name}</ListText>
+          </Link>
+        ),
+        description: rule.keywordsLabel,
+        trailing: rule.activeState,
+        metaValues: [rule.pollLabel, rule.nextRunLabel],
+      })),
+    [rows],
+  );
+
   return (
     <DashboardListContent
       copy={DASHBOARD_TRANSITION_COPY.rules}
@@ -512,22 +561,8 @@ function DashboardRulesPanel({
       itemCount={rows.length}
       onRetry={onRetry}
     >
-      {rows.map((rule) => (
-        <ListRow
-          key={rule.id}
-          title={
-            <Link
-              className={pageViewStyles.listLink}
-              href={`${routeViewModels.alerts.path}/${rule.id}`}
-            >
-              <DashboardListTitle>{rule.name}</DashboardListTitle>
-            </Link>
-          }
-          description={<DashboardListDescription>{rule.keywordsLabel}</DashboardListDescription>}
-          trailing={<DashboardListTrailing>{rule.activeState}</DashboardListTrailing>}
-        >
-          <DashboardListMeta values={[rule.pollLabel, rule.nextRunLabel]} />
-        </ListRow>
+      {listRows.map((row) => (
+        <DashboardDenseListRow key={row.id} row={row} />
       ))}
     </DashboardListContent>
   );
@@ -553,14 +588,10 @@ export default function DashboardClientContent() {
     [watchReleasesQuery.data],
   );
 
-  const recentNotifications = useMemo(
-    () => sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT),
-    [notifications],
-  );
-  const notificationRows = useMemo(
-    () => buildNotificationRows(recentNotifications),
-    [recentNotifications],
-  );
+  const notificationRows = useMemo(() => {
+    const recentNotifications = sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT);
+    return buildNotificationRows(recentNotifications);
+  }, [notifications]);
   const watchRulesSummary = useMemo(() => {
     const { recentItems, activeItemCount, totalItemCount } = summarizeDashboardItems(
       watchRules,
@@ -570,6 +601,7 @@ export default function DashboardClientContent() {
       recentRules: recentItems,
       activeRuleCount: activeItemCount,
       totalRuleCount: totalItemCount,
+      rows: buildRuleRows(recentItems),
     };
   }, [watchRules]);
   const watchReleasesSummary = useMemo(() => {
@@ -581,16 +613,9 @@ export default function DashboardClientContent() {
       recentMatches: recentItems,
       activeMatchCount: activeItemCount,
       totalReleaseCount: totalItemCount,
+      rows: buildReleaseRows(recentItems),
     };
   }, [watchReleases]);
-  const releaseRows = useMemo(
-    () => buildReleaseRows(watchReleasesSummary.recentMatches),
-    [watchReleasesSummary.recentMatches],
-  );
-  const ruleRows = useMemo(
-    () => buildRuleRows(watchRulesSummary.recentRules),
-    [watchRulesSummary.recentRules],
-  );
   const unreadCountSummary = useMemo(
     () => ({
       value: unreadCountQuery.isLoading
@@ -602,6 +627,16 @@ export default function DashboardClientContent() {
     }),
     [unreadCountQuery.data?.unread_count, unreadCountQuery.isError, unreadCountQuery.isLoading],
   );
+  const retryWatchReleases = useCallback(() => {
+    void watchReleasesQuery.retry();
+  }, [watchReleasesQuery]);
+  const retryWatchRules = useCallback(() => {
+    void watchRulesQuery.retry();
+  }, [watchRulesQuery]);
+  const retryNotifications = useCallback(() => {
+    void notificationsQuery.retry();
+    void unreadCountQuery.retry();
+  }, [notificationsQuery, unreadCountQuery]);
 
   return (
     <PageView
@@ -665,10 +700,10 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardMatchesPanel
-              rows={releaseRows}
+              rows={watchReleasesSummary.rows}
               isLoading={watchReleasesQuery.isLoading}
               error={watchReleasesQuery.error}
-              onRetry={() => void watchReleasesQuery.retry()}
+              onRetry={retryWatchReleases}
             />
             <Link className={pageViewStyles.listLink} href={routeViewModels.watchlist.path}>
               Open full watchlist
@@ -686,10 +721,10 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardRulesPanel
-              rows={ruleRows}
+              rows={watchRulesSummary.rows}
               isLoading={watchRulesQuery.isLoading}
               error={watchRulesQuery.error}
-              onRetry={() => void watchRulesQuery.retry()}
+              onRetry={retryWatchRules}
             />
             <Link className={pageViewStyles.listLink} href={routeViewModels.alerts.path}>
               Open alerts
@@ -713,10 +748,7 @@ export default function DashboardClientContent() {
               rows={notificationRows}
               isLoading={notificationsQuery.isLoading}
               error={notificationsQuery.error}
-              onRetry={() => {
-                void notificationsQuery.retry();
-                void unreadCountQuery.retry();
-              }}
+              onRetry={retryNotifications}
             />
             <Link className={pageViewStyles.listLink} href={routeViewModels.notifications.path}>
               Open notifications
