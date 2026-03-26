@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, type ReactNode } from "react";
+import { Fragment, useMemo, type ReactNode } from "react";
 
 import { RetryAction } from "@/components/RetryAction";
 import pageViewStyles from "@/components/page-view/PageView.module.css";
@@ -41,11 +41,28 @@ const DASHBOARD_RELEASE_LIMIT = 5;
 const DASHBOARD_RULE_LIMIT = 4;
 const DASHBOARD_LOADING_ROW_COUNT = 3;
 const DASHBOARD_EMPTY_TITLE_PREFIX = "No";
-const DASHBOARD_META_SEPARATOR = "•";
 const EMPTY_NOTIFICATIONS: Notification[] = [];
 const EMPTY_RELEASES: WatchRelease[] = [];
 const EMPTY_RULES: WatchRule[] = [];
+const DASHBOARD_TRANSITION_COPY = {
+  notifications: {
+    title: "Notifications",
+    emptyMessage: "Recent notification activity will appear here.",
+  },
+  matches: {
+    title: "Recent matches",
+    emptyMessage: "Watchlist matches will appear once tracked releases meet your rules.",
+  },
+  rules: {
+    title: "Watch rules",
+    emptyMessage: "Create a watch rule to begin matching releases.",
+  },
+} satisfies Record<string, DashboardTransitionCopy>;
 type DashboardCollectionState = "loading" | "error" | "empty" | "content";
+type DashboardTransitionCopy = {
+  title: string;
+  emptyMessage: string;
+};
 
 function toTimestamp(value?: string) {
   if (!value) {
@@ -90,6 +107,26 @@ function formatKeywords(values?: Array<string | number | null | undefined>) {
   return filtered.length > 0 ? filtered.join(", ") : "No keywords";
 }
 
+function DashboardListTitle({ children }: { children: ReactNode }) {
+  return <ListText>{children}</ListText>;
+}
+
+function DashboardListTrailing({ children }: { children: ReactNode }) {
+  return <ListText className={pageViewStyles.mutedText}>{children}</ListText>;
+}
+
+function DashboardMetaItem({ children }: { children: ReactNode }) {
+  return <ListText className={pageViewStyles.mutedText}>{children}</ListText>;
+}
+
+function DashboardMetaSeparator() {
+  return (
+    <ListText className={pageViewStyles.mutedText} truncate={false} aria-hidden>
+      •
+    </ListText>
+  );
+}
+
 function DashboardMetric({ value, label }: { value: number | string; label: string }) {
   return (
     <>
@@ -109,9 +146,10 @@ function DashboardListMeta({ values }: { values: string[] }) {
   return (
     <ListMeta>
       {renderedValues.map((value, index) => (
-        <ListText key={`${value}-${index}`} className={pageViewStyles.mutedText}>
-          {index === 0 ? value : `${DASHBOARD_META_SEPARATOR} ${value}`}
-        </ListText>
+        <Fragment key={`${value}-${index}`}>
+          {index > 0 ? <DashboardMetaSeparator /> : null}
+          <DashboardMetaItem>{value}</DashboardMetaItem>
+        </Fragment>
       ))}
     </ListMeta>
   );
@@ -221,6 +259,42 @@ function DashboardListEmptyState({ title, message }: { title: string; message: s
   );
 }
 
+function DashboardCollectionTransition({
+  copy,
+  isLoading,
+  error,
+  itemCount,
+  onRetry,
+  children,
+}: {
+  copy: DashboardTransitionCopy;
+  isLoading: boolean;
+  error: unknown;
+  itemCount: number;
+  onRetry: () => void;
+  children: ReactNode;
+}) {
+  const state = resolveDashboardCollectionState({
+    isLoading,
+    hasError: Boolean(error),
+    itemCount,
+  });
+
+  if (state === "loading") {
+    return <DashboardQueryState title={copy.title} error={null} onRetry={onRetry} />;
+  }
+
+  if (state === "error") {
+    return <DashboardQueryState title={copy.title} error={error} onRetry={onRetry} />;
+  }
+
+  if (state === "empty") {
+    return <DashboardListEmptyState title={copy.title} message={copy.emptyMessage} />;
+  }
+
+  return <>{children}</>;
+}
+
 function DashboardNotificationsPanel({
   notifications,
   isLoading,
@@ -245,45 +319,29 @@ function DashboardNotificationsPanel({
       })),
     [notifications],
   );
-  const state = resolveDashboardCollectionState({
-    isLoading,
-    hasError: Boolean(error),
-    itemCount: notificationRows.length,
-  });
-  if (state === "loading") {
-    return <DashboardQueryState title="Notifications" error={null} onRetry={onRetry} />;
-  }
-
-  if (state === "error") {
-    return <DashboardQueryState title="Notifications" error={error} onRetry={onRetry} />;
-  }
-
-  if (state === "empty") {
-    return (
-      <DashboardListEmptyState
-        title="Notifications"
-        message="Recent notification activity will appear here."
-      />
-    );
-  }
-
   return (
-    <ListContainer dense>
-      {notificationRows.map((notification) => (
-        <ListRow
-          key={notification.id}
-          title={<ListText>{notification.event_type}</ListText>}
-          description={
-            <DashboardListDescription>{notification.description}</DashboardListDescription>
-          }
-          trailing={
-            <ListText className={pageViewStyles.mutedText}>{notification.readState}</ListText>
-          }
-        >
-          <DashboardListMeta values={notification.metaValues} />
-        </ListRow>
-      ))}
-    </ListContainer>
+    <DashboardCollectionTransition
+      copy={DASHBOARD_TRANSITION_COPY.notifications}
+      isLoading={isLoading}
+      error={error}
+      itemCount={notificationRows.length}
+      onRetry={onRetry}
+    >
+      <ListContainer dense>
+        {notificationRows.map((notification) => (
+          <ListRow
+            key={notification.id}
+            title={<DashboardListTitle>{notification.event_type}</DashboardListTitle>}
+            description={
+              <DashboardListDescription>{notification.description}</DashboardListDescription>
+            }
+            trailing={<DashboardListTrailing>{notification.readState}</DashboardListTrailing>}
+          >
+            <DashboardListMeta values={notification.metaValues} />
+          </ListRow>
+        ))}
+      </ListContainer>
+    </DashboardCollectionTransition>
   );
 }
 
@@ -313,52 +371,38 @@ function DashboardMatchesPanel({
       })),
     [releases],
   );
-  const state = resolveDashboardCollectionState({
-    isLoading,
-    hasError: Boolean(error),
-    itemCount: releaseRows.length,
-  });
-  if (state === "loading") {
-    return <DashboardQueryState title="Recent matches" error={null} onRetry={onRetry} />;
-  }
-
-  if (state === "error") {
-    return <DashboardQueryState title="Recent matches" error={error} onRetry={onRetry} />;
-  }
-
-  if (state === "empty") {
-    return (
-      <DashboardListEmptyState
-        title="Recent matches"
-        message="Watchlist matches will appear once tracked releases meet your rules."
-      />
-    );
-  }
-
   return (
-    <ListContainer dense>
-      {releaseRows.map((release) => (
-        <ListRow
-          key={release.id}
-          title={
-            <Link
-              className={pageViewStyles.listLink}
-              href={`${routeViewModels.watchlist.path}/${release.id}`}
-            >
-              <ListText>{release.title}</ListText>
-            </Link>
-          }
-          description={
-            <DashboardListDescription>
-              {release.artist} · {release.matchModeLabel}
-            </DashboardListDescription>
-          }
-          trailing={<ListText className={pageViewStyles.mutedText}>{release.activeState}</ListText>}
-        >
-          <DashboardListMeta values={[release.targetPriceLabel, release.updatedLabel]} />
-        </ListRow>
-      ))}
-    </ListContainer>
+    <DashboardCollectionTransition
+      copy={DASHBOARD_TRANSITION_COPY.matches}
+      isLoading={isLoading}
+      error={error}
+      itemCount={releaseRows.length}
+      onRetry={onRetry}
+    >
+      <ListContainer dense>
+        {releaseRows.map((release) => (
+          <ListRow
+            key={release.id}
+            title={
+              <Link
+                className={pageViewStyles.listLink}
+                href={`${routeViewModels.watchlist.path}/${release.id}`}
+              >
+                <DashboardListTitle>{release.title}</DashboardListTitle>
+              </Link>
+            }
+            description={
+              <DashboardListDescription>
+                {release.artist} · {release.matchModeLabel}
+              </DashboardListDescription>
+            }
+            trailing={<DashboardListTrailing>{release.activeState}</DashboardListTrailing>}
+          >
+            <DashboardListMeta values={[release.targetPriceLabel, release.updatedLabel]} />
+          </ListRow>
+        ))}
+      </ListContainer>
+    </DashboardCollectionTransition>
   );
 }
 
@@ -386,48 +430,34 @@ function DashboardRulesPanel({
       })),
     [rules],
   );
-  const state = resolveDashboardCollectionState({
-    isLoading,
-    hasError: Boolean(error),
-    itemCount: ruleRows.length,
-  });
-  if (state === "loading") {
-    return <DashboardQueryState title="Watch rules" error={null} onRetry={onRetry} />;
-  }
-
-  if (state === "error") {
-    return <DashboardQueryState title="Watch rules" error={error} onRetry={onRetry} />;
-  }
-
-  if (state === "empty") {
-    return (
-      <DashboardListEmptyState
-        title="Watch rules"
-        message="Create a watch rule to begin matching releases."
-      />
-    );
-  }
-
   return (
-    <ListContainer dense>
-      {ruleRows.map((rule) => (
-        <ListRow
-          key={rule.id}
-          title={
-            <Link
-              className={pageViewStyles.listLink}
-              href={`${routeViewModels.alerts.path}/${rule.id}`}
-            >
-              <ListText>{rule.name}</ListText>
-            </Link>
-          }
-          description={<DashboardListDescription>{rule.keywordsLabel}</DashboardListDescription>}
-          trailing={<ListText className={pageViewStyles.mutedText}>{rule.activeState}</ListText>}
-        >
-          <DashboardListMeta values={[rule.pollLabel, rule.nextRunLabel]} />
-        </ListRow>
-      ))}
-    </ListContainer>
+    <DashboardCollectionTransition
+      copy={DASHBOARD_TRANSITION_COPY.rules}
+      isLoading={isLoading}
+      error={error}
+      itemCount={ruleRows.length}
+      onRetry={onRetry}
+    >
+      <ListContainer dense>
+        {ruleRows.map((rule) => (
+          <ListRow
+            key={rule.id}
+            title={
+              <Link
+                className={pageViewStyles.listLink}
+                href={`${routeViewModels.alerts.path}/${rule.id}`}
+              >
+                <DashboardListTitle>{rule.name}</DashboardListTitle>
+              </Link>
+            }
+            description={<DashboardListDescription>{rule.keywordsLabel}</DashboardListDescription>}
+            trailing={<DashboardListTrailing>{rule.activeState}</DashboardListTrailing>}
+          >
+            <DashboardListMeta values={[rule.pollLabel, rule.nextRunLabel]} />
+          </ListRow>
+        ))}
+      </ListContainer>
+    </DashboardCollectionTransition>
   );
 }
 
@@ -451,30 +481,33 @@ export default function DashboardClientContent() {
     [watchReleasesQuery.data],
   );
 
-  const dashboardSummaries = useMemo(() => {
-    const recentNotifications = sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT);
+  const recentNotifications = useMemo(
+    () => sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT),
+    [notifications],
+  );
+  const watchRulesSummary = useMemo(() => {
     const recentRules = sortByNewest(watchRules).slice(0, DASHBOARD_RULE_LIMIT);
-    const recentMatches = sortByNewest(watchReleases).slice(0, DASHBOARD_RELEASE_LIMIT);
     const activeRuleCount = watchRules.reduce((count, rule) => count + (rule.is_active ? 1 : 0), 0);
+
+    return {
+      recentRules,
+      activeRuleCount,
+      totalRuleCount: watchRules.length,
+    };
+  }, [watchRules]);
+  const watchReleasesSummary = useMemo(() => {
+    const recentMatches = sortByNewest(watchReleases).slice(0, DASHBOARD_RELEASE_LIMIT);
     const activeMatchCount = watchReleases.reduce(
       (count, release) => count + (release.is_active ? 1 : 0),
       0,
     );
 
     return {
-      recentNotifications,
-      watchRulesSummary: {
-        recentRules,
-        activeRuleCount,
-        totalRuleCount: watchRules.length,
-      },
-      watchReleasesSummary: {
-        recentMatches,
-        activeMatchCount,
-        totalReleaseCount: watchReleases.length,
-      },
+      recentMatches,
+      activeMatchCount,
+      totalReleaseCount: watchReleases.length,
     };
-  }, [notifications, watchReleases, watchRules]);
+  }, [watchReleases]);
   const unreadCountSummary = useMemo(
     () => ({
       value: unreadCountQuery.isLoading
@@ -513,11 +546,11 @@ export default function DashboardClientContent() {
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
             <DashboardMetric
-              value={dashboardSummaries.watchRulesSummary.totalRuleCount}
+              value={watchRulesSummary.totalRuleCount}
               label={
-                dashboardSummaries.watchRulesSummary.totalRuleCount === 0
+                watchRulesSummary.totalRuleCount === 0
                   ? "Watch rules ready to create"
-                  : `${dashboardSummaries.watchRulesSummary.activeRuleCount} active recent watch rules`
+                  : `${watchRulesSummary.activeRuleCount} active recent watch rules`
               }
             />
           </CardBody>
@@ -525,11 +558,11 @@ export default function DashboardClientContent() {
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
             <DashboardMetric
-              value={dashboardSummaries.watchReleasesSummary.totalReleaseCount}
+              value={watchReleasesSummary.totalReleaseCount}
               label={
-                dashboardSummaries.watchReleasesSummary.totalReleaseCount === 0
+                watchReleasesSummary.totalReleaseCount === 0
                   ? "Recent matches will appear here"
-                  : `${dashboardSummaries.watchReleasesSummary.activeMatchCount} active recent matches`
+                  : `${watchReleasesSummary.activeMatchCount} active recent matches`
               }
             />
           </CardBody>
@@ -549,7 +582,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardMatchesPanel
-              releases={dashboardSummaries.watchReleasesSummary.recentMatches}
+              releases={watchReleasesSummary.recentMatches}
               isLoading={watchReleasesQuery.isLoading}
               error={watchReleasesQuery.error}
               onRetry={() => void watchReleasesQuery.retry()}
@@ -570,7 +603,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardRulesPanel
-              rules={dashboardSummaries.watchRulesSummary.recentRules}
+              rules={watchRulesSummary.recentRules}
               isLoading={watchRulesQuery.isLoading}
               error={watchRulesQuery.error}
               onRetry={() => void watchRulesQuery.retry()}
@@ -594,7 +627,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardNotificationsPanel
-              notifications={dashboardSummaries.recentNotifications}
+              notifications={recentNotifications}
               isLoading={notificationsQuery.isLoading}
               error={notificationsQuery.error}
               onRetry={() => {
