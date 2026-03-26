@@ -307,4 +307,33 @@ describe("/login route", () => {
       ),
     );
   });
+
+  it("keeps sign-in disabled while pending and only redirects after the in-flight retry resolves", async () => {
+    let resolveFetch: ((value: Response) => void) | undefined;
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveFetch = resolve;
+        }),
+    ) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(<LoginPageClient handoff={noHandoff} fetchImpl={fetchMock} onRedirect={onRedirect} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeDisabled();
+    expect(screen.getByText(/signing you in/i)).toBeInTheDocument();
+    expect(onRedirect).not.toHaveBeenCalled();
+
+    resolveFetch?.(new Response(null, { status: 200 }));
+    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
+  });
 });

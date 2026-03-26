@@ -188,10 +188,10 @@ describe("/watchlist/[id] route", () => {
 
     fireEvent.click(screen.getAllByRole("button", { name: /^disable watchlist item$/i })[0]);
     fireEvent.click(
-      within(screen.getByRole("alertdialog", { name: /disable watchlist item\?/i })).getByRole(
+      within(screen.getByRole("alertdialog", { name: /disable watchlist item\?/i })).getAllByRole(
         "button",
         { name: /^disable watchlist item$/i },
-      ),
+      )[0],
     );
     fireEvent.click(screen.getAllByRole("button", { name: /^disable watchlist item$/i })[0]);
     fireEvent.click(
@@ -378,6 +378,7 @@ describe("/watchlist/[id] route", () => {
 
     expect(state.push).toHaveBeenCalledWith("/watchlist");
     expect(state.refresh).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(/could not disable watchlist item\./i)).not.toBeInTheDocument();
   });
 
   it("returns focus to disable trigger when dialog closes with escape", async () => {

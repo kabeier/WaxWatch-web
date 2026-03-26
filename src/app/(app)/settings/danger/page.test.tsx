@@ -216,6 +216,9 @@ describe("/settings/danger route", () => {
     expect(deactivateMutate).toHaveBeenCalledTimes(2);
     expect(screen.getByRole("status")).toHaveTextContent(/success: account deactivated\./i);
     expect(screen.queryByText(/could not deactivate account\./i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("alertdialog", { name: /deactivate account now\?/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows loading state before account data arrives, then restores destructive actions", () => {
