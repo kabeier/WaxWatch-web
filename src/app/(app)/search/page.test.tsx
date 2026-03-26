@@ -47,6 +47,10 @@ describe("/search route", () => {
     expect(keywords).toHaveAttribute("aria-invalid", "true");
     expect(keywords).toHaveAttribute("aria-errormessage", "search-keywords-error");
     expect(keywords).toHaveAttribute("aria-describedby", "search-keywords-error");
+    expect(screen.getByText(/enter at least one keyword to run a search\./i)).toHaveAttribute(
+      "role",
+      "alert",
+    );
 
     await user.click(screen.getByRole("button", { name: /run search/i }));
     expect(
@@ -78,6 +82,10 @@ describe("/search route", () => {
     expect(alertName).toHaveAttribute("aria-invalid", "true");
     expect(alertName).toHaveAttribute("aria-errormessage", "save-alert-name-error");
     expect(alertName).toHaveAttribute("aria-describedby", "save-alert-name-error");
+    expect(screen.getByText(/alert name must be between 1 and 120 characters\./i)).toHaveAttribute(
+      "role",
+      "alert",
+    );
 
     const saveAlertForm = alertName.closest("form");
     expect(saveAlertForm).not.toBeNull();

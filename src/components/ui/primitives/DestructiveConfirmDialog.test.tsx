@@ -122,6 +122,32 @@ describe("DestructiveConfirmDialog", () => {
     expect(cancelButton).toHaveFocus();
   });
 
+  it("ignores hidden and inert controls when finding focus targets", () => {
+    render(
+      <DestructiveConfirmDialog
+        open
+        title="Delete item?"
+        description="This cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+        className="dialog-hidden-controls-test"
+      />,
+    );
+
+    const dialog = screen.getByRole("alertdialog", { name: "Delete item?" });
+    dialog.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div aria-hidden="true"><button type="button">Hidden aria button</button></div>
+        <div inert><button type="button">Inert button</button></div>
+        <input type="hidden" value="secret" />
+      `,
+    );
+
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+  });
+
   it("handles escape based on pending state", async () => {
     const user = userEvent.setup();
     const onCancel = vi.fn();
