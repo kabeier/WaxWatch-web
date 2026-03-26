@@ -87,12 +87,14 @@ export function ButtonLink({
 type TextInputProps = ComponentPropsWithoutRef<"input"> & {
   error?: boolean;
   errorMessageId?: string;
+  errorSummaryId?: string;
 };
 
 export function TextInput({
   className,
   error = false,
   errorMessageId,
+  errorSummaryId,
   type = "text",
   ...props
 }: TextInputProps) {
@@ -111,6 +113,7 @@ export function TextInput({
   const resolvedErrorMessageId = ariaErrorMessage ?? errorMessageId;
   const describedByIds = joinAriaIds(
     ariaDescribedBy,
+    isInvalid ? errorSummaryId : undefined,
     isInvalid ? resolvedErrorMessageId : undefined,
   );
   const shouldSetAriaErrorMessage = isInvalid ? resolvedErrorMessageId : undefined;
@@ -130,12 +133,14 @@ export function TextInput({
 type SelectProps = ComponentPropsWithoutRef<"select"> & {
   error?: boolean;
   errorMessageId?: string;
+  errorSummaryId?: string;
 };
 
 export function Select({
   className,
   error = false,
   errorMessageId,
+  errorSummaryId,
   children,
   ...props
 }: SelectProps) {
@@ -154,6 +159,7 @@ export function Select({
   const resolvedErrorMessageId = ariaErrorMessage ?? errorMessageId;
   const describedByIds = joinAriaIds(
     ariaDescribedBy,
+    isInvalid ? errorSummaryId : undefined,
     isInvalid ? resolvedErrorMessageId : undefined,
   );
   const shouldSetAriaErrorMessage = isInvalid ? resolvedErrorMessageId : undefined;
@@ -182,6 +188,7 @@ type CheckboxRowProps = Omit<ComponentPropsWithoutRef<"label">, "children" | "on
   errorText?: ReactNode;
   error?: boolean;
   errorMessageId?: string;
+  errorSummaryId?: string;
   inputAriaInvalid?: ComponentPropsWithoutRef<"input">["aria-invalid"];
   inputAriaDescribedBy?: string;
   inputAriaErrorMessage?: string;
@@ -201,6 +208,7 @@ export function CheckboxRow({
   value,
   error = false,
   errorMessageId,
+  errorSummaryId,
   inputAriaInvalid,
   inputAriaDescribedBy,
   inputAriaErrorMessage,
@@ -218,6 +226,7 @@ export function CheckboxRow({
   const isInvalid = isAriaInvalidState(resolvedAriaInvalid);
   const ariaDescribedBy = joinAriaIds(
     inputAriaDescribedBy,
+    isInvalid ? errorSummaryId : null,
     helperText ? helperTextId : null,
     isInvalid ? resolvedErrorMessageId : null,
   );
