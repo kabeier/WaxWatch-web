@@ -600,4 +600,72 @@ describe("DestructiveConfirmDialog", () => {
 
     expect(document.body.style.overflow).toBe("auto");
   });
+
+  it("preserves keyboard, focus-return, and disabled semantics across pending transitions", async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn();
+
+    function PendingSemanticsHarness() {
+      const [open, setOpen] = React.useState(false);
+      const [pending, setPending] = React.useState(false);
+      const triggerRef = React.useRef<HTMLButtonElement>(null);
+
+      return (
+        <>
+          <button type="button" ref={triggerRef} onClick={() => setOpen(true)}>
+            Open destructive dialog
+          </button>
+          <button type="button" onClick={() => setPending((current) => !current)}>
+            Toggle pending
+          </button>
+          <DestructiveConfirmDialog
+            open={open}
+            title="Delete item?"
+            description="This cannot be undone."
+            confirmLabel="Delete"
+            pending={pending}
+            onCancel={() => {
+              onCancel();
+              setOpen(false);
+            }}
+            onConfirm={onConfirm}
+            returnFocusRef={triggerRef}
+          />
+        </>
+      );
+    }
+
+    render(<PendingSemanticsHarness />);
+
+    const trigger = screen.getByRole("button", { name: "Open destructive dialog" });
+    const togglePending = screen.getByRole("button", { name: "Toggle pending" });
+
+    await user.click(trigger);
+
+    const dialog = screen.getByRole("alertdialog", { name: "Delete item?" });
+    const cancelButton = screen.getByRole("button", { name: "Cancel" });
+    const confirmButton = screen.getByRole("button", { name: "Delete" });
+
+    expect(cancelButton).toHaveFocus();
+    await user.tab();
+    expect(confirmButton).toHaveFocus();
+    await user.tab();
+    expect(cancelButton).toHaveFocus();
+
+    await user.click(togglePending);
+    expect(cancelButton).toBeDisabled();
+    expect(confirmButton).toBeDisabled();
+    await user.keyboard("{Escape}");
+    expect(onCancel).toHaveBeenCalledTimes(0);
+    expect(dialog).toBeInTheDocument();
+
+    await user.click(togglePending);
+    expect(cancelButton).not.toBeDisabled();
+    expect(confirmButton).not.toBeDisabled();
+    await user.keyboard("{Escape}");
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("alertdialog", { name: "Delete item?" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
 });
