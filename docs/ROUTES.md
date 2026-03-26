@@ -103,15 +103,12 @@ When route statuses change, update that matrix in the same PR so this repo keeps
 
 Requested full verification (`test`, `typecheck`, `lint`, `format:check`, `build`, `a11y:smoke`, `docs:route-status-gate`) was rerun on **March 26, 2026** in this workspace.
 
-Result in this workspace: **partially green (infrastructure/network limited)**.
+Result in this workspace: **partially green (local environment configuration limited)**.
 
-- ✅ `npm run test:run` passed (48/48 files, 402/402 tests).
+- ✅ `npm run test:run` passed (50/50 files, 413/413 tests).
 - ✅ `npm run typecheck`, `npm run lint`, and `npm run format:check` all passed.
-- ✅ `npm run build` passed env-contract `prebuild` validation when production-safe env vars were supplied inline for the command.
-- ❌ `npm run build` failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH` reaching the SWC package host).
-- ⚠️ `npm run a11y:smoke` could not pass because `.next/standalone/server.js` was unavailable (depends on successful `npm run build`).
-- ⚠️ `npm run docs:route-status-gate` skipped in both local modes:
-  - without `GITHUB_BASE_REF` (script no-op by design), and
-  - with `GITHUB_BASE_REF=main` because this workspace has no `origin` remote (`fatal: 'origin' does not appear to be a git repository`).
+- ❌ `npm run build` failed in `prebuild` env-contract validation because required runtime env vars were unset (`NODE_ENV`, `APP_BASE_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_RELEASE_VERSION`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_REGION`, `AWS_SECRETS_PREFIX`, `TRUSTED_PROXY_CIDRS`, `LOG_LEVEL`).
+- ⚠️ `npm run a11y:smoke` failed before browser checks because `npm run start` exited on missing required runtime env vars (`APP_BASE_URL`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_RELEASE_VERSION`, `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `AWS_REGION`, `AWS_SECRETS_PREFIX`, `TRUSTED_PROXY_CIDRS`, `LOG_LEVEL`).
+- ⚠️ `npm run docs:route-status-gate` skipped without `GITHUB_BASE_REF` (script no-op by design).
 
 Since the full gate run did not complete end-to-end, do not newly finalize route maturity promotions from this workspace run.
