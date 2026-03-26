@@ -130,6 +130,8 @@ export default function SearchWorkbench() {
     ? searchMutation.data.providers_searched
     : [];
   const searchPagination = searchMutation.data?.pagination;
+  const showSearchValidationSummary = searchSubmitAttempted && searchErrors.length > 0;
+  const showSaveAlertValidationSummary = saveAlertSubmitAttempted && saveAlertErrors.length > 0;
 
   return (
     <div className={pageViewStyles.cardStack}>
@@ -142,10 +144,10 @@ export default function SearchWorkbench() {
         </p>
       </div>
 
-      {searchErrors.length > 0 ? (
+      {showSearchValidationSummary ? (
         <FocusOnRender
           id="search-form-errors"
-          enabled={searchSubmitAttempted}
+          enabled={showSearchValidationSummary}
           focusKey={searchSubmitAttemptCount}
         >
           <StateError
@@ -158,7 +160,7 @@ export default function SearchWorkbench() {
 
       <form
         className={pageViewStyles.formStack}
-        aria-describedby={searchErrors.length > 0 ? "search-form-errors" : undefined}
+        aria-describedby={showSearchValidationSummary ? "search-form-errors" : undefined}
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
@@ -337,10 +339,10 @@ export default function SearchWorkbench() {
         </>
       ) : null}
 
-      {saveAlertErrors.length > 0 ? (
+      {showSaveAlertValidationSummary ? (
         <FocusOnRender
           id="save-alert-errors"
-          enabled={saveAlertSubmitAttempted}
+          enabled={showSaveAlertValidationSummary}
           focusKey={saveAlertSubmitAttemptCount}
         >
           <StateError
@@ -353,7 +355,7 @@ export default function SearchWorkbench() {
 
       <form
         className={pageViewStyles.formStack}
-        aria-describedby={saveAlertErrors.length > 0 ? "save-alert-errors" : undefined}
+        aria-describedby={showSaveAlertValidationSummary ? "save-alert-errors" : undefined}
         noValidate
         onSubmit={(event) => {
           event.preventDefault();

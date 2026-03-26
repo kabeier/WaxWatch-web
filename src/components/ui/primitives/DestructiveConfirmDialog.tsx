@@ -56,6 +56,22 @@ function DialogActionControls({
   );
 }
 
+function getFocusableElements(container: HTMLElement | null) {
+  if (!container) {
+    return [];
+  }
+
+  const selector =
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter((node) => {
+    if (node.hasAttribute("disabled") || node.getAttribute("aria-hidden") === "true") {
+      return false;
+    }
+    return true;
+  });
+}
+
 export function DestructiveConfirmDialog({
   id,
   open,
@@ -93,15 +109,15 @@ export function DestructiveConfirmDialog({
 
     const previousActiveElement = document.activeElement;
     const returnFocusElement = returnFocusRef?.current ?? null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
     let isRepositioningFocus = false;
 
     const focusDialog = (useLastFocusable = false) => {
-      const focusableNodes = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
+      const focusableNodes = getFocusableElements(dialogRef.current);
 
-      if (!focusableNodes || focusableNodes.length === 0) {
+      if (focusableNodes.length === 0) {
         const fallbackNode = dialogRef.current;
         if (!fallbackNode || document.activeElement === fallbackNode) {
           return;
@@ -115,6 +131,9 @@ export function DestructiveConfirmDialog({
 
       const first = focusableNodes[0];
       const last = focusableNodes[focusableNodes.length - 1];
+      if (!first || !last) {
+        return;
+      }
       const nextFocusTarget = useLastFocusable ? last : first;
 
       if (document.activeElement === nextFocusTarget) {
@@ -138,11 +157,9 @@ export function DestructiveConfirmDialog({
         return;
       }
 
-      const focusableNodes = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
+      const focusableNodes = getFocusableElements(dialogRef.current);
 
-      if (!focusableNodes || focusableNodes.length === 0) {
+      if (focusableNodes.length === 0) {
         event.preventDefault();
         focusDialog();
         return;
@@ -150,6 +167,9 @@ export function DestructiveConfirmDialog({
 
       const first = focusableNodes[0];
       const last = focusableNodes[focusableNodes.length - 1];
+      if (!first || !last) {
+        return;
+      }
       const activeElement = document.activeElement;
 
       if (!activeElement || !dialogRef.current?.contains(activeElement)) {
@@ -191,6 +211,7 @@ export function DestructiveConfirmDialog({
     document.addEventListener("focusin", handleFocusIn);
 
     return () => {
+      document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("focusin", handleFocusIn);
       const focusTarget = returnFocusElement ?? previousActiveElement;

@@ -62,6 +62,7 @@ export default function ProfileSettingsForm() {
     return null;
   }, [currency, displayName, timezone]);
   const validationMessage = validationState?.message;
+  const showValidationSummary = submitAttempted && Boolean(validationMessage);
 
   const isFormReady = Boolean(meQuery.data);
   const rateLimitedLoadError =
@@ -125,10 +126,10 @@ export default function ProfileSettingsForm() {
         <StateEmpty message="No profile found." />
       ) : null}
 
-      {validationMessage ? (
+      {showValidationSummary ? (
         <FocusOnRender
           id="profile-settings-form-errors"
-          enabled={submitAttempted}
+          enabled={showValidationSummary}
           focusKey={submitAttemptCount}
         >
           <StateError
@@ -142,7 +143,7 @@ export default function ProfileSettingsForm() {
       <form
         id="profile-settings-form"
         className={pageViewStyles.formStack}
-        aria-describedby={validationMessage ? "profile-settings-form-errors" : undefined}
+        aria-describedby={showValidationSummary ? "profile-settings-form-errors" : undefined}
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
