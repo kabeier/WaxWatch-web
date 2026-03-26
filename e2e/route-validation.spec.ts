@@ -282,19 +282,25 @@ test.describe("critical route coverage", () => {
     });
 
     await page.goto("/settings/danger");
-    const deactivateButton = page.getByRole("button", { name: /^Deactivate account$/ }).first();
+    const deactivateButton = page.locator(
+      'button[aria-controls="danger-deactivate-confirm-dialog"]',
+    );
+    await expect(deactivateButton).toBeVisible();
+    await expect(deactivateButton).toBeEnabled();
 
     await deactivateButton.click();
-    await expect(page.getByText("Deactivate account now?")).toBeVisible();
+    await expect(page.getByRole("alertdialog", { name: /Deactivate account now\?/i })).toBeVisible({
+      timeout: 15_000,
+    });
 
     await page.getByRole("button", { name: /^Cancel$/i }).click();
-    await expect(page.getByText("Deactivate account now?")).toBeHidden();
+    await expect(page.getByRole("alertdialog", { name: /Deactivate account now\?/i })).toBeHidden();
     expect(deleteCalls).toBe(0);
 
     await deactivateButton.click();
     await page
+      .getByRole("alertdialog", { name: /Deactivate account now\?/i })
       .getByRole("button", { name: /^Deactivate account$/ })
-      .nth(1)
       .click();
 
     await expect(page).toHaveURL(/\/account-removed$/);
