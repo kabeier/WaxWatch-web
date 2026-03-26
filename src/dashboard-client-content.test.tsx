@@ -215,6 +215,10 @@ describe("DashboardClientContent", () => {
         "This card will automatically populate once matching activity is available.",
       ),
     ).toHaveLength(3);
+    expect(screen.getAllByText("No items yet")).toHaveLength(3);
+    expect(screen.getAllByText("Waiting")).toHaveLength(3);
+    expect(screen.getAllByText("No recent activity")).toHaveLength(3);
+    expect(screen.getAllByText("Check back soon")).toHaveLength(3);
   });
 
   it("falls back to 'No keywords' when watch-rule keywords are empty values", () => {
