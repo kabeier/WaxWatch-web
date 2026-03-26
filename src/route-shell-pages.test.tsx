@@ -689,7 +689,7 @@ describe("route shell pages", () => {
 
     expect(screen.getByText(/cooldown/i)).toBeInTheDocument();
     expect(screen.getByText(/retry-after:\s*45s/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /retry watchlist item load/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 45s/i })).toBeDisabled();
   });
 
   it("retries watchlist item load from the rate-limited cooldown state", () => {
@@ -705,8 +705,10 @@ describe("route shell pages", () => {
     render(<WatchlistItemClient id="release-1" />);
 
     expect(screen.getByText(/cooldown active/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /retry watchlist item load/i }));
-    expect(retryWatchlistLoad).toHaveBeenCalledTimes(1);
+    const cooldownButton = screen.getByRole("button", { name: /retry available in 45s/i });
+    expect(cooldownButton).toBeDisabled();
+    fireEvent.click(cooldownButton);
+    expect(retryWatchlistLoad).not.toHaveBeenCalled();
   });
 
   it("surfaces save mutation failure and rate-limited branches without leaving /watchlist/[id]", () => {
