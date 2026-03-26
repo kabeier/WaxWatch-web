@@ -16,6 +16,12 @@ Outcome in this environment: **partially green (environment/network limited)**.
 
 Because the full gate set did not complete end-to-end, treat route readiness as **not newly promoted/finalized** from this local run.
 
+## Playwright suite classification
+
+- `e2e/home.spec.ts` and `e2e/a11y.spec.ts` are **smoke-only** checks that guard core navigation + baseline accessibility.
+- Route-depth browser validation lives in `e2e/route-validation.spec.ts` and covers route-focused states (`loading`, `error`, `empty`, and `rate-limited`), auth-expiry redirects, destructive confirmation flow, and deterministic SSE simulation aligned with `docs/SSE_MODEL.md`.
+- CI labels the browser steps explicitly as smoke-only baseline + deeper route validation so expectations stay clear during PR review.
+
 ## Developer quickstart (read this first)
 
 ### 1) Boot your local environment
