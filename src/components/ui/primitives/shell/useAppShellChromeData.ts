@@ -9,20 +9,20 @@ function getAccountStatusLabel(args: {
   hasError: boolean;
   hasSettled: boolean;
 }) {
-  if (args.hasError) {
-    return "Unavailable";
-  }
-
-  if (args.isLoading || !args.hasSettled) {
-    return "Loading";
-  }
-
   if (args.isActive === true) {
     return "Active";
   }
 
   if (args.isActive === false) {
     return "Attention";
+  }
+
+  if (args.isLoading || !args.hasSettled) {
+    return "Loading";
+  }
+
+  if (args.hasError) {
+    return "Unavailable";
   }
 
   return "Unavailable";
@@ -34,6 +34,10 @@ function getInboxValue(args: {
   hasError: boolean;
   hasSettled: boolean;
 }) {
+  if (typeof args.unreadCount === "number") {
+    return `${args.unreadCount}`;
+  }
+
   if (args.isLoading || !args.hasSettled) {
     return "…";
   }
@@ -82,15 +86,16 @@ function getSessionMeta(args: {
   unreadError: unknown;
   unreadHasSettled: boolean;
 }) {
-  const activityLabel = args.unreadHasError
-    ? isRateLimitedError(args.unreadError)
-      ? "Notifications cooling down"
-      : "Notifications unavailable"
-    : args.unreadIsLoading || !args.unreadHasSettled
-      ? "Notifications syncing"
-      : typeof args.unreadCount === "number"
-        ? `${args.unreadCount ?? 0} unread notification${args.unreadCount === 1 ? "" : "s"}`
-        : "Notifications unavailable";
+  const activityLabel =
+    typeof args.unreadCount === "number"
+      ? `${args.unreadCount} unread notification${args.unreadCount === 1 ? "" : "s"}`
+      : args.unreadHasError
+        ? isRateLimitedError(args.unreadError)
+          ? "Notifications cooling down"
+          : "Notifications unavailable"
+        : args.unreadIsLoading || !args.unreadHasSettled
+          ? "Notifications syncing"
+          : "Notifications unavailable";
 
   if (args.isActive === true) {
     return `Account active · ${activityLabel}`;

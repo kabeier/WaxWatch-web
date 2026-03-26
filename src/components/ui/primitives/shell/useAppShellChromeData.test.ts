@@ -172,6 +172,68 @@ describe("useAppShellChromeData", () => {
     });
   });
 
+  it("prefers live unread and account values when refetching reports loading", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: {
+        display_name: "Avery Collector",
+        email: "avery@example.com",
+        is_active: true,
+      },
+      isLoading: true,
+      isError: false,
+      error: null,
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: { unread_count: 12 },
+      isLoading: true,
+      isError: false,
+      error: null,
+    });
+
+    const { result } = renderHook(() => useAppShellChromeData());
+
+    expect(result.current.utilityItems).toEqual([
+      { href: "/notifications", label: "Inbox", value: "12" },
+      { href: "/settings/profile", label: "Account", value: "Active" },
+    ]);
+    expect(result.current.status).toEqual({
+      label: "Session",
+      value: "Avery Collector",
+      meta: "Account active · 12 unread notifications",
+    });
+  });
+
+  it("prefers live unread and account values when requests error with cached data", () => {
+    queryHookMocks.me.mockReturnValue({
+      data: {
+        display_name: "Avery Collector",
+        email: "avery@example.com",
+        is_active: false,
+      },
+      isLoading: false,
+      isError: true,
+      error: new Error("profile request failed"),
+    });
+    queryHookMocks.unread.mockReturnValue({
+      data: { unread_count: 9 },
+      isLoading: false,
+      isError: true,
+      error: new Error("notifications request failed"),
+    });
+
+    const { result } = renderHook(() => useAppShellChromeData());
+
+    expect(result.current.utilityItems).toEqual([
+      { href: "/notifications", label: "Inbox", value: "9" },
+      { href: "/settings/profile", label: "Account", value: "Attention" },
+    ]);
+    expect(result.current.status).toEqual({
+      label: "Session",
+      value: "Avery Collector",
+      meta: "Account needs attention · 9 unread notifications",
+    });
+  });
+
   it("uses cooling-down meta copy when unread notifications are rate-limited", () => {
     stateMocks.isRateLimitedError.mockReturnValue(true);
     queryHookMocks.me.mockReturnValue({
