@@ -113,6 +113,77 @@ describe("/dashboard route", () => {
     expect(screen.getByText(/no notifications yet/i)).toBeInTheDocument();
   });
 
+  it("shows loading copy first, then presents content once dashboard data arrives", () => {
+    hookMocks.notifications.mockReturnValueOnce({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    hookMocks.releases.mockReturnValueOnce({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    hookMocks.rules.mockReturnValueOnce({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    const { rerender } = render(<DashboardPage />);
+
+    expect(screen.getByRole("heading", { name: /loading notifications/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /loading recent matches/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /loading watch rules/i })).toBeInTheDocument();
+
+    hookMocks.notifications.mockReturnValueOnce({
+      data: [
+        {
+          id: "notification-2",
+          user_id: "user-1",
+          event_type: "price_drop",
+          payload: {},
+          channel: "email",
+          status: "sent",
+          is_read: false,
+          created_at: "2026-03-22T10:00:00.000Z",
+          read_at: null,
+        },
+      ],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    hookMocks.releases.mockReturnValueOnce({
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    hookMocks.rules.mockReturnValueOnce({
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    rerender(<DashboardPage />);
+
+    expect(
+      screen.queryByRole("heading", { name: /loading notifications/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/price_drop/i)).toBeInTheDocument();
+  });
+
   it("shows API error and cooldown states with disabled and retry actions", () => {
     const retryNotifications = vi.fn();
     const retryUnreadCount = vi.fn();

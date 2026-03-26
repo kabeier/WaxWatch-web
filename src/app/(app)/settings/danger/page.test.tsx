@@ -218,6 +218,34 @@ describe("/settings/danger route", () => {
     expect(screen.queryByText(/could not deactivate account\./i)).not.toBeInTheDocument();
   });
 
+  it("shows loading state before account data arrives, then restores destructive actions", () => {
+    hooks.meQuery.mockReturnValueOnce({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    const { rerender } = render(<DangerSettingsPage />);
+
+    expect(screen.getByText(/loading account danger-zone options/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^deactivate account$/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^permanently delete account$/i })).toBeEnabled();
+
+    hooks.meQuery.mockReturnValueOnce({
+      data: { id: "user-1" },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    rerender(<DangerSettingsPage />);
+
+    expect(screen.queryByText(/loading account danger-zone options/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /danger zone/i })).toBeInTheDocument();
+  });
+
   it("locks readiness with permanent-delete failure evidence followed by successful retry status", () => {
     const deleteMutate = vi.fn();
     hooks.hardDelete.mockReturnValue({

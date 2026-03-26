@@ -115,6 +115,43 @@ describe("/login route", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("shows cooldown copy, then clears it while submit is pending and redirects after retry", async () => {
+    let resolveSecondFetch: ((value: Response) => void) | undefined;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { message: "Too many attempts." } }), {
+          status: 429,
+          headers: { "Content-Type": "application/json", "Retry-After": "5" },
+        }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            resolveSecondFetch = resolve;
+          }),
+      ) as typeof fetch;
+    const onRedirect = vi.fn();
+
+    render(<LoginPageClient handoff={noHandoff} fetchImpl={fetchMock} onRedirect={onRedirect} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "listener@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password123" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/retry-after:\s*5s/i);
+
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeDisabled();
+    expect(screen.getByText(/signing you in/i)).toBeInTheDocument();
+    expect(screen.queryByText(/too many attempts\./i)).not.toBeInTheDocument();
+
+    resolveSecondFetch?.(new Response(null, { status: 200 }));
+    await waitFor(() => expect(onRedirect).toHaveBeenCalledWith("/"));
+  });
+
   it("clears cooldown error copy after a successful retry redirect", async () => {
     const fetchMock = vi
       .fn()

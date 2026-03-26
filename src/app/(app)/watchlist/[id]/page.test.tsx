@@ -114,6 +114,52 @@ describe("/watchlist/[id] route", () => {
     expect(retryLoad).toHaveBeenCalledTimes(1);
   });
 
+  it("recovers from rate-limited detail load and restores editable form controls", async () => {
+    const retryLoad = vi.fn();
+    state.detail.mockReturnValueOnce({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "Cooldown active", retryAfterSeconds: 6 },
+      retry: retryLoad,
+    });
+
+    const { rerender } = render(
+      await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }),
+    );
+
+    expect(screen.getByText(/cooldown active/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 6s/i })).toBeDisabled();
+
+    state.detail.mockReturnValueOnce({
+      data: {
+        id: "release-1",
+        user_id: "user-1",
+        discogs_release_id: 1,
+        discogs_master_id: null,
+        match_mode: "exact_release",
+        title: "Kind of Blue",
+        artist: "Miles Davis",
+        year: 1959,
+        target_price: 25,
+        currency: "USD",
+        min_condition: "VG+",
+        is_active: true,
+        created_at: "2026-03-21T08:00:00.000Z",
+        updated_at: "2026-03-22T10:00:00.000Z",
+      },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
+
+    expect(screen.queryByText(/temporarily rate limited/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: /target price/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /save watchlist updates/i })).toBeEnabled();
+  });
+
   it("shows mutation failures and allows retrying save/disable actions", async () => {
     const updateMutate = vi.fn();
     const disableMutate = vi.fn();
