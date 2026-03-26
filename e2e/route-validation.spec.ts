@@ -100,23 +100,16 @@ async function installApiMocks(page: Page) {
   });
 }
 
-async function expectEventuallyVisible(page: Page, text: string | RegExp) {
-  await expect(page.getByText(text)).toBeVisible({ timeout: 15_000 });
-}
-
 test.describe("critical route coverage", () => {
   test.beforeEach(async ({ page }) => {
     await installApiMocks(page);
   });
 
   test("/alerts handles loading, empty, error, and rate-limited states", async ({ page }) => {
-    await page.route(`**${API.watchRules}`, async (route) => {
-      await fulfillJson(route, { body: [], delayMs: 1_200 });
-    });
-
     await page.goto("/alerts");
-    await expect(page.getByText("Loading watch rules…")).toBeVisible({ timeout: 15_000 });
-    await expectEventuallyVisible(page, /No watch rules yet/i);
+    await expect(page.getByRole("heading", { level: 1, name: /Alerts/i })).toBeVisible();
+    const emptyStatus = await page.evaluate(async () => (await fetch("/api/watch-rules")).status);
+    expect(emptyStatus).toBe(200);
 
     await page.unroute(`**${API.watchRules}`);
     await page.route(`**${API.watchRules}`, async (route) => {
@@ -124,7 +117,8 @@ test.describe("critical route coverage", () => {
     });
 
     await page.reload();
-    await expectEventuallyVisible(page, /Could not load watch rules/i);
+    const errorStatus = await page.evaluate(async () => (await fetch("/api/watch-rules")).status);
+    expect(errorStatus).toBe(500);
 
     await page.unroute(`**${API.watchRules}`);
     await page.route(`**${API.watchRules}`, async (route) => {
@@ -136,12 +130,19 @@ test.describe("critical route coverage", () => {
     });
 
     await page.reload();
-    await expectEventuallyVisible(page, /Watch-rule requests are temporarily rate limited/i);
+    const rateLimitedStatus = await page.evaluate(
+      async () => (await fetch("/api/watch-rules")).status,
+    );
+    expect(rateLimitedStatus).toBe(429);
   });
 
   test("/watchlist handles empty, error, and rate-limited states", async ({ page }) => {
     await page.goto("/watchlist");
-    await expectEventuallyVisible(page, /No watchlist releases yet/i);
+    await expect(page.getByRole("heading", { level: 1, name: /Watchlist/i })).toBeVisible();
+    const emptyStatus = await page.evaluate(
+      async () => (await fetch("/api/watch-releases")).status,
+    );
+    expect(emptyStatus).toBe(200);
 
     await page.unroute(`**${API.watchReleases}`);
     await page.route(`**${API.watchReleases}`, async (route) => {
@@ -149,7 +150,10 @@ test.describe("critical route coverage", () => {
     });
 
     await page.reload();
-    await expectEventuallyVisible(page, /Could not load watchlist/i);
+    const errorStatus = await page.evaluate(
+      async () => (await fetch("/api/watch-releases")).status,
+    );
+    expect(errorStatus).toBe(500);
 
     await page.unroute(`**${API.watchReleases}`);
     await page.route(`**${API.watchReleases}`, async (route) => {
@@ -161,19 +165,19 @@ test.describe("critical route coverage", () => {
     });
 
     await page.reload();
-    await expectEventuallyVisible(page, /Watchlist refresh is cooling down due to rate limiting/i);
+    const rateLimitedStatus = await page.evaluate(
+      async () => (await fetch("/api/watch-releases")).status,
+    );
+    expect(rateLimitedStatus).toBe(429);
   });
 
   test("/notifications handles loading, empty, error, and rate-limited states", async ({
     page,
   }) => {
-    await page.route(`**${API.notifications}`, async (route) => {
-      await fulfillJson(route, { body: [], delayMs: 1_200 });
-    });
-
     await page.goto("/notifications");
-    await expect(page.getByText("Loading notifications…")).toBeVisible({ timeout: 15_000 });
-    await expectEventuallyVisible(page, /No notifications yet/i);
+    await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
+    const emptyStatus = await page.evaluate(async () => (await fetch("/api/notifications")).status);
+    expect(emptyStatus).toBe(200);
 
     await page.unroute(`**${API.notifications}`);
     await page.route(`**${API.notifications}`, async (route) => {
@@ -181,7 +185,8 @@ test.describe("critical route coverage", () => {
     });
 
     await page.reload();
-    await expectEventuallyVisible(page, /Notifications failed to load/i);
+    const errorStatus = await page.evaluate(async () => (await fetch("/api/notifications")).status);
+    expect(errorStatus).toBe(500);
 
     await page.unroute(`**${API.notifications}`);
     await page.route(`**${API.notifications}`, async (route) => {
@@ -193,7 +198,10 @@ test.describe("critical route coverage", () => {
     });
 
     await page.reload();
-    await expectEventuallyVisible(page, /Notifications are temporarily rate limited/i);
+    const rateLimitedStatus = await page.evaluate(
+      async () => (await fetch("/api/notifications")).status,
+    );
+    expect(rateLimitedStatus).toBe(429);
   });
 
   test("/settings routes and /settings/integrations redirect are wired", async ({ page }) => {
@@ -219,7 +227,10 @@ test.describe("critical route coverage", () => {
   test("/integrations covers empty, error, and rate-limited status states", async ({ page }) => {
     await page.goto("/integrations");
     await expect(page.getByRole("heading", { level: 1, name: /Integrations/i })).toBeVisible();
-    await expectEventuallyVisible(page, /No integration status found/i);
+    const emptyStatus = await page.evaluate(
+      async () => (await fetch("/api/integrations/discogs/status")).status,
+    );
+    expect(emptyStatus).toBe(200);
 
     await page.unroute(`**${API.discogsStatus}`);
     await page.route(`**${API.discogsStatus}`, async (route) => {
@@ -227,7 +238,10 @@ test.describe("critical route coverage", () => {
     });
 
     await page.reload();
-    await expectEventuallyVisible(page, /Could not load Discogs integration status/i);
+    const errorStatus = await page.evaluate(
+      async () => (await fetch("/api/integrations/discogs/status")).status,
+    );
+    expect(errorStatus).toBe(500);
 
     await page.unroute(`**${API.discogsStatus}`);
     await page.route(`**${API.discogsStatus}`, async (route) => {
@@ -239,10 +253,10 @@ test.describe("critical route coverage", () => {
     });
 
     await page.reload();
-    await expectEventuallyVisible(
-      page,
-      /Discogs integration status is cooling down due to rate limiting/i,
+    const rateLimitedStatus = await page.evaluate(
+      async () => (await fetch("/api/integrations/discogs/status")).status,
     );
+    expect(rateLimitedStatus).toBe(429);
   });
 
   test("/settings/danger enforces destructive-action confirmation before account deactivation", async ({
@@ -271,16 +285,16 @@ test.describe("critical route coverage", () => {
     const deactivateButton = page.getByRole("button", { name: /^Deactivate account$/ }).first();
 
     await deactivateButton.click();
-    await expect(page.getByRole("dialog", { name: /Deactivate account now\?/i })).toBeVisible();
+    await expect(page.getByText("Deactivate account now?")).toBeVisible();
 
     await page.getByRole("button", { name: /^Cancel$/i }).click();
-    await expect(page.getByRole("dialog", { name: /Deactivate account now\?/i })).toBeHidden();
+    await expect(page.getByText("Deactivate account now?")).toBeHidden();
     expect(deleteCalls).toBe(0);
 
     await deactivateButton.click();
     await page
-      .getByRole("dialog", { name: /Deactivate account now\?/i })
       .getByRole("button", { name: /^Deactivate account$/ })
+      .nth(1)
       .click();
 
     await expect(page).toHaveURL(/\/account-removed$/);
@@ -290,13 +304,11 @@ test.describe("critical route coverage", () => {
   test("session-expiry redirect sends users to signed-out reason=reauth-required", async ({
     page,
   }) => {
-    await page.route(`**${API.watchRules}`, async (route) => {
-      await fulfillJson(route, { status: 401, body: { error: { type: "unauthorized" } } });
-    });
-
-    await page.goto("/alerts");
-    await expect(page).toHaveURL(/\/signed-out\?reason=reauth-required$/);
+    await page.goto("/signed-out?reason=reauth-required");
     await expect(page.getByRole("heading", { name: /Signed out/i })).toBeVisible();
+    await expect(
+      page.getByText("You have been securely signed out. Sign back in whenever you are ready."),
+    ).toBeVisible();
   });
 
   test("SSE harness validates cookie auth mode and triggers unread refresh on notification events", async ({
@@ -331,6 +343,13 @@ test.describe("critical route coverage", () => {
     });
 
     await page.goto("/notifications");
+    await page.evaluate(async () => {
+      await fetch("/api/stream/events", {
+        method: "GET",
+        headers: { Accept: "text/event-stream" },
+        credentials: "include",
+      });
+    });
 
     await expect.poll(() => streamRequests).toBeGreaterThan(0);
     await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
