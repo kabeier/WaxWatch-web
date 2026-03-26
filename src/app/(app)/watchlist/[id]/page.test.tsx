@@ -108,10 +108,10 @@ describe("/watchlist/[id] route", () => {
     });
     rerender(await WatchlistItemPage({ params: Promise.resolve({ id: "release-1" }) }));
     expect(screen.getByText(/retry-after:\s*40s/i)).toBeInTheDocument();
-    const retryButton = screen.getByRole("button", { name: /retry watchlist item load/i });
-    expect(retryButton).toBeEnabled();
+    const retryButton = screen.getByRole("button", { name: /retry available in 40s/i });
+    expect(retryButton).toBeDisabled();
     fireEvent.click(retryButton);
-    expect(retryLoad).toHaveBeenCalledTimes(2);
+    expect(retryLoad).toHaveBeenCalledTimes(1);
   });
 
   it("shows mutation failures and allows retrying save/disable actions", async () => {
