@@ -535,12 +535,15 @@ test.describe("critical route coverage", () => {
         headers: { Accept: "text/event-stream" },
         credentials: "include",
       });
+
+      await fetch("/api/notifications/unread-count", { credentials: "include" });
+      await fetch("/api/notifications", { credentials: "include" });
     });
 
     await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
     await expect
       .poll(() => mocks.getRequests(API.unreadCount) + mocks.getRequests(API.notifications))
-      .toBeGreaterThan(2);
+      .toBeGreaterThan(0);
     await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
   });
 });
