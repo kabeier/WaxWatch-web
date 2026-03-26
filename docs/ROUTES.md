@@ -105,7 +105,7 @@ Requested full verification (`test`, `typecheck`, `lint`, `format:check`, `build
 
 Result in this workspace: **partially green (infrastructure/network limited)**.
 
-- ✅ `npm run test:run` passed (48/48 files, 378/378 tests).
+- ✅ `npm run test:run` passed (48/48 files, 380/380 tests).
 - ✅ `npm run typecheck`, `npm run lint`, and `npm run format:check` all passed.
 - ✅ `npm run build` passed env-contract `prebuild` validation when production-safe env vars were supplied inline for the command.
 - ❌ `npm run build` failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH` reaching the SWC package host).
