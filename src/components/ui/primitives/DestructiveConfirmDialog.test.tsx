@@ -327,6 +327,25 @@ describe("DestructiveConfirmDialog", () => {
     ).toHaveAccessibleDescription("This action is permanent. Delete failed.");
   });
 
+  it("applies a passed id to the dialog container", () => {
+    render(
+      <DestructiveConfirmDialog
+        id="danger-confirm-dialog"
+        open
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("alertdialog", { name: "Delete account?" })).toHaveAttribute(
+      "id",
+      "danger-confirm-dialog",
+    );
+  });
+
   it("cycles focus with tab and shift+tab when controls are enabled", async () => {
     const user = userEvent.setup();
 
