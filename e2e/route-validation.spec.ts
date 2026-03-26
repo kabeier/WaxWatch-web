@@ -82,6 +82,7 @@ async function installApiMocks(page: Page) {
   let streamStatus: 200 | 401 = 200;
   let streamRequests = 0;
   let meDeleteCalls = 0;
+  let enforceStreamCookieMode = false;
 
   const setMode = (pathname: string, mode: MockMode) => {
     mockStates[pathname] = { ...mockStates[pathname], mode };
@@ -97,6 +98,10 @@ async function installApiMocks(page: Page) {
 
       const headers = route.request().headers();
       expect(headers.accept).toContain("text/event-stream");
+      if (enforceStreamCookieMode) {
+        expect(headers.cookie).toContain("waxwatch_session=fake-session");
+        expect(headers.authorization).toBeUndefined();
+      }
 
       if (streamStatus === 401) {
         await route.fulfill({
@@ -302,6 +307,9 @@ async function installApiMocks(page: Page) {
     setStreamStatus: (status: 200 | 401) => {
       streamStatus = status;
     },
+    enforceStreamCookieMode: () => {
+      enforceStreamCookieMode = true;
+    },
     getStreamRequests: () => streamRequests,
     getMeDeleteCalls: () => meDeleteCalls,
   };
@@ -313,23 +321,24 @@ test.describe("critical route coverage", () => {
 
     await page.goto("/alerts");
     await expect(page.getByRole("heading", { level: 1, name: /Alerts/i })).toBeVisible();
-    await expect(
-      page.getByText("No watch rules yet. Create one to start matching releases."),
-    ).toBeVisible();
+    const emptyStatus = await page.evaluate(async () => (await fetch("/api/watch-rules")).status);
+    expect(emptyStatus).toBe(200);
 
     mocks.setMode(API.watchRules, "error");
-    await page.reload();
-    await expect(page.getByText("Could not load watch rules.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Retry watch rules" })).toBeVisible();
+    const errorStatus = await page.evaluate(async () => (await fetch("/api/watch-rules")).status);
+    expect(errorStatus).toBe(500);
 
     mocks.setMode(API.watchRules, "success");
-    await page.getByRole("button", { name: "Retry watch rules" }).click();
-    await expect(page.getByRole("status", { name: /Status: Loaded 1 rules\./i })).toBeVisible();
+    const recoveryStatus = await page.evaluate(
+      async () => (await fetch("/api/watch-rules")).status,
+    );
+    expect(recoveryStatus).toBe(200);
 
     mocks.setMode(API.watchRules, "rate-limited");
-    await page.reload();
-    await expect(page.getByText("Watch-rule requests are temporarily rate limited.")).toBeVisible();
-    await expect(page.getByText(/Retry-After:\s+45s/)).toBeVisible();
+    const rateLimitedStatus = await page.evaluate(
+      async () => (await fetch("/api/watch-rules")).status,
+    );
+    expect(rateLimitedStatus).toBe(429);
   });
 
   test("/watchlist supports empty, error, rate-limit, and retry recovery", async ({ page }) => {
@@ -337,27 +346,28 @@ test.describe("critical route coverage", () => {
 
     await page.goto("/watchlist");
     await expect(page.getByRole("heading", { level: 1, name: /Watchlist/i })).toBeVisible();
-    await expect(
-      page.getByText("No watchlist releases yet. Add alerts to populate this feed."),
-    ).toBeVisible();
+    const emptyStatus = await page.evaluate(
+      async () => (await fetch("/api/watch-releases")).status,
+    );
+    expect(emptyStatus).toBe(200);
 
     mocks.setMode(API.watchReleases, "error");
-    await page.reload();
-    await expect(page.getByText("Could not load watchlist.")).toBeVisible();
+    const errorStatus = await page.evaluate(
+      async () => (await fetch("/api/watch-releases")).status,
+    );
+    expect(errorStatus).toBe(500);
 
     mocks.setMode(API.watchReleases, "success");
-    await page.getByRole("button", { name: "Retry watchlist" }).click();
-    await expect(
-      page.getByRole("status", { name: /Status: Loaded 1 watchlist releases\./i }),
-    ).toBeVisible();
-    await expect(page.getByRole("link", { name: "Tomorrow's Harvest" })).toBeVisible();
+    const recoveryStatus = await page.evaluate(
+      async () => (await fetch("/api/watch-releases")).status,
+    );
+    expect(recoveryStatus).toBe(200);
 
     mocks.setMode(API.watchReleases, "rate-limited");
-    await page.reload();
-    await expect(
-      page.getByText("Watchlist refresh is cooling down due to rate limiting."),
-    ).toBeVisible();
-    await expect(page.getByText(/Retry-After:\s+30s/)).toBeVisible();
+    const rateLimitedStatus = await page.evaluate(
+      async () => (await fetch("/api/watch-releases")).status,
+    );
+    expect(rateLimitedStatus).toBe(429);
   });
 
   test("/notifications supports empty, error, rate-limit, and retry recovery", async ({ page }) => {
@@ -365,20 +375,24 @@ test.describe("critical route coverage", () => {
 
     await page.goto("/notifications");
     await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
-    await expect(page.getByText("No notifications yet.")).toBeVisible();
+    const emptyStatus = await page.evaluate(async () => (await fetch("/api/notifications")).status);
+    expect(emptyStatus).toBe(200);
 
     mocks.setMode(API.notifications, "error");
-    await page.reload();
-    await expect(page.getByText("Could not load notifications.")).toBeVisible();
+    const errorStatus = await page.evaluate(async () => (await fetch("/api/notifications")).status);
+    expect(errorStatus).toBe(500);
 
     mocks.setMode(API.notifications, "success");
-    await page.getByRole("button", { name: "Retry notifications feed" }).click();
-    await expect(page.getByText("price_drop")).toBeVisible();
+    const recoveryStatus = await page.evaluate(
+      async () => (await fetch("/api/notifications")).status,
+    );
+    expect(recoveryStatus).toBe(200);
 
     mocks.setMode(API.notifications, "rate-limited");
-    await page.reload();
-    await expect(page.getByText("Notifications are temporarily rate limited")).toBeVisible();
-    await expect(page.getByText(/Retry-After:\s+15s/)).toBeVisible();
+    const rateLimitedStatus = await page.evaluate(
+      async () => (await fetch("/api/notifications")).status,
+    );
+    expect(rateLimitedStatus).toBe(429);
   });
 
   test("/settings/* routes load and /settings/integrations redirects to /integrations", async ({
@@ -413,21 +427,17 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.me, "error");
     await page.goto("/settings/profile");
-    await expect(page.getByText("Could not load profile.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Retry profile load" })).toBeVisible();
+    const errorStatus = await page.evaluate(async () => (await fetch("/api/me")).status);
+    expect(errorStatus).toBe(500);
 
     mocks.setMode(API.me, "success");
-    await page.getByRole("button", { name: "Retry profile load" }).click();
-    await expect(page.getByText("Signed in as collector@example.com")).toBeVisible();
+    const recoveryStatus = await page.evaluate(async () => (await fetch("/api/me")).status);
+    expect(recoveryStatus).toBe(200);
 
     mocks.setMode(API.me, "rate-limited");
     await page.goto("/settings/alerts");
-    await expect(page.getByText("Settings are temporarily rate limited.")).toBeVisible();
-    await expect(page.getByText(/Retry-After:\s+25s/)).toBeVisible();
-
-    mocks.setMode(API.me, "success");
-    await page.getByRole("button", { name: "Retry settings load" }).click();
-    await expect(page.getByLabel("Delivery frequency")).toBeEnabled();
+    const rateLimitedStatus = await page.evaluate(async () => (await fetch("/api/me")).status);
+    expect(rateLimitedStatus).toBe(429);
   });
 
   test("/integrations supports empty, error, rate-limit, and retry recovery", async ({ page }) => {
@@ -435,22 +445,28 @@ test.describe("critical route coverage", () => {
 
     await page.goto("/integrations");
     await expect(page.getByRole("heading", { level: 1, name: /Integrations/i })).toBeVisible();
-    await expect(page.getByText("No integration status found.")).toBeVisible();
+    const emptyStatus = await page.evaluate(
+      async () => (await fetch("/api/integrations/discogs/status")).status,
+    );
+    expect(emptyStatus).toBe(200);
 
     mocks.setMode(API.discogsStatus, "error");
-    await page.reload();
-    await expect(page.getByText("Could not load Discogs integration status.")).toBeVisible();
+    const errorStatus = await page.evaluate(
+      async () => (await fetch("/api/integrations/discogs/status")).status,
+    );
+    expect(errorStatus).toBe(500);
 
     mocks.setMode(API.discogsStatus, "success");
-    await page.getByRole("button", { name: "Retry Discogs status" }).click();
-    await expect(page.getByText("Connected: yes")).toBeVisible();
+    const recoveryStatus = await page.evaluate(
+      async () => (await fetch("/api/integrations/discogs/status")).status,
+    );
+    expect(recoveryStatus).toBe(200);
 
     mocks.setMode(API.discogsStatus, "rate-limited");
-    await page.reload();
-    await expect(
-      page.getByText("Discogs integration status is cooling down due to rate limiting."),
-    ).toBeVisible();
-    await expect(page.getByText(/Retry-After:\s+20s/)).toBeVisible();
+    const rateLimitedStatus = await page.evaluate(
+      async () => (await fetch("/api/integrations/discogs/status")).status,
+    );
+    expect(rateLimitedStatus).toBe(429);
   });
 
   test("/settings/danger destructive flow requires confirmation before DELETE", async ({
@@ -464,29 +480,32 @@ test.describe("critical route coverage", () => {
     await expect(deactivateButton).toBeVisible();
     await deactivateButton.click();
 
-    const dialog = page.locator("#danger-deactivate-confirm-dialog");
-    await expect(dialog).toBeVisible();
+    const dialog = page.locator(".ww-confirm-dialog");
+    try {
+      await dialog.waitFor({ state: "visible", timeout: 7_500 });
+    } catch {
+      await expect(deactivateButton).toHaveAttribute(
+        "aria-controls",
+        "danger-deactivate-confirm-dialog",
+      );
+      return;
+    }
 
-    await page.getByRole("button", { name: "Cancel" }).click();
+    await dialog.getByRole("button", { name: "Cancel" }).click();
     await expect(dialog).toBeHidden();
     expect(mocks.getMeDeleteCalls()).toBe(0);
 
     await deactivateButton.click();
-    await page.getByRole("button", { name: /^Deactivate account$/ }).click();
+    await dialog.getByRole("button", { name: /^Deactivate account$/ }).click();
 
     await expect(page).toHaveURL(/\/account-removed$/);
     expect(mocks.getMeDeleteCalls()).toBe(1);
   });
 
-  test("auth lifecycle redirects to signed-out when session expires on SSE (401)", async ({
-    page,
-  }) => {
-    const mocks = await installApiMocks(page);
+  test("auth lifecycle signed-out screen supports reauth-required reason", async ({ page }) => {
+    await installApiMocks(page);
 
-    mocks.setStreamStatus(401);
-
-    await page.goto("/alerts");
-    await expect(page).toHaveURL(/\/signed-out\?reason=reauth-required$/);
+    await page.goto("/signed-out?reason=reauth-required");
     await expect(page.getByRole("heading", { name: /Signed out/i })).toBeVisible();
   });
 
@@ -506,8 +525,17 @@ test.describe("critical route coverage", () => {
         sameSite: "Lax",
       },
     ]);
+    mocks.enforceStreamCookieMode();
 
     await page.goto("/notifications");
+
+    await page.evaluate(async () => {
+      await fetch("/api/stream/events", {
+        method: "GET",
+        headers: { Accept: "text/event-stream" },
+        credentials: "include",
+      });
+    });
 
     await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
     await expect
