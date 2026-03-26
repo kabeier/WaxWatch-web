@@ -70,15 +70,23 @@ All new route implementation/migration work must compose shared primitives first
 
 ## Navigation model
 
-### Desktop sidebar
+### Desktop side nav (primary route navigation)
 
-1. Dashboard
-2. Search
-3. Alerts
-4. Watchlist
-5. Notifications
-6. Integrations
-7. Settings
+1. Dashboard (`/dashboard`)
+2. Search (`/search`)
+3. Alerts (`/alerts`)
+4. Watchlist (`/watchlist`)
+5. Notifications (`/notifications`)
+6. Integrations (`/integrations`)
+7. Settings (`/settings`)
+
+### Top nav (utility/account area)
+
+Top nav is utility/account chrome (brand + utility links), not the primary route navigation surface.
+Default utility items are:
+
+- Inbox (`/notifications`)
+- Account (`/settings/profile`)
 
 ### Mobile bottom navigation
 
@@ -88,8 +96,8 @@ All new route implementation/migration work must compose shared primitives first
 4. Notifications (`/notifications`)
 5. Settings (`/settings`)
 
-Search (`/search`) remains a first-class signed-in route, but it is not a bottom-tab item on mobile.
-Users reach Search from in-route links/CTAs (for example Dashboard quick actions) and by direct route entry.
+`/search` and `/integrations` remain first-class signed-in routes, but they are not bottom-tab items on mobile.
+Users reach them from in-route links/CTAs (for example Dashboard quick actions) and by direct route entry.
 
 ## Route maturity/status
 
