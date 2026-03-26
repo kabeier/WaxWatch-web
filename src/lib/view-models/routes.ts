@@ -310,7 +310,7 @@ export const mobileNavigationRouteKeys = [
   "watchlist",
   "notifications",
   "settings",
-] as const;
+] as const satisfies readonly (keyof typeof routeViewModels)[];
 
 export const settingsNavigationRouteKeys = [
   "settingsProfile",
