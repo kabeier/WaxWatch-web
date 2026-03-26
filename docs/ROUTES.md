@@ -70,9 +70,9 @@ All new route implementation/migration work must compose shared primitives first
 
 ## Navigation model
 
-### Desktop side nav (primary route navigation)
+### Desktop primary nav (sidebar route set)
 
-Desktop primary navigation is rendered from `APP_NAV_ITEMS` in
+Desktop primary navigation is the sidebar route set rendered from `APP_NAV_ITEMS` in
 `src/components/ui/primitives/shell/primitives.tsx` and includes exactly:
 
 1. Dashboard (`/dashboard`)
@@ -83,17 +83,17 @@ Desktop primary navigation is rendered from `APP_NAV_ITEMS` in
 6. Integrations (`/integrations`)
 7. Settings (`/settings`)
 
-### Top nav (utility/status area)
+### Top nav (utility/account status area)
 
-Top nav is the utility/status chrome (brand + utility links), not the primary route navigation
+Top nav is the utility/account status chrome (brand + utility links), not the primary route navigation
 surface. Utility links are rendered by `TopNav` utility items. Default utility items are:
 
 - Inbox (`/notifications`)
 - Account (`/settings/profile`)
 
-### Mobile bottom navigation
+### Mobile primary nav (currently rendered tab set)
 
-Mobile tab navigation is rendered from `MOBILE_NAV_ITEMS` in
+Mobile primary navigation is the currently rendered tab set from `MOBILE_NAV_ITEMS` in
 `src/components/ui/primitives/shell/primitives.tsx` and includes exactly:
 
 1. Home (`/dashboard`)
