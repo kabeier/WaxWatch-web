@@ -9,7 +9,7 @@ This document is the “rules of engagement” for human contributors and code a
      - `contracts/openapi.snapshot.json`
      - `docs/FRONTEND_API_CONTRACT.md`
    - If either file is moved, update docs and `scripts/check-contract-doc-paths.mjs` in the same PR.
-2. **Use platform-authenticated API transport (no Supabase token assumptions)**
+2. **Use platform-authenticated API transport (no third-party token-storage assumptions)**
    - **Web:** backend-managed `httpOnly` session cookies (`credentials: include`).
    - **Mobile/native:** `Authorization: Bearer <jwt>`.
    - Canonical web implementation anchors: `app/(auth)/login/LoginPageClient.tsx` and `src/lib/auth-session.ts`.

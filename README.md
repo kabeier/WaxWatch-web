@@ -14,7 +14,7 @@ It focuses on the user-facing experience: search, alerts, watchlist, notificatio
 
 - **Next.js** (React framework) for the web app
 - **TypeScript** for safer, maintainable code
-- **First-party backend auth sessions** (`httpOnly` cookies via `credentials: "include"`) for web sign-in/session handling
+- **Backend-issued web sessions** (`httpOnly` cookies via `credentials: "include"`) for browser sign-in/session handling
 - **Backend API integration** for listings, alerts, watchlist, notifications, and settings
 - **TanStack Query** for data fetching and caching
 - **Server-Sent Events (SSE)** for realtime notification updates
@@ -22,7 +22,7 @@ It focuses on the user-facing experience: search, alerts, watchlist, notificatio
 Auth implementation anchors:
 
 - Session adapter + auth lifecycle redirects: [`src/lib/auth-session.ts`](src/lib/auth-session.ts)
-- Login submit flow (`POST /auth/login` + cookie credentials): `app/(auth)/login/LoginPageClient.tsx`
+- Login submit flow (`POST ${resolveApiBaseUrl()}/auth/login`, default `/api/auth/login`, with `credentials: "include"`): `app/(auth)/login/LoginPageClient.tsx`
 
 ## Project goal
 

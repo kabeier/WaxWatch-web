@@ -10,7 +10,7 @@
 Implementation anchors:
 
 - `src/lib/auth-session.ts` defines the web `AuthSessionAdapter` (cookie-backed access token behavior, lifecycle event emission, redirect targets).
-- `app/(auth)/login/LoginPageClient.tsx` performs `POST /auth/login` with `credentials: include` and enforces secure handoff parameter validation.
+- `app/(auth)/login/LoginPageClient.tsx` performs `POST ${resolveApiBaseUrl()}/auth/login` (default `/api/auth/login`) with `credentials: include` and enforces secure handoff parameter validation.
 
 ## Canonical auth lifecycle (web + mobile)
 
