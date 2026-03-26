@@ -104,7 +104,7 @@ This contract captures **current API behavior** and maps it to intended React su
   - `sub` must be a UUID (used as `user_id`).
 - Missing/invalid token yields a standardized `error` envelope.
 - Session lifecycle assumptions for React:
-  - Primary token issuance/session bootstrap may occur outside this API (Supabase/Auth provider), but web login form submit is handled by `POST /api/auth/login`.
+  - Primary session issuance for web is backend-owned via `POST /api/auth/login` (cookie/session bootstrap), with lifecycle handling centralized in `src/lib/auth-session.ts` and login submit in `app/(auth)/login/LoginPageClient.tsx`.
   - `POST /api/me/logout` returns a logout marker payload for client-side/session-provider sign-out orchestration.
   - `DELETE /api/me` deactivates local account state; frontend should then clear session and route to signed-out state.
   - `DELETE /api/me/hard-delete` immediately and permanently deletes the authenticated user record when it exists.
