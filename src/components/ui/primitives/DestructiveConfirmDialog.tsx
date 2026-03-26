@@ -68,6 +68,19 @@ function getFocusableElements(container: HTMLElement | null) {
     if (node.hasAttribute("disabled") || node.getAttribute("aria-hidden") === "true") {
       return false;
     }
+    if (node.closest("[aria-hidden='true'], [inert]")) {
+      return false;
+    }
+    if (node.getAttribute("tabindex") === "-1") {
+      return false;
+    }
+    if (node instanceof HTMLInputElement && node.type === "hidden") {
+      return false;
+    }
+    const style = window.getComputedStyle(node);
+    if (style.visibility === "hidden" || style.display === "none") {
+      return false;
+    }
     return true;
   });
 }
