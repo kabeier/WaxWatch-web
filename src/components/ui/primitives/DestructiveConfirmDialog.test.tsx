@@ -434,6 +434,50 @@ describe("DestructiveConfirmDialog", () => {
     );
   });
 
+  it("supports custom labels and primary confirm styling", async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn();
+
+    render(
+      <DestructiveConfirmDialog
+        open
+        title="Archive record?"
+        description="You can restore this later."
+        confirmLabel="Archive"
+        cancelLabel="Keep record"
+        confirmVariant="primary"
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+      />,
+    );
+
+    const confirmButton = screen.getByRole("button", { name: "Archive" });
+    expect(confirmButton).toHaveClass("ww-button--primary");
+
+    await user.click(screen.getByRole("button", { name: "Keep record" }));
+    await user.click(confirmButton);
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render dialog content when closed", () => {
+    render(
+      <DestructiveConfirmDialog
+        open={false}
+        title="Delete account?"
+        description="This action is permanent."
+        confirmLabel="Delete"
+        onCancel={() => undefined}
+        onConfirm={() => undefined}
+      />,
+    );
+
+    expect(screen.queryByRole("alertdialog", { name: "Delete account?" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  });
+
   it("cycles focus with tab and shift+tab when controls are enabled", async () => {
     const user = userEvent.setup();
 

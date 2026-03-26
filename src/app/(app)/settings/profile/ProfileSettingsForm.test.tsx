@@ -155,4 +155,27 @@ describe("ProfileSettingsForm", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Could not save profile settings.");
     expect(screen.getByText(/request failed/i)).toBeVisible();
   });
+
+  it("shows rate-limited load messaging, allows retry, and keeps save disabled", async () => {
+    const user = userEvent.setup();
+    const retry = vi.fn();
+    hooks.me.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "Cooldown active", retryAfterSeconds: 45 },
+      retry,
+    });
+
+    render(<ProfileSettingsForm />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      /profile requests are temporarily rate limited\./i,
+    );
+    expect(screen.getByText(/retry-after:\s*45s/i)).toBeVisible();
+    expect(screen.getByRole("button", { name: /save profile changes/i })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: /retry profile load/i }));
+    expect(retry).toHaveBeenCalledTimes(1);
+  });
 });
