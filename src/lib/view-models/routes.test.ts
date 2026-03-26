@@ -17,7 +17,7 @@ describe("mobileNavigationRouteKeys", () => {
 
   it("stays in parity with routes that declare mobile navigation labels", () => {
     const routeKeysWithMobileNavigationLabel = Object.entries(routeViewModels)
-      .filter(([, route]) => route.mobileNavigationLabel)
+      .filter(([, route]) => "mobileNavigationLabel" in route)
       .map(([key]) => key);
 
     expect(routeKeysWithMobileNavigationLabel).toEqual(expectedMobileTabRouteKeys);
