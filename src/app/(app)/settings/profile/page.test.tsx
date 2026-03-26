@@ -75,6 +75,13 @@ describe("/settings/profile route", () => {
     );
   });
 
+  it("uses shared button-link primitives for integrations navigation", () => {
+    render(<ProfileSettingsPage />);
+
+    const integrationsLink = screen.getByRole("link", { name: /open integrations/i });
+    expect(integrationsLink).toHaveClass("ww-button", "ww-button--secondary", "ww-button--md");
+  });
+
   it("announces async profile save errors through alert semantics", () => {
     hooks.update.mockReturnValue({
       mutate: vi.fn(),
