@@ -3,21 +3,21 @@
 ## Responsibility split
 
 - Backend auth endpoints own web login/session issuance and refresh semantics for browser flows.
-- **Web** uses server-managed `httpOnly` session cookies for API auth; browser JavaScript does not read bearer tokens from storage.
+- **Web** uses backend-managed `httpOnly` session cookies for API auth; browser JavaScript does not manage long-lived bearer tokens in storage.
 - **Mobile/native** continues to use bearer JWTs via secure native storage and transport.
 - The shared API client is the canonical place where auth lifecycle side effects are triggered.
 
 Implementation anchors:
 
-- `src/lib/auth-session.ts` defines the web `AuthSessionAdapter` (cookie-backed access token behavior, lifecycle event emission, redirect targets).
-- `app/(auth)/login/LoginPageClient.tsx` performs `POST ${resolveApiBaseUrl()}/auth/login` (default `/api/auth/login`) with `credentials: include` and enforces secure handoff parameter validation.
+- `src/lib/auth-session.ts` defines the web `AuthSessionAdapter` (returns `null` bearer token in web mode, emits lifecycle events, and handles signed-out/account-removed redirects).
+- `app/(auth)/login/LoginPageClient.tsx` performs `POST ${resolveApiBaseUrl()}/auth/login` (default `/api/auth/login`) with `credentials: "include"` and enforces secure handoff parameter validation.
 
 ## Canonical auth lifecycle (web + mobile)
 
 All auth transitions must flow through `createApiClient(..., { authSessionAdapter })` hooks.
 
 1. API client asks the adapter (or `getJwt`) for auth context.
-   - Web adapter returns `null` token and relies on cookie transport (`credentials: include`).
+   - Web adapter returns `null` token and relies on cookie transport (`credentials: "include"`).
    - Mobile (or explicit `getJwt`) supplies bearer JWTs.
 2. API client applies auth transport:
    - Bearer mode: `Authorization: Bearer <jwt>`.
@@ -37,7 +37,7 @@ Do not duplicate these transitions in feature code (SSE controllers, screens, pa
 
 - Web no longer reads long-lived access tokens from `localStorage` in `webAuthSessionAdapter.getAccessToken()`.
 - Legacy key cleanup (`waxwatch.auth.session`) is best-effort only during `clearSession()`.
-- Browser API calls and SSE connections use cookie auth (`credentials: include`) instead of JavaScript-managed bearer headers.
+- Browser API calls and SSE connections use cookie auth (`credentials: "include"`) instead of JavaScript-managed bearer headers.
 
 ### Residual risks and trade-offs
 
