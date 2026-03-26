@@ -306,9 +306,9 @@ export const primaryNavigationRouteKeys = [
 
 export const mobileNavigationRouteKeys = [
   "dashboard",
-  "search",
   "alerts",
   "watchlist",
+  "notifications",
   "settings",
 ] as const;
 
