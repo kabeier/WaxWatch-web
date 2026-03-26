@@ -6,7 +6,7 @@ Requested full verification (`test`, `typecheck`, `lint`, `format:check`, `build
 
 Outcome in this environment: **partially green (infrastructure/network limited)**.
 
-- ✅ `npm run test:run`: passed (48/48 files, 392/392 tests).
+- ✅ `npm run test:run`: passed (48/48 files, 402/402 tests).
 - ✅ `npm run typecheck`: passed.
 - ✅ `npm run lint`: passed.
 - ✅ `npm run format:check`: passed.
@@ -240,23 +240,6 @@ Any PR that changes one or more route statuses in the matrix above must include 
    - Accessibility validation evidence (for example: semantic roles/labels, keyboard behavior, and/or a11y smoke coverage).
 
 When moving a route to `production-ready`, reviewers should reject the status change if this evidence is missing or if route-level test updates are absent.
-
-### Verification lock (2026-03-26 local full-script rerun)
-
-Requested full verification (`test`, `typecheck`, `lint`, `format:check`, `build`, `a11y:smoke`, `docs:route-status-gate`) was rerun on **March 26, 2026** in this workspace.
-
-Result in this workspace: **partially green (infrastructure/network limited)**.
-
-- ✅ `npm run test:run` passed (48/48 files, 402/402 tests).
-- ✅ `npm run typecheck`, `npm run lint`, and `npm run format:check` all passed.
-- ✅ `npm run build` passed env-contract `prebuild` validation when production-safe env vars were supplied inline for the command.
-- ❌ `npm run build` failed while Next.js attempted to download missing SWC binaries (`ENETUNREACH` reaching the SWC package host).
-- ⚠️ `npm run a11y:smoke` could not pass because `.next/standalone/server.js` was unavailable (depends on successful `npm run build`).
-- ⚠️ `npm run docs:route-status-gate` skipped in both local modes:
-  - without `GITHUB_BASE_REF` (script no-op by design), and
-  - with `GITHUB_BASE_REF=main` because this workspace has no `origin` remote (`fatal: 'origin' does not appear to be a git repository`).
-
-Since the full gate run did not complete end-to-end, do not newly finalize route maturity promotions from this workspace run.
 
 ### SSE verification (contributor workflow)
 
