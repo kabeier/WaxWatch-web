@@ -88,6 +88,11 @@ type DashboardDenseListRowViewModel = {
   trailing?: ReactNode;
   metaValues: string[];
 };
+type DashboardSummaryViewModel = {
+  totalCount: number;
+  activeCount: number;
+  rows: DashboardDenseListRowViewModel[];
+};
 type DashboardCollectionContentProps = {
   copy: DashboardTransitionCopy;
   isLoading: boolean;
@@ -185,6 +190,14 @@ function DashboardMetaItem({ children }: { children: ReactNode }) {
   );
 }
 
+function DashboardLinkTitle({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link className={pageViewStyles.listLink} href={href}>
+      <ListText truncate>{children}</ListText>
+    </Link>
+  );
+}
+
 function DashboardMetaSeparator() {
   return (
     <ListText className={pageViewStyles.mutedText} aria-hidden>
@@ -210,8 +223,12 @@ function DashboardListDescription({ children }: { children: ReactNode }) {
   );
 }
 
+function normalizeMetaValues(values: string[]) {
+  return values.map((value) => value.trim()).filter((value) => value.length > 0);
+}
+
 function DashboardListMeta({ values }: { values: string[] }) {
-  const renderedValues = useMemo(() => values.filter((value) => value.trim().length > 0), [values]);
+  const renderedValues = useMemo(() => normalizeMetaValues(values), [values]);
 
   return (
     <ListMeta>
@@ -242,6 +259,16 @@ function DashboardDenseListRow({ row }: { row: DashboardDenseListRowViewModel })
       <DashboardListMeta values={row.metaValues} />
     </ListRow>
   );
+}
+
+function toDenseRows<TItem extends { id: string | number }>(
+  rows: TItem[],
+  mapRow: (row: TItem) => Omit<DashboardDenseListRowViewModel, "id">,
+) {
+  return rows.map((row) => ({
+    id: row.id,
+    ...mapRow(row),
+  }));
 }
 
 function resolveDashboardCollectionState({
@@ -560,81 +587,62 @@ export default function DashboardClientContent() {
     [watchReleasesQuery.data],
   );
 
-  const notificationRows = useMemo(() => {
+  const notificationsSummary = useMemo<DashboardSummaryViewModel>(() => {
     const recentNotifications = sortByNewest(notifications).slice(0, DASHBOARD_NOTIFICATION_LIMIT);
-    return buildNotificationRows(recentNotifications);
-  }, [notifications]);
-  const notificationListRows = useMemo<DashboardDenseListRowViewModel[]>(
-    () =>
-      notificationRows.map((notification) => ({
-        id: notification.id,
+    const rows = buildNotificationRows(recentNotifications);
+    return {
+      totalCount: notifications.length,
+      activeCount: rows.reduce((count, row) => count + (row.is_read ? 0 : 1), 0),
+      rows: toDenseRows(rows, (notification) => ({
         title: notification.event_type,
         description: notification.description,
         trailing: notification.readState,
         metaValues: notification.metaValues,
       })),
-    [notificationRows],
-  );
-  const watchRulesSummary = useMemo(() => {
+    };
+  }, [notifications]);
+  const watchRulesSummary = useMemo<DashboardSummaryViewModel>(() => {
     const { recentItems, activeItemCount, totalItemCount } = summarizeDashboardItems(
       watchRules,
       DASHBOARD_RULE_LIMIT,
     );
+    const rows = buildRuleRows(recentItems);
     return {
-      recentRules: recentItems,
-      activeRuleCount: activeItemCount,
-      totalRuleCount: totalItemCount,
-      rows: buildRuleRows(recentItems),
-    };
-  }, [watchRules]);
-  const watchReleasesSummary = useMemo(() => {
-    const { recentItems, activeItemCount, totalItemCount } = summarizeDashboardItems(
-      watchReleases,
-      DASHBOARD_RELEASE_LIMIT,
-    );
-    return {
-      recentMatches: recentItems,
-      activeMatchCount: activeItemCount,
-      totalReleaseCount: totalItemCount,
-      rows: buildReleaseRows(recentItems),
-    };
-  }, [watchReleases]);
-  const watchReleaseListRows = useMemo<DashboardDenseListRowViewModel[]>(
-    () =>
-      watchReleasesSummary.rows.map((release) => ({
-        id: release.id,
+      totalCount: totalItemCount,
+      activeCount: activeItemCount,
+      rows: toDenseRows(rows, (rule) => ({
         title: (
-          <Link
-            className={pageViewStyles.listLink}
-            href={`${routeViewModels.watchlist.path}/${release.id}`}
-          >
-            <ListText truncate>{release.title}</ListText>
-          </Link>
-        ),
-        description: `${release.artist} · ${release.matchModeLabel}`,
-        trailing: release.activeState,
-        metaValues: [release.targetPriceLabel, release.updatedLabel],
-      })),
-    [watchReleasesSummary.rows],
-  );
-  const watchRuleListRows = useMemo<DashboardDenseListRowViewModel[]>(
-    () =>
-      watchRulesSummary.rows.map((rule) => ({
-        id: rule.id,
-        title: (
-          <Link
-            className={pageViewStyles.listLink}
-            href={`${routeViewModels.alerts.path}/${rule.id}`}
-          >
-            <ListText truncate>{rule.name}</ListText>
-          </Link>
+          <DashboardLinkTitle href={`${routeViewModels.alerts.path}/${rule.id}`}>
+            {rule.name}
+          </DashboardLinkTitle>
         ),
         description: rule.keywordsLabel,
         trailing: rule.activeState,
         metaValues: [rule.pollLabel, rule.nextRunLabel],
       })),
-    [watchRulesSummary.rows],
-  );
+    };
+  }, [watchRules]);
+  const watchReleasesSummary = useMemo<DashboardSummaryViewModel>(() => {
+    const { recentItems, activeItemCount, totalItemCount } = summarizeDashboardItems(
+      watchReleases,
+      DASHBOARD_RELEASE_LIMIT,
+    );
+    const rows = buildReleaseRows(recentItems);
+    return {
+      totalCount: totalItemCount,
+      activeCount: activeItemCount,
+      rows: toDenseRows(rows, (release) => ({
+        title: (
+          <DashboardLinkTitle href={`${routeViewModels.watchlist.path}/${release.id}`}>
+            {release.title}
+          </DashboardLinkTitle>
+        ),
+        description: `${release.artist} · ${release.matchModeLabel}`,
+        trailing: release.activeState,
+        metaValues: [release.targetPriceLabel, release.updatedLabel],
+      })),
+    };
+  }, [watchReleases]);
   const unreadCountSummary = useMemo(
     () => ({
       value: unreadCountQuery.isLoading
@@ -683,11 +691,11 @@ export default function DashboardClientContent() {
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
             <DashboardMetric
-              value={watchRulesSummary.totalRuleCount}
+              value={watchRulesSummary.totalCount}
               label={
-                watchRulesSummary.totalRuleCount === 0
+                watchRulesSummary.totalCount === 0
                   ? "Watch rules ready to create"
-                  : `${watchRulesSummary.activeRuleCount} active recent watch rules`
+                  : `${watchRulesSummary.activeCount} active recent watch rules`
               }
             />
           </CardBody>
@@ -695,11 +703,11 @@ export default function DashboardClientContent() {
         <Card>
           <CardBody className={pageViewStyles.metricStack}>
             <DashboardMetric
-              value={watchReleasesSummary.totalReleaseCount}
+              value={watchReleasesSummary.totalCount}
               label={
-                watchReleasesSummary.totalReleaseCount === 0
+                watchReleasesSummary.totalCount === 0
                   ? "Recent matches will appear here"
-                  : `${watchReleasesSummary.activeMatchCount} active recent matches`
+                  : `${watchReleasesSummary.activeCount} active recent matches`
               }
             />
           </CardBody>
@@ -719,7 +727,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardMatchesPanel
-              rows={watchReleaseListRows}
+              rows={watchReleasesSummary.rows}
               isLoading={watchReleasesQuery.isLoading}
               error={watchReleasesQuery.error}
               onRetry={retryWatchReleases}
@@ -740,7 +748,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardRulesPanel
-              rows={watchRuleListRows}
+              rows={watchRulesSummary.rows}
               isLoading={watchRulesQuery.isLoading}
               error={watchRulesQuery.error}
               onRetry={retryWatchRules}
@@ -764,7 +772,7 @@ export default function DashboardClientContent() {
           </CardHeader>
           <CardBody className={pageViewStyles.cardStack}>
             <DashboardNotificationsPanel
-              rows={notificationListRows}
+              rows={notificationsSummary.rows}
               isLoading={notificationsQuery.isLoading}
               error={notificationsQuery.error}
               onRetry={retryNotifications}
