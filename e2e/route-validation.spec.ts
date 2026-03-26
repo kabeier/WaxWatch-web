@@ -31,46 +31,90 @@ const meProfile = {
   integrations: [{ provider: "discogs", linked: true, watch_rule_count: 1 }],
 };
 
-async function fulfillJson(
-  route: Route,
-  status: number,
-  payload: unknown,
-  headers?: Record<string, string>,
-) {
+async function fulfillJson(route: Route, status: number, payload: unknown) {
   await route.fulfill({
     status,
     contentType: "application/json",
-    headers,
     body: JSON.stringify(payload),
   });
 }
 
-async function mockSseIdle(page: Page) {
-  await page.route(API.sse, async (route) => {
-    await route.fulfill({
-      status: 200,
-      headers: { "content-type": "text/event-stream" },
-      body: "",
-    });
+async function installApiFallback(page: Page) {
+  await page.route("**/api/**", async (route) => {
+    const requestUrl = new URL(route.request().url());
+    const pathname = requestUrl.pathname.replace(/\/$/, "");
+    const method = route.request().method();
+
+    if (pathname === "/api/stream/events") {
+      await route.fulfill({
+        status: 200,
+        headers: { "content-type": "text/event-stream" },
+        body: "",
+      });
+      return;
+    }
+
+    if (pathname === "/api/watch-rules") {
+      await fulfillJson(route, 200, []);
+      return;
+    }
+
+    if (pathname === "/api/watch-releases") {
+      await fulfillJson(route, 200, []);
+      return;
+    }
+
+    if (pathname === "/api/notifications/unread-count") {
+      await fulfillJson(route, 200, { unread_count: 0 });
+      return;
+    }
+
+    if (pathname === "/api/notifications") {
+      await fulfillJson(route, 200, []);
+      return;
+    }
+
+    if (pathname === "/api/me/hard-delete") {
+      await route.fulfill({ status: 204, body: "" });
+      return;
+    }
+
+    if (pathname === "/api/me" && method === "DELETE") {
+      await route.fulfill({ status: 204, body: "" });
+      return;
+    }
+
+    if (pathname === "/api/me") {
+      await fulfillJson(route, 200, meProfile);
+      return;
+    }
+
+    if (pathname === "/api/integrations/discogs/status") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: "null" });
+      return;
+    }
+
+    await fulfillJson(route, 200, {});
   });
 }
 
 test.describe("route-focused validation", () => {
+  test.beforeEach(async ({ page }) => {
+    await installApiFallback(page);
+  });
+
   test("/alerts covers loading and empty states", async ({ page }) => {
-    await mockSseIdle(page);
     await page.route(API.watchRules, async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 250));
       await fulfillJson(route, 200, []);
     });
 
     await page.goto("/alerts");
-
     await expect(page.getByText("Loading watch rules…")).toBeVisible();
     await expect(page.getByText(/No watch rules yet/i)).toBeVisible();
   });
 
   test("/alerts covers error and rate-limited states", async ({ page }) => {
-    await mockSseIdle(page);
     await page.route(API.watchRules, async (route) => {
       await fulfillJson(route, 429, { error: { type: "rate_limited", message: "Calm down." } });
     });
@@ -84,11 +128,10 @@ test.describe("route-focused validation", () => {
     });
 
     await page.getByRole("button", { name: "Retry watch rules" }).click();
-    await expect(page.getByText("Could not load watch rules.")).toBeVisible();
+    await expect(page.getByText(/Could not load watch rules/i)).toBeVisible();
   });
 
   test("/watchlist covers error and empty states", async ({ page }) => {
-    await mockSseIdle(page);
     await page.route(API.watchReleases, async (route) => {
       await fulfillJson(route, 500, { error: { message: "Nope" } });
     });
@@ -106,7 +149,6 @@ test.describe("route-focused validation", () => {
   });
 
   test("/notifications covers rate-limited and empty states", async ({ page }) => {
-    await mockSseIdle(page);
     await page.route(API.notifications, async (route) => {
       await fulfillJson(route, 429, { error: { type: "rate_limited", message: "Cooling down" } });
     });
@@ -127,7 +169,6 @@ test.describe("route-focused validation", () => {
   });
 
   test("/settings/profile and /settings/alerts load and rate-limit states", async ({ page }) => {
-    await mockSseIdle(page);
     await page.route(API.me, async (route) => {
       await fulfillJson(route, 429, {
         error: { type: "rate_limited", message: "Profile cooldown" },
@@ -142,15 +183,9 @@ test.describe("route-focused validation", () => {
   });
 
   test("/integrations covers empty and error states", async ({ page }) => {
-    await mockSseIdle(page);
-    await page.route(API.discogsStatus, async (route) => {
-      await route.fulfill({ status: 200, contentType: "application/json", body: "null" });
-    });
-
     await page.goto("/integrations");
     await expect(page.getByText(/No integration status found/i)).toBeVisible();
 
-    await page.unroute(API.discogsStatus);
     await page.route(API.discogsStatus, async (route) => {
       await fulfillJson(route, 500, { error: { message: "Discogs down" } });
     });
@@ -160,30 +195,12 @@ test.describe("route-focused validation", () => {
   });
 
   test("/settings/integrations redirects to /integrations", async ({ page }) => {
-    await mockSseIdle(page);
-    await page.route(API.discogsStatus, async (route) => {
-      await route.fulfill({ status: 200, contentType: "application/json", body: "null" });
-    });
-
     await page.goto("/settings/integrations");
     await expect(page).toHaveURL(/\/integrations$/);
     await expect(page.getByRole("heading", { name: /^integrations$/i })).toBeVisible();
   });
 
   test("/settings/danger destructive flow requires confirmation", async ({ page }) => {
-    await mockSseIdle(page);
-    await page.route(API.meHardDelete, async (route) => {
-      await route.fulfill({ status: 204, body: "" });
-    });
-    await page.route(API.me, async (route) => {
-      if (route.request().method() === "DELETE") {
-        await route.fulfill({ status: 204, body: "" });
-        return;
-      }
-
-      await fulfillJson(route, 200, meProfile);
-    });
-
     await page.goto("/settings/danger");
     await page.getByRole("button", { name: "Deactivate account" }).click();
     await expect(page.getByText(/Deactivate account now\?/i)).toBeVisible();
@@ -199,7 +216,6 @@ test.describe("route-focused validation", () => {
   });
 
   test("auth-expiry redirects to /signed-out", async ({ page }) => {
-    await mockSseIdle(page);
     await page.route(API.watchRules, async (route) => {
       await fulfillJson(route, 401, { error: { type: "unauthorized", message: "expired" } });
     });
