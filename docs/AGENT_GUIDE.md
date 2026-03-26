@@ -9,8 +9,10 @@ This document is the “rules of engagement” for human contributors and code a
      - `contracts/openapi.snapshot.json`
      - `docs/FRONTEND_API_CONTRACT.md`
    - If either file is moved, update docs and `scripts/check-contract-doc-paths.mjs` in the same PR.
-2. **All user-facing API calls require bearer auth**
-   - `Authorization: Bearer <supabase_jwt>`
+2. **Use platform-authenticated API transport (no Supabase token assumptions)**
+   - **Web:** backend-managed `httpOnly` session cookies (`credentials: include`).
+   - **Mobile/native:** `Authorization: Bearer <jwt>`.
+   - Canonical web implementation anchors: `app/(auth)/login/LoginPageClient.tsx` and `src/lib/auth-session.ts`.
 3. **Every screen implements 4 states**
    - Loading, Empty, Error, Rate-limited (429 + Retry-After)
 4. **No ad-hoc fetch**
@@ -69,10 +71,10 @@ Implement a single wrapper (example paths):
 
 Responsibilities:
 
-- inject bearer token
+- apply platform auth transport (web cookie credentials or mobile bearer token)
 - parse JSON
 - normalize backend error envelope
-- handle 401/403 globally (sign out + redirect)
+- handle 401/403 globally via auth-session adapter lifecycle (clear session/event/redirect)
 - handle 429 globally (honor Retry-After)
 
 ### 2) Query keys + invalidation
