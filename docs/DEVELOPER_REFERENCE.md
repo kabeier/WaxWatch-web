@@ -6,14 +6,14 @@ Requested full verification (`test`, `typecheck`, `lint`, `format:check`, `build
 
 Outcome in this environment: **partially green (infrastructure/network limited)**.
 
-- ✅ `npm run test:run`: passed (48/48 files, 386/386 tests).
+- ✅ `npm run test:run`: passed (48/48 files, 392/392 tests).
 - ✅ `npm run typecheck`: passed.
 - ✅ `npm run lint`: passed.
 - ✅ `npm run format:check`: passed.
 - ✅ `npm run build`: `prebuild` env-contract validation passed when production-safe env vars were supplied inline for the command.
 - ❌ `npm run build`: failed because Next.js attempted to download missing SWC binary `@next/swc-linux-x64-gnu` and the environment could not reach the package host (`ENETUNREACH`).
 - ⚠️ `npm run a11y:smoke`: cannot pass in this workspace because `npm run start` requires `.next/standalone/server.js`, which depends on a successful `npm run build`.
-- ⚠️ `npm run docs:route-status-gate`: skipped in local workspace context (`GITHUB_BASE_REF` unset). With `GITHUB_BASE_REF=main`, the script still skips because this workspace cannot fetch `origin/main` (`origin` remote is unavailable).
+- ⚠️ `npm run docs:route-status-gate`: skipped in local workspace context (`GITHUB_BASE_REF` unset). With `GITHUB_BASE_REF=main`, the script still skips because this workspace cannot fetch `origin/main` (`fatal: 'origin' does not appear to be a git repository`).
 
 Because the full gate set did not complete end-to-end, treat route readiness as **not newly promoted/finalized** from this local run.
 
