@@ -274,4 +274,34 @@ describe("DashboardClientContent", () => {
     expect(screen.getByText("in_app · queued")).toBeInTheDocument();
     expect(screen.queryByText("Loading Notifications")).not.toBeInTheDocument();
   });
+
+  it("falls back to empty collections when preview payloads are not arrays", () => {
+    hookMocks.notifications.mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    hookMocks.releases.mockReturnValue({
+      data: { items: [] },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    hookMocks.rules.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    render(<DashboardClientContent />);
+
+    expect(screen.getByText("No notifications yet")).toBeInTheDocument();
+    expect(screen.getByText("No recent matches yet")).toBeInTheDocument();
+    expect(screen.getByText("No watch rules yet")).toBeInTheDocument();
+  });
 });
