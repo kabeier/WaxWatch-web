@@ -2,9 +2,9 @@
 
 ## Signed-in app navigation model
 
-### Desktop side nav (primary route destinations)
+### Desktop primary nav (sidebar route set)
 
-Desktop primary navigation is rendered from `APP_NAV_ITEMS` in
+Desktop primary navigation is the sidebar route set rendered from `APP_NAV_ITEMS` in
 `src/components/ui/primitives/shell/primitives.tsx` and includes exactly:
 
 1. Dashboard (`/dashboard`)
@@ -15,17 +15,17 @@ Desktop primary navigation is rendered from `APP_NAV_ITEMS` in
 6. Integrations (`/integrations`)
 7. Settings (`/settings`)
 
-### Top nav (utility/status area)
+### Top nav (utility/account status area)
 
-Top nav is not the primary route map. It is the utility/status surface: brand/home access plus
+Top nav is not the primary route map. It is the utility/account status surface: brand/home access plus
 utility links rendered via `TopNav` utility items:
 
 - Inbox (`/notifications`)
 - Account (`/settings/profile`)
 
-### Mobile bottom tabs
+### Mobile primary nav (currently rendered tab set)
 
-Mobile tab navigation is rendered from `MOBILE_NAV_ITEMS` in
+Mobile primary navigation is the currently rendered tab set from `MOBILE_NAV_ITEMS` in
 `src/components/ui/primitives/shell/primitives.tsx` and includes exactly:
 
 1. Home (`/dashboard`)
