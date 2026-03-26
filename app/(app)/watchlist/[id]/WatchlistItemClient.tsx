@@ -210,7 +210,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           disabled={isPending}
           error={validationField === "targetPrice"}
           errorMessageId="watchlist-item-target-price-error"
-          aria-describedby={validationText ? "watchlist-item-form-errors" : undefined}
+          errorSummaryId="watchlist-item-form-errors"
         />
         {validationField === "targetPrice" ? (
           <p className={pageViewStyles.helpText} id="watchlist-item-target-price-error">
@@ -231,7 +231,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           disabled={isPending}
           error={validationField === "minCondition"}
           errorMessageId="watchlist-item-min-condition-error"
-          aria-describedby={validationText ? "watchlist-item-form-errors" : undefined}
+          errorSummaryId="watchlist-item-form-errors"
         />
         {validationField === "minCondition" ? (
           <p className={pageViewStyles.helpText} id="watchlist-item-min-condition-error">

@@ -182,7 +182,7 @@ export default function SearchWorkbench() {
             disabled={isBusy}
             error={Boolean(keywordError)}
             errorMessageId="search-keywords-error"
-            aria-describedby={searchErrors.length > 0 ? "search-form-errors" : undefined}
+            errorSummaryId="search-form-errors"
           />
           {keywordError ? (
             <p className={pageViewStyles.helpText} id="search-keywords-error">
@@ -199,7 +199,7 @@ export default function SearchWorkbench() {
             disabled={isBusy}
             error={Boolean(providerError)}
             errorMessageId="search-providers-error"
-            aria-describedby={searchErrors.length > 0 ? "search-form-errors" : undefined}
+            errorSummaryId="search-form-errors"
           />
           {providerError ? (
             <p className={pageViewStyles.helpText} id="search-providers-error">
@@ -219,7 +219,7 @@ export default function SearchWorkbench() {
               disabled={isBusy}
               error={Boolean(pageError)}
               errorMessageId="search-page-error"
-              aria-describedby={searchErrors.length > 0 ? "search-form-errors" : undefined}
+              errorSummaryId="search-form-errors"
             />
             {pageError ? (
               <p className={pageViewStyles.helpText} id="search-page-error">
@@ -239,7 +239,7 @@ export default function SearchWorkbench() {
               disabled={isBusy}
               error={Boolean(pageSizeError)}
               errorMessageId="search-page-size-error"
-              aria-describedby={searchErrors.length > 0 ? "search-form-errors" : undefined}
+              errorSummaryId="search-form-errors"
             />
             {pageSizeError ? (
               <p className={pageViewStyles.helpText} id="search-page-size-error">
@@ -388,7 +388,7 @@ export default function SearchWorkbench() {
               disabled={isBusy}
               error={Boolean(alertNameError)}
               errorMessageId="save-alert-name-error"
-              aria-describedby={saveAlertErrors.length > 0 ? "save-alert-errors" : undefined}
+              errorSummaryId="save-alert-errors"
             />
             {alertNameError ? (
               <p className={pageViewStyles.helpText} id="save-alert-name-error">
@@ -408,7 +408,7 @@ export default function SearchWorkbench() {
               disabled={isBusy}
               error={Boolean(pollIntervalError)}
               errorMessageId="save-alert-poll-interval-error"
-              aria-describedby={saveAlertErrors.length > 0 ? "save-alert-errors" : undefined}
+              errorSummaryId="save-alert-errors"
             />
             {pollIntervalError ? (
               <p className={pageViewStyles.helpText} id="save-alert-poll-interval-error">

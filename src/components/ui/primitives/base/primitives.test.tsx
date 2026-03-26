@@ -237,6 +237,30 @@ describe("base ui primitives", () => {
     expect(alertName).toHaveAttribute("aria-errormessage", "alert-name-error");
   });
 
+  it("only appends error summary ids when controls are invalid", () => {
+    render(
+      <>
+        <TextInput
+          aria-label="Search keywords"
+          errorSummaryId="search-form-errors"
+          errorMessageId="search-keywords-error"
+          error
+        />
+        <TextInput aria-label="Search providers" errorSummaryId="search-form-errors" />
+        <p id="search-form-errors">Fix highlighted fields before saving.</p>
+        <p id="search-keywords-error">Keyword is required.</p>
+      </>,
+    );
+
+    expect(screen.getByRole("textbox", { name: "Search keywords" })).toHaveAttribute(
+      "aria-describedby",
+      "search-form-errors search-keywords-error",
+    );
+    expect(screen.getByRole("textbox", { name: "Search providers" })).not.toHaveAttribute(
+      "aria-describedby",
+    );
+  });
+
   it("merges checkbox field descriptions with externally provided error associations", () => {
     render(
       <>
