@@ -188,6 +188,9 @@ export function TopNav({
   brandLabel = "WaxWatch",
   utilityLabel = "Utilities",
 }: TopNavProps) {
+  const resolvedUtilityItems =
+    utilityItems && utilityItems.length > 0 ? utilityItems : DEFAULT_UTILITY_ITEMS;
+
   return (
     <header className="top-nav">
       <div className="top-nav__inner">
@@ -196,7 +199,7 @@ export function TopNav({
           <nav className="top-nav__utilities" aria-label={utilityLabel}>
             {utilities ??
               // Loading-safe fallback for non-auth shell compositions
-              (utilityItems ?? DEFAULT_UTILITY_ITEMS).map((item) => (
+              resolvedUtilityItems.map((item) => (
                 <ShellUtilityLink
                   key={`${item.href}-${item.label}`}
                   href={item.href}
@@ -224,6 +227,12 @@ export function SideNav({
   footer,
   status = DEFAULT_SIDE_NAV_STATUS,
 }: SideNavProps) {
+  const resolvedStatus: SideNavStatus = {
+    label: getNonEmptyValue(status.label, "Session"),
+    value: getNonEmptyValue(status.value, "Profile unavailable"),
+    meta: status.meta?.trim() || undefined,
+  };
+
   return (
     <aside className="side-nav">
       <div className="side-nav__inner">
@@ -238,14 +247,10 @@ export function SideNav({
         <div className="side-nav__footer">
           {footer ?? (
             <div className="side-nav__status" aria-label="Account status">
-              <span className="side-nav__status-label">
-                {getNonEmptyValue(status.label, "Session")}
-              </span>
-              <strong className="side-nav__status-value">
-                {getNonEmptyValue(status.value, "Profile unavailable")}
-              </strong>
-              {status.meta?.trim() ? (
-                <span className="side-nav__status-meta">{status.meta}</span>
+              <span className="side-nav__status-label">{resolvedStatus.label}</span>
+              <strong className="side-nav__status-value">{resolvedStatus.value}</strong>
+              {resolvedStatus.meta ? (
+                <span className="side-nav__status-meta">{resolvedStatus.meta}</span>
               ) : null}
             </div>
           )}

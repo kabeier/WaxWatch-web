@@ -188,6 +188,31 @@ describe("shell primitives", () => {
     expect(screen.getByText("Notifications syncing")).toBeInTheDocument();
   });
 
+  it("falls back to loading utility values when utility items are empty", () => {
+    const { container } = render(<TopNav utilityItems={[]} />);
+
+    const utilityValues = Array.from(container.querySelectorAll("span.top-nav__utility-value"));
+
+    expect(utilityValues).toHaveLength(2);
+    expect(utilityValues.map((node) => node.textContent)).toEqual(["…", "Loading"]);
+  });
+
+  it("keeps side-nav status values non-empty when blank status fields are provided", () => {
+    render(
+      <SideNav
+        status={{
+          label: "  ",
+          value: " ",
+          meta: "   ",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Session")).toBeInTheDocument();
+    expect(screen.getByText("Profile unavailable")).toBeInTheDocument();
+    expect(screen.queryByText(/^\s+$/)).not.toBeInTheDocument();
+  });
+
   it("renders dynamic shell utility and status values from query-backed chrome data", () => {
     queryHookMocks.me.mockReturnValue({
       data: {
