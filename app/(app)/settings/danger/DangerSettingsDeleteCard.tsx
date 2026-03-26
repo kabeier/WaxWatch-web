@@ -19,6 +19,7 @@ export default function DangerSettingsDeleteCard() {
   const [isDialogRequested, setDialogRequested] = useState(false);
   const [isConfirmSubmitted, setConfirmSubmitted] = useState(false);
   const deleteTriggerRef = useRef<HTMLElement | null>(null);
+  const deleteDialogId = "danger-delete-confirm-dialog";
   const { deactivateMutation, hardDeleteMutation } = useDangerMutations();
   const isPending = deactivateMutation.isPending || hardDeleteMutation.isPending;
   const isDialogOpen =
@@ -41,6 +42,9 @@ export default function DangerSettingsDeleteCard() {
         <Button
           variant="destructive"
           disabled={isPending}
+          aria-haspopup="dialog"
+          aria-expanded={isDialogOpen}
+          aria-controls={deleteDialogId}
           onClick={(event: MouseEvent<HTMLButtonElement>) => {
             deleteTriggerRef.current = event.currentTarget;
             setConfirmSubmitted(false);
@@ -52,6 +56,7 @@ export default function DangerSettingsDeleteCard() {
             : "Permanently delete account"}
         </Button>
         <DestructiveConfirmDialog
+          id={deleteDialogId}
           open={isDialogOpen}
           title="Delete account permanently?"
           description="This permanently deletes account access and cannot be undone."

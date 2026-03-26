@@ -42,6 +42,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [submitAttemptCount, setSubmitAttemptCount] = useState(0);
   const disableTriggerRef = useRef<HTMLElement | null>(null);
+  const disableDialogId = "watchlist-disable-confirm-dialog";
 
   const disableRequestRef = useRef<{ requestedId: string | null; sawPending: boolean }>({
     requestedId: null,
@@ -286,6 +287,9 @@ export default function WatchlistItemClient({ id }: { id: string }) {
           type="button"
           variant="destructive"
           disabled={isPending}
+          aria-haspopup="dialog"
+          aria-expanded={isDisableDialogOpen}
+          aria-controls={disableDialogId}
           onClick={(event: MouseEvent<HTMLButtonElement>) => {
             disableTriggerRef.current = event.currentTarget;
             setDisableConfirmSubmitted(false);
@@ -298,6 +302,7 @@ export default function WatchlistItemClient({ id }: { id: string }) {
         </Button>
       </div>
       <DestructiveConfirmDialog
+        id={disableDialogId}
         open={isDisableDialogOpen}
         title="Disable watchlist item?"
         description="Disabling keeps this watchlist item visible, but it stops matching new listings until re-enabled."

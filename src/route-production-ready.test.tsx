@@ -999,23 +999,35 @@ describe("route-level production-ready paths", () => {
     render(<DangerSettingsPage />);
 
     const deactivateTrigger = screen.getByRole("button", { name: /^deactivate account$/i });
+    expect(deactivateTrigger).toHaveAttribute("aria-haspopup", "dialog");
+    expect(deactivateTrigger).toHaveAttribute("aria-expanded", "false");
+    expect(deactivateTrigger).toHaveAttribute("aria-controls", "danger-deactivate-confirm-dialog");
     fireEvent.click(deactivateTrigger);
     const deactivateDialog = screen.getByRole("alertdialog", { name: /deactivate account now\?/i });
+    expect(deactivateDialog).toHaveAttribute("id", "danger-deactivate-confirm-dialog");
+    expect(deactivateTrigger).toHaveAttribute("aria-expanded", "true");
     expect(deactivateDialog).toBeInTheDocument();
     fireEvent.click(within(deactivateDialog).getByRole("button", { name: /cancel/i }));
     expect(
       screen.queryByRole("alertdialog", { name: /deactivate account now\?/i }),
     ).not.toBeInTheDocument();
+    expect(deactivateTrigger).toHaveAttribute("aria-expanded", "false");
     expect(deactivateTrigger).toHaveFocus();
 
     const deleteTrigger = screen.getByRole("button", { name: /^permanently delete account$/i });
+    expect(deleteTrigger).toHaveAttribute("aria-haspopup", "dialog");
+    expect(deleteTrigger).toHaveAttribute("aria-expanded", "false");
+    expect(deleteTrigger).toHaveAttribute("aria-controls", "danger-delete-confirm-dialog");
     fireEvent.click(deleteTrigger);
     const deleteDialog = screen.getByRole("alertdialog", { name: /delete account permanently\?/i });
+    expect(deleteDialog).toHaveAttribute("id", "danger-delete-confirm-dialog");
+    expect(deleteTrigger).toHaveAttribute("aria-expanded", "true");
     expect(deleteDialog).toBeInTheDocument();
     fireEvent.click(within(deleteDialog).getByRole("button", { name: /cancel/i }));
     expect(
       screen.queryByRole("alertdialog", { name: /delete account permanently\?/i }),
     ).not.toBeInTheDocument();
+    expect(deleteTrigger).toHaveAttribute("aria-expanded", "false");
     expect(deleteTrigger).toHaveFocus();
   });
 
