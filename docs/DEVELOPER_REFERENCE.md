@@ -6,7 +6,7 @@ Requested full verification (`test`, `typecheck`, `lint`, `format:check`, `build
 
 Outcome in this environment: **partially green (infrastructure/network limited)**.
 
-- ✅ `npm run test:run`: passed (48/48 files, 392/392 tests).
+- ✅ `npm run test:run`: passed (48/48 files, 402/402 tests).
 - ✅ `npm run typecheck`: passed.
 - ✅ `npm run lint`: passed.
 - ✅ `npm run format:check`: passed.
