@@ -79,6 +79,19 @@ function notificationFixture() {
   };
 }
 
+async function ensureAuthenticatedSession(page: Page) {
+  await page.context().addCookies([
+    {
+      name: "waxwatch_session",
+      value: "fake-session",
+      domain: "127.0.0.1",
+      path: "/",
+      httpOnly: false,
+      sameSite: "Lax",
+    },
+  ]);
+}
+
 async function installApiMocks(page: Page) {
   const mockStates: Record<string, RouteMockState> = {
     [API.watchRules]: { mode: "empty", requests: 0 },
@@ -430,6 +443,7 @@ test.describe("critical route coverage", () => {
     page,
   }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     mocks.setMode(API.watchRules, "error");
     await page.goto("/alerts");
@@ -454,6 +468,7 @@ test.describe("critical route coverage", () => {
     page,
   }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     mocks.setMode(API.watchReleases, "error");
     await page.goto("/watchlist");
@@ -482,6 +497,7 @@ test.describe("critical route coverage", () => {
     page,
   }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     mocks.setMode(API.notifications, "error");
     await page.goto("/notifications");
@@ -509,6 +525,7 @@ test.describe("critical route coverage", () => {
     page,
   }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     mocks.setMode(API.discogsStatus, "error");
     await page.goto("/integrations");
@@ -533,6 +550,7 @@ test.describe("critical route coverage", () => {
     page,
   }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     await page.goto("/settings");
     await expect(page.getByRole("heading", { level: 1, name: /^Settings$/i })).toBeVisible();
@@ -567,6 +585,7 @@ test.describe("critical route coverage", () => {
     page,
   }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     await page.goto("/settings/danger");
     await expect(page.getByRole("heading", { level: 1, name: /Danger Zone/i })).toBeVisible();
@@ -604,6 +623,7 @@ test.describe("critical route coverage", () => {
     page,
   }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
     mocks.setMode(API.me, "unauthorized");
 
     await page.goto("/settings/profile");
@@ -615,6 +635,7 @@ test.describe("critical route coverage", () => {
     page,
   }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
     mocks.setStreamStatus(401);
 
     await page.goto("/notifications");
@@ -625,24 +646,13 @@ test.describe("critical route coverage", () => {
 
   test("SSE notification event triggers user-visible unread count refresh and feed invalidation", async ({
     page,
-    context,
   }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     mocks.enforceStreamCookieMode();
     mocks.setMode(API.notifications, "success");
     mocks.setUnreadCountBase(1);
-
-    await context.addCookies([
-      {
-        name: "waxwatch_session",
-        value: "fake-session",
-        domain: "127.0.0.1",
-        path: "/",
-        httpOnly: false,
-        sameSite: "Lax",
-      },
-    ]);
 
     await page.goto("/notifications");
 
