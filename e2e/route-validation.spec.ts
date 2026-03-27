@@ -38,6 +38,15 @@ async function fulfillJson(route: Route, init: JsonInit) {
   });
 }
 
+function matchesEndpoint(pathname: string, endpoint: string) {
+  return (
+    pathname === endpoint ||
+    pathname.startsWith(`${endpoint}/`) ||
+    pathname.endsWith(endpoint) ||
+    pathname.includes(`${endpoint}/`)
+  );
+}
+
 function sampleMeProfile() {
   return {
     id: "user-1",
@@ -98,24 +107,27 @@ async function installApiMocks(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
     const { pathname } = new URL(request.url());
-    const apiPath = pathname.startsWith("/api/") ? pathname.slice(4) : pathname;
+    let apiPath = pathname;
+    while (/^\/(?:api|v1|v2)(?=\/)/.test(apiPath)) {
+      apiPath = apiPath.replace(/^\/(?:api|v1|v2)(?=\/)/, "");
+    }
 
     const isKnownApiPath =
-      apiPath.startsWith(API.streamEvents) ||
-      apiPath.startsWith(API.unreadCount) ||
-      apiPath.startsWith(API.watchRules) ||
-      apiPath.startsWith(API.watchReleases) ||
-      apiPath.startsWith(API.notifications) ||
-      apiPath.startsWith(API.discogsStatus) ||
-      apiPath.startsWith(API.meHardDelete) ||
-      apiPath.startsWith(API.me);
+      matchesEndpoint(apiPath, API.streamEvents) ||
+      matchesEndpoint(apiPath, API.unreadCount) ||
+      matchesEndpoint(apiPath, API.watchRules) ||
+      matchesEndpoint(apiPath, API.watchReleases) ||
+      matchesEndpoint(apiPath, API.notifications) ||
+      matchesEndpoint(apiPath, API.discogsStatus) ||
+      matchesEndpoint(apiPath, API.meHardDelete) ||
+      matchesEndpoint(apiPath, API.me);
 
     if (!isKnownApiPath) {
       await route.continue();
       return;
     }
 
-    if (apiPath.startsWith(API.streamEvents)) {
+    if (matchesEndpoint(apiPath, API.streamEvents)) {
       streamRequests += 1;
 
       const headers = request.headers();
@@ -142,7 +154,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (apiPath.startsWith(API.unreadCount)) {
+    if (matchesEndpoint(apiPath, API.unreadCount)) {
       mockStates[API.unreadCount].requests += 1;
 
       const mode = mockStates[API.unreadCount].mode;
@@ -165,7 +177,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (apiPath.startsWith(API.watchRules)) {
+    if (matchesEndpoint(apiPath, API.watchRules)) {
       mockStates[API.watchRules].requests += 1;
       const mode = mockStates[API.watchRules].mode;
 
@@ -207,7 +219,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (apiPath.startsWith(API.watchReleases)) {
+    if (matchesEndpoint(apiPath, API.watchReleases)) {
       mockStates[API.watchReleases].requests += 1;
       const mode = mockStates[API.watchReleases].mode;
 
@@ -249,7 +261,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (apiPath.startsWith(API.notifications) && !apiPath.startsWith(API.unreadCount)) {
+    if (matchesEndpoint(apiPath, API.notifications) && !matchesEndpoint(apiPath, API.unreadCount)) {
       mockStates[API.notifications].requests += 1;
 
       if (request.method() === "POST" && apiPath.endsWith("/read")) {
@@ -283,7 +295,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (apiPath.startsWith(API.discogsStatus)) {
+    if (matchesEndpoint(apiPath, API.discogsStatus)) {
       mockStates[API.discogsStatus].requests += 1;
       const mode = mockStates[API.discogsStatus].mode;
 
@@ -316,7 +328,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (apiPath.startsWith(API.meHardDelete)) {
+    if (matchesEndpoint(apiPath, API.meHardDelete)) {
       if (request.method() === "DELETE") {
         meHardDeleteCalls += 1;
         await route.fulfill({ status: 204, body: "" });
@@ -324,7 +336,7 @@ async function installApiMocks(page: Page) {
       }
     }
 
-    if (apiPath.startsWith(API.me)) {
+    if (matchesEndpoint(apiPath, API.me)) {
       mockStates[API.me].requests += 1;
 
       if (request.method() === "DELETE") {
