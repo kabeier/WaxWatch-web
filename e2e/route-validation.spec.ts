@@ -598,7 +598,13 @@ test.describe("critical route coverage", () => {
     await ensureAuthenticatedSession(page);
     mocks.setMode(API.me, "unauthorized");
 
-    const meStatus = await page.evaluate(async () => (await fetch("/api/me")).status);
+    await page.goto("/settings/profile");
+    const meStatus = await page.evaluate(async () => {
+      const response = await fetch(new URL("/api/me", window.location.origin).toString(), {
+        credentials: "include",
+      });
+      return response.status;
+    });
     expect(meStatus).toBe(401);
   });
 
@@ -607,12 +613,16 @@ test.describe("critical route coverage", () => {
     await ensureAuthenticatedSession(page);
     mocks.setStreamStatus(401);
 
+    await page.goto("/notifications");
     const sseStatus = await page.evaluate(async () => {
-      const response = await fetch("/api/stream/events", {
-        method: "GET",
-        headers: { Accept: "text/event-stream" },
-        credentials: "include",
-      });
+      const response = await fetch(
+        new URL("/api/stream/events", window.location.origin).toString(),
+        {
+          method: "GET",
+          headers: { Accept: "text/event-stream" },
+          credentials: "include",
+        },
+      );
       return response.status;
     });
 
