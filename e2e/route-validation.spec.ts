@@ -15,14 +15,14 @@ type RouteMockState = {
 };
 
 const API = {
-  watchRules: "/api/watch-rules",
-  watchReleases: "/api/watch-releases",
-  notifications: "/api/notifications",
-  unreadCount: "/api/notifications/unread-count",
-  me: "/api/me",
-  meHardDelete: "/api/me/hard-delete",
-  discogsStatus: "/api/integrations/discogs/status",
-  streamEvents: "/api/stream/events",
+  watchRules: "/watch-rules",
+  watchReleases: "/watch-releases",
+  notifications: "/notifications",
+  unreadCount: "/notifications/unread-count",
+  me: "/me",
+  meHardDelete: "/me/hard-delete",
+  discogsStatus: "/integrations/discogs/status",
+  streamEvents: "/stream/events",
 } as const;
 
 async function fulfillJson(route: Route, init: JsonInit) {
@@ -95,11 +95,27 @@ async function installApiMocks(page: Page) {
 
   const getRequests = (pathname: string) => mockStates[pathname]?.requests ?? 0;
 
-  await page.route("**/api/**", async (route) => {
+  await page.route("**/*", async (route) => {
     const request = route.request();
     const { pathname } = new URL(request.url());
+    const apiPath = pathname.startsWith("/api/") ? pathname.slice(4) : pathname;
 
-    if (pathname.startsWith(API.streamEvents)) {
+    const isKnownApiPath =
+      apiPath.startsWith(API.streamEvents) ||
+      apiPath.startsWith(API.unreadCount) ||
+      apiPath.startsWith(API.watchRules) ||
+      apiPath.startsWith(API.watchReleases) ||
+      apiPath.startsWith(API.notifications) ||
+      apiPath.startsWith(API.discogsStatus) ||
+      apiPath.startsWith(API.meHardDelete) ||
+      apiPath.startsWith(API.me);
+
+    if (!isKnownApiPath) {
+      await route.continue();
+      return;
+    }
+
+    if (apiPath.startsWith(API.streamEvents)) {
       streamRequests += 1;
 
       const headers = request.headers();
@@ -126,7 +142,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (pathname.startsWith(API.unreadCount)) {
+    if (apiPath.startsWith(API.unreadCount)) {
       mockStates[API.unreadCount].requests += 1;
 
       const mode = mockStates[API.unreadCount].mode;
@@ -149,7 +165,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (pathname.startsWith(API.watchRules)) {
+    if (apiPath.startsWith(API.watchRules)) {
       mockStates[API.watchRules].requests += 1;
       const mode = mockStates[API.watchRules].mode;
 
@@ -191,7 +207,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (pathname.startsWith(API.watchReleases)) {
+    if (apiPath.startsWith(API.watchReleases)) {
       mockStates[API.watchReleases].requests += 1;
       const mode = mockStates[API.watchReleases].mode;
 
@@ -233,10 +249,10 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (pathname.startsWith(API.notifications) && !pathname.startsWith(API.unreadCount)) {
+    if (apiPath.startsWith(API.notifications) && !apiPath.startsWith(API.unreadCount)) {
       mockStates[API.notifications].requests += 1;
 
-      if (request.method() === "POST" && pathname.endsWith("/read")) {
+      if (request.method() === "POST" && apiPath.endsWith("/read")) {
         markNotificationReadCalls += 1;
         await route.fulfill({ status: 204, body: "" });
         return;
@@ -267,7 +283,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (pathname.startsWith(API.discogsStatus)) {
+    if (apiPath.startsWith(API.discogsStatus)) {
       mockStates[API.discogsStatus].requests += 1;
       const mode = mockStates[API.discogsStatus].mode;
 
@@ -300,7 +316,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (pathname.startsWith(API.meHardDelete)) {
+    if (apiPath.startsWith(API.meHardDelete)) {
       if (request.method() === "DELETE") {
         meHardDeleteCalls += 1;
         await route.fulfill({ status: 204, body: "" });
@@ -308,7 +324,7 @@ async function installApiMocks(page: Page) {
       }
     }
 
-    if (pathname.startsWith(API.me)) {
+    if (apiPath.startsWith(API.me)) {
       mockStates[API.me].requests += 1;
 
       if (request.method() === "DELETE") {
@@ -374,7 +390,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    await fulfillJson(route, { body: {} });
+    await route.continue();
   });
 
   return {
