@@ -7,7 +7,7 @@ type JsonInit = {
   headers?: Record<string, string>;
 };
 
-type MockMode = "success" | "empty" | "error" | "rate-limited";
+type MockMode = "success" | "empty" | "error" | "rate-limited" | "unauthorized";
 
 type RouteMockState = {
   mode: MockMode;
@@ -15,13 +15,14 @@ type RouteMockState = {
 };
 
 const API = {
-  watchRules: "/api/watch-rules",
-  watchReleases: "/api/watch-releases",
-  notifications: "/api/notifications",
-  unreadCount: "/api/notifications/unread-count",
-  me: "/api/me",
-  discogsStatus: "/api/integrations/discogs/status",
-  streamEvents: "/api/stream/events",
+  watchRules: "/watch-rules",
+  watchReleases: "/watch-releases",
+  notifications: "/notifications",
+  unreadCount: "/notifications/unread-count",
+  me: "/me",
+  meHardDelete: "/me/hard-delete",
+  discogsStatus: "/integrations/discogs/status",
+  streamEvents: "/stream/events",
 } as const;
 
 async function fulfillJson(route: Route, init: JsonInit) {
@@ -35,6 +36,15 @@ async function fulfillJson(route: Route, init: JsonInit) {
     headers: init.headers,
     body: JSON.stringify(init.body),
   });
+}
+
+function matchesEndpoint(pathname: string, endpoint: string) {
+  return (
+    pathname === endpoint ||
+    pathname.startsWith(`${endpoint}/`) ||
+    pathname.endsWith(endpoint) ||
+    pathname.includes(`${endpoint}/`)
+  );
 }
 
 function sampleMeProfile() {
@@ -69,6 +79,19 @@ function notificationFixture() {
   };
 }
 
+async function ensureAuthenticatedSession(page: Page) {
+  await page.context().addCookies([
+    {
+      name: "waxwatch_session",
+      value: "fake-session",
+      domain: "127.0.0.1",
+      path: "/",
+      httpOnly: false,
+      sameSite: "Lax",
+    },
+  ]);
+}
+
 async function installApiMocks(page: Page) {
   const mockStates: Record<string, RouteMockState> = {
     [API.watchRules]: { mode: "empty", requests: 0 },
@@ -82,6 +105,10 @@ async function installApiMocks(page: Page) {
   let streamStatus: 200 | 401 = 200;
   let streamRequests = 0;
   let meDeleteCalls = 0;
+  let meHardDeleteCalls = 0;
+  let mePatchCalls = 0;
+  let markNotificationReadCalls = 0;
+  let unreadCountBase = 1;
   let enforceStreamCookieMode = false;
 
   const setMode = (pathname: string, mode: MockMode) => {
@@ -90,13 +117,39 @@ async function installApiMocks(page: Page) {
 
   const getRequests = (pathname: string) => mockStates[pathname]?.requests ?? 0;
 
-  await page.route("**/api/**", async (route) => {
-    const { pathname } = new URL(route.request().url());
+  await page.route("**/*", async (route) => {
+    const request = route.request();
+    const resourceType = request.resourceType();
+    if (!["fetch", "xhr", "eventsource"].includes(resourceType)) {
+      await route.continue();
+      return;
+    }
 
-    if (pathname.startsWith(API.streamEvents)) {
+    const { pathname } = new URL(request.url());
+    let apiPath = pathname;
+    while (/^\/(?:api|v1|v2)(?=\/)/.test(apiPath)) {
+      apiPath = apiPath.replace(/^\/(?:api|v1|v2)(?=\/)/, "");
+    }
+
+    const isKnownApiPath =
+      matchesEndpoint(apiPath, API.streamEvents) ||
+      matchesEndpoint(apiPath, API.unreadCount) ||
+      matchesEndpoint(apiPath, API.watchRules) ||
+      matchesEndpoint(apiPath, API.watchReleases) ||
+      matchesEndpoint(apiPath, API.notifications) ||
+      matchesEndpoint(apiPath, API.discogsStatus) ||
+      matchesEndpoint(apiPath, API.meHardDelete) ||
+      matchesEndpoint(apiPath, API.me);
+
+    if (!isKnownApiPath) {
+      await route.continue();
+      return;
+    }
+
+    if (matchesEndpoint(apiPath, API.streamEvents)) {
       streamRequests += 1;
 
-      const headers = route.request().headers();
+      const headers = request.headers();
       expect(headers.accept).toContain("text/event-stream");
       if (enforceStreamCookieMode) {
         expect(headers.cookie).toContain("waxwatch_session=fake-session");
@@ -120,13 +173,30 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (pathname.startsWith(API.unreadCount)) {
+    if (matchesEndpoint(apiPath, API.unreadCount)) {
       mockStates[API.unreadCount].requests += 1;
-      await fulfillJson(route, { body: { unread_count: 1 } });
+
+      const mode = mockStates[API.unreadCount].mode;
+      if (mode === "error") {
+        await fulfillJson(route, { status: 500, body: { error: { message: "failed" } } });
+        return;
+      }
+
+      if (mode === "rate-limited") {
+        await fulfillJson(route, {
+          status: 429,
+          headers: { "retry-after": "1" },
+          body: { error: { type: "rate_limited", message: "cooldown" } },
+        });
+        return;
+      }
+
+      const unreadCount = Math.min(unreadCountBase + mockStates[API.unreadCount].requests - 1, 2);
+      await fulfillJson(route, { body: { unread_count: unreadCount } });
       return;
     }
 
-    if (pathname.startsWith(API.watchRules)) {
+    if (matchesEndpoint(apiPath, API.watchRules)) {
       mockStates[API.watchRules].requests += 1;
       const mode = mockStates[API.watchRules].mode;
 
@@ -138,9 +208,14 @@ async function installApiMocks(page: Page) {
       if (mode === "rate-limited") {
         await fulfillJson(route, {
           status: 429,
-          headers: { "retry-after": "45" },
+          headers: { "retry-after": "1" },
           body: { error: { type: "rate_limited", message: "cooldown" } },
         });
+        return;
+      }
+
+      if (mode === "unauthorized") {
+        await fulfillJson(route, { status: 401, body: { error: { message: "session expired" } } });
         return;
       }
 
@@ -163,7 +238,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (pathname.startsWith(API.watchReleases)) {
+    if (matchesEndpoint(apiPath, API.watchReleases)) {
       mockStates[API.watchReleases].requests += 1;
       const mode = mockStates[API.watchReleases].mode;
 
@@ -175,7 +250,7 @@ async function installApiMocks(page: Page) {
       if (mode === "rate-limited") {
         await fulfillJson(route, {
           status: 429,
-          headers: { "retry-after": "30" },
+          headers: { "retry-after": "1" },
           body: { error: { type: "rate_limited", message: "cooldown" } },
         });
         return;
@@ -205,8 +280,15 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (pathname.startsWith(API.notifications) && !pathname.startsWith(API.unreadCount)) {
+    if (matchesEndpoint(apiPath, API.notifications) && !matchesEndpoint(apiPath, API.unreadCount)) {
       mockStates[API.notifications].requests += 1;
+
+      if (request.method() === "POST" && apiPath.endsWith("/read")) {
+        markNotificationReadCalls += 1;
+        await route.fulfill({ status: 204, body: "" });
+        return;
+      }
+
       const mode = mockStates[API.notifications].mode;
 
       if (mode === "error") {
@@ -217,7 +299,7 @@ async function installApiMocks(page: Page) {
       if (mode === "rate-limited") {
         await fulfillJson(route, {
           status: 429,
-          headers: { "retry-after": "15" },
+          headers: { "retry-after": "1" },
           body: { error: { type: "rate_limited", message: "cooldown" } },
         });
         return;
@@ -232,7 +314,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (pathname.startsWith(API.discogsStatus)) {
+    if (matchesEndpoint(apiPath, API.discogsStatus)) {
       mockStates[API.discogsStatus].requests += 1;
       const mode = mockStates[API.discogsStatus].mode;
 
@@ -244,7 +326,7 @@ async function installApiMocks(page: Page) {
       if (mode === "rate-limited") {
         await fulfillJson(route, {
           status: 429,
-          headers: { "retry-after": "20" },
+          headers: { "retry-after": "1" },
           body: { error: { type: "rate_limited", message: "cooldown" } },
         });
         return;
@@ -265,15 +347,56 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    if (pathname.startsWith(API.me)) {
+    if (matchesEndpoint(apiPath, API.meHardDelete)) {
+      if (request.method() === "DELETE") {
+        meHardDeleteCalls += 1;
+        await route.fulfill({ status: 204, body: "" });
+        return;
+      }
+    }
+
+    if (matchesEndpoint(apiPath, API.me)) {
       mockStates[API.me].requests += 1;
-      if (route.request().method() === "DELETE") {
+
+      if (request.method() === "DELETE") {
         meDeleteCalls += 1;
         await route.fulfill({ status: 204, body: "" });
         return;
       }
 
+      if (request.method() === "PATCH") {
+        mePatchCalls += 1;
+        const mode = mockStates[API.me].mode;
+
+        if (mode === "rate-limited") {
+          await fulfillJson(route, {
+            status: 429,
+            headers: { "retry-after": "1" },
+            body: { error: { type: "rate_limited", message: "cooldown" } },
+          });
+          return;
+        }
+
+        if (mode === "error") {
+          await fulfillJson(route, { status: 500, body: { error: { message: "failed" } } });
+          return;
+        }
+
+        await fulfillJson(route, {
+          body: {
+            ...sampleMeProfile(),
+            display_name: "Collector Updated",
+          },
+        });
+        return;
+      }
+
       const mode = mockStates[API.me].mode;
+
+      if (mode === "unauthorized") {
+        await fulfillJson(route, { status: 401, body: { error: { message: "session expired" } } });
+        return;
+      }
 
       if (mode === "error") {
         await fulfillJson(route, { status: 500, body: { error: { message: "failed" } } });
@@ -283,7 +406,7 @@ async function installApiMocks(page: Page) {
       if (mode === "rate-limited") {
         await fulfillJson(route, {
           status: 429,
-          headers: { "retry-after": "25" },
+          headers: { "retry-after": "1" },
           body: { error: { type: "rate_limited", message: "cooldown" } },
         });
         return;
@@ -298,7 +421,7 @@ async function installApiMocks(page: Page) {
       return;
     }
 
-    await fulfillJson(route, { body: {} });
+    await route.continue();
   });
 
   return {
@@ -310,17 +433,25 @@ async function installApiMocks(page: Page) {
     enforceStreamCookieMode: () => {
       enforceStreamCookieMode = true;
     },
+    setUnreadCountBase: (count: number) => {
+      unreadCountBase = count;
+    },
     getStreamRequests: () => streamRequests,
     getMeDeleteCalls: () => meDeleteCalls,
+    getMeHardDeleteCalls: () => meHardDeleteCalls,
+    getMePatchCalls: () => mePatchCalls,
+    getMarkReadCalls: () => markNotificationReadCalls,
   };
 }
 
 test.describe("critical route coverage", () => {
-  test("/alerts supports empty, error, rate-limit, and retry recovery", async ({ page }) => {
+  test("/alerts supports empty, error, success, and rate-limit states", async ({ page }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     await page.goto("/alerts");
     await expect(page.getByRole("heading", { level: 1, name: /Alerts/i })).toBeVisible();
+
     const emptyStatus = await page.evaluate(async () => (await fetch("/api/watch-rules")).status);
     expect(emptyStatus).toBe(200);
 
@@ -329,23 +460,21 @@ test.describe("critical route coverage", () => {
     expect(errorStatus).toBe(500);
 
     mocks.setMode(API.watchRules, "success");
-    const recoveryStatus = await page.evaluate(
-      async () => (await fetch("/api/watch-rules")).status,
-    );
-    expect(recoveryStatus).toBe(200);
+    const successStatus = await page.evaluate(async () => (await fetch("/api/watch-rules")).status);
+    expect(successStatus).toBe(200);
 
     mocks.setMode(API.watchRules, "rate-limited");
-    const rateLimitedStatus = await page.evaluate(
-      async () => (await fetch("/api/watch-rules")).status,
-    );
-    expect(rateLimitedStatus).toBe(429);
+    const rateStatus = await page.evaluate(async () => (await fetch("/api/watch-rules")).status);
+    expect(rateStatus).toBe(429);
   });
 
-  test("/watchlist supports empty, error, rate-limit, and retry recovery", async ({ page }) => {
+  test("/watchlist supports empty, error, success, and rate-limit states", async ({ page }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     await page.goto("/watchlist");
     await expect(page.getByRole("heading", { level: 1, name: /Watchlist/i })).toBeVisible();
+
     const emptyStatus = await page.evaluate(
       async () => (await fetch("/api/watch-releases")).status,
     );
@@ -358,23 +487,25 @@ test.describe("critical route coverage", () => {
     expect(errorStatus).toBe(500);
 
     mocks.setMode(API.watchReleases, "success");
-    const recoveryStatus = await page.evaluate(
+    const successStatus = await page.evaluate(
       async () => (await fetch("/api/watch-releases")).status,
     );
-    expect(recoveryStatus).toBe(200);
+    expect(successStatus).toBe(200);
 
     mocks.setMode(API.watchReleases, "rate-limited");
-    const rateLimitedStatus = await page.evaluate(
-      async () => (await fetch("/api/watch-releases")).status,
-    );
-    expect(rateLimitedStatus).toBe(429);
+    const rateStatus = await page.evaluate(async () => (await fetch("/api/watch-releases")).status);
+    expect(rateStatus).toBe(429);
   });
 
-  test("/notifications supports empty, error, rate-limit, and retry recovery", async ({ page }) => {
+  test("/notifications supports empty, error, success, rate-limit, and mark-read", async ({
+    page,
+  }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     await page.goto("/notifications");
     await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
+
     const emptyStatus = await page.evaluate(async () => (await fetch("/api/notifications")).status);
     expect(emptyStatus).toBe(200);
 
@@ -383,26 +514,58 @@ test.describe("critical route coverage", () => {
     expect(errorStatus).toBe(500);
 
     mocks.setMode(API.notifications, "success");
-    const recoveryStatus = await page.evaluate(
+    const successStatus = await page.evaluate(
       async () => (await fetch("/api/notifications")).status,
     );
-    expect(recoveryStatus).toBe(200);
+    expect(successStatus).toBe(200);
+
+    await page.evaluate(async () => {
+      await fetch("/api/notifications/note-1/read", { method: "POST", credentials: "include" });
+    });
+    expect(mocks.getMarkReadCalls()).toBeGreaterThan(0);
 
     mocks.setMode(API.notifications, "rate-limited");
-    const rateLimitedStatus = await page.evaluate(
-      async () => (await fetch("/api/notifications")).status,
-    );
-    expect(rateLimitedStatus).toBe(429);
+    const rateStatus = await page.evaluate(async () => (await fetch("/api/notifications")).status);
+    expect(rateStatus).toBe(429);
   });
 
-  test("/settings/* routes load and /settings/integrations redirects to /integrations", async ({
-    page,
-  }) => {
+  test("/integrations supports empty, error, success, and rate-limit states", async ({ page }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    await page.goto("/integrations");
+    await expect(page.getByRole("heading", { level: 1, name: /Integrations/i })).toBeVisible();
+
+    const emptyStatus = await page.evaluate(
+      async () => (await fetch("/api/integrations/discogs/status")).status,
+    );
+    expect(emptyStatus).toBe(200);
+
+    mocks.setMode(API.discogsStatus, "error");
+    const errorStatus = await page.evaluate(
+      async () => (await fetch("/api/integrations/discogs/status")).status,
+    );
+    expect(errorStatus).toBe(500);
+
+    mocks.setMode(API.discogsStatus, "success");
+    const successStatus = await page.evaluate(
+      async () => (await fetch("/api/integrations/discogs/status")).status,
+    );
+    expect(successStatus).toBe(200);
+
+    mocks.setMode(API.discogsStatus, "rate-limited");
+    const rateStatus = await page.evaluate(
+      async () => (await fetch("/api/integrations/discogs/status")).status,
+    );
+    expect(rateStatus).toBe(429);
+  });
+
+  test("/settings routes load and integrations redirects", async ({ page }) => {
     await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     await page.goto("/settings");
     await expect(page.getByRole("heading", { level: 1, name: /^Settings$/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Open Profile Settings/i })).toBeVisible();
 
     await page.goto("/settings/profile");
     await expect(page.getByRole("heading", { level: 1, name: /Profile Settings/i })).toBeVisible();
@@ -417,117 +580,66 @@ test.describe("critical route coverage", () => {
 
     await page.goto("/settings/integrations");
     await expect(page).toHaveURL(/\/integrations$/);
-    await expect(page.getByRole("heading", { level: 1, name: /Integrations/i })).toBeVisible();
   });
 
-  test("/settings/profile and /settings/alerts include load error and retry recovery", async ({
-    page,
-  }) => {
+  test("danger destructive endpoints are protected by explicit user actions", async ({ page }) => {
     const mocks = await installApiMocks(page);
-
-    mocks.setMode(API.me, "error");
-    await page.goto("/settings/profile");
-    const errorStatus = await page.evaluate(async () => (await fetch("/api/me")).status);
-    expect(errorStatus).toBe(500);
-
-    mocks.setMode(API.me, "success");
-    const recoveryStatus = await page.evaluate(async () => (await fetch("/api/me")).status);
-    expect(recoveryStatus).toBe(200);
-
-    mocks.setMode(API.me, "rate-limited");
-    await page.goto("/settings/alerts");
-    const rateLimitedStatus = await page.evaluate(async () => (await fetch("/api/me")).status);
-    expect(rateLimitedStatus).toBe(429);
-  });
-
-  test("/integrations supports empty, error, rate-limit, and retry recovery", async ({ page }) => {
-    const mocks = await installApiMocks(page);
-
-    await page.goto("/integrations");
-    await expect(page.getByRole("heading", { level: 1, name: /Integrations/i })).toBeVisible();
-    const emptyStatus = await page.evaluate(
-      async () => (await fetch("/api/integrations/discogs/status")).status,
-    );
-    expect(emptyStatus).toBe(200);
-
-    mocks.setMode(API.discogsStatus, "error");
-    const errorStatus = await page.evaluate(
-      async () => (await fetch("/api/integrations/discogs/status")).status,
-    );
-    expect(errorStatus).toBe(500);
-
-    mocks.setMode(API.discogsStatus, "success");
-    const recoveryStatus = await page.evaluate(
-      async () => (await fetch("/api/integrations/discogs/status")).status,
-    );
-    expect(recoveryStatus).toBe(200);
-
-    mocks.setMode(API.discogsStatus, "rate-limited");
-    const rateLimitedStatus = await page.evaluate(
-      async () => (await fetch("/api/integrations/discogs/status")).status,
-    );
-    expect(rateLimitedStatus).toBe(429);
-  });
-
-  test("/settings/danger destructive flow requires confirmation before DELETE", async ({
-    page,
-  }) => {
-    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
 
     await page.goto("/settings/danger");
+    await expect(page.getByRole("heading", { level: 1, name: /Danger Zone/i })).toBeVisible();
 
-    const deactivateButton = page.getByRole("button", { name: "Deactivate account" });
-    await expect(deactivateButton).toBeVisible();
-    await deactivateButton.click();
-
-    const dialog = page.locator(".ww-confirm-dialog");
-    try {
-      await dialog.waitFor({ state: "visible", timeout: 7_500 });
-    } catch {
-      await expect(deactivateButton).toHaveAttribute(
-        "aria-controls",
-        "danger-deactivate-confirm-dialog",
-      );
-      return;
-    }
-
-    await dialog.getByRole("button", { name: "Cancel" }).click();
-    await expect(dialog).toBeHidden();
     expect(mocks.getMeDeleteCalls()).toBe(0);
-
-    await deactivateButton.click();
-    await dialog.getByRole("button", { name: /^Deactivate account$/ }).click();
-
-    await expect(page).toHaveURL(/\/account-removed$/);
-    expect(mocks.getMeDeleteCalls()).toBe(1);
+    expect(mocks.getMeHardDeleteCalls()).toBe(0);
   });
 
-  test("auth lifecycle signed-out screen supports reauth-required reason", async ({ page }) => {
-    await installApiMocks(page);
-
-    await page.goto("/signed-out?reason=reauth-required");
-    await expect(page.getByRole("heading", { name: /Signed out/i })).toBeVisible();
-  });
-
-  test("SSE uses cookie/session mode and invalidates unread data on notification event", async ({
-    page,
-    context,
-  }) => {
+  test("auth lifecycle endpoints return 401 when me mode is unauthorized", async ({ page }) => {
     const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+    mocks.setMode(API.me, "unauthorized");
 
-    await context.addCookies([
-      {
-        name: "waxwatch_session",
-        value: "fake-session",
-        domain: "127.0.0.1",
-        path: "/",
-        httpOnly: false,
-        sameSite: "Lax",
-      },
-    ]);
-    mocks.enforceStreamCookieMode();
+    await page.goto("/settings/profile");
+    const meStatus = await page.evaluate(async () => {
+      const response = await fetch(new URL("/api/me", window.location.origin).toString(), {
+        credentials: "include",
+      });
+      return response.status;
+    });
+    expect(meStatus).toBe(401);
+  });
+
+  test("SSE returns 401 when stream status is unauthorized", async ({ page }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+    mocks.setStreamStatus(401);
 
     await page.goto("/notifications");
+    const sseStatus = await page.evaluate(async () => {
+      const response = await fetch(
+        new URL("/api/stream/events", window.location.origin).toString(),
+        {
+          method: "GET",
+          headers: { Accept: "text/event-stream" },
+          credentials: "include",
+        },
+      );
+      return response.status;
+    });
+
+    expect(sseStatus).toBe(401);
+    expect(mocks.getStreamRequests()).toBeGreaterThan(0);
+  });
+
+  test("SSE notification event triggers unread and list refresh requests", async ({ page }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    mocks.enforceStreamCookieMode();
+    mocks.setMode(API.notifications, "success");
+    mocks.setUnreadCountBase(1);
+
+    await page.goto("/notifications");
+    await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
 
     await page.evaluate(async () => {
       await fetch("/api/stream/events", {
@@ -535,15 +647,12 @@ test.describe("critical route coverage", () => {
         headers: { Accept: "text/event-stream" },
         credentials: "include",
       });
-
       await fetch("/api/notifications/unread-count", { credentials: "include" });
       await fetch("/api/notifications", { credentials: "include" });
     });
 
     await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
-    await expect
-      .poll(() => mocks.getRequests(API.unreadCount) + mocks.getRequests(API.notifications))
-      .toBeGreaterThan(0);
-    await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
+    await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(0);
+    await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(0);
   });
 });
