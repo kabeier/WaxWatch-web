@@ -46,7 +46,7 @@ describe("mobileNavigationRouteKeys", () => {
   it("matches the documented mobile navigation sequence in docs/ROUTES.md", () => {
     const routesDoc = readFileSync(resolve(process.cwd(), "docs/ROUTES.md"), "utf8");
     const mobileNavigationSection = routesDoc.match(
-      /### Mobile (?:bottom navigation|primary nav \(currently rendered tab set\))\s+([\s\S]*?)\n\s*`\/search`/,
+      /### Mobile (?:bottom navigation|primary nav \((?:currently rendered tab set|bottom-tab route set)\))\s+([\s\S]*?)\n\s*`\/search`/,
     )?.[1];
 
     expect(mobileNavigationSection).toBeDefined();
