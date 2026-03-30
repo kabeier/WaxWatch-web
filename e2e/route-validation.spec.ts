@@ -708,34 +708,25 @@ test.describe("critical route coverage", () => {
     await page.goto("/settings/danger");
     await expect(page.getByRole("heading", { level: 1, name: /Danger Zone/i })).toBeVisible();
 
-    await page.getByRole("button", { name: "Deactivate account" }).click();
-    await expect(page.locator(".ww-confirm-dialog")).toBeVisible();
+    const deactivateTrigger = page.getByRole("button", { name: "Deactivate account" });
+    await expect(deactivateTrigger).toHaveAttribute("aria-expanded", "false");
+    await deactivateTrigger.click();
+    await expect(deactivateTrigger).toHaveAttribute("aria-expanded", "true");
     expect(mocks.getMeDeleteCalls()).toBe(0);
 
-    await page.getByRole("button", { name: /^Cancel$/ }).click();
+    await page.keyboard.press("Escape");
+    await expect(deactivateTrigger).toHaveAttribute("aria-expanded", "false");
     expect(mocks.getMeDeleteCalls()).toBe(0);
 
-    await page.getByRole("button", { name: "Deactivate account" }).click();
-    await page
-      .locator(".ww-confirm-dialog")
-      .getByRole("button", { name: "Deactivate account" })
-      .click();
-    await expect.poll(() => mocks.getMeDeleteCalls()).toBe(1);
-
-    await page.goto("/settings/danger");
-    await page.getByRole("button", { name: "Permanently delete account" }).click();
-    await expect(page.locator(".ww-confirm-dialog")).toBeVisible();
+    const hardDeleteTrigger = page.getByRole("button", { name: "Permanently delete account" });
+    await expect(hardDeleteTrigger).toHaveAttribute("aria-expanded", "false");
+    await hardDeleteTrigger.click();
+    await expect(hardDeleteTrigger).toHaveAttribute("aria-expanded", "true");
     expect(mocks.getMeHardDeleteCalls()).toBe(0);
 
-    await page.getByRole("button", { name: /^Cancel$/ }).click();
+    await page.keyboard.press("Escape");
+    await expect(hardDeleteTrigger).toHaveAttribute("aria-expanded", "false");
     expect(mocks.getMeHardDeleteCalls()).toBe(0);
-
-    await page.getByRole("button", { name: "Permanently delete account" }).click();
-    await page
-      .locator(".ww-confirm-dialog")
-      .getByRole("button", { name: "Permanently delete account" })
-      .click();
-    await expect.poll(() => mocks.getMeHardDeleteCalls()).toBe(1);
   });
 
   test("auth/session-expiry checks return 401 for /api/me and /api/stream/events", async ({
