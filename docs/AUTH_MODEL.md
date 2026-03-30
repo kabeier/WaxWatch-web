@@ -1,10 +1,10 @@
-# Auth Model (Web Cookie Sessions + Backend API)
+# Auth Model (Cookie-Session Web Auth + Backend API)
 
 ## Responsibility split
 
-- Backend auth endpoints own web login/session issuance and refresh semantics for browser flows.
-- **Web** uses backend-managed `httpOnly` session cookies for API auth; browser JavaScript does not manage long-lived bearer tokens in storage.
-- **Mobile/native** continues to use bearer JWTs via secure native storage and transport.
+- Backend auth endpoints own login/session issuance and refresh semantics for browser flows.
+- **Web (cookie-session mode)** uses backend-managed `httpOnly` session cookies for API auth; browser JavaScript does not manage long-lived bearer tokens in storage.
+- **Mobile/native (bearer mode)** continues to use bearer JWTs via secure native storage and transport.
 - The shared API client is the canonical place where auth lifecycle side effects are triggered.
 
 Implementation anchors:
@@ -17,15 +17,31 @@ Implementation anchors:
 All auth transitions must flow through `createApiClient(..., { authSessionAdapter })` hooks.
 
 1. API client asks the adapter (or `getJwt`) for auth context.
-   - Web adapter returns `null` token and relies on cookie transport (`credentials: "include"`).
-   - Mobile (or explicit `getJwt`) supplies bearer JWTs.
+   - Cookie-session mode (web adapter) returns `null` token and relies on cookie transport.
+   - Bearer mode (mobile/explicit `getJwt`) supplies JWTs.
 2. API client applies auth transport:
    - Bearer mode: `Authorization: Bearer <jwt>`.
-   - Cookie mode: sends browser credentials/cookies.
+   - Cookie-session mode: sends browser credentials/cookies (`credentials: "include"`).
 3. API client routes auth outcomes through adapter hooks:
    - `401/403` → `clearSession` → `emitAuthEvent("reauth-required")` → `redirectToSignedOut("reauth-required")`
    - `POST /me/logout` success → `clearSession` → `emitAuthEvent("signed-out")` → `redirectToSignedOut("signed-out")`
    - `DELETE /me` or `DELETE /me/hard-delete` success → `clearSession` → `emitAuthEvent("account-removed")` → `redirectToAccountRemoved()`
+
+## Canonical login submit flow (web)
+
+`LoginPageClient` follows this sequence:
+
+1. Resolve and validate handoff state before submit when `handoff` is present (`state`/`nonce`/`expires_at` required; expiry enforced).
+2. `POST ${resolveApiBaseUrl()}/auth/login` (default `/api/auth/login`) with:
+   - `credentials: "include"` (cookie-session transport),
+   - JSON body: `email`, `password`, plus optional `return_to`, `handoff`, `state`, `nonce`, `expires_at`.
+3. Handle response states:
+   - `401/403` (or `invalid_credentials` discriminator) → `"Invalid email or password."`
+   - Rate-limited envelope → route to `StateRateLimited`
+   - Validation envelope → show backend validation message
+4. On success, resolve destination:
+   - Valid handoff: redirect to handoff URL with `state`, `nonce`, `expires_at`, `status=success`, and optional `return_to`.
+   - Otherwise: redirect to `return_to` or `/`.
 
 ### Important rule
 
@@ -37,7 +53,7 @@ Do not duplicate these transitions in feature code (SSE controllers, screens, pa
 
 - Web no longer reads long-lived access tokens from `localStorage` in `webAuthSessionAdapter.getAccessToken()`.
 - Legacy key cleanup (`waxwatch.auth.session`) is best-effort only during `clearSession()`.
-- Browser API calls and SSE connections use cookie auth (`credentials: "include"`) instead of JavaScript-managed bearer headers.
+- Browser API calls and SSE connections use cookie-session auth (`credentials: "include"`) instead of JavaScript-managed bearer headers.
 
 ### Residual risks and trade-offs
 

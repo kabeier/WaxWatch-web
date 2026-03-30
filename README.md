@@ -14,15 +14,20 @@ It focuses on the user-facing experience: search, alerts, watchlist, notificatio
 
 - **Next.js** (React framework) for the web app
 - **TypeScript** for safer, maintainable code
-- **Backend-managed web auth sessions** (`httpOnly` cookies sent with `credentials: "include"`) for browser sign-in/session handling (no long-lived bearer tokens in browser storage)
+- **Backend-managed web auth sessions** (cookie-session mode in browsers) using `httpOnly` cookies with `credentials: "include"` (no long-lived bearer tokens in browser storage)
 - **Backend API integration** for listings, alerts, watchlist, notifications, and settings
 - **TanStack Query** for data fetching and caching
 - **Server-Sent Events (SSE)** for realtime notification updates
 
 Auth implementation anchors:
 
-- Session adapter + auth lifecycle redirects: [`src/lib/auth-session.ts`](src/lib/auth-session.ts)
+- Session adapter + auth lifecycle redirects (`/signed-out?reason=...` and `/account-removed`): [`src/lib/auth-session.ts`](src/lib/auth-session.ts)
 - Login submit flow (`POST ${resolveApiBaseUrl()}/auth/login`, default `/api/auth/login`, with `credentials: "include"`): [`app/(auth)/login/LoginPageClient.tsx`](app/%28auth%29/login/LoginPageClient.tsx)
+
+Auth model shorthand used in this repo:
+
+- **Cookie-session mode (web):** adapter returns `null` access token; browser requests rely on backend-managed session cookies.
+- **Bearer mode (mobile/native):** callers provide JWTs to the API client, which sends `Authorization: Bearer ...`.
 
 ## Project goal
 
