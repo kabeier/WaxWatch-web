@@ -304,13 +304,14 @@ export const primaryNavigationRouteKeys = [
   "settings",
 ] as const;
 
+// Canonical bottom-tab order (Home, Alerts, Watchlist, Notifications, Settings).
 export const mobileNavigationRouteKeys = [
   "dashboard",
   "alerts",
   "watchlist",
   "notifications",
   "settings",
-] as const satisfies readonly (keyof typeof routeViewModels)[];
+] as const satisfies readonly (typeof primaryNavigationRouteKeys)[number][];
 
 export const settingsNavigationRouteKeys = [
   "settingsProfile",

@@ -14,6 +14,8 @@ const expectedMobileTabRouteKeys = [
   "settings",
 ] as const;
 
+const uxExpectedMobileTabLabels = ["Home", "Alerts", "Watchlist", "Notifications", "Settings"];
+
 describe("mobileNavigationRouteKeys", () => {
   it("matches the canonical mobile tab model and ordering", () => {
     expect(mobileNavigationRouteKeys).toEqual(expectedMobileTabRouteKeys);
@@ -26,6 +28,16 @@ describe("mobileNavigationRouteKeys", () => {
 
     expect(routeKeysWithMobileNavigationLabel).toEqual(expectedMobileTabRouteKeys);
     expect(mobileNavigationRouteKeys).toEqual(routeKeysWithMobileNavigationLabel);
+  });
+
+  it("matches UX label/order expectations for the canonical mobile tabs", () => {
+    const resolvedLabels = mobileNavigationRouteKeys.map((routeKey) => {
+      const route = routeViewModels[routeKey];
+
+      return route.mobileNavigationLabel ?? route.navigationLabel ?? route.heading;
+    });
+
+    expect(resolvedLabels).toEqual(uxExpectedMobileTabLabels);
   });
 
   it("matches rendered MobileTabBar navigation definitions in route order and labels", () => {
@@ -63,6 +75,7 @@ describe("mobileNavigationRouteKeys", () => {
     );
     const documentedMobileRouteKeys = documentedMobilePaths.map((path) => routePathToKey[path]);
 
+    expect(documentedMobileRouteKeys.every((routeKey) => Boolean(routeKey))).toBe(true);
     expect(documentedMobileRouteKeys).toEqual([...mobileNavigationRouteKeys]);
   });
 });
