@@ -16,9 +16,9 @@ always present and is the primary destination map on desktop/tablet widths. It i
 6. Integrations (`/integrations`)
 7. Settings (`/settings`)
 
-### Top nav (utility/account status area)
+### Top nav (canonical utility/status area)
 
-Top nav is not the primary route map. Where utilities are enabled, it is the utility/account surface:
+Top nav is not the primary route map. In the canonical shell model it is the utility/status surface:
 brand/home access plus utility links rendered via `TopNav` utility items:
 
 - Inbox (`/notifications`)
@@ -27,9 +27,9 @@ brand/home access plus utility links rendered via `TopNav` utility items:
 In auth pages (`app/(auth)`), top nav still renders brand/home but utilities are intentionally hidden
 via `showUtilities={false}`.
 
-### Mobile primary nav (currently rendered tab set)
+### Mobile primary nav (bottom-tab route set)
 
-Mobile primary navigation is the bottom-tab set defined by
+Mobile primary navigation is the bottom-tab route set defined by
 `mobileNavigationRouteKeys` in `src/lib/view-models/routes.ts` and rendered via
 `MOBILE_NAV_ITEMS` in `src/components/ui/primitives/shell/primitives.tsx`. Tabs are rendered in
 `AppShell` and shown only
@@ -43,7 +43,13 @@ authenticated-shell behavior). The tab set includes exactly:
 5. Settings (`/settings`)
 
 `/search` and `/integrations` are intentionally excluded from mobile bottom tabs and remain
-reachable through in-route CTAs/links and direct navigation.
+first-class routes reachable through in-route CTAs/links and direct navigation.
+
+### Pattern summary (canonical)
+
+- Desktop/tablet: sidebar is the primary route map.
+- Mobile: bottom tabs are the primary route map.
+- Top nav: utility/status chrome only (brand + utility links), not a primary route map.
 
 ## Auth + account lifecycle routes (supporting IA)
 
