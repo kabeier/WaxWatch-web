@@ -707,6 +707,7 @@ test.describe("critical route coverage", () => {
 
     await page.goto("/settings/danger");
     await expect(page.getByRole("heading", { level: 1, name: /Danger Zone/i })).toBeVisible();
+    await expect.poll(() => mocks.getRequests(API.me)).toBeGreaterThan(0);
 
     const deactivateTrigger = page.getByRole("button", { name: "Deactivate account" });
     await expect(deactivateTrigger).toHaveAttribute("aria-expanded", "false");
