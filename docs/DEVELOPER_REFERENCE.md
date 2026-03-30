@@ -108,14 +108,14 @@ Route maturity/status guidance is canonical in this reference's **Route matrix**
 
 - Next.js **App Router**
 - TypeScript
-- Backend-managed auth sessions: web uses `httpOnly` cookies (`credentials: "include"`) and does not use JS-managed long-lived bearer tokens; mobile/native uses JWT bearer transport
+- Backend-managed auth sessions: web runs in **cookie-session mode** (`httpOnly` cookies + `credentials: "include"`) and does not use JS-managed long-lived bearer tokens; mobile/native uses **bearer mode** (JWT `Authorization` header)
 - TanStack Query for server state (Option A: SPA-style dashboard)
 - SSE for realtime notifications
 
 Auth implementation anchors:
 
-- [`src/lib/auth-session.ts`](../src/lib/auth-session.ts) (web auth adapter returns `null` bearer token in browser mode, handles signed-out/account-removed redirects, performs legacy token cleanup)
-- [`app/(auth)/login/LoginPageClient.tsx`](../app/%28auth%29/login/LoginPageClient.tsx) (`POST ${resolveApiBaseUrl()}/auth/login`; default `/api/auth/login`; sends `credentials: "include"` + secure handoff guardrails)
+- [`src/lib/auth-session.ts`](../src/lib/auth-session.ts) (web adapter returns `null` access token, dispatches auth lifecycle events, redirects to `/signed-out?reason=...` and `/account-removed`, performs legacy token cleanup)
+- [`app/(auth)/login/LoginPageClient.tsx`](../app/%28auth%29/login/LoginPageClient.tsx) (`POST ${resolveApiBaseUrl()}/auth/login`; default `/api/auth/login`; sends `credentials: "include"`; validates secure handoff params before/after submit; redirects to validated handoff callback or `return_to`/`/`)
 
 ## Architecture layering: api core vs web query
 
