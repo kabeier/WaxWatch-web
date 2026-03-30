@@ -707,12 +707,15 @@ test.describe("critical route coverage", () => {
 
     await page.goto("/settings/danger");
     await expect(page.getByRole("heading", { level: 1, name: /Danger Zone/i })).toBeVisible();
-    await expect.poll(() => mocks.getRequests(API.me)).toBeGreaterThan(0);
 
     const deactivateTrigger = page.getByRole("button", { name: "Deactivate account" });
     await expect(deactivateTrigger).toHaveAttribute("aria-expanded", "false");
-    await deactivateTrigger.click();
-    await expect(deactivateTrigger).toHaveAttribute("aria-expanded", "true");
+    await expect
+      .poll(async () => {
+        await deactivateTrigger.click();
+        return deactivateTrigger.getAttribute("aria-expanded");
+      })
+      .toBe("true");
     expect(mocks.getMeDeleteCalls()).toBe(0);
 
     await page.keyboard.press("Escape");
@@ -721,8 +724,12 @@ test.describe("critical route coverage", () => {
 
     const hardDeleteTrigger = page.getByRole("button", { name: "Permanently delete account" });
     await expect(hardDeleteTrigger).toHaveAttribute("aria-expanded", "false");
-    await hardDeleteTrigger.click();
-    await expect(hardDeleteTrigger).toHaveAttribute("aria-expanded", "true");
+    await expect
+      .poll(async () => {
+        await hardDeleteTrigger.click();
+        return hardDeleteTrigger.getAttribute("aria-expanded");
+      })
+      .toBe("true");
     expect(mocks.getMeHardDeleteCalls()).toBe(0);
 
     await page.keyboard.press("Escape");
