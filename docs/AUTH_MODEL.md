@@ -1,6 +1,6 @@
 # Auth Model (Canonical Auth Narrative)
 
-This document is the canonical auth source for this repository. Keep README and `docs/DEVELOPER_REFERENCE.md` aligned to this wording and to the implementation anchors listed below.
+This document is the canonical auth source for this repository. Keep README, `docs/DEVELOPER_REFERENCE.md`, and `docs/DATA_FETCHING.md` aligned to this wording and to the implementation anchors listed below.
 
 ## Responsibility split
 

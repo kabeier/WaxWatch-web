@@ -24,7 +24,7 @@ Auth implementation anchors:
 - Session adapter + auth lifecycle redirects (`/signed-out?reason=...` and `/account-removed`): [`src/lib/auth-session.ts`](src/lib/auth-session.ts)
 - Login submit flow (`POST ${resolveApiBaseUrl()}/auth/login`, default `/api/auth/login`, with `credentials: "include"`): [`app/(auth)/login/LoginPageClient.tsx`](app/%28auth%29/login/LoginPageClient.tsx)
 
-Canonical auth narrative (source of truth: [`docs/AUTH_MODEL.md`](docs/AUTH_MODEL.md)):
+Canonical auth narrative (source of truth: [`docs/AUTH_MODEL.md`](docs/AUTH_MODEL.md); this summary must stay verbatim-aligned):
 
 - **Cookie-session mode (web):** `webAuthSessionAdapter.getAccessToken()` returns `null`; browser auth uses backend-managed `httpOnly` cookies with `credentials: "include"`.
 - **Bearer mode (mobile/native):** callers provide JWTs to the API client, which sends `Authorization: Bearer ...`.
