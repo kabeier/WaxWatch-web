@@ -110,7 +110,7 @@ Default utility links:
 - Inbox (`/notifications`)
 - Account (`/settings/profile`)
 
-### Mobile tab behavior (actual)
+### Mobile primary nav (bottom navigation route set)
 
 `MobileTabBar` renders `MOBILE_NAV_ITEMS` from `mobileNavigationRouteKeys`.
 
@@ -120,11 +120,11 @@ Default utility links:
 
 Canonical shipped mobile tab set:
 
-1. Home (`/dashboard`)
-2. Alerts (`/alerts`)
-3. Watchlist (`/watchlist`)
-4. Notifications (`/notifications`)
-5. Settings (`/settings`)
+1. Home(`/dashboard`)
+2. Alerts(`/alerts`)
+3. Watchlist(`/watchlist`)
+4. Notifications(`/notifications`)
+5. Settings(`/settings`)
 
 `/search` and `/integrations` are intentionally omitted from mobile tabs and remain primary routes reachable via direct navigation and in-route links/CTAs.
 
