@@ -63,19 +63,22 @@ describe("mobileNavigationRouteKeys", () => {
 
     expect(mobileNavigationSection).toBeDefined();
 
-    const documentedMobilePaths = Array.from(
-      mobileNavigationSection?.matchAll(/^\d+\.\s+[^(]+\(`([^`]+)`\)/gm) ?? [],
-      ([, path]) => path,
+    const documentedMobileItems = Array.from(
+      mobileNavigationSection?.matchAll(/^\d+\.\s+([^(]+)\(`([^`]+)`\)/gm) ?? [],
+      ([, label, path]) => ({ label: label.trim(), path }),
     );
 
-    expect(documentedMobilePaths.length).toBeGreaterThan(0);
+    expect(documentedMobileItems.length).toBeGreaterThan(0);
 
     const routePathToKey = Object.fromEntries(
       Object.entries(routeViewModels).map(([routeKey, route]) => [route.path, routeKey]),
     );
-    const documentedMobileRouteKeys = documentedMobilePaths.map((path) => routePathToKey[path]);
+    const documentedMobileRouteKeys = documentedMobileItems.map(({ path }) => routePathToKey[path]);
+    const documentedMobileLabels = documentedMobileItems.map(({ label }) => label);
 
     expect(documentedMobileRouteKeys.every((routeKey) => Boolean(routeKey))).toBe(true);
     expect(documentedMobileRouteKeys).toEqual([...mobileNavigationRouteKeys]);
+    expect(documentedMobileLabels).toEqual(uxExpectedMobileTabLabels);
+    expect(MOBILE_NAV_ITEMS.map((item) => item.label)).toEqual(documentedMobileLabels);
   });
 });

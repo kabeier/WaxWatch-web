@@ -305,6 +305,8 @@ export const primaryNavigationRouteKeys = [
 ] as const;
 
 // Canonical bottom-tab order (Home, Alerts, Watchlist, Notifications, Settings).
+// Keep this tuple exactly aligned with `MOBILE_NAV_ITEMS` construction in
+// `src/components/ui/primitives/shell/primitives.tsx` and docs/ROUTES.md.
 export const mobileNavigationRouteKeys = [
   "dashboard",
   "alerts",
