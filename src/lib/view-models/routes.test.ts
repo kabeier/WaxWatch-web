@@ -22,9 +22,9 @@ describe("mobileNavigationRouteKeys", () => {
   });
 
   it("stays in parity with routes that declare mobile navigation labels", () => {
-    const routeKeysWithMobileNavigationLabel = Object.entries(routeViewModels)
-      .filter(([, route]) => "mobileNavigationLabel" in route)
-      .map(([key]) => key);
+    const routeKeysWithMobileNavigationLabel = mobileNavigationDefinitions.map(
+      ({ routeKey }) => routeKey,
+    );
 
     expect(routeKeysWithMobileNavigationLabel).toEqual(expectedMobileTabRouteKeys);
     expect(mobileNavigationRouteKeys).toEqual(routeKeysWithMobileNavigationLabel);
@@ -48,6 +48,9 @@ describe("mobileNavigationRouteKeys", () => {
 
     expect(MOBILE_NAV_ITEMS.map((item) => ({ href: item.href, label: item.label }))).toEqual(
       expectedTabs,
+    );
+    expect(MOBILE_NAV_ITEMS.map((item) => item.href)).toEqual(
+      mobileNavigationRouteKeys.map((routeKey) => routeViewModels[routeKey].path),
     );
   });
 
