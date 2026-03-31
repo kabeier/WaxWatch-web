@@ -304,16 +304,8 @@ export const primaryNavigationRouteKeys = [
   "settings",
 ] as const;
 
-export const mobileNavigationRouteKeys = [
-  "dashboard",
-  "alerts",
-  "watchlist",
-  "notifications",
-  "settings",
-] as const satisfies readonly (typeof primaryNavigationRouteKeys)[number][];
-
 type MobileNavigationDefinition = {
-  routeKey: (typeof mobileNavigationRouteKeys)[number];
+  routeKey: (typeof primaryNavigationRouteKeys)[number];
   label: string;
 };
 
@@ -327,6 +319,10 @@ export const mobileNavigationDefinitions = [
   { routeKey: "notifications", label: "Notifications" },
   { routeKey: "settings", label: "Settings" },
 ] as const satisfies readonly MobileNavigationDefinition[];
+
+export const mobileNavigationRouteKeys = mobileNavigationDefinitions.map(
+  (definition) => definition.routeKey,
+);
 
 export const settingsNavigationRouteKeys = [
   "settingsProfile",
