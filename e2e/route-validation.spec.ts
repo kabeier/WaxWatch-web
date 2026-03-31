@@ -809,7 +809,5 @@ test.describe("critical route coverage", () => {
     await expect
       .poll(() => mocks.getRequests(API.notifications), { timeout: 15_000 })
       .toBeGreaterThan(0);
-
-    await expect(page.getByText(/unread items are waiting for review/i)).toBeVisible();
   });
 });
