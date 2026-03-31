@@ -322,18 +322,13 @@ export const mobileNavigationRouteKeys = [
   "settings",
 ] as const satisfies readonly MobileNavigationRouteKey[];
 
-const mobileNavigationLabels: Record<(typeof mobileNavigationRouteKeys)[number], string> = {
-  dashboard: "Home",
-  alerts: "Alerts",
-  watchlist: "Watchlist",
-  notifications: "Notifications",
-  settings: "Settings",
-};
-
 export const mobileNavigationDefinitions: readonly MobileNavigationDefinition[] =
   mobileNavigationRouteKeys.map((routeKey) => ({
     routeKey,
-    label: mobileNavigationLabels[routeKey],
+    label:
+      routeViewModels[routeKey].mobileNavigationLabel ??
+      routeViewModels[routeKey].navigationLabel ??
+      routeViewModels[routeKey].heading,
   }));
 
 export const settingsNavigationRouteKeys = [

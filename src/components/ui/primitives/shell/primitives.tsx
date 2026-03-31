@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { WaveTrace } from "@/components/WaveTrace";
 import {
-  mobileNavigationDefinitions,
+  mobileNavigationRouteKeys,
   routeViewModels,
   type RouteKey,
 } from "@/lib/view-models/routes";
@@ -91,10 +91,7 @@ const APP_NAV_ITEMS: ShellNavItem[] = [
   },
 ];
 
-const MOBILE_NAV_ITEM_SHORT_LABELS: Record<
-  (typeof mobileNavigationDefinitions)[number]["routeKey"],
-  string
-> = {
+const MOBILE_NAV_ITEM_SHORT_LABELS: Record<(typeof mobileNavigationRouteKeys)[number], string> = {
   dashboard: "DB",
   alerts: "AL",
   watchlist: "WL",
@@ -107,18 +104,17 @@ const MOBILE_NAV_ITEM_MATCH_MODE_OVERRIDES: Partial<Record<RouteKey, ShellNavIte
   settings: "settings-without-legacy",
 };
 
-export const MOBILE_NAV_ITEMS: ShellNavItem[] = mobileNavigationDefinitions.map(
-  ({ routeKey, label }) => {
-    const route = routeViewModels[routeKey];
+export const MOBILE_NAV_ITEMS: ShellNavItem[] = mobileNavigationRouteKeys.map((routeKey) => {
+  const route = routeViewModels[routeKey];
+  const label = route.mobileNavigationLabel ?? route.navigationLabel ?? route.heading;
 
-    return {
-      href: route.path,
-      label,
-      shortLabel: MOBILE_NAV_ITEM_SHORT_LABELS[routeKey],
-      matchMode: MOBILE_NAV_ITEM_MATCH_MODE_OVERRIDES[routeKey],
-    };
-  },
-);
+  return {
+    href: route.path,
+    label,
+    shortLabel: MOBILE_NAV_ITEM_SHORT_LABELS[routeKey],
+    matchMode: MOBILE_NAV_ITEM_MATCH_MODE_OVERRIDES[routeKey],
+  };
+});
 
 function joinClassNames(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");

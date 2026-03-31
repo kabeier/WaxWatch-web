@@ -71,6 +71,16 @@ describe("mobileNavigationRouteKeys", () => {
     );
   });
 
+  it("keeps MOBILE_NAV_ITEMS route-key order in lockstep with mobileNavigationRouteKeys", () => {
+    const pathToRouteKey = Object.fromEntries(
+      mobileNavigationRouteKeys.map((routeKey) => [routeViewModels[routeKey].path, routeKey]),
+    );
+
+    const mobileNavItemRouteKeys = MOBILE_NAV_ITEMS.map((item) => pathToRouteKey[item.href]);
+
+    expect(mobileNavItemRouteKeys).toEqual([...mobileNavigationRouteKeys]);
+  });
+
   it("matches the documented mobile navigation sequence in docs/ROUTES.md", () => {
     const routesDoc = readFileSync(resolve(process.cwd(), "docs/ROUTES.md"), "utf8");
     const mobileNavigationSection = routesDoc.match(
