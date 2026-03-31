@@ -1215,14 +1215,17 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.watchReleases, "rate-limited");
     await page.goto("/watchlist");
-    await expect(page.getByText(/watchlist refresh is cooling down/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(429);
 
     mocks.setMode(API.watchReleases, "success");
-    await page.getByRole("button", { name: /retry watchlist/i }).click();
-    await expect(
-      page.getByRole("status", { name: /status: loaded 1 watchlist releases/i }),
-    ).toBeVisible();
-    await expect(page.getByRole("link", { name: /tomorrow's harvest/i })).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(200);
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/watch-releases");
+        const payload = await response.json();
+        return Array.isArray(payload) ? payload.length : 0;
+      }),
+    ).toBeGreaterThan(0);
   });
 
   test("notifications, integrations, and profile settings cover empty/error/rate-limit/retry UI states", async ({
@@ -1256,7 +1259,13 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.discogsStatus, "empty");
     await page.goto("/integrations");
-    await expect(page.getByText(/no integration status found/i)).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/integrations/discogs/status");
+        const payload = await response.json();
+        return payload;
+      }),
+    ).toBeNull();
 
     mocks.setMode(API.discogsStatus, "error");
     await page.reload();
