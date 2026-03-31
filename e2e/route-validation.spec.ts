@@ -104,6 +104,7 @@ async function installApiMocks(page: Page) {
     [API.discogsConnect]: { mode: "success", requests: 0 },
     [API.discogsImport]: { mode: "success", requests: 0 },
     [API.me]: { mode: "success", requests: 0 },
+    [API.meHardDelete]: { mode: "success", requests: 0 },
   };
 
   let streamStatus: 200 | 401 = 200;
@@ -399,7 +400,23 @@ async function installApiMocks(page: Page) {
     }
 
     if (matchesEndpoint(apiPath, API.meHardDelete)) {
+      mockStates[API.meHardDelete].requests += 1;
       if (request.method() === "DELETE") {
+        const mode = mockStates[API.meHardDelete].mode;
+        if (mode === "rate-limited") {
+          await fulfillJson(route, {
+            status: 429,
+            headers: { "retry-after": "1" },
+            body: { error: { type: "rate_limited", message: "cooldown" } },
+          });
+          return;
+        }
+
+        if (mode === "error") {
+          await fulfillJson(route, { status: 500, body: { error: { message: "failed" } } });
+          return;
+        }
+
         meHardDeleteCalls += 1;
         await route.fulfill({ status: 204, body: "" });
         return;
@@ -410,6 +427,21 @@ async function installApiMocks(page: Page) {
       mockStates[API.me].requests += 1;
 
       if (request.method() === "DELETE") {
+        const mode = mockStates[API.me].mode;
+        if (mode === "rate-limited") {
+          await fulfillJson(route, {
+            status: 429,
+            headers: { "retry-after": "1" },
+            body: { error: { type: "rate_limited", message: "cooldown" } },
+          });
+          return;
+        }
+
+        if (mode === "error") {
+          await fulfillJson(route, { status: 500, body: { error: { message: "failed" } } });
+          return;
+        }
+
         meDeleteCalls += 1;
         await route.fulfill({ status: 204, body: "" });
         return;
@@ -520,6 +552,53 @@ test.describe("critical route coverage", () => {
     expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(200);
   });
 
+  test("alerts and watchlist show empty/error/rate-limited states and allow retry", async ({
+    page,
+  }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    mocks.setMode(API.watchRules, "empty");
+    await page.goto("/alerts");
+    await expect(page).toHaveURL(/\/alerts$/);
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/watch-rules", { credentials: "include" });
+        const payload = await response.json();
+        return Array.isArray(payload) ? payload.length : -1;
+      }),
+    ).toBe(0);
+
+    mocks.setMode(API.watchRules, "error");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(500);
+
+    mocks.setMode(API.watchRules, "rate-limited");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(429);
+
+    mocks.setMode(API.watchRules, "success");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(200);
+
+    mocks.setMode(API.watchReleases, "empty");
+    await page.goto("/watchlist");
+    await expect(page).toHaveURL(/\/watchlist$/);
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/watch-releases", { credentials: "include" });
+        const payload = await response.json();
+        return Array.isArray(payload) ? payload.length : -1;
+      }),
+    ).toBe(0);
+
+    mocks.setMode(API.watchReleases, "error");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(500);
+
+    mocks.setMode(API.watchReleases, "rate-limited");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(429);
+
+    mocks.setMode(API.watchReleases, "success");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(200);
+  });
+
   test("notifications flow covers mark-read and unread refresh requests", async ({ page }) => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
@@ -585,6 +664,105 @@ test.describe("critical route coverage", () => {
         return response.status;
       }),
     ).toBe(500);
+  });
+
+  test("notifications and integrations user workflows include retries and success paths", async ({
+    page,
+  }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    mocks.setMode(API.notifications, "empty");
+    mocks.setMode(API.unreadCount, "success");
+    await page.goto("/notifications");
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/notifications", { credentials: "include" });
+        const payload = await response.json();
+        return Array.isArray(payload) ? payload.length : -1;
+      }),
+    ).toBe(0);
+
+    mocks.setMode(API.notifications, "error");
+    expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(500);
+
+    mocks.setMode(API.notifications, "rate-limited");
+    expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(429);
+
+    mocks.setMode(API.notifications, "success");
+    expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(200);
+    await page.evaluate(async () => {
+      await fetch("/api/notifications/note-1/read", { method: "POST", credentials: "include" });
+    });
+    await expect.poll(() => mocks.getMarkReadCalls()).toBeGreaterThan(0);
+
+    mocks.setMode(API.discogsStatus, "error");
+    await page.goto("/integrations");
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(500);
+
+    mocks.setMode(API.discogsStatus, "rate-limited");
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(429);
+
+    mocks.setMode(API.discogsStatus, "success");
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(200);
+
+    mocks.setMode(API.discogsConnect, "rate-limited");
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/integrations/discogs/connect", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ external_user_id: "discogs-007" }),
+        });
+        return response.status;
+      }),
+    ).toBe(429);
+
+    mocks.setMode(API.discogsConnect, "success");
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/integrations/discogs/connect", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ external_user_id: "discogs-007" }),
+        });
+        return response.status;
+      }),
+    ).toBe(200);
+
+    mocks.setMode(API.discogsImport, "error");
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/integrations/discogs/import", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ source: "both" }),
+        });
+        return response.status;
+      }),
+    ).toBe(500);
+
+    mocks.setMode(API.discogsImport, "success");
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/integrations/discogs/import", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ source: "both" }),
+        });
+        return response.status;
+      }),
+    ).toBe(200);
   });
 
   test("settings profile + danger destructive APIs", async ({ page }) => {
@@ -655,6 +833,62 @@ test.describe("critical route coverage", () => {
     expect(sseStatus).toBe(401);
   });
 
+  test("danger settings destructive confirmations enforce dialog workflow and retry after errors", async ({
+    page,
+  }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    await page.goto("/settings/danger");
+    await expect(page).toHaveURL(/\/settings\/danger$/);
+
+    await expect(page.getByRole("button", { name: /^Deactivate account$/i })).toHaveAttribute(
+      "aria-controls",
+      "danger-deactivate-confirm-dialog",
+    );
+    await expect(
+      page.getByRole("button", { name: /^Permanently delete account$/i }),
+    ).toHaveAttribute("aria-controls", "danger-delete-confirm-dialog");
+
+    mocks.setMode(API.me, "error");
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me", { method: "DELETE", credentials: "include" });
+        return response.status;
+      }),
+    ).toBe(500);
+
+    mocks.setMode(API.me, "success");
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me", { method: "DELETE", credentials: "include" });
+        return response.status;
+      }),
+    ).toBe(204);
+
+    mocks.setMode(API.meHardDelete, "error");
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me/hard-delete", {
+          method: "DELETE",
+          credentials: "include",
+        });
+        return response.status;
+      }),
+    ).toBe(500);
+
+    mocks.setMode(API.meHardDelete, "success");
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me/hard-delete", {
+          method: "DELETE",
+          credentials: "include",
+        });
+        return response.status;
+      }),
+    ).toBe(204);
+  });
+
   test("SSE cookie-mode model validations", async ({ page }) => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
@@ -679,5 +913,32 @@ test.describe("critical route coverage", () => {
     await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
     await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(0);
     await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(0);
+  });
+
+  test("SSE model behavior updates user-visible notifications state and uses cookie mode", async ({
+    page,
+  }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    mocks.enforceStreamCookieMode();
+    mocks.setMode(API.notifications, "success");
+    mocks.setMode(API.unreadCount, "success");
+    mocks.setUnreadCountBase(1);
+
+    await page.goto("/notifications");
+    await expect(page).toHaveURL(/\/notifications$/);
+    await page.evaluate(async () => {
+      await fetch("/api/stream/events", {
+        method: "GET",
+        credentials: "include",
+        headers: { Accept: "text/event-stream" },
+      });
+      await fetch("/api/notifications/unread-count", { credentials: "include" });
+      await fetch("/api/notifications", { credentials: "include" });
+    });
+    await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(0);
+    await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(0);
+    await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
   });
 });
