@@ -2,11 +2,12 @@
 
 ## Signed-in app navigation model
 
-> **Canonical nav source:** `src/components/ui/primitives/shell/primitives.tsx` is the canonical
-> rendered-shell nav definition (`APP_NAV_ITEMS`, `MOBILE_NAV_ITEMS`, and `DEFAULT_UTILITY_ITEMS`).
-> Mobile tab membership/order is derived from `mobileNavigationRouteKeys` in
-> `src/lib/view-models/routes.ts`. Keep this document and `docs/ROUTES.md` aligned whenever either
-> source changes.
+> **Canonical source in code (anti-drift note):** Treat rendered nav in
+> `src/components/ui/primitives/shell/primitives.tsx` (`APP_NAV_ITEMS`, `MOBILE_NAV_ITEMS`,
+> `DEFAULT_UTILITY_ITEMS`) plus route/nav definitions in `src/lib/view-models/routes.ts`
+> (`primaryNavigationRouteKeys`, `mobileNavigationRouteKeys`, `mobileNavigationDefinitions`) as
+> source of truth. Update this file and `docs/ROUTES.md` in the same PR whenever those code paths
+> change.
 
 ### Desktop primary nav (sidebar route set)
 
@@ -24,15 +25,21 @@ always present and is the primary destination map on desktop/tablet widths. It i
 
 ### Top nav utility role (not primary nav)
 
-Top nav is not the primary route map. In the shipped shell model it is a utility/status area when
-utilities are enabled: brand/home access plus utility links rendered via `TopNav` utility items
-(defaulting to `DEFAULT_UTILITY_ITEMS`):
+Top nav is **not** the primary route map. In the shipped shell model it has utility/chrome
+responsibilities only:
+
+- Always provides brand/home entry (`ShellBrand`).
+- Optionally renders utility links from `TopNav` utility items (defaulting to
+  `DEFAULT_UTILITY_ITEMS`).
+- Must not be treated as route inventory for information architecture decisions.
+
+Default utility links:
 
 - Inbox (`/notifications`)
 - Account (`/settings/profile`)
 
-In auth pages (`app/(auth)`), top nav still renders brand/home but utilities are intentionally
-hidden via `showUtilities={false}`.
+In auth pages (`app/(auth)`), top nav still renders brand/home while utility links are
+intentionally hidden via `showUtilities={false}`.
 
 ### Mobile primary nav (bottom-tab route set)
 
