@@ -252,6 +252,29 @@ describe("SseController", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it.each(["signed-out", "reauth-required"] as const)(
+    "halts reconnect attempts when %s auth event is dispatched",
+    async (authEvent) => {
+      vi.useFakeTimers();
+      vi.spyOn(Math, "random").mockReturnValue(0);
+      fetchMock.mockRejectedValue(new Error("disconnect"));
+      const setTimeoutSpy = vi.spyOn(window, "setTimeout");
+
+      const queryClient = new QueryClient();
+      renderWithClient(queryClient);
+
+      await vi.runAllTicks();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(setTimeoutSpy).toHaveBeenCalled();
+
+      window.dispatchEvent(new CustomEvent("waxwatch:auth", { detail: authEvent }));
+      await vi.advanceTimersByTimeAsync(1_200);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    },
+  );
   it.each([401, 403])(
     "handles auth failure status %s by invoking authorization failure and halting reconnect",
     async (status) => {
@@ -319,5 +342,19 @@ describe("SseController", () => {
       queryKey: queryKeys.notifications.list,
     });
     expect(invalidateSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not invalidate user-visible notification queries for non-notification SSE events", async () => {
+    fetchMock.mockResolvedValueOnce(
+      createChunkedSseResponse(["event: heartbeat\n", 'data: {"ok":true}\n\n']),
+    );
+
+    const queryClient = new QueryClient();
+    const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
+
+    renderWithClient(queryClient);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(invalidateSpy).not.toHaveBeenCalled();
   });
 });

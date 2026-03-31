@@ -14,6 +14,16 @@ describe("LayoutAuthNotice", () => {
     expect(screen.getByRole("status")).toHaveTextContent("You have been signed out.");
   });
 
+  it("renders the reauth-required notice when session expiry reason is present", () => {
+    __setSearchParams({ reason: "reauth-required" });
+
+    render(<LayoutAuthNotice />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Your session expired or became invalid. Please sign in again.",
+    );
+  });
+
   it("renders nothing when the reason query param is not recognized", () => {
     __setSearchParams({ reason: "unknown" });
 

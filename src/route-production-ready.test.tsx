@@ -509,6 +509,47 @@ describe("route-level production-ready paths", () => {
     );
   });
 
+  it("/alerts route-level flow covers empty/error/rate-limited/retry states", () => {
+    const retryWatchRules = vi.fn();
+    state.watchRulesQuery = {
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: retryWatchRules,
+    };
+
+    const { rerender } = render(<AlertsPage />);
+    expect(
+      screen.getByText(/no watch rules yet\. create one to start matching releases\./i),
+    ).toBeInTheDocument();
+
+    state.watchRulesQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "alerts unavailable" },
+      retry: retryWatchRules,
+    };
+    rerender(<AlertsPage />);
+    expect(screen.getByText(/could not load watch rules\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry watch rules/i }));
+    expect(retryWatchRules).toHaveBeenCalledTimes(1);
+
+    state.watchRulesQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "slow down", retryAfterSeconds: 18 },
+      retry: retryWatchRules,
+    };
+    rerender(<AlertsPage />);
+    expect(
+      screen.getByText(/watch-rule requests are temporarily rate limited\./i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry watch rules/i })).toBeEnabled();
+  });
+
   it("/alerts/new success", () => {
     render(<NewAlertPage />);
     expect(screen.getByText(/success: alert created/i)).toBeInTheDocument();
@@ -596,6 +637,51 @@ describe("route-level production-ready paths", () => {
     state.notificationsQuery = { ...state.notificationsQuery, isError: true, error: apiError };
     render(<NotificationsPage />);
     expect(screen.getByText(/could not load notifications/i)).toBeInTheDocument();
+  });
+
+  it("/notifications route-level flow covers empty/error/rate-limited/retry states", () => {
+    const retryFeed = vi.fn();
+    const retryUnread = vi.fn();
+    state.notificationsQuery = {
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: retryFeed,
+    };
+    state.unreadCountQuery = {
+      data: { unread_count: 0 },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: retryUnread,
+    };
+
+    const { rerender } = render(<NotificationsPage />);
+    expect(screen.getByText(/no notifications yet\./i)).toBeInTheDocument();
+
+    state.notificationsQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "feed unavailable" },
+      retry: retryFeed,
+    };
+    rerender(<NotificationsPage />);
+    expect(screen.getByText(/could not load notifications\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry notifications feed/i }));
+    expect(retryFeed).toHaveBeenCalledTimes(1);
+
+    state.unreadCountQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "slow down", retryAfterSeconds: 22 },
+      retry: retryUnread,
+    };
+    rerender(<NotificationsPage />);
+    expect(screen.getByText(/unread count is temporarily rate limited/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 22s/i })).toBeDisabled();
   });
 
   it("/notifications unread-count failure does not force zero", () => {
@@ -1314,6 +1400,46 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/could not load watchlist/i)).toBeInTheDocument();
   });
 
+  it("/watchlist route-level flow covers empty/error/rate-limited/retry states", () => {
+    const retryWatchlist = vi.fn();
+    state.watchReleasesQuery = {
+      data: [],
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: retryWatchlist,
+    };
+    const { rerender } = render(<WatchlistPage />);
+    expect(
+      screen.getByText(/no watchlist releases yet\. add alerts to populate this feed\./i),
+    ).toBeInTheDocument();
+
+    state.watchReleasesQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "watchlist unavailable" },
+      retry: retryWatchlist,
+    };
+    rerender(<WatchlistPage />);
+    expect(screen.getByText(/could not load watchlist\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry watchlist/i }));
+    expect(retryWatchlist).toHaveBeenCalledTimes(1);
+
+    state.watchReleasesQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "cooldown active", retryAfterSeconds: 33 },
+      retry: retryWatchlist,
+    };
+    rerender(<WatchlistPage />);
+    expect(
+      screen.getByText(/watchlist refresh is cooling down due to rate limiting\./i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 33s/i })).toBeDisabled();
+  });
+
   it("/dashboard route-level states cover success, empty data, api error, and cooldown retry affordances", () => {
     const retryNotifications = vi.fn();
     state.notificationsQuery = {
@@ -1623,6 +1749,43 @@ describe("route-level production-ready paths", () => {
     expect(screen.getByText(/could not load profile/i)).toBeInTheDocument();
   });
 
+  it("/settings/alerts route-level flow covers empty/error/rate-limited/retry states", () => {
+    const retrySettingsLoad = vi.fn();
+    state.meQuery = {
+      data: { preferences: undefined, integrations: [{ provider: "discogs" }] },
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: retrySettingsLoad,
+    };
+
+    const { rerender } = render(<AlertSettingsPage />);
+    expect(screen.getByText(/no delivery settings configured yet\./i)).toBeInTheDocument();
+
+    state.meQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "settings unavailable" },
+      retry: retrySettingsLoad,
+    };
+    rerender(<AlertSettingsPage />);
+    expect(screen.getByText(/could not load alert delivery settings\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry settings load/i }));
+    expect(retrySettingsLoad).toHaveBeenCalledTimes(1);
+
+    state.meQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "slow down", retryAfterSeconds: 24 },
+      retry: retrySettingsLoad,
+    };
+    rerender(<AlertSettingsPage />);
+    expect(screen.getByText(/settings are temporarily rate limited\./i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 24s/i })).toBeDisabled();
+  });
+
   it("/integrations success", () => {
     render(<IntegrationSettingsPage />);
     expect(screen.getByText(/discogs connected/i)).toBeInTheDocument();
@@ -1643,5 +1806,44 @@ describe("route-level production-ready paths", () => {
     state.discogsStatusQuery = { ...state.discogsStatusQuery, isError: true, error: apiError };
     render(<IntegrationSettingsPage />);
     expect(screen.getByText(/could not load discogs integration status/i)).toBeInTheDocument();
+  });
+
+  it("/integrations route-level flow covers empty/error/rate-limited/retry states", () => {
+    const retryDiscogsStatus = vi.fn();
+    state.discogsStatusQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      error: null,
+      retry: retryDiscogsStatus,
+    };
+
+    const { rerender } = render(<IntegrationSettingsPage />);
+    expect(screen.getByText(/no integration status found\./i)).toBeInTheDocument();
+
+    state.discogsStatusQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "unknown_error", message: "discogs unavailable" },
+      retry: retryDiscogsStatus,
+    };
+    rerender(<IntegrationSettingsPage />);
+    expect(screen.getByText(/could not load discogs integration status\./i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /retry discogs status/i }));
+    expect(retryDiscogsStatus).toHaveBeenCalledTimes(1);
+
+    state.discogsStatusQuery = {
+      data: undefined,
+      isLoading: false,
+      isError: true,
+      error: { kind: "rate_limited", message: "slow down", retryAfterSeconds: 27 },
+      retry: retryDiscogsStatus,
+    };
+    rerender(<IntegrationSettingsPage />);
+    expect(
+      screen.getByText(/discogs integration status is cooling down due to rate limiting\./i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /retry available in 27s/i })).toBeDisabled();
   });
 });
