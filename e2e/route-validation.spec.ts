@@ -123,12 +123,6 @@ async function installApiMocks(page: Page) {
 
   await page.route("**/*", async (route) => {
     const request = route.request();
-    const resourceType = request.resourceType();
-    if (!["fetch", "xhr", "eventsource"].includes(resourceType)) {
-      await route.continue();
-      return;
-    }
-
     const { pathname } = new URL(request.url());
     let apiPath = pathname;
     while (/^\/(?:api|v1|v2)(?=\/)/.test(apiPath)) {
