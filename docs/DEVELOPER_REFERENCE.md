@@ -117,7 +117,7 @@ Auth implementation anchors:
 - [`src/lib/auth-session.ts`](../src/lib/auth-session.ts) (web adapter returns `null` access token, dispatches auth lifecycle events, redirects to `/signed-out?reason=...` and `/account-removed`, performs best-effort legacy key cleanup)
 - [`app/(auth)/login/LoginPageClient.tsx`](../app/%28auth%29/login/LoginPageClient.tsx) (`POST ${resolveApiBaseUrl()}/auth/login`; default `/api/auth/login`; sends `credentials: "include"`; validates secure handoff params before/after submit; redirects to validated handoff callback or `return_to`/`/`)
 
-### Canonical auth narrative (must match `docs/AUTH_MODEL.md`)
+### Canonical auth narrative (must match `docs/AUTH_MODEL.md` verbatim)
 
 Use this exact terminology in docs and reviews:
 
