@@ -2,12 +2,12 @@
 
 ## Signed-in app navigation model
 
-> **Canonical source in code (anti-drift note):** Treat rendered nav in
+> **Canonical source in code (anti-drift note):** Treat shell nav definitions as the source of truth:
 > `src/components/ui/primitives/shell/primitives.tsx` (`APP_NAV_ITEMS`, `MOBILE_NAV_ITEMS`,
-> `DEFAULT_UTILITY_ITEMS`, `TopNav`, `SideNav`, `MobileTabBar`) plus route/nav definitions in `src/lib/view-models/routes.ts`
-> (`primaryNavigationRouteKeys`, `mobileNavigationRouteKeys`, `mobileNavigationDefinitions`) as
-> source of truth. Update this file and `docs/ROUTES.md` in the same PR whenever those code paths
-> change.
+> `DEFAULT_UTILITY_ITEMS`, `TopNav`, `SideNav`, `MobileTabBar`) and
+> `src/lib/view-models/routes.ts` (`primaryNavigationRouteKeys`, `mobileNavigationRouteKeys`,
+> `mobileNavigationDefinitions`). Update this file and `docs/ROUTES.md` in the same PR whenever
+> those code paths change.
 
 ### Navigation surface responsibilities (desktop + mobile)
 
@@ -64,7 +64,7 @@ to `always`. The shipped authenticated tab set includes exactly:
 5. Settings (`/settings`)
 
 `/search` and `/integrations` are intentionally excluded from mobile bottom tabs and remain
-first-class routes reachable through in-route CTAs/links and direct navigation.
+first-class routes reachable via in-route CTAs/links and direct navigation.
 
 ### Pattern summary (canonical)
 

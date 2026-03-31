@@ -5,6 +5,8 @@ This app uses Next.js **App Router**.
 ## Canonical route model
 
 - `app/` is the single source of truth for route ownership.
+- Shell nav definitions in `src/components/ui/primitives/shell/primitives.tsx` and
+  `src/lib/view-models/routes.ts` are the canonical source for desktop/mobile navigation labels and order.
 - `/` is a server redirect entrypoint to `/dashboard`.
 - `/dashboard` is the canonical signed-in landing route.
 - `/search` remains a first-class top-level task route for discovery and save-as-alert flows.
@@ -70,12 +72,12 @@ All new route implementation/migration work must compose shared primitives first
 
 ## Navigation model
 
-> **Canonical source in code (anti-drift note):** Treat rendered nav in
+> **Canonical source in code (anti-drift note):** Treat shell nav definitions as the source of truth:
 > `src/components/ui/primitives/shell/primitives.tsx` (`APP_NAV_ITEMS`, `MOBILE_NAV_ITEMS`,
-> `DEFAULT_UTILITY_ITEMS`, `TopNav`, `SideNav`, `MobileTabBar`) plus route/nav definitions in `src/lib/view-models/routes.ts`
-> (`primaryNavigationRouteKeys`, `mobileNavigationRouteKeys`, `mobileNavigationDefinitions`) as
-> source of truth. Update this file and `docs/IA_MAP.md` in the same PR whenever those code paths
-> change.
+> `DEFAULT_UTILITY_ITEMS`, `TopNav`, `SideNav`, `MobileTabBar`) and
+> `src/lib/view-models/routes.ts` (`primaryNavigationRouteKeys`, `mobileNavigationRouteKeys`,
+> `mobileNavigationDefinitions`). Update this file and `docs/IA_MAP.md` in the same PR whenever
+> those code paths change.
 
 ### Navigation surface responsibilities (desktop + mobile)
 
@@ -131,8 +133,8 @@ to `always`. The shipped authenticated tab set includes exactly:
 4. Notifications (`/notifications`)
 5. Settings (`/settings`)
 
-`/search` and `/integrations` remain first-class signed-in routes, but they are not bottom-tab items on mobile.
-Users reach them from in-route links/CTAs (for example Dashboard quick actions) and by direct route entry.
+`/search` and `/integrations` are intentionally excluded from mobile bottom tabs and remain
+first-class routes reachable via in-route CTAs/links and direct navigation.
 
 ### Pattern summary (canonical)
 
