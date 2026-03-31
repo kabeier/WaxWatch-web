@@ -2,26 +2,23 @@
 
 ## Signed-in app navigation model
 
-> **Canonical source in code (anti-drift note):** Treat shell nav definitions as the source of truth:
-> `src/components/ui/primitives/shell/primitives.tsx` (`APP_NAV_ITEMS`, `MOBILE_NAV_ITEMS`,
-> `DEFAULT_UTILITY_ITEMS`, `TopNav`, `SideNav`, `MobileTabBar`) and
-> `src/lib/view-models/routes.ts` (`primaryNavigationRouteKeys`, `mobileNavigationRouteKeys`,
-> `mobileNavigationDefinitions`). Update this file and `docs/ROUTES.md` in the same PR whenever
-> those code paths change.
+> **Canonical source note:** Navigation truth lives in shell code definitions: `src/components/ui/primitives/shell/primitives.tsx` and `src/lib/view-models/routes.ts`. If nav labels/order/visibility change there, update this doc and `docs/ROUTES.md` in the same PR.
 
-### Navigation surface responsibilities (desktop + mobile)
+### Navigation surface responsibilities
 
-- **Top nav (`TopNav`)**: global shell utility chrome (brand/home + utility links), not the primary
-  route inventory.
-- **Desktop/tablet primary nav (`SideNav`)**: primary route map for authenticated app navigation.
-- **Mobile primary nav (`MobileTabBar`)**: primary route map on mobile (`max-width: 767px`) for
-  authenticated app navigation.
+- **Top nav (`TopNav`)** = utility chrome (brand/home + utility links), not primary route IA.
+- **Desktop/tablet primary nav (`SideNav`)** = authenticated primary route inventory.
+- **Mobile primary nav (`MobileTabBar`)** = authenticated primary route inventory on phones.
 
-### Desktop primary nav (sidebar route set)
+### Desktop + sidebar behavior (actual)
 
-Desktop primary navigation is the sidebar route set rendered from `APP_NAV_ITEMS` in
-`src/components/ui/primitives/shell/primitives.tsx`. In the authenticated shell, this sidebar is
-always present and is the primary destination map on desktop/tablet widths. It includes exactly:
+`SideNav` is wired into the authenticated shell by default and uses `APP_NAV_ITEMS`.
+Behavior by breakpoint:
+
+- **Desktop/tablet (`>=768px`)**: sidebar is visible and is the primary navigation map.
+- **Mobile (`<=767px`)**: sidebar remains part of shell composition but is visually hidden by CSS.
+
+Sidebar route set:
 
 1. Dashboard (`/dashboard`)
 2. Search (`/search`)
@@ -31,31 +28,27 @@ always present and is the primary destination map on desktop/tablet widths. It i
 6. Integrations (`/integrations`)
 7. Settings (`/settings`)
 
-### Top nav utility role (not primary nav route set)
+### Top-nav utility role vs primary route navigation
 
-Top nav is **not** the primary route map. In the shipped shell model it has global shell
-utility/chrome responsibilities only:
+Top nav is intentionally **not** the primary destination inventory.
 
-- Always provides brand/home entry (`ShellBrand`).
-- Optionally renders utility links from `TopNav` utility items (defaulting to
-  `DEFAULT_UTILITY_ITEMS`; hydrated in authenticated shell by `useAppShellChromeData`).
-- Must not be treated as route inventory for information architecture decisions.
+- Always renders `ShellBrand` (brand/home entry).
+- Renders utility links from `TopNav` utility items (`DEFAULT_UTILITY_ITEMS` fallback, hydrated in app shell via `useAppShellChromeData`).
+- On auth-state pages (`app/(auth)`), top nav still renders brand/home but hides utilities with `showUtilities={false}`.
 
 Default utility links:
 
 - Inbox (`/notifications`)
 - Account (`/settings/profile`)
 
-In auth pages (`app/(auth)`), top nav still renders brand/home while utility links are
-intentionally hidden via `showUtilities={false}`.
+### Mobile tab behavior (actual)
 
-### Mobile primary nav (bottom-tab route set)
+`MobileTabBar` renders `MOBILE_NAV_ITEMS` (from `mobileNavigationRouteKeys`). In `AppShell`, tab visibility is controlled by `mobileTabBarVisibility`:
 
-Mobile primary navigation is the bottom-tab route set defined by
-`mobileNavigationRouteKeys` in `src/lib/view-models/routes.ts` and rendered as
-`MOBILE_NAV_ITEMS` in `src/components/ui/primitives/shell/primitives.tsx`. Tabs render in `AppShell` and are shown only on mobile viewport widths (`max-width: 767px`) when
-`mobileTabBarVisibility` is `auto` (current `(app)` shell behavior), or always when explicitly set
-to `always`. The shipped authenticated tab set includes exactly:
+- `auto` (current authenticated shell default): render tabs only when viewport is `max-width: 767px`.
+- `always`: render tabs regardless of viewport.
+
+In addition, shell CSS only displays the bottom-tab container at `max-width: 767px` in normal responsive layouts. Canonical shipped mobile tab set:
 
 1. Home (`/dashboard`)
 2. Alerts (`/alerts`)
@@ -63,14 +56,13 @@ to `always`. The shipped authenticated tab set includes exactly:
 4. Notifications (`/notifications`)
 5. Settings (`/settings`)
 
-`/search` and `/integrations` are intentionally excluded from mobile bottom tabs and remain
-first-class routes reachable via in-route CTAs/links and direct navigation.
+`/search` and `/integrations` are intentionally excluded from mobile tabs and remain first-class routes via direct URL and in-flow links/CTAs.
 
-### Pattern summary (canonical)
+### Pattern summary
 
-- Desktop/tablet: sidebar is the primary route map.
-- Mobile: bottom tabs are the primary route map.
-- Top nav: utility/status chrome only (brand + utility links), not a primary route map.
+- Desktop/tablet: sidebar is primary route map.
+- Mobile: bottom tabs are primary route map.
+- Top nav: utility/status chrome only.
 
 ## Auth + account lifecycle routes (supporting IA)
 
