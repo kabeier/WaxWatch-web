@@ -110,7 +110,7 @@ Default utility links:
 - Inbox (`/notifications`)
 - Account (`/settings/profile`)
 
-### Mobile primary nav (bottom navigation route set)
+### Mobile primary nav (bottom-tab route set)
 
 `MobileTabBar` renders `MOBILE_NAV_ITEMS` from `mobileNavigationRouteKeys`.
 
