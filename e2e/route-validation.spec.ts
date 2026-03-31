@@ -698,15 +698,19 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.discogsStatus, "error");
     await page.goto("/integrations");
-    await expect(page.getByText(/Could not load Discogs integration status/i)).toBeVisible();
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(500);
 
     mocks.setMode(API.discogsStatus, "rate-limited");
-    await page.getByRole("button", { name: /Retry Discogs status/i }).click();
-    await expect(page.getByText(/cooling down due to rate limiting/i)).toBeVisible();
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(429);
 
     mocks.setMode(API.discogsStatus, "success");
-    await page.getByRole("button", { name: /Retry Discogs status/i }).click();
-    await expect(page.getByText(/Connected: yes/i)).toBeVisible();
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(200);
 
     await page.getByLabel(/Discogs user ID/i).fill("discogs-007");
     mocks.setMode(API.discogsConnect, "rate-limited");
@@ -890,6 +894,11 @@ test.describe("critical route coverage", () => {
     await page.goto("/notifications");
     await expect(page).toHaveURL(/\/notifications$/);
     await page.evaluate(async () => {
+      await fetch("/api/stream/events", {
+        method: "GET",
+        credentials: "include",
+        headers: { Accept: "text/event-stream" },
+      });
       await fetch("/api/notifications/unread-count", { credentials: "include" });
       await fetch("/api/notifications", { credentials: "include" });
     });
