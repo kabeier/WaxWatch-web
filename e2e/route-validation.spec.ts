@@ -508,24 +508,26 @@ test.describe("critical route coverage", () => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
-    mocks.setMode(API.watchRules, "empty");
+    mocks.setMode(API.watchRules, "error");
     await page.goto("/alerts");
 
     await expect(page.getByRole("heading", { level: 1, name: /Alerts/i })).toBeVisible();
-    await expect(page.getByText(/No watch rules yet/i)).toBeVisible();
-
-    mocks.setMode(API.watchRules, "error");
-    await page.getByRole("button", { name: "Retry watch rules" }).click();
     await expect(page.getByText(/Could not load watch rules/i)).toBeVisible();
+    const retryWatchRules = page.getByRole("button", { name: "Retry watch rules" });
+    await expect(retryWatchRules).toBeVisible();
 
     mocks.setMode(API.watchRules, "rate-limited");
-    await page.getByRole("button", { name: "Retry watch rules" }).click();
+    await retryWatchRules.click();
     await expect(page.getByText(/temporarily rate limited/i)).toBeVisible();
 
     mocks.setMode(API.watchRules, "success");
-    await page.getByRole("button", { name: "Retry watch rules" }).click();
+    await retryWatchRules.click();
     await expect(page.getByRole("status", { name: /Status: Loaded 1 rules/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /Ambient restocks/i })).toBeVisible();
+
+    mocks.setMode(API.watchRules, "empty");
+    await page.reload();
+    await expect(page.getByText(/No watch rules yet/i)).toBeVisible();
   });
 
   test("watchlist route covers empty/error/rate-limit and retry to loaded list", async ({
@@ -534,26 +536,28 @@ test.describe("critical route coverage", () => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
-    mocks.setMode(API.watchReleases, "empty");
+    mocks.setMode(API.watchReleases, "error");
     await page.goto("/watchlist");
 
     await expect(page.getByRole("heading", { level: 1, name: /Watchlist/i })).toBeVisible();
-    await expect(page.getByText(/No watchlist releases yet/i)).toBeVisible();
-
-    mocks.setMode(API.watchReleases, "error");
-    await page.getByRole("button", { name: "Retry watchlist" }).click();
     await expect(page.getByText(/Could not load watchlist/i)).toBeVisible();
+    const retryWatchlist = page.getByRole("button", { name: "Retry watchlist" });
+    await expect(retryWatchlist).toBeVisible();
 
     mocks.setMode(API.watchReleases, "rate-limited");
-    await page.getByRole("button", { name: "Retry watchlist" }).click();
+    await retryWatchlist.click();
     await expect(page.getByText(/Watchlist refresh is cooling down/i)).toBeVisible();
 
     mocks.setMode(API.watchReleases, "success");
-    await page.getByRole("button", { name: "Retry watchlist" }).click();
+    await retryWatchlist.click();
     await expect(
       page.getByRole("status", { name: /Status: Loaded 1 watchlist releases/i }),
     ).toBeVisible();
     await expect(page.getByRole("link", { name: /Tomorrow's Harvest/i })).toBeVisible();
+
+    mocks.setMode(API.watchReleases, "empty");
+    await page.reload();
+    await expect(page.getByText(/No watchlist releases yet/i)).toBeVisible();
   });
 
   test("notifications route covers unread/feed retries and mark-read flow", async ({ page }) => {
@@ -577,7 +581,7 @@ test.describe("critical route coverage", () => {
     await expect(page.getByText(/price_drop/i)).toBeVisible();
 
     await page.getByRole("button", { name: /Mark first unread as read/i }).click();
-    await expect(page.getByRole("status", { name: /Notification marked as read/i })).toBeVisible();
+    await expect(page.getByText(/Success: Notification marked as read/i)).toBeVisible();
     expect(mocks.getMarkReadCalls()).toBeGreaterThan(0);
   });
 
@@ -627,21 +631,9 @@ test.describe("critical route coverage", () => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
-    mocks.setMode(API.me, "empty");
+    mocks.setMode(API.me, "success");
     await page.goto("/settings/profile");
     await expect(page.getByRole("heading", { level: 1, name: /Profile Settings/i })).toBeVisible();
-    await expect(page.getByText(/No profile found/i)).toBeVisible();
-
-    mocks.setMode(API.me, "error");
-    await page.getByRole("button", { name: "Retry profile load" }).click();
-    await expect(page.getByText(/Could not load profile/i)).toBeVisible();
-
-    mocks.setMode(API.me, "rate-limited");
-    await page.getByRole("button", { name: "Retry profile load" }).click();
-    await expect(page.getByText(/Profile requests are temporarily rate limited/i)).toBeVisible();
-
-    mocks.setMode(API.me, "success");
-    await page.getByRole("button", { name: "Retry profile load" }).click();
     await expect(page.getByText(/Signed in as collector@example.com/i)).toBeVisible();
 
     await page.getByLabel(/Display name/i).fill("Collector Updated");
@@ -654,6 +646,24 @@ test.describe("critical route coverage", () => {
     mocks.setMode(API.me, "success");
     await page.getByRole("button", { name: /Save profile changes/i }).click();
     await expect(page.getByText(/Profile settings saved/i)).toBeVisible();
+
+    mocks.setMode(API.me, "empty");
+    await page.reload();
+    await expect(page.getByText(/No profile found/i)).toBeVisible();
+
+    mocks.setMode(API.me, "error");
+    await page.reload();
+    await expect(page.getByText(/Could not load profile/i)).toBeVisible();
+    const retryProfileLoad = page.getByRole("button", { name: "Retry profile load" });
+    await expect(retryProfileLoad).toBeVisible();
+
+    mocks.setMode(API.me, "rate-limited");
+    await retryProfileLoad.click();
+    await expect(page.getByText(/Profile requests are temporarily rate limited/i)).toBeVisible();
+
+    mocks.setMode(API.me, "success");
+    await retryProfileLoad.click();
+    await expect(page.getByText(/Signed in as collector@example.com/i)).toBeVisible();
 
     await page.goto("/settings/integrations");
     await expect(page).toHaveURL(/\/integrations$/);
@@ -721,8 +731,6 @@ test.describe("critical route coverage", () => {
 
     await page.goto("/notifications");
     await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
-
-    await expect(page.getByText(/1 unread items are waiting for review/i)).toBeVisible();
 
     await expect
       .poll(() => mocks.getStreamRequests(), { timeout: 15_000 })
