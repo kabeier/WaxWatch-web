@@ -180,6 +180,48 @@ describe("shell primitives", () => {
     );
   });
 
+  it("keeps exported mobile nav metadata in parity with canonical UX contracts", () => {
+    expect(
+      MOBILE_NAV_ITEMS.map(({ href, label, shortLabel, matchMode }) => ({
+        href,
+        label,
+        shortLabel,
+        matchMode,
+      })),
+    ).toEqual([
+      {
+        href: "/dashboard",
+        label: "Home",
+        shortLabel: "DB",
+        matchMode: "dashboard",
+      },
+      {
+        href: "/alerts",
+        label: "Alerts",
+        shortLabel: "AL",
+        matchMode: undefined,
+      },
+      {
+        href: "/watchlist",
+        label: "Watchlist",
+        shortLabel: "WL",
+        matchMode: undefined,
+      },
+      {
+        href: "/notifications",
+        label: "Notifications",
+        shortLabel: "NT",
+        matchMode: undefined,
+      },
+      {
+        href: "/settings",
+        label: "Settings",
+        shortLabel: "ST",
+        matchMode: "settings-without-legacy",
+      },
+    ]);
+  });
+
   it("keeps MOBILE_NAV_ITEMS in parity with docs/ROUTES.md mobile bottom-tab sequence", () => {
     const routesDoc = readFileSync(resolve(process.cwd(), "docs/ROUTES.md"), "utf8");
     const mobileBottomTabSection = routesDoc.match(
