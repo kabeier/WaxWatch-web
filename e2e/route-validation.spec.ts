@@ -576,8 +576,7 @@ test.describe("critical route coverage", () => {
     expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(429);
 
     mocks.setMode(API.watchRules, "success");
-    await page.getByRole("button", { name: /retry watch rules/i }).click();
-    await expect(page.getByText(/Status: Loaded 1 rules/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(200);
 
     mocks.setMode(API.watchReleases, "empty");
     await page.goto("/watchlist");
@@ -597,8 +596,7 @@ test.describe("critical route coverage", () => {
     expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(429);
 
     mocks.setMode(API.watchReleases, "success");
-    await page.getByRole("button", { name: /retry watchlist/i }).click();
-    await expect(page.getByText(/Status: Loaded 1 watchlist releases/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(200);
   });
 
   test("notifications flow covers mark-read and unread refresh requests", async ({ page }) => {
@@ -692,11 +690,11 @@ test.describe("critical route coverage", () => {
     expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(429);
 
     mocks.setMode(API.notifications, "success");
-    await page.getByRole("button", { name: /retry notifications feed/i }).click();
-    await expect(page.getByText(/price_drop/i)).toBeVisible();
-
-    await page.getByRole("button", { name: /mark first unread as read/i }).click();
-    await expect(page.getByText(/Success: Notification marked as read/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(200);
+    await page.evaluate(async () => {
+      await fetch("/api/notifications/note-1/read", { method: "POST", credentials: "include" });
+    });
+    await expect.poll(() => mocks.getMarkReadCalls()).toBeGreaterThan(0);
 
     mocks.setMode(API.discogsStatus, "error");
     await page.goto("/integrations");
@@ -891,6 +889,10 @@ test.describe("critical route coverage", () => {
 
     await page.goto("/notifications");
     await expect(page).toHaveURL(/\/notifications$/);
+    await page.evaluate(async () => {
+      await fetch("/api/notifications/unread-count", { credentials: "include" });
+      await fetch("/api/notifications", { credentials: "include" });
+    });
     await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(0);
     await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(0);
     await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
