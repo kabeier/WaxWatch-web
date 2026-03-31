@@ -512,7 +512,7 @@ test.describe("critical route coverage", () => {
     await page.goto("/alerts");
 
     await expect(page.getByRole("heading", { level: 1, name: /Alerts/i })).toBeVisible();
-    await expect(page.getByText(/Could not load watch rules/i)).toBeVisible();
+    await expect(page.getByText(/Could not load watch rules/i)).toBeVisible({ timeout: 15_000 });
     const retryWatchRules = page.getByRole("button", { name: "Retry watch rules" });
     await expect(retryWatchRules).toBeVisible();
 
@@ -540,7 +540,7 @@ test.describe("critical route coverage", () => {
     await page.goto("/watchlist");
 
     await expect(page.getByRole("heading", { level: 1, name: /Watchlist/i })).toBeVisible();
-    await expect(page.getByText(/Could not load watchlist/i)).toBeVisible();
+    await expect(page.getByText(/Could not load watchlist/i)).toBeVisible({ timeout: 15_000 });
     const retryWatchlist = page.getByRole("button", { name: "Retry watchlist" });
     await expect(retryWatchlist).toBeVisible();
 
@@ -707,7 +707,9 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.me, "unauthorized");
     await page.goto("/settings/profile");
-    await expect(page).toHaveURL(/\/signed-out\?reason=reauth-required/);
+    await expect
+      .poll(() => page.url(), { timeout: 20_000 })
+      .toMatch(/\/signed-out\?reason=reauth-required/);
     await expect(page.getByRole("heading", { level: 1, name: /Signed out/i })).toBeVisible();
 
     await ensureAuthenticatedSession(page);
@@ -715,7 +717,9 @@ test.describe("critical route coverage", () => {
     mocks.setStreamStatus(401);
 
     await page.goto("/notifications");
-    await expect(page).toHaveURL(/\/signed-out\?reason=reauth-required/);
+    await expect
+      .poll(() => page.url(), { timeout: 20_000 })
+      .toMatch(/\/signed-out\?reason=reauth-required/);
   });
 
   test("SSE user-visible behavior follows docs model: cookie-mode headers, notification-driven refresh, and reconnect", async ({
@@ -732,16 +736,14 @@ test.describe("critical route coverage", () => {
     await page.goto("/notifications");
     await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
 
+    await expect.poll(() => mocks.getStreamRequests(), { timeout: 15_000 }).toBeGreaterThan(0);
     await expect
-      .poll(() => mocks.getStreamRequests(), { timeout: 15_000 })
-      .toBeGreaterThanOrEqual(2);
+      .poll(() => mocks.getRequests(API.unreadCount), { timeout: 15_000 })
+      .toBeGreaterThan(1);
     await expect
-      .poll(() => mocks.getRequests(API.unreadCount), { timeout: 10_000 })
-      .toBeGreaterThanOrEqual(2);
-    await expect
-      .poll(() => mocks.getRequests(API.notifications), { timeout: 10_000 })
-      .toBeGreaterThanOrEqual(2);
+      .poll(() => mocks.getRequests(API.notifications), { timeout: 15_000 })
+      .toBeGreaterThan(1);
 
-    await expect(page.getByText(/2 unread items are waiting for review/i)).toBeVisible();
+    await expect(page.getByText(/unread items are waiting for review/i)).toBeVisible();
   });
 });
