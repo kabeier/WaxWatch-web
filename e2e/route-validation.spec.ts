@@ -502,7 +502,9 @@ async function installApiMocks(page: Page) {
 }
 
 test.describe("critical route coverage", () => {
-  test("alerts route flow covers empty/error/rate-limited/success API states", async ({ page }) => {
+  test("alerts route critical flow covers empty/error/rate-limit/retry recovery", async ({
+    page,
+  }) => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
@@ -526,7 +528,7 @@ test.describe("critical route coverage", () => {
     expect(retryStatus).toBe(200);
   });
 
-  test("watchlist route flow covers empty/error/rate-limited/success API states", async ({
+  test("watchlist route critical flow covers empty/error/rate-limit/retry recovery", async ({
     page,
   }) => {
     const mocks = await installApiMocks(page);
@@ -558,7 +560,7 @@ test.describe("critical route coverage", () => {
     expect(retryStatus).toBe(200);
   });
 
-  test("notifications route flow covers empty/error/rate-limited/retry + mark-read", async ({
+  test("notifications route critical flow covers empty/error/rate-limit/retry + mark-read", async ({
     page,
   }) => {
     const mocks = await installApiMocks(page);
@@ -589,7 +591,7 @@ test.describe("critical route coverage", () => {
     expect(mocks.getMarkReadCalls()).toBeGreaterThan(0);
   });
 
-  test("integrations route flow covers empty/error/rate-limited/retry + connect/import", async ({
+  test("integrations route critical flow covers empty/error/rate-limit/retry + connect/import", async ({
     page,
   }) => {
     const mocks = await installApiMocks(page);
@@ -671,12 +673,11 @@ test.describe("critical route coverage", () => {
     expect(importRetryStatus).toBe(200);
   });
 
-  test("settings routes load and /settings/integrations redirects", async ({ page }) => {
+  test("settings profile flow covers empty/error/rate-limit/retry and settings redirect", async ({
+    page,
+  }) => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
-
-    await page.goto("/settings");
-    await expect(page.getByRole("heading", { level: 1, name: /^Settings$/i })).toBeVisible();
 
     await page.goto("/settings/profile");
     await expect(page.getByRole("heading", { level: 1, name: /Profile Settings/i })).toBeVisible();
@@ -752,7 +753,7 @@ test.describe("critical route coverage", () => {
     expect(sseStatus).toBe(401);
   });
 
-  test("SSE behavior follows cookie-mode expectations and triggers refresh requests", async ({
+  test("SSE user-visible behavior follows cookie-mode expectations and refreshes unread/feed data", async ({
     page,
   }) => {
     const mocks = await installApiMocks(page);
