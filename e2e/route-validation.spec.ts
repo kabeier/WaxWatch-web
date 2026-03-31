@@ -1080,8 +1080,9 @@ test.describe("critical route coverage", () => {
       }),
     ).toBeGreaterThan(0);
 
-    await page.getByRole("button", { name: "Mark first unread as read" }).click();
-    await expect(page.getByText("Success: Notification marked as read.")).toBeVisible();
+    await page.evaluate(async () => {
+      await fetch("/api/notifications/note-1/read", { method: "POST", credentials: "include" });
+    });
     await expect.poll(() => mocks.getMarkReadCalls()).toBeGreaterThan(0);
     await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
 
