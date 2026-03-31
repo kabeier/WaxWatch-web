@@ -1275,6 +1275,9 @@ test.describe("critical route coverage", () => {
     const deactivateButton = page.getByRole("button", { name: /^Deactivate account$/i });
     await expect(deactivateButton).toBeEnabled();
     await deactivateButton.click();
+    const deactivateDialog = page
+      .getByRole("heading", { name: /deactivate account now/i })
+      .locator("xpath=ancestor::*[contains(@class,'ww-confirm-dialog')][1]");
     await expect(page.getByRole("heading", { name: /deactivate account now/i })).toBeVisible();
     await page.getByRole("button", { name: /^Cancel$/i }).click();
     await expect(page.getByRole("heading", { name: /deactivate account now/i })).not.toBeVisible();
@@ -1285,7 +1288,7 @@ test.describe("critical route coverage", () => {
       .getByRole("button", { name: /^Deactivate account$/i })
       .nth(1)
       .click();
-    await expect(page.getByText(/failed/i)).toBeVisible();
+    await expect(deactivateDialog.getByRole("alert")).toContainText(/failed/i);
     await expect.poll(() => mocks.getMeDeleteCalls()).toBe(0);
 
     mocks.setMode(API.meHardDelete, "error");
@@ -1293,12 +1296,15 @@ test.describe("critical route coverage", () => {
       .getByRole("button", { name: /^Permanently delete account$/i })
       .first()
       .click();
+    const deleteDialog = page
+      .getByRole("heading", { name: /delete account permanently/i })
+      .locator("xpath=ancestor::*[contains(@class,'ww-confirm-dialog')][1]");
     await expect(page.getByRole("heading", { name: /delete account permanently/i })).toBeVisible();
     await page
       .getByRole("button", { name: /^Permanently delete account$/i })
       .nth(1)
       .click();
-    await expect(page.getByText(/failed/i)).toBeVisible();
+    await expect(deleteDialog.getByRole("alert")).toContainText(/failed/i);
     await expect.poll(() => mocks.getMeHardDeleteCalls()).toBe(0);
   });
 
