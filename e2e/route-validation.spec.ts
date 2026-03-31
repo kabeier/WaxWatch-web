@@ -124,6 +124,12 @@ async function installApiMocks(page: Page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
     const { pathname } = new URL(request.url());
+    const isApiRequest = /^\/(?:api|v1|v2)(?:\/|$)/.test(pathname);
+    if (!isApiRequest) {
+      await route.continue();
+      return;
+    }
+
     let apiPath = pathname;
     while (/^\/(?:api|v1|v2)(?=\/)/.test(apiPath)) {
       apiPath = apiPath.replace(/^\/(?:api|v1|v2)(?=\/)/, "");
