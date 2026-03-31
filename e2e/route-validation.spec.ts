@@ -502,231 +502,194 @@ async function installApiMocks(page: Page) {
 }
 
 test.describe("critical route coverage", () => {
-  test("alerts route critical flow covers empty/error/rate-limit/retry recovery", async ({
+  test("alerts route renders empty/error/rate-limit states and recovers via retry", async ({
     page,
   }) => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
-
-    await page.goto("/alerts");
-    await expect(page.getByRole("heading", { level: 1, name: /Alerts/i })).toBeVisible();
 
     mocks.setMode(API.watchRules, "empty");
-    const emptyStatus = await page.evaluate(async () => (await fetch("/api/watch-rules")).status);
-    expect(emptyStatus).toBe(200);
+    await page.goto("/alerts");
+
+    await expect(page.getByRole("heading", { level: 1, name: /Alerts/i })).toBeVisible();
+    await expect(page.getByText(/No watch rules yet/i)).toBeVisible();
 
     mocks.setMode(API.watchRules, "error");
-    const errorStatus = await page.evaluate(async () => (await fetch("/api/watch-rules")).status);
-    expect(errorStatus).toBe(500);
+    await page.getByRole("button", { name: "Retry watch rules" }).click();
+    await expect(page.getByText(/Could not load watch rules/i)).toBeVisible();
 
     mocks.setMode(API.watchRules, "rate-limited");
-    const rateStatus = await page.evaluate(async () => (await fetch("/api/watch-rules")).status);
-    expect(rateStatus).toBe(429);
+    await page.getByRole("button", { name: "Retry watch rules" }).click();
+    await expect(page.getByText(/temporarily rate limited/i)).toBeVisible();
 
     mocks.setMode(API.watchRules, "success");
-    const retryStatus = await page.evaluate(async () => (await fetch("/api/watch-rules")).status);
-    expect(retryStatus).toBe(200);
+    await page.getByRole("button", { name: "Retry watch rules" }).click();
+    await expect(page.getByRole("status", { name: /Status: Loaded 1 rules/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Ambient restocks/i })).toBeVisible();
   });
 
-  test("watchlist route critical flow covers empty/error/rate-limit/retry recovery", async ({
+  test("watchlist route covers empty/error/rate-limit and retry to loaded list", async ({
     page,
   }) => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
-
-    await page.goto("/watchlist");
-    await expect(page.getByRole("heading", { level: 1, name: /Watchlist/i })).toBeVisible();
 
     mocks.setMode(API.watchReleases, "empty");
-    const emptyStatus = await page.evaluate(
-      async () => (await fetch("/api/watch-releases")).status,
-    );
-    expect(emptyStatus).toBe(200);
+    await page.goto("/watchlist");
+
+    await expect(page.getByRole("heading", { level: 1, name: /Watchlist/i })).toBeVisible();
+    await expect(page.getByText(/No watchlist releases yet/i)).toBeVisible();
 
     mocks.setMode(API.watchReleases, "error");
-    const errorStatus = await page.evaluate(
-      async () => (await fetch("/api/watch-releases")).status,
-    );
-    expect(errorStatus).toBe(500);
+    await page.getByRole("button", { name: "Retry watchlist" }).click();
+    await expect(page.getByText(/Could not load watchlist/i)).toBeVisible();
 
     mocks.setMode(API.watchReleases, "rate-limited");
-    const rateStatus = await page.evaluate(async () => (await fetch("/api/watch-releases")).status);
-    expect(rateStatus).toBe(429);
+    await page.getByRole("button", { name: "Retry watchlist" }).click();
+    await expect(page.getByText(/Watchlist refresh is cooling down/i)).toBeVisible();
 
     mocks.setMode(API.watchReleases, "success");
-    const retryStatus = await page.evaluate(
-      async () => (await fetch("/api/watch-releases")).status,
-    );
-    expect(retryStatus).toBe(200);
+    await page.getByRole("button", { name: "Retry watchlist" }).click();
+    await expect(
+      page.getByRole("status", { name: /Status: Loaded 1 watchlist releases/i }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: /Tomorrow's Harvest/i })).toBeVisible();
   });
 
-  test("notifications route critical flow covers empty/error/rate-limit/retry + mark-read", async ({
-    page,
-  }) => {
+  test("notifications route covers unread/feed retries and mark-read flow", async ({ page }) => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
-    await page.goto("/notifications");
-    await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
-
-    mocks.setMode(API.notifications, "empty");
-    const emptyStatus = await page.evaluate(async () => (await fetch("/api/notifications")).status);
-    expect(emptyStatus).toBe(200);
-
     mocks.setMode(API.notifications, "error");
-    const errorStatus = await page.evaluate(async () => (await fetch("/api/notifications")).status);
-    expect(errorStatus).toBe(500);
+    mocks.setMode(API.unreadCount, "rate-limited");
+    await page.goto("/notifications");
 
-    mocks.setMode(API.notifications, "rate-limited");
-    const rateStatus = await page.evaluate(async () => (await fetch("/api/notifications")).status);
-    expect(rateStatus).toBe(429);
+    await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
+    await expect(page.getByText(/Unread count is temporarily rate limited/i)).toBeVisible();
+    await expect(page.getByText(/Notifications failed to load/i)).toBeVisible();
+
+    mocks.setMode(API.unreadCount, "success");
+    await page.getByRole("button", { name: "Retry unread count" }).click();
+    await expect(page.getByText(/unread items are waiting for review/i)).toBeVisible();
 
     mocks.setMode(API.notifications, "success");
-    const retryStatus = await page.evaluate(async () => (await fetch("/api/notifications")).status);
-    expect(retryStatus).toBe(200);
+    await page.getByRole("button", { name: "Retry notifications feed" }).click();
+    await expect(page.getByText(/price_drop/i)).toBeVisible();
 
-    await page.evaluate(async () => {
-      await fetch("/api/notifications/note-1/read", { method: "POST", credentials: "include" });
-    });
+    await page.getByRole("button", { name: /Mark first unread as read/i }).click();
+    await expect(page.getByRole("status", { name: /Notification marked as read/i })).toBeVisible();
     expect(mocks.getMarkReadCalls()).toBeGreaterThan(0);
   });
 
-  test("integrations route critical flow covers empty/error/rate-limit/retry + connect/import", async ({
+  test("integrations route covers status/connect/import error, rate-limit, and retries", async ({
     page,
   }) => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
-
-    await page.goto("/integrations");
-    await expect(page.getByRole("heading", { level: 1, name: /Integrations/i })).toBeVisible();
-
-    mocks.setMode(API.discogsStatus, "empty");
-    const emptyStatus = await page.evaluate(
-      async () => (await fetch("/api/integrations/discogs/status")).status,
-    );
-    expect(emptyStatus).toBe(200);
 
     mocks.setMode(API.discogsStatus, "error");
-    const errorStatus = await page.evaluate(
-      async () => (await fetch("/api/integrations/discogs/status")).status,
-    );
-    expect(errorStatus).toBe(500);
+    await page.goto("/integrations");
+
+    await expect(page.getByRole("heading", { level: 1, name: /Integrations/i })).toBeVisible();
+    await expect(page.getByText(/Could not load Discogs integration status/i)).toBeVisible();
 
     mocks.setMode(API.discogsStatus, "rate-limited");
-    const rateStatus = await page.evaluate(
-      async () => (await fetch("/api/integrations/discogs/status")).status,
-    );
-    expect(rateStatus).toBe(429);
+    await page.getByRole("button", { name: "Retry Discogs status" }).first().click();
+    await expect(page.getByText(/status is cooling down due to rate limiting/i)).toBeVisible();
 
     mocks.setMode(API.discogsStatus, "success");
-    const retryStatus = await page.evaluate(
-      async () => (await fetch("/api/integrations/discogs/status")).status,
-    );
-    expect(retryStatus).toBe(200);
+    await page.getByRole("button", { name: "Retry Discogs status" }).first().click();
+    await expect(page.getByText(/External user id: discogs-123/i)).toBeVisible();
+
+    const discogsUserId = page.getByLabel(/Discogs user ID/i);
+    await discogsUserId.fill("discogs-007");
 
     mocks.setMode(API.discogsConnect, "rate-limited");
-    const connectRateStatus = await page.evaluate(async () => {
-      const response = await fetch("/api/integrations/discogs/connect", {
-        method: "POST",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ external_user_id: "discogs-007" }),
-      });
-      return response.status;
-    });
-    expect(connectRateStatus).toBe(429);
+    await page.getByRole("button", { name: /Connect Discogs account/i }).click();
+    await expect(page.getByText(/Connecting Discogs is temporarily rate limited/i)).toBeVisible();
 
     mocks.setMode(API.discogsConnect, "success");
-    const connectRetryStatus = await page.evaluate(async () => {
-      const response = await fetch("/api/integrations/discogs/connect", {
-        method: "POST",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ external_user_id: "discogs-007" }),
-      });
-      return response.status;
-    });
-    expect(connectRetryStatus).toBe(200);
+    await page.getByRole("button", { name: "Retry Discogs connect" }).click();
+    await expect(page.getByRole("status", { name: /Discogs account connected/i })).toBeVisible();
 
     mocks.setMode(API.discogsImport, "error");
-    const importErrorStatus = await page.evaluate(async () => {
-      const response = await fetch("/api/integrations/discogs/import", {
-        method: "POST",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ source: "both" }),
-      });
-      return response.status;
-    });
-    expect(importErrorStatus).toBe(500);
+    await page.getByRole("button", { name: /Start Discogs import/i }).click();
+    await expect(page.getByText(/Could not start Discogs import/i)).toBeVisible();
 
     mocks.setMode(API.discogsImport, "success");
-    const importRetryStatus = await page.evaluate(async () => {
-      const response = await fetch("/api/integrations/discogs/import", {
-        method: "POST",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ source: "both" }),
-      });
-      return response.status;
-    });
-    expect(importRetryStatus).toBe(200);
+    await page.getByRole("button", { name: "Retry Discogs import" }).click();
+    await expect(page.getByRole("status", { name: /Discogs import started/i })).toBeVisible();
   });
 
-  test("settings profile flow covers empty/error/rate-limit/retry and settings redirect", async ({
+  test("settings profile route covers empty/error/rate-limited load and save retry", async ({
     page,
   }) => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
+    mocks.setMode(API.me, "empty");
     await page.goto("/settings/profile");
     await expect(page.getByRole("heading", { level: 1, name: /Profile Settings/i })).toBeVisible();
-
-    mocks.setMode(API.me, "empty");
-    const meEmptyStatus = await page.evaluate(async () => (await fetch("/api/me")).status);
-    expect(meEmptyStatus).toBe(200);
+    await expect(page.getByText(/No profile found/i)).toBeVisible();
 
     mocks.setMode(API.me, "error");
-    const meErrorStatus = await page.evaluate(async () => (await fetch("/api/me")).status);
-    expect(meErrorStatus).toBe(500);
+    await page.getByRole("button", { name: "Retry profile load" }).click();
+    await expect(page.getByText(/Could not load profile/i)).toBeVisible();
 
     mocks.setMode(API.me, "rate-limited");
-    const meRateStatus = await page.evaluate(async () => (await fetch("/api/me")).status);
-    expect(meRateStatus).toBe(429);
+    await page.getByRole("button", { name: "Retry profile load" }).click();
+    await expect(page.getByText(/Profile requests are temporarily rate limited/i)).toBeVisible();
 
     mocks.setMode(API.me, "success");
-    const meRetryStatus = await page.evaluate(async () => (await fetch("/api/me")).status);
-    expect(meRetryStatus).toBe(200);
+    await page.getByRole("button", { name: "Retry profile load" }).click();
+    await expect(page.getByText(/Signed in as collector@example.com/i)).toBeVisible();
+
+    await page.getByLabel(/Display name/i).fill("Collector Updated");
+    mocks.setMode(API.me, "rate-limited");
+    await page.getByRole("button", { name: /Save profile changes/i }).click();
+    await expect(
+      page.getByText(/Saving profile settings is temporarily rate limited/i),
+    ).toBeVisible();
+
+    mocks.setMode(API.me, "success");
+    await page.getByRole("button", { name: /Save profile changes/i }).click();
+    await expect(page.getByText(/Profile settings saved/i)).toBeVisible();
 
     await page.goto("/settings/integrations");
     await expect(page).toHaveURL(/\/integrations$/);
   });
 
-  test("/settings/danger destructive flow requires explicit confirmation", async ({ page }) => {
+  test("/settings/danger destructive actions require confirm/cancel and only execute on confirm", async ({
+    page,
+  }) => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
     await page.goto("/settings/danger");
     await expect(page.getByRole("heading", { level: 1, name: /Danger Zone/i })).toBeVisible();
 
-    const deactivateTrigger = page.getByRole("button", { name: "Deactivate account" });
-    await deactivateTrigger.click();
-    await page.waitForTimeout(150);
+    await page.getByRole("button", { name: /^Deactivate account$/ }).click();
+    const deactivateDialog = page.getByRole("dialog", { name: /Deactivate account now/i });
+    await expect(deactivateDialog).toBeVisible();
+    await deactivateDialog.getByRole("button", { name: /^Cancel$/ }).click();
     expect(mocks.getMeDeleteCalls()).toBe(0);
 
-    await page.keyboard.press("Escape");
-    expect(mocks.getMeDeleteCalls()).toBe(0);
+    await page.getByRole("button", { name: /^Deactivate account$/ }).click();
+    await deactivateDialog.getByRole("button", { name: /^Deactivate account$/ }).click();
+    await expect.poll(() => mocks.getMeDeleteCalls()).toBe(1);
 
-    const hardDeleteTrigger = page.getByRole("button", { name: "Permanently delete account" });
-    await hardDeleteTrigger.click();
-    await page.waitForTimeout(150);
+    await page.getByRole("button", { name: /^Permanently delete account$/ }).click();
+    const deleteDialog = page.getByRole("dialog", { name: /Delete account permanently/i });
+    await expect(deleteDialog).toBeVisible();
+    await deleteDialog.getByRole("button", { name: /^Cancel$/ }).click();
     expect(mocks.getMeHardDeleteCalls()).toBe(0);
 
-    await page.keyboard.press("Escape");
-    expect(mocks.getMeHardDeleteCalls()).toBe(0);
+    await page.getByRole("button", { name: /^Permanently delete account$/ }).click();
+    await deleteDialog.getByRole("button", { name: /^Permanently delete account$/ }).click();
+    await expect.poll(() => mocks.getMeHardDeleteCalls()).toBe(1);
   });
 
-  test("auth/session-expiry checks return 401 for /api/me and /api/stream/events", async ({
+  test("auth lifecycle redirects to signed-out route for profile/session-expiry and stream auth failures", async ({
     page,
   }) => {
     const mocks = await installApiMocks(page);
@@ -734,26 +697,18 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.me, "unauthorized");
     await page.goto("/settings/profile");
+    await expect(page).toHaveURL(/\/signed-out\?reason=reauth-required/);
+    await expect(page.getByRole("heading", { level: 1, name: /Signed out/i })).toBeVisible();
 
-    const meStatus = await page.evaluate(async () => {
-      const response = await fetch("/api/me", { credentials: "include" });
-      return response.status;
-    });
-    expect(meStatus).toBe(401);
-
+    await ensureAuthenticatedSession(page);
+    mocks.setMode(API.me, "success");
     mocks.setStreamStatus(401);
-    const sseStatus = await page.evaluate(async () => {
-      const response = await fetch("/api/stream/events", {
-        method: "GET",
-        credentials: "include",
-        headers: { Accept: "text/event-stream" },
-      });
-      return response.status;
-    });
-    expect(sseStatus).toBe(401);
+
+    await page.goto("/notifications");
+    await expect(page).toHaveURL(/\/signed-out\?reason=reauth-required/);
   });
 
-  test("SSE user-visible behavior follows cookie-mode expectations and refreshes unread/feed data", async ({
+  test("SSE user-visible behavior follows docs model: cookie-mode headers, notification-driven refresh, and reconnect", async ({
     page,
   }) => {
     const mocks = await installApiMocks(page);
@@ -761,23 +716,24 @@ test.describe("critical route coverage", () => {
 
     mocks.enforceStreamCookieMode();
     mocks.setMode(API.notifications, "success");
+    mocks.setMode(API.unreadCount, "success");
     mocks.setUnreadCountBase(1);
 
     await page.goto("/notifications");
     await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
 
-    await page.evaluate(async () => {
-      await fetch("/api/stream/events", {
-        method: "GET",
-        credentials: "include",
-        headers: { Accept: "text/event-stream" },
-      });
-      await fetch("/api/notifications/unread-count", { credentials: "include" });
-      await fetch("/api/notifications", { credentials: "include" });
-    });
+    await expect(page.getByText(/1 unread items are waiting for review/i)).toBeVisible();
 
-    await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
-    await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(0);
-    await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(0);
+    await expect
+      .poll(() => mocks.getStreamRequests(), { timeout: 15_000 })
+      .toBeGreaterThanOrEqual(2);
+    await expect
+      .poll(() => mocks.getRequests(API.unreadCount), { timeout: 10_000 })
+      .toBeGreaterThanOrEqual(2);
+    await expect
+      .poll(() => mocks.getRequests(API.notifications), { timeout: 10_000 })
+      .toBeGreaterThanOrEqual(2);
+
+    await expect(page.getByText(/2 unread items are waiting for review/i)).toBeVisible();
   });
 });
