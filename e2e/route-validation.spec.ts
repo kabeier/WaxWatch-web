@@ -511,10 +511,10 @@ test.describe("critical route coverage", () => {
     mocks.setMode(API.watchRules, "empty");
     await page.goto("/alerts");
     await expect(page.getByRole("heading", { level: 1, name: /Alerts/i })).toBeVisible();
-    // Initial query state can vary with seeded environments; force state transitions via retries below.
+    await expect(page.getByText(/No watch rules yet/i)).toBeVisible();
 
     mocks.setMode(API.watchRules, "error");
-    await page.getByRole("button", { name: /Retry watch rules/i }).click();
+    await page.reload();
     await expect(page.getByText(/Could not load watch rules/i)).toBeVisible();
 
     mocks.setMode(API.watchRules, "rate-limited");
@@ -536,10 +536,10 @@ test.describe("critical route coverage", () => {
     mocks.setMode(API.watchReleases, "empty");
     await page.goto("/watchlist");
     await expect(page.getByRole("heading", { level: 1, name: /Watchlist/i })).toBeVisible();
-    // Initial query state can vary with seeded environments; force state transitions via retries below.
+    await expect(page.getByText(/No watchlist releases yet/i)).toBeVisible();
 
     mocks.setMode(API.watchReleases, "error");
-    await page.getByRole("button", { name: /Retry watchlist/i }).click();
+    await page.reload();
     await expect(page.getByText(/Could not load watchlist/i)).toBeVisible();
 
     mocks.setMode(API.watchReleases, "rate-limited");
