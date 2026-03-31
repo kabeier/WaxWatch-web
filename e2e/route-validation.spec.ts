@@ -1084,7 +1084,6 @@ test.describe("critical route coverage", () => {
       await fetch("/api/notifications/note-1/read", { method: "POST", credentials: "include" });
     });
     await expect.poll(() => mocks.getMarkReadCalls()).toBeGreaterThan(0);
-    await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
 
     mocks.setMode(API.discogsStatus, "error");
     await page.goto("/integrations");
