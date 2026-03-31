@@ -2,6 +2,11 @@
 
 ## Signed-in app navigation model
 
+> **Canonical nav source:** Treat `src/components/ui/primitives/shell/primitives.tsx` as the
+> shipped navigation source of truth for shell navigation chrome (desktop sidebar, mobile tabs,
+> and top-nav utility defaults). Keep this document and `docs/ROUTES.md` aligned whenever that file
+> changes.
+
 ### Desktop primary nav (sidebar route set)
 
 Desktop primary navigation is the sidebar route set rendered from `APP_NAV_ITEMS` in
@@ -16,25 +21,26 @@ always present and is the primary destination map on desktop/tablet widths. It i
 6. Integrations (`/integrations`)
 7. Settings (`/settings`)
 
-### Top nav (canonical utility/status area)
+### Top nav utility role (not primary nav)
 
-Top nav is not the primary route map. In the canonical shell model it is the utility/status surface:
-brand/home access plus utility links rendered via `TopNav` utility items:
+Top nav is not the primary route map. In the shipped shell model it is utility/status chrome:
+brand/home access plus utility links rendered via `TopNav` utility items (defaulting to
+`DEFAULT_UTILITY_ITEMS`):
 
 - Inbox (`/notifications`)
 - Account (`/settings/profile`)
 
-In auth pages (`app/(auth)`), top nav still renders brand/home but utilities are intentionally hidden
-via `showUtilities={false}`.
+In auth pages (`app/(auth)`), top nav still renders brand/home but utilities are intentionally
+hidden via `showUtilities={false}`.
 
 ### Mobile primary nav (bottom-tab route set)
 
 Mobile primary navigation is the bottom-tab route set defined by
-`mobileNavigationRouteKeys` in `src/lib/view-models/routes.ts` and rendered via
-`MOBILE_NAV_ITEMS` in `src/components/ui/primitives/shell/primitives.tsx`. Tabs are rendered in
-`AppShell` and shown only
-for mobile viewport widths (`max-width: 767px`) when `mobileTabBarVisibility` is `auto` (the current
-authenticated-shell behavior). The tab set includes exactly:
+`mobileNavigationRouteKeys` in `src/lib/view-models/routes.ts` and rendered as
+`MOBILE_NAV_ITEMS` in `src/components/ui/primitives/shell/primitives.tsx`. Tabs render in
+`AppShell` and are shown only for mobile viewport widths (`max-width: 767px`) when
+`mobileTabBarVisibility` is `auto` (the current authenticated-shell behavior). The shipped tab set
+includes exactly:
 
 1. Home (`/dashboard`)
 2. Alerts (`/alerts`)
