@@ -14,7 +14,7 @@ It focuses on the user-facing experience: search, alerts, watchlist, notificatio
 
 - **Next.js** (React framework) for the web app
 - **TypeScript** for safer, maintainable code
-- **Backend-managed web auth sessions** (cookie-session mode in browsers) using `httpOnly` cookies with `credentials: "include"` (no long-lived bearer tokens in browser storage)
+- **Backend-managed web auth sessions** in **cookie-session mode (web)** using backend-managed `httpOnly` cookies with `credentials: "include"` (no JavaScript-managed long-lived bearer tokens in browser storage)
 - **Backend API integration** for listings, alerts, watchlist, notifications, and settings
 - **TanStack Query** for data fetching and caching
 - **Server-Sent Events (SSE)** for realtime notification updates
@@ -34,7 +34,7 @@ Canonical lifecycle assumptions (API-client/adapter driven, never feature-local)
 - Auth lifecycle transitions are API-client driven through `AuthSessionAdapter` hooks in `src/lib/api/client.ts` + `src/lib/auth-session.ts`.
 - `401/403` from authenticated API calls trigger `clearSession`, emit `reauth-required`, and redirect to `/signed-out?reason=reauth-required`.
 - Successful `POST /me/logout` triggers `clearSession`, emits `signed-out`, and redirects to `/signed-out?reason=signed-out`.
-- Successful `DELETE /me` / `DELETE /me/hard-delete` triggers `clearSession`, emits `account-removed`, and redirects to `/account-removed`.
+- Successful `DELETE /me` or `DELETE /me/hard-delete` triggers `clearSession`, emits `account-removed`, and redirects to `/account-removed`.
 
 Behavioral implementation anchors:
 
