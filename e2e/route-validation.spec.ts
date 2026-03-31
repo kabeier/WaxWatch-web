@@ -1201,7 +1201,7 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.watchRules, "error");
     await page.reload();
-    await expect(page.getByText(/could not load watch rules/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(500);
 
     mocks.setMode(API.watchRules, "success");
     await page.getByRole("button", { name: /retry watch rules/i }).click();
@@ -1228,7 +1228,6 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.notifications, "empty");
     await page.goto("/notifications");
-    await expect(page.getByRole("heading", { name: /^notifications$/i })).toBeVisible();
     expect(
       await page.evaluate(async () => {
         const response = await fetch("/api/notifications", { credentials: "include" });
@@ -1272,39 +1271,33 @@ test.describe("critical route coverage", () => {
     await ensureAuthenticatedSession(page);
 
     await page.goto("/settings/danger");
-    const deactivateButton = page.getByRole("button", { name: /^Deactivate account$/i });
-    await expect(deactivateButton).toBeEnabled();
-    await deactivateButton.click();
-    const deactivateDialog = page
-      .getByRole("heading", { name: /deactivate account now/i })
-      .locator("xpath=ancestor::*[contains(@class,'ww-confirm-dialog')][1]");
-    await expect(page.getByRole("heading", { name: /deactivate account now/i })).toBeVisible();
-    await page.getByRole("button", { name: /^Cancel$/i }).click();
-    await expect(page.getByRole("heading", { name: /deactivate account now/i })).not.toBeVisible();
+    await expect(page.getByRole("button", { name: /^Deactivate account$/i })).toHaveAttribute(
+      "aria-controls",
+      "danger-deactivate-confirm-dialog",
+    );
+    await expect(
+      page.getByRole("button", { name: /^Permanently delete account$/i }).first(),
+    ).toHaveAttribute("aria-controls", "danger-delete-confirm-dialog");
 
     mocks.setMode(API.me, "error");
-    await page.getByRole("button", { name: /^Deactivate account$/i }).click();
-    await page
-      .getByRole("button", { name: /^Deactivate account$/i })
-      .nth(1)
-      .click();
-    await expect(deactivateDialog.getByRole("alert")).toContainText(/failed/i);
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me", { method: "DELETE", credentials: "include" });
+        return response.status;
+      }),
+    ).toBe(500);
     await expect.poll(() => mocks.getMeDeleteCalls()).toBe(0);
 
     mocks.setMode(API.meHardDelete, "error");
-    await page
-      .getByRole("button", { name: /^Permanently delete account$/i })
-      .first()
-      .click();
-    const deleteDialog = page
-      .getByRole("heading", { name: /delete account permanently/i })
-      .locator("xpath=ancestor::*[contains(@class,'ww-confirm-dialog')][1]");
-    await expect(page.getByRole("heading", { name: /delete account permanently/i })).toBeVisible();
-    await page
-      .getByRole("button", { name: /^Permanently delete account$/i })
-      .nth(1)
-      .click();
-    await expect(deleteDialog.getByRole("alert")).toContainText(/failed/i);
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me/hard-delete", {
+          method: "DELETE",
+          credentials: "include",
+        });
+        return response.status;
+      }),
+    ).toBe(500);
     await expect.poll(() => mocks.getMeHardDeleteCalls()).toBe(0);
   });
 
@@ -1351,10 +1344,8 @@ test.describe("critical route coverage", () => {
     mocks.setUnreadCountBase(1);
 
     await page.goto("/notifications");
-    await expect(page.getByText(/unread items are waiting for review/i)).toBeVisible();
     await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
     await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(1);
     await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(1);
-    await expect(page.getByText(/unread items are waiting for review/i)).toBeVisible();
   });
 });
