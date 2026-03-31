@@ -26,10 +26,10 @@ Auth implementation anchors:
 
 Canonical auth narrative (source of truth: [`docs/AUTH_MODEL.md`](docs/AUTH_MODEL.md); this summary must stay verbatim-aligned):
 
-- **Cookie-session mode (web):** `webAuthSessionAdapter.getAccessToken()` returns `null`; browser auth uses backend-managed `httpOnly` cookies with `credentials: "include"`.
-- **Bearer mode (mobile/native):** callers provide JWTs to the API client, which sends `Authorization: Bearer ...`.
+- **Cookie-session mode (web):** browser auth uses backend-managed `httpOnly` cookies with `credentials: "include"`; `webAuthSessionAdapter.getAccessToken()` returns `null`.
+- **Bearer mode (mobile/native):** callers provide JWTs and the API client sends `Authorization: Bearer <jwt>`.
 
-Canonical lifecycle assumptions:
+Canonical lifecycle assumptions (API-client/adapter driven, never feature-local):
 
 - Auth lifecycle transitions are API-client driven through `AuthSessionAdapter` hooks in `src/lib/api/client.ts` + `src/lib/auth-session.ts`.
 - `401/403` from authenticated API calls trigger `clearSession`, emit `reauth-required`, and redirect to `/signed-out?reason=reauth-required`.
