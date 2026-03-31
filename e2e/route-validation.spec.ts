@@ -560,6 +560,7 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.watchRules, "empty");
     await page.goto("/alerts");
+    await expect.poll(() => mocks.getRequests(API.watchRules)).toBeGreaterThan(0);
     await expect(page.getByText(/No watch rules yet/i)).toBeVisible();
 
     mocks.setMode(API.watchRules, "error");
@@ -576,6 +577,7 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.watchReleases, "empty");
     await page.goto("/watchlist");
+    await expect.poll(() => mocks.getRequests(API.watchReleases)).toBeGreaterThan(0);
     await expect(page.getByText(/No watchlist releases yet/i)).toBeVisible();
 
     mocks.setMode(API.watchReleases, "error");
