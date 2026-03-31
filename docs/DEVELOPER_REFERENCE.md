@@ -124,7 +124,7 @@ Use this exact terminology in docs and reviews:
 - **Cookie-session mode (web):** browser auth uses backend-managed `httpOnly` cookies with `credentials: "include"`; `webAuthSessionAdapter.getAccessToken()` returns `null`.
 - **Bearer mode (mobile/native):** callers provide JWTs and the API client sends `Authorization: Bearer <jwt>`.
 
-All auth transitions are API-client/adapter driven (not feature-local):
+All auth transitions are API-client/adapter driven (never feature-local):
 
 1. `401/403` on authenticated API calls:
    - `clearSession` -> `emitAuthEvent("reauth-required")` -> redirect to `/signed-out?reason=reauth-required`.
