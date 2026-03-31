@@ -1,4 +1,6 @@
-# Auth Model (Cookie-Session Web Auth + Backend API)
+# Auth Model (Canonical Auth Narrative)
+
+This document is the canonical auth source for this repository. Keep README and `docs/DEVELOPER_REFERENCE.md` aligned to this wording and to the implementation anchors listed below.
 
 ## Responsibility split
 

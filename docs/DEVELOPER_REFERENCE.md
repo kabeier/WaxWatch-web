@@ -114,10 +114,10 @@ Route maturity/status guidance is canonical in this reference's **Route matrix**
 
 Auth implementation anchors:
 
-- [`src/lib/auth-session.ts`](../src/lib/auth-session.ts) (web adapter returns `null` access token, dispatches auth lifecycle events, redirects to `/signed-out?reason=...` and `/account-removed`, performs legacy token cleanup)
+- [`src/lib/auth-session.ts`](../src/lib/auth-session.ts) (web adapter returns `null` access token, dispatches auth lifecycle events, redirects to `/signed-out?reason=...` and `/account-removed`, performs best-effort legacy key cleanup)
 - [`app/(auth)/login/LoginPageClient.tsx`](../app/%28auth%29/login/LoginPageClient.tsx) (`POST ${resolveApiBaseUrl()}/auth/login`; default `/api/auth/login`; sends `credentials: "include"`; validates secure handoff params before/after submit; redirects to validated handoff callback or `return_to`/`/`)
 
-### Canonical auth lifecycle (must match `docs/AUTH_MODEL.md`)
+### Canonical auth narrative (must match `docs/AUTH_MODEL.md`)
 
 Use this exact terminology in docs and reviews:
 
@@ -144,6 +144,8 @@ Canonical login flow assumptions (`/login`):
 4. On success:
    - Valid handoff -> redirect to handoff URL with `state`, `nonce`, `expires_at`, `status=success`, optional `return_to`
    - Otherwise -> redirect to `return_to` or `/`
+
+`docs/AUTH_MODEL.md` is the canonical auth spec. If wording diverges, update this reference and README to match `docs/AUTH_MODEL.md` and the implementation anchors above.
 
 ## Architecture layering: api core vs web query
 
