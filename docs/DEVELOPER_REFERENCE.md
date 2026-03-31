@@ -108,7 +108,7 @@ Route maturity/status guidance is canonical in this reference's **Route matrix**
 
 - Next.js **App Router**
 - TypeScript
-- Backend-managed auth sessions: web runs in **cookie-session mode (web)** (`credentials: "include"` + backend-managed `httpOnly` cookies) and does not use JavaScript-managed long-lived bearer tokens; mobile/native uses **bearer mode (mobile/native)** (JWT `Authorization` header).
+- Backend-managed auth sessions: web runs in **cookie-session mode (web)** (`credentials: "include"` + backend-managed `httpOnly` cookies) and does not use JavaScript-managed long-lived bearer tokens; mobile/native runs in **bearer mode (mobile/native)** (JWT `Authorization` header).
 - TanStack Query for server state (Option A: SPA-style dashboard)
 - SSE for realtime notifications
 
@@ -131,17 +131,17 @@ Canonical auth lifecycle (web + mobile; API-client/adapter driven, never feature
 - Successful `POST /me/logout` triggers `clearSession`, `emitAuthEvent("signed-out")`, and `redirectToSignedOut("signed-out")` (`/signed-out?reason=signed-out`).
 - Successful `DELETE /me` or `DELETE /me/hard-delete` triggers `clearSession`, `emitAuthEvent("account-removed")`, and `redirectToAccountRemoved()` (`/account-removed`).
 
-Canonical login flow assumptions (`/login`):
+Canonical login submit flow (`/login`):
 
 1. Resolve and validate handoff state before submit when `handoff` is present (`state`/`nonce`/`expires_at` required; expiry enforced).
 2. Submit `POST ${resolveApiBaseUrl()}/auth/login` (default `/api/auth/login`) with `credentials: "include"` and JSON body containing `email`, `password`, plus optional `return_to`, `handoff`, `state`, `nonce`, `expires_at`.
 3. Handle failures consistently:
-   - `401/403` (or `invalid_credentials` discriminator) -> `Invalid email or password.`
-   - Rate-limit envelope -> route state to `StateRateLimited`
-   - Validation envelope -> show backend validation message
+   - `401/403` (or `invalid_credentials` discriminator) → `"Invalid email or password."`
+   - Rate-limited envelope → route to `StateRateLimited`
+   - Validation envelope → show backend validation message
 4. On success:
-   - Valid handoff -> redirect to handoff URL with `state`, `nonce`, `expires_at`, `status=success`, and optional `return_to`
-   - Otherwise -> redirect to `return_to` or `/`
+   - Valid handoff: redirect to handoff URL with `state`, `nonce`, `expires_at`, `status=success`, and optional `return_to`.
+   - Otherwise: redirect to `return_to` or `/`.
 
 `docs/AUTH_MODEL.md` is the canonical auth spec. If wording diverges, update this reference and README to match `docs/AUTH_MODEL.md` and the implementation anchors above.
 
