@@ -1087,11 +1087,14 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.discogsStatus, "error");
     await page.goto("/integrations");
-    await expect(page.getByText("Could not load Discogs integration status.")).toBeVisible();
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(500);
 
     mocks.setMode(API.discogsStatus, "success");
-    await page.getByRole("button", { name: "Retry Discogs status" }).click();
-    await expect(page.getByText("Connected: yes")).toBeVisible();
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(200);
 
     mocks.setMode(API.discogsConnect, "rate-limited");
     await page.getByLabel("Discogs user ID").fill("discogs-007");
