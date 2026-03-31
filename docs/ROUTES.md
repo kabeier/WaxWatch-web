@@ -72,10 +72,18 @@ All new route implementation/migration work must compose shared primitives first
 
 > **Canonical source in code (anti-drift note):** Treat rendered nav in
 > `src/components/ui/primitives/shell/primitives.tsx` (`APP_NAV_ITEMS`, `MOBILE_NAV_ITEMS`,
-> `DEFAULT_UTILITY_ITEMS`) plus route/nav definitions in `src/lib/view-models/routes.ts`
+> `DEFAULT_UTILITY_ITEMS`, `TopNav`, `SideNav`, `MobileTabBar`) plus route/nav definitions in `src/lib/view-models/routes.ts`
 > (`primaryNavigationRouteKeys`, `mobileNavigationRouteKeys`, `mobileNavigationDefinitions`) as
 > source of truth. Update this file and `docs/IA_MAP.md` in the same PR whenever those code paths
 > change.
+
+### Navigation surface responsibilities (desktop + mobile)
+
+- **Top nav (`TopNav`)**: global shell utility chrome (brand/home + utility links), not the
+  primary route inventory.
+- **Desktop/tablet primary nav (`SideNav`)**: primary route map for authenticated app navigation.
+- **Mobile primary nav (`MobileTabBar`)**: primary route map on mobile (`max-width: 767px`) for
+  authenticated app navigation.
 
 ### Desktop primary nav (sidebar route set)
 
@@ -91,14 +99,14 @@ always present and is the primary destination map on desktop/tablet widths. It i
 6. Integrations (`/integrations`)
 7. Settings (`/settings`)
 
-### Top nav utility role (not primary nav)
+### Top nav utility role (not primary nav route set)
 
-Top nav is **utility/status chrome**, not the primary route navigation surface. Its responsibilities
-are intentionally limited to:
+Top nav is **utility/status chrome**, not the primary route navigation surface. Its
+responsibilities are intentionally limited to:
 
 - Always providing brand/home entry (`ShellBrand`).
 - Optionally rendering utility links from `TopNav` utility items (defaults from
-  `DEFAULT_UTILITY_ITEMS`).
+  `DEFAULT_UTILITY_ITEMS`; hydrated in authenticated shell by `useAppShellChromeData`).
 - Exposing quick utility access without redefining primary IA.
 
 Default utility links:
