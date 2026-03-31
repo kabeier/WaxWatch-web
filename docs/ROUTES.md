@@ -72,20 +72,24 @@ All new route implementation/migration work must compose shared primitives first
 
 ## Navigation model
 
-> **Canonical source note:** Navigation truth lives in shell code definitions: `src/components/ui/primitives/shell/primitives.tsx` and `src/lib/view-models/routes.ts`. If nav labels/order/visibility change there, update this doc and `docs/IA_MAP.md` in the same PR.
+> **Canonical source note:** Navigation behavior is defined by shell primitives in `src/components/ui/primitives/shell/primitives.tsx` (rendered surfaces + item wiring), with route metadata in `src/lib/view-models/routes.ts` (labels + mobile key selection). If those definitions change, update this doc and `docs/IA_MAP.md` in the same PR.
 
 ### Navigation surface responsibilities
 
-- **Top nav (`TopNav`)** = utility chrome (brand/home + utility links), not primary route IA.
-- **Desktop/tablet primary nav (`SideNav`)** = authenticated primary route inventory.
-- **Mobile primary nav (`MobileTabBar`)** = authenticated primary route inventory on phones.
+- **Primary app navigation**
+  - **Desktop/tablet:** `SideNav` is the primary destination inventory for signed-in routes.
+  - **Mobile phone:** `MobileTabBar` is the primary destination inventory at `max-width: 767px`.
+- **Top utility navigation (`TopNav`)**
+  - Always provides brand/home entry (`ShellBrand`).
+  - Provides utility/status shortcuts (not the full destination map).
+  - On auth-state routes (`app/(auth)`), utilities are intentionally hidden (`showUtilities={false}`).
 
 ### Desktop + sidebar behavior (actual)
 
 `SideNav` is included in the authenticated shell and uses `APP_NAV_ITEMS`:
 
 - **Desktop/tablet (`>=768px`)**: sidebar is visible and functions as the primary route map.
-- **Mobile (`<=767px`)**: sidebar remains composed but is hidden by CSS.
+- **Mobile (`<=767px`)**: sidebar remains composed but is hidden by CSS (`.app-shell__sidebar { display: none; }` in the mobile breakpoint).
 
 Desktop/sidebar route set:
 
@@ -97,7 +101,7 @@ Desktop/sidebar route set:
 6. Integrations (`/integrations`)
 7. Settings (`/settings`)
 
-### Top-nav utility role vs route inventory
+### Top utility nav role vs primary destination nav
 
 Top nav is intentionally **not** the primary route navigation surface.
 
@@ -120,19 +124,19 @@ Default utility links:
 
 Canonical shipped mobile tab set:
 
-1. Home(`/dashboard`)
-2. Alerts(`/alerts`)
-3. Watchlist(`/watchlist`)
-4. Notifications(`/notifications`)
-5. Settings(`/settings`)
+1. Home (`/dashboard`)
+2. Alerts (`/alerts`)
+3. Watchlist (`/watchlist`)
+4. Notifications (`/notifications`)
+5. Settings (`/settings`)
 
 `/search` and `/integrations` are intentionally omitted from mobile tabs and remain primary routes reachable via direct navigation and in-route links/CTAs.
 
 ### Pattern summary
 
-- Desktop/tablet: sidebar is primary route map.
-- Mobile: bottom tabs are primary route map.
-- Top nav: utility/status chrome only.
+- Desktop/tablet: `SideNav` is the primary route map.
+- Mobile phone: `MobileTabBar` is the primary route map.
+- Top nav: utility/status chrome only (brand + utility shortcuts).
 
 ## Route maturity/status
 
