@@ -4,7 +4,12 @@ import { resolve } from "node:path";
 
 import { MOBILE_NAV_ITEMS } from "@/components/ui/primitives/shell/primitives";
 
-import { mobileNavigationDefinitions, mobileNavigationRouteKeys, routeViewModels } from "./routes";
+import {
+  mobileNavigationDefinitions,
+  mobileNavigationRouteKeys,
+  primaryNavigationRouteKeys,
+  routeViewModels,
+} from "./routes";
 
 const expectedMobileTabRouteKeys = [
   "dashboard",
@@ -34,6 +39,18 @@ describe("mobileNavigationRouteKeys", () => {
     const resolvedLabels = mobileNavigationDefinitions.map((definition) => definition.label);
 
     expect(resolvedLabels).toEqual(uxExpectedMobileTabLabels);
+  });
+
+  it("keeps mobile tab routes constrained to the documented mobile subset", () => {
+    const mobileRouteKeySet = new Set<string>(mobileNavigationRouteKeys);
+    const nonTabPrimaryRoutes = primaryNavigationRouteKeys.filter(
+      (routeKey) => !mobileRouteKeySet.has(routeKey),
+    );
+
+    expect(nonTabPrimaryRoutes).toEqual(["search", "integrations"]);
+    expect(
+      mobileNavigationRouteKeys.every((routeKey) => primaryNavigationRouteKeys.includes(routeKey)),
+    ).toBe(true);
   });
 
   it("matches rendered MobileTabBar navigation definitions in route order and labels", () => {
