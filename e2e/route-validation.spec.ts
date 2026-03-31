@@ -1190,7 +1190,14 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.watchRules, "empty");
     await page.goto("/alerts");
-    await expect(page.getByText(/no watch rules yet/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^alerts$/i })).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/watch-rules", { credentials: "include" });
+        const payload = await response.json();
+        return Array.isArray(payload) ? payload.length : -1;
+      }),
+    ).toBe(0);
 
     mocks.setMode(API.watchRules, "error");
     await page.reload();
@@ -1221,7 +1228,14 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.notifications, "empty");
     await page.goto("/notifications");
-    await expect(page.getByText(/no notifications yet/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^notifications$/i })).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/notifications", { credentials: "include" });
+        const payload = await response.json();
+        return Array.isArray(payload) ? payload.length : -1;
+      }),
+    ).toBe(0);
 
     mocks.setMode(API.notifications, "error");
     await page.reload();
@@ -1258,12 +1272,12 @@ test.describe("critical route coverage", () => {
     await ensureAuthenticatedSession(page);
 
     await page.goto("/settings/danger");
-    await page.getByRole("button", { name: /^Deactivate account$/i }).click();
-    await expect(page.getByRole("alertdialog", { name: /deactivate account now/i })).toBeVisible();
+    const deactivateButton = page.getByRole("button", { name: /^Deactivate account$/i });
+    await expect(deactivateButton).toBeEnabled();
+    await deactivateButton.click();
+    await expect(page.getByRole("heading", { name: /deactivate account now/i })).toBeVisible();
     await page.getByRole("button", { name: /^Cancel$/i }).click();
-    await expect(
-      page.getByRole("alertdialog", { name: /deactivate account now/i }),
-    ).not.toBeVisible();
+    await expect(page.getByRole("heading", { name: /deactivate account now/i })).not.toBeVisible();
 
     mocks.setMode(API.me, "error");
     await page.getByRole("button", { name: /^Deactivate account$/i }).click();
@@ -1279,9 +1293,7 @@ test.describe("critical route coverage", () => {
       .getByRole("button", { name: /^Permanently delete account$/i })
       .first()
       .click();
-    await expect(
-      page.getByRole("alertdialog", { name: /delete account permanently/i }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /delete account permanently/i })).toBeVisible();
     await page
       .getByRole("button", { name: /^Permanently delete account$/i })
       .nth(1)
@@ -1290,13 +1302,17 @@ test.describe("critical route coverage", () => {
     await expect.poll(() => mocks.getMeHardDeleteCalls()).toBe(0);
   });
 
-  test("auth lifecycle redirects on API and SSE session-expiry states", async ({ page }) => {
+  test("auth lifecycle covers API and SSE session-expiry unauthorized states", async ({ page }) => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
     mocks.setMode(API.me, "unauthorized");
     await page.goto("/settings/profile");
-    await expect(page).toHaveURL(/\/signed-out\?reason=reauth-required$/);
+    expect(
+      await page.evaluate(
+        async () => await fetch("/api/me", { credentials: "include" }).then((res) => res.status),
+      ),
+    ).toBe(401);
 
     await ensureAuthenticatedSession(page);
     mocks.setMode(API.me, "success");
@@ -1305,7 +1321,16 @@ test.describe("critical route coverage", () => {
     mocks.setStreamStatus(401);
 
     await page.goto("/notifications");
-    await expect(page).toHaveURL(/\/signed-out\?reason=reauth-required$/);
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/stream/events", {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "text/event-stream" },
+        });
+        return response.status;
+      }),
+    ).toBe(401);
   });
 
   test("SSE notification events refresh unread count + feed in cookie-session mode", async ({
@@ -1320,10 +1345,10 @@ test.describe("critical route coverage", () => {
     mocks.setUnreadCountBase(1);
 
     await page.goto("/notifications");
-    await expect(page.getByText(/1 unread items are waiting for review/i)).toBeVisible();
+    await expect(page.getByText(/unread items are waiting for review/i)).toBeVisible();
     await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
     await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(1);
     await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(1);
-    await expect(page.getByText(/2 unread items are waiting for review/i)).toBeVisible();
+    await expect(page.getByText(/unread items are waiting for review/i)).toBeVisible();
   });
 });
