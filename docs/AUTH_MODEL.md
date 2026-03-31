@@ -22,10 +22,10 @@ All auth transitions must flow through `createApiClient(..., { authSessionAdapte
 2. API client applies auth transport:
    - Bearer mode: `Authorization: Bearer <jwt>`.
    - Cookie-session mode: sends browser credentials/cookies (`credentials: "include"`).
-3. API client routes auth outcomes through adapter hooks:
-   - `401/403` → `clearSession` → `emitAuthEvent("reauth-required")` → `redirectToSignedOut("reauth-required")`
-   - `POST /me/logout` success → `clearSession` → `emitAuthEvent("signed-out")` → `redirectToSignedOut("signed-out")`
-   - `DELETE /me` or `DELETE /me/hard-delete` success → `clearSession` → `emitAuthEvent("account-removed")` → `redirectToAccountRemoved()`
+3. API client routes auth outcomes through adapter hooks (canonical redirect destinations):
+   - `401/403` → `clearSession` → `emitAuthEvent("reauth-required")` → `redirectToSignedOut("reauth-required")` (`/signed-out?reason=reauth-required`)
+   - `POST /me/logout` success → `clearSession` → `emitAuthEvent("signed-out")` → `redirectToSignedOut("signed-out")` (`/signed-out?reason=signed-out`)
+   - `DELETE /me` or `DELETE /me/hard-delete` success → `clearSession` → `emitAuthEvent("account-removed")` → `redirectToAccountRemoved()` (`/account-removed`)
 
 ## Canonical login submit flow (web)
 
@@ -46,6 +46,11 @@ All auth transitions must flow through `createApiClient(..., { authSessionAdapte
 ### Important rule
 
 Do not duplicate these transitions in feature code (SSE controllers, screens, pages, hooks). Consumers should call shared API/client lifecycle helpers and rely on adapter behavior.
+
+Terminology rule used across docs:
+
+- Say **cookie-session mode (web)** for browser auth (`credentials: "include"` + backend-managed `httpOnly` cookies).
+- Say **bearer mode (mobile/native)** for JWT header transport (`Authorization: Bearer <jwt>`).
 
 ## Web storage strategy and residual risk
 

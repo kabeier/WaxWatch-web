@@ -117,6 +117,34 @@ Auth implementation anchors:
 - [`src/lib/auth-session.ts`](../src/lib/auth-session.ts) (web adapter returns `null` access token, dispatches auth lifecycle events, redirects to `/signed-out?reason=...` and `/account-removed`, performs legacy token cleanup)
 - [`app/(auth)/login/LoginPageClient.tsx`](../app/%28auth%29/login/LoginPageClient.tsx) (`POST ${resolveApiBaseUrl()}/auth/login`; default `/api/auth/login`; sends `credentials: "include"`; validates secure handoff params before/after submit; redirects to validated handoff callback or `return_to`/`/`)
 
+### Canonical auth lifecycle (must match `docs/AUTH_MODEL.md`)
+
+Use this exact terminology in docs and reviews:
+
+- **Cookie-session mode (web):** browser auth uses backend-managed `httpOnly` cookies with `credentials: "include"`; `webAuthSessionAdapter.getAccessToken()` returns `null`.
+- **Bearer mode (mobile/native):** callers provide JWTs and the API client sends `Authorization: Bearer <jwt>`.
+
+All auth transitions are API-client/adapter driven (not feature-local):
+
+1. `401/403` on authenticated API calls:
+   - `clearSession` -> `emitAuthEvent("reauth-required")` -> redirect to `/signed-out?reason=reauth-required`.
+2. `POST /me/logout` success:
+   - `clearSession` -> `emitAuthEvent("signed-out")` -> redirect to `/signed-out?reason=signed-out`.
+3. `DELETE /me` or `DELETE /me/hard-delete` success:
+   - `clearSession` -> `emitAuthEvent("account-removed")` -> redirect to `/account-removed`.
+
+Canonical login flow assumptions (`/login`):
+
+1. Validate handoff params (`state`/`nonce`/`expires_at`) before submit when `handoff` is present.
+2. Submit `POST ${resolveApiBaseUrl()}/auth/login` (default `/api/auth/login`) with `credentials: "include"` and JSON body containing `email`, `password`, and optional handoff/return params.
+3. Handle failures consistently:
+   - `401/403` or `invalid_credentials` -> show `Invalid email or password.`
+   - Rate-limit envelope -> route state to `StateRateLimited`
+   - Validation envelope -> show backend validation message
+4. On success:
+   - Valid handoff -> redirect to handoff URL with `state`, `nonce`, `expires_at`, `status=success`, optional `return_to`
+   - Otherwise -> redirect to `return_to` or `/`
+
 ## Architecture layering: api core vs web query
 
 WaxWatch uses a strict layering split for data access code:
