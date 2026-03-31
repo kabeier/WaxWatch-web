@@ -1,4 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __setPathname } from "@/test/mocks/next-navigation";
@@ -175,6 +177,27 @@ describe("shell primitives", () => {
     );
     expect(MOBILE_NAV_ITEMS.map((item) => item.href)).toEqual(
       mobileNavigationRouteKeys.map((routeKey) => routeViewModels[routeKey].path),
+    );
+  });
+
+  it("keeps MOBILE_NAV_ITEMS in parity with docs/ROUTES.md mobile bottom-tab sequence", () => {
+    const routesDoc = readFileSync(resolve(process.cwd(), "docs/ROUTES.md"), "utf8");
+    const mobileBottomTabSection = routesDoc.match(
+      /### Mobile primary nav \(bottom-tab route set\)\s+([\s\S]*?)\n`\/search` and `\/integrations`/,
+    )?.[1];
+
+    expect(mobileBottomTabSection).toBeDefined();
+
+    const documentedTabs = Array.from(
+      mobileBottomTabSection?.matchAll(/^\d+\.\s+([^(]+)\(`([^`]+)`\)/gm) ?? [],
+      ([, label, href]) => ({ label: label.trim(), href }),
+    );
+
+    expect(documentedTabs.map((item) => item.href)).toEqual(
+      MOBILE_NAV_ITEMS.map((item) => item.href),
+    );
+    expect(documentedTabs.map((item) => item.label)).toEqual(
+      MOBILE_NAV_ITEMS.map((item) => item.label),
     );
   });
 

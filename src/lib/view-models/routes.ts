@@ -304,7 +304,7 @@ export const primaryNavigationRouteKeys = [
   "settings",
 ] as const;
 
-type MobileNavigationRouteKey = "dashboard" | "alerts" | "watchlist" | "notifications" | "settings";
+type MobileNavigationRouteKey = (typeof primaryNavigationRouteKeys)[number];
 
 type MobileNavigationDefinition = {
   routeKey: MobileNavigationRouteKey;
