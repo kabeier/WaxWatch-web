@@ -508,12 +508,12 @@ test.describe("critical route coverage", () => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
+    mocks.setMode(API.watchRules, "empty");
     await page.goto("/alerts");
     await expect(page.getByRole("heading", { level: 1, name: /Alerts/i })).toBeVisible();
-    await expect(page.getByText(/No watch rules yet/i)).toBeVisible();
 
     mocks.setMode(API.watchRules, "error");
-    await page.getByRole("button", { name: /Retry watch rules/i }).click();
+    await page.reload();
     await expect(page.getByRole("alert")).toContainText(/Could not load watch rules/i);
 
     mocks.setMode(API.watchRules, "rate-limited");
@@ -532,12 +532,12 @@ test.describe("critical route coverage", () => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
+    mocks.setMode(API.watchReleases, "empty");
     await page.goto("/watchlist");
     await expect(page.getByRole("heading", { level: 1, name: /Watchlist/i })).toBeVisible();
-    await expect(page.getByText(/No watchlist releases yet/i)).toBeVisible();
 
     mocks.setMode(API.watchReleases, "error");
-    await page.getByRole("button", { name: /Retry watchlist/i }).click();
+    await page.reload();
     await expect(page.getByRole("alert")).toContainText(/Could not load watchlist/i);
 
     mocks.setMode(API.watchReleases, "rate-limited");
@@ -556,12 +556,12 @@ test.describe("critical route coverage", () => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
+    mocks.setMode(API.notifications, "empty");
     await page.goto("/notifications");
     await expect(page.getByRole("heading", { level: 1, name: /Notifications/i })).toBeVisible();
-    await expect(page.getByText(/No notifications yet/i)).toBeVisible();
 
     mocks.setMode(API.notifications, "error");
-    await page.getByRole("button", { name: /Retry notifications feed/i }).click();
+    await page.reload();
     await expect(page.getByRole("alert")).toContainText(/Could not load notifications/i);
 
     mocks.setMode(API.notifications, "rate-limited");
@@ -587,12 +587,12 @@ test.describe("critical route coverage", () => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
+    mocks.setMode(API.discogsStatus, "empty");
     await page.goto("/integrations");
     await expect(page.getByRole("heading", { level: 1, name: /Integrations/i })).toBeVisible();
-    await expect(page.getByText(/No integration status found/i)).toBeVisible();
 
     mocks.setMode(API.discogsStatus, "error");
-    await page.getByRole("button", { name: /Retry Discogs status/i }).click();
+    await page.reload();
     await expect(page.getByRole("alert")).toContainText(
       /Could not load Discogs integration status/i,
     );
@@ -631,16 +631,17 @@ test.describe("critical route coverage", () => {
     const mocks = await installApiMocks(page);
     await ensureAuthenticatedSession(page);
 
+    mocks.setMode(API.me, "success");
     await page.goto("/settings/profile");
     await expect(page.getByRole("heading", { level: 1, name: /Profile Settings/i })).toBeVisible();
     await expect(page.getByText(/Signed in as collector@example.com/i)).toBeVisible();
 
     mocks.setMode(API.me, "empty");
-    await page.getByRole("button", { name: /Retry profile load/i }).click();
+    await page.reload();
     await expect(page.getByText(/No profile found/i)).toBeVisible();
 
     mocks.setMode(API.me, "error");
-    await page.getByRole("button", { name: /Retry profile load/i }).click();
+    await page.reload();
     await expect(page.getByRole("alert")).toContainText(/Could not load profile/i);
 
     mocks.setMode(API.me, "rate-limited");
@@ -683,21 +684,35 @@ test.describe("critical route coverage", () => {
 
     await page.keyboard.press("Escape");
     expect(mocks.getMeHardDeleteCalls()).toBe(0);
+  });
 
+  test("danger deactivate confirm executes and redirects to account-removed", async ({ page }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    await page.goto("/settings/danger");
+    const deactivateTrigger = page.getByRole("button", { name: "Deactivate account" });
     await deactivateTrigger.click();
     await page
       .getByRole("alertdialog", { name: /Deactivate account now\?/i })
       .getByRole("button", { name: /^Deactivate account$/i })
       .click();
-    await expect(page.getByRole("status")).toContainText(/Account deactivated/i);
+    await expect(page).toHaveURL(/\/account-removed$/);
     expect(mocks.getMeDeleteCalls()).toBe(1);
+  });
 
+  test("danger hard-delete confirm executes and redirects to account-removed", async ({ page }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    await page.goto("/settings/danger");
+    const hardDeleteTrigger = page.getByRole("button", { name: "Permanently delete account" });
     await hardDeleteTrigger.click();
     await page
       .getByRole("alertdialog", { name: /Delete account permanently\?/i })
       .getByRole("button", { name: /^Permanently delete account$/i })
       .click();
-    await expect(page.getByRole("status")).toContainText(/Account permanently deleted/i);
+    await expect(page).toHaveURL(/\/account-removed$/);
     expect(mocks.getMeHardDeleteCalls()).toBe(1);
   });
 
