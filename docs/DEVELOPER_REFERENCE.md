@@ -124,25 +124,23 @@ Use this exact terminology in docs and reviews:
 - **Cookie-session mode (web):** browser auth uses backend-managed `httpOnly` cookies with `credentials: "include"`; `webAuthSessionAdapter.getAccessToken()` returns `null`.
 - **Bearer mode (mobile/native):** callers provide JWTs and the API client sends `Authorization: Bearer <jwt>`.
 
-All auth transitions are API-client/adapter driven (never feature-local):
+Canonical auth lifecycle (web + mobile; API-client/adapter driven, never feature-local):
 
-1. `401/403` on authenticated API calls:
-   - `clearSession` -> `emitAuthEvent("reauth-required")` -> redirect to `/signed-out?reason=reauth-required`.
-2. `POST /me/logout` success:
-   - `clearSession` -> `emitAuthEvent("signed-out")` -> redirect to `/signed-out?reason=signed-out`.
-3. `DELETE /me` or `DELETE /me/hard-delete` success:
-   - `clearSession` -> `emitAuthEvent("account-removed")` -> redirect to `/account-removed`.
+- All auth transitions must flow through `createApiClient(..., { authSessionAdapter })` hooks.
+- `401/403` from authenticated API calls trigger `clearSession`, `emitAuthEvent("reauth-required")`, and `redirectToSignedOut("reauth-required")` (`/signed-out?reason=reauth-required`).
+- Successful `POST /me/logout` triggers `clearSession`, `emitAuthEvent("signed-out")`, and `redirectToSignedOut("signed-out")` (`/signed-out?reason=signed-out`).
+- Successful `DELETE /me` or `DELETE /me/hard-delete` triggers `clearSession`, `emitAuthEvent("account-removed")`, and `redirectToAccountRemoved()` (`/account-removed`).
 
 Canonical login flow assumptions (`/login`):
 
-1. Validate handoff params (`state`/`nonce`/`expires_at`) before submit when `handoff` is present.
+1. Resolve and validate handoff state before submit when `handoff` is present (`state`/`nonce`/`expires_at` required; expiry enforced).
 2. Submit `POST ${resolveApiBaseUrl()}/auth/login` (default `/api/auth/login`) with `credentials: "include"` and JSON body containing `email`, `password`, plus optional `return_to`, `handoff`, `state`, `nonce`, `expires_at`.
 3. Handle failures consistently:
-   - `401/403` or `invalid_credentials` -> show `Invalid email or password.`
+   - `401/403` (or `invalid_credentials` discriminator) -> `Invalid email or password.`
    - Rate-limit envelope -> route state to `StateRateLimited`
    - Validation envelope -> show backend validation message
 4. On success:
-   - Valid handoff -> redirect to handoff URL with `state`, `nonce`, `expires_at`, `status=success`, optional `return_to`
+   - Valid handoff -> redirect to handoff URL with `state`, `nonce`, `expires_at`, `status=success`, and optional `return_to`
    - Otherwise -> redirect to `return_to` or `/`
 
 `docs/AUTH_MODEL.md` is the canonical auth spec. If wording diverges, update this reference and README to match `docs/AUTH_MODEL.md` and the implementation anchors above.

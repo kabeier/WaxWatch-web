@@ -5,8 +5,8 @@
 All requests go through a single wrapper to enforce:
 
 - platform auth transport via shared adapter/client lifecycle
-  - web: cookie-session mode (`credentials: "include"` with backend-managed `httpOnly` cookies)
-  - mobile/native: bearer mode (`Authorization: Bearer <jwt>`)
+  - cookie-session mode (web): `credentials: "include"` with backend-managed `httpOnly` cookies; web adapter returns `null` from `getAccessToken()`
+  - bearer mode (mobile/native): `Authorization: Bearer <jwt>`
 - consistent base URL
 - error envelope parsing
 - Retry-After handling for 429
