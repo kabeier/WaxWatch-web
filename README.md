@@ -29,12 +29,12 @@ Canonical auth narrative (source of truth: [`docs/AUTH_MODEL.md`](docs/AUTH_MODE
 - **Cookie-session mode (web):** browser auth uses backend-managed `httpOnly` cookies with `credentials: "include"`; `webAuthSessionAdapter.getAccessToken()` returns `null`.
 - **Bearer mode (mobile/native):** callers provide JWTs and the API client sends `Authorization: Bearer <jwt>`.
 
-Canonical lifecycle assumptions (API-client/adapter driven, never feature-local):
+Canonical auth lifecycle (web + mobile; API-client/adapter driven, never feature-local):
 
-- Auth lifecycle transitions are API-client driven through `AuthSessionAdapter` hooks in `src/lib/api/client.ts` + `src/lib/auth-session.ts`.
-- `401/403` from authenticated API calls trigger `clearSession`, emit `reauth-required`, and redirect to `/signed-out?reason=reauth-required`.
-- Successful `POST /me/logout` triggers `clearSession`, emits `signed-out`, and redirects to `/signed-out?reason=signed-out`.
-- Successful `DELETE /me` or `DELETE /me/hard-delete` triggers `clearSession`, emits `account-removed`, and redirects to `/account-removed`.
+- All auth transitions must flow through `createApiClient(..., { authSessionAdapter })` hooks.
+- `401/403` from authenticated API calls trigger `clearSession`, `emitAuthEvent("reauth-required")`, and `redirectToSignedOut("reauth-required")` (`/signed-out?reason=reauth-required`).
+- Successful `POST /me/logout` triggers `clearSession`, `emitAuthEvent("signed-out")`, and `redirectToSignedOut("signed-out")` (`/signed-out?reason=signed-out`).
+- Successful `DELETE /me` or `DELETE /me/hard-delete` triggers `clearSession`, `emitAuthEvent("account-removed")`, and `redirectToAccountRemoved()` (`/account-removed`).
 
 Behavioral implementation anchors:
 
