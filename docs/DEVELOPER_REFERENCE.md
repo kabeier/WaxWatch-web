@@ -108,7 +108,7 @@ Route maturity/status guidance is canonical in this reference's **Route matrix**
 
 - Next.js **App Router**
 - TypeScript
-- Backend-managed auth sessions: web runs in **cookie-session mode** (`httpOnly` cookies + `credentials: "include"`) and does not use JS-managed long-lived bearer tokens; mobile/native uses **bearer mode** (JWT `Authorization` header)
+- Backend-managed auth sessions: web runs in **cookie-session mode (web)** (`credentials: "include"` + backend-managed `httpOnly` cookies) and does not use JavaScript-managed long-lived bearer tokens; mobile/native uses **bearer mode (mobile/native)** (JWT `Authorization` header).
 - TanStack Query for server state (Option A: SPA-style dashboard)
 - SSE for realtime notifications
 
@@ -136,7 +136,7 @@ All auth transitions are API-client/adapter driven (never feature-local):
 Canonical login flow assumptions (`/login`):
 
 1. Validate handoff params (`state`/`nonce`/`expires_at`) before submit when `handoff` is present.
-2. Submit `POST ${resolveApiBaseUrl()}/auth/login` (default `/api/auth/login`) with `credentials: "include"` and JSON body containing `email`, `password`, and optional handoff/return params.
+2. Submit `POST ${resolveApiBaseUrl()}/auth/login` (default `/api/auth/login`) with `credentials: "include"` and JSON body containing `email`, `password`, plus optional `return_to`, `handoff`, `state`, `nonce`, `expires_at`.
 3. Handle failures consistently:
    - `401/403` or `invalid_credentials` -> show `Invalid email or password.`
    - Rate-limit envelope -> route state to `StateRateLimited`

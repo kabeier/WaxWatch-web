@@ -10,7 +10,7 @@ All requests go through a single wrapper to enforce:
 - consistent base URL
 - error envelope parsing
 - Retry-After handling for 429
-- sign-out handling for 401/403
+- canonical auth lifecycle handling via adapter hooks (`401/403` reauth-required, `POST /me/logout` signed-out, `DELETE /me`/`DELETE /me/hard-delete` account-removed)
 
 ## Retry policy
 
