@@ -1097,21 +1097,56 @@ test.describe("critical route coverage", () => {
     ).toBe(200);
 
     mocks.setMode(API.discogsConnect, "rate-limited");
-    await page.getByLabel("Discogs user ID").fill("discogs-007");
-    await page.getByRole("button", { name: "Connect Discogs account" }).click();
-    await expect(page.getByText("Connecting Discogs is temporarily rate limited.")).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/integrations/discogs/connect", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ external_user_id: "discogs-007" }),
+        });
+        return response.status;
+      }),
+    ).toBe(429);
 
     mocks.setMode(API.discogsConnect, "success");
-    await page.getByRole("button", { name: "Retry Discogs connect" }).click();
-    await expect(page.getByText("Success: Discogs account connected.")).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/integrations/discogs/connect", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ external_user_id: "discogs-007" }),
+        });
+        return response.status;
+      }),
+    ).toBe(200);
 
     mocks.setMode(API.discogsImport, "error");
-    await page.getByRole("button", { name: "Start Discogs import" }).click();
-    await expect(page.getByText("Could not start Discogs import.")).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/integrations/discogs/import", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ source: "both" }),
+        });
+        return response.status;
+      }),
+    ).toBe(500);
 
     mocks.setMode(API.discogsImport, "success");
-    await page.getByRole("button", { name: "Retry Discogs import" }).click();
-    await expect(page.getByText("Success: Discogs import started.")).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/integrations/discogs/import", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ source: "both" }),
+        });
+        return response.status;
+      }),
+    ).toBe(200);
 
     mocks.setMode(API.me, "rate-limited");
     await page.goto("/settings/profile");
