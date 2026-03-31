@@ -24,7 +24,7 @@ Auth implementation anchors:
 - Session adapter + auth lifecycle redirects (`/signed-out?reason=...` and `/account-removed`): [`src/lib/auth-session.ts`](src/lib/auth-session.ts)
 - Login submit flow (`POST ${resolveApiBaseUrl()}/auth/login`, default `/api/auth/login`, with `credentials: "include"`): [`app/(auth)/login/LoginPageClient.tsx`](app/%28auth%29/login/LoginPageClient.tsx)
 
-Canonical auth model shorthand used in this repo:
+Canonical auth narrative (source of truth: [`docs/AUTH_MODEL.md`](docs/AUTH_MODEL.md)):
 
 - **Cookie-session mode (web):** `webAuthSessionAdapter.getAccessToken()` returns `null`; browser auth uses backend-managed `httpOnly` cookies with `credentials: "include"`.
 - **Bearer mode (mobile/native):** callers provide JWTs to the API client, which sends `Authorization: Bearer ...`.
@@ -32,9 +32,14 @@ Canonical auth model shorthand used in this repo:
 Canonical lifecycle assumptions:
 
 - Auth lifecycle transitions are API-client driven through `AuthSessionAdapter` hooks in `src/lib/api/client.ts` + `src/lib/auth-session.ts`.
-- `401/403` from authenticated API calls trigger `clearSession` and redirect to `/signed-out?reason=reauth-required`.
-- Successful `POST /me/logout` triggers `clearSession` and redirect to `/signed-out?reason=signed-out`.
-- Successful `DELETE /me` / `DELETE /me/hard-delete` triggers `clearSession` and redirect to `/account-removed`.
+- `401/403` from authenticated API calls trigger `clearSession`, emit `reauth-required`, and redirect to `/signed-out?reason=reauth-required`.
+- Successful `POST /me/logout` triggers `clearSession`, emits `signed-out`, and redirects to `/signed-out?reason=signed-out`.
+- Successful `DELETE /me` / `DELETE /me/hard-delete` triggers `clearSession`, emits `account-removed`, and redirects to `/account-removed`.
+
+Behavioral implementation anchors:
+
+- `clearSession()` performs best-effort legacy key cleanup (`waxwatch.auth.session`) in browser storage: [`src/lib/auth-session.ts`](src/lib/auth-session.ts)
+- `/login` validates secure handoff params before and after submit, then redirects to validated handoff destination or `return_to`/`/`: [`app/(auth)/login/LoginPageClient.tsx`](app/%28auth%29/login/LoginPageClient.tsx)
 
 ## Project goal
 
