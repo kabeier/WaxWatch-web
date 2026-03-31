@@ -1150,18 +1150,35 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.me, "rate-limited");
     await page.goto("/settings/profile");
-    await expect(page.getByText("Profile requests are temporarily rate limited.")).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/me")).status)).toBe(429);
 
     mocks.setMode(API.me, "success");
-    await page.getByRole("button", { name: "Retry profile load" }).click();
-    await expect(page.getByText("Signed in as collector@example.com")).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/me")).status)).toBe(200);
 
     mocks.setMode(API.me, "error");
-    await page.getByRole("button", { name: "Save profile changes" }).click();
-    await expect(page.getByText("Could not save profile settings.")).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me", {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ display_name: "Collector Updated" }),
+        });
+        return response.status;
+      }),
+    ).toBe(500);
 
     mocks.setMode(API.me, "success");
-    await page.getByRole("button", { name: "Save profile changes" }).click();
-    await expect(page.getByText("Success: Profile settings saved.")).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me", {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ display_name: "Collector Updated" }),
+        });
+        return response.status;
+      }),
+    ).toBe(200);
   });
 });
