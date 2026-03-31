@@ -24,10 +24,17 @@ Auth implementation anchors:
 - Session adapter + auth lifecycle redirects (`/signed-out?reason=...` and `/account-removed`): [`src/lib/auth-session.ts`](src/lib/auth-session.ts)
 - Login submit flow (`POST ${resolveApiBaseUrl()}/auth/login`, default `/api/auth/login`, with `credentials: "include"`): [`app/(auth)/login/LoginPageClient.tsx`](app/%28auth%29/login/LoginPageClient.tsx)
 
-Auth model shorthand used in this repo:
+Canonical auth model shorthand used in this repo:
 
-- **Cookie-session mode (web):** adapter returns `null` access token; browser requests rely on backend-managed session cookies.
+- **Cookie-session mode (web):** `webAuthSessionAdapter.getAccessToken()` returns `null`; browser auth uses backend-managed `httpOnly` cookies with `credentials: "include"`.
 - **Bearer mode (mobile/native):** callers provide JWTs to the API client, which sends `Authorization: Bearer ...`.
+
+Canonical lifecycle assumptions:
+
+- Auth lifecycle transitions are API-client driven through `AuthSessionAdapter` hooks in `src/lib/api/client.ts` + `src/lib/auth-session.ts`.
+- `401/403` from authenticated API calls trigger `clearSession` and redirect to `/signed-out?reason=reauth-required`.
+- Successful `POST /me/logout` triggers `clearSession` and redirect to `/signed-out?reason=signed-out`.
+- Successful `DELETE /me` / `DELETE /me/hard-delete` triggers `clearSession` and redirect to `/account-removed`.
 
 ## Project goal
 
