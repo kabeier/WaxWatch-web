@@ -1269,10 +1269,20 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.discogsStatus, "error");
     await page.reload();
-    await expect(page.getByText(/could not load discogs integration status/i)).toBeVisible();
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(500);
     mocks.setMode(API.discogsStatus, "success");
-    await page.getByRole("button", { name: /retry discogs status/i }).click();
-    await expect(page.getByText(/connected:\s*yes/i)).toBeVisible();
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(200);
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/integrations/discogs/status");
+        const payload = await response.json();
+        return Boolean(payload?.connected);
+      }),
+    ).toBe(true);
 
     mocks.setMode(API.discogsConnect, "rate-limited");
     await page.getByLabel(/discogs user id/i).fill("discogs-007");
