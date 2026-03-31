@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 
 import { MOBILE_NAV_ITEMS } from "@/components/ui/primitives/shell/primitives";
 
-import { mobileNavigationRouteKeys, routeViewModels } from "./routes";
+import { mobileNavigationDefinitions, mobileNavigationRouteKeys, routeViewModels } from "./routes";
 
 const expectedMobileTabRouteKeys = [
   "dashboard",
@@ -31,22 +31,18 @@ describe("mobileNavigationRouteKeys", () => {
   });
 
   it("matches UX label/order expectations for the canonical mobile tabs", () => {
-    const resolvedLabels = mobileNavigationRouteKeys.map((routeKey) => {
-      const route = routeViewModels[routeKey];
-
-      return route.mobileNavigationLabel ?? route.navigationLabel ?? route.heading;
-    });
+    const resolvedLabels = mobileNavigationDefinitions.map((definition) => definition.label);
 
     expect(resolvedLabels).toEqual(uxExpectedMobileTabLabels);
   });
 
   it("matches rendered MobileTabBar navigation definitions in route order and labels", () => {
-    const expectedTabs = mobileNavigationRouteKeys.map((routeKey) => {
+    const expectedTabs = mobileNavigationDefinitions.map(({ routeKey, label }) => {
       const route = routeViewModels[routeKey];
 
       return {
         href: route.path,
-        label: route.mobileNavigationLabel ?? route.navigationLabel ?? route.heading,
+        label,
       };
     });
 
@@ -78,6 +74,7 @@ describe("mobileNavigationRouteKeys", () => {
 
     expect(documentedMobileRouteKeys.every((routeKey) => Boolean(routeKey))).toBe(true);
     expect(documentedMobileRouteKeys).toEqual([...mobileNavigationRouteKeys]);
+    expect(documentedMobileLabels).toEqual(mobileNavigationDefinitions.map((item) => item.label));
     expect(documentedMobileLabels).toEqual(uxExpectedMobileTabLabels);
     expect(MOBILE_NAV_ITEMS.map((item) => item.label)).toEqual(documentedMobileLabels);
   });
