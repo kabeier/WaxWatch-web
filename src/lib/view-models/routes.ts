@@ -304,16 +304,25 @@ export const primaryNavigationRouteKeys = [
   "settings",
 ] as const;
 
-// Canonical bottom-tab order (Home, Alerts, Watchlist, Notifications, Settings).
-// Keep this tuple exactly aligned with `MOBILE_NAV_ITEMS` construction in
-// `src/components/ui/primitives/shell/primitives.tsx` and docs/ROUTES.md.
-export const mobileNavigationRouteKeys = [
-  "dashboard",
-  "alerts",
-  "watchlist",
-  "notifications",
-  "settings",
-] as const satisfies readonly (typeof primaryNavigationRouteKeys)[number][];
+type MobileNavigationDefinition = {
+  routeKey: (typeof primaryNavigationRouteKeys)[number];
+  label: string;
+};
+
+// Canonical bottom-tab order and labels.
+// Keep this tuple aligned with docs/ROUTES.md ("Mobile primary nav (bottom-tab route set)")
+// and the rendered `MOBILE_NAV_ITEMS` in `src/components/ui/primitives/shell/primitives.tsx`.
+export const mobileNavigationDefinitions = [
+  { routeKey: "dashboard", label: "Home" },
+  { routeKey: "alerts", label: "Alerts" },
+  { routeKey: "watchlist", label: "Watchlist" },
+  { routeKey: "notifications", label: "Notifications" },
+  { routeKey: "settings", label: "Settings" },
+] as const satisfies readonly MobileNavigationDefinition[];
+
+export const mobileNavigationRouteKeys = mobileNavigationDefinitions.map(
+  (item) => item.routeKey,
+) as readonly (typeof primaryNavigationRouteKeys)[number][];
 
 export const settingsNavigationRouteKeys = [
   "settingsProfile",

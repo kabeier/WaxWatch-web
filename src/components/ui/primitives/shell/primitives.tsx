@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { WaveTrace } from "@/components/WaveTrace";
 import {
+  mobileNavigationDefinitions,
   mobileNavigationRouteKeys,
   routeViewModels,
   type RouteKey,
@@ -104,12 +105,16 @@ const MOBILE_NAV_ITEM_MATCH_MODE_OVERRIDES: Partial<Record<RouteKey, ShellNavIte
   settings: "settings-without-legacy",
 };
 
+const MOBILE_NAV_LABELS_BY_ROUTE_KEY = Object.fromEntries(
+  mobileNavigationDefinitions.map((definition) => [definition.routeKey, definition.label]),
+) as Record<(typeof mobileNavigationRouteKeys)[number], string>;
+
 export const MOBILE_NAV_ITEMS: ShellNavItem[] = mobileNavigationRouteKeys.map((routeKey) => {
   const route = routeViewModels[routeKey];
 
   return {
     href: route.path,
-    label: route.mobileNavigationLabel ?? route.navigationLabel ?? route.heading,
+    label: MOBILE_NAV_LABELS_BY_ROUTE_KEY[routeKey],
     shortLabel: MOBILE_NAV_ITEM_SHORT_LABELS[routeKey],
     matchMode: MOBILE_NAV_ITEM_MATCH_MODE_OVERRIDES[routeKey],
   };

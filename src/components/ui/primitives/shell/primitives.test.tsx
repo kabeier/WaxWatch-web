@@ -2,13 +2,18 @@ import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { __setPathname } from "@/test/mocks/next-navigation";
-import { mobileNavigationRouteKeys, routeViewModels } from "@/lib/view-models/routes";
+import {
+  mobileNavigationDefinitions,
+  mobileNavigationRouteKeys,
+  routeViewModels,
+} from "@/lib/view-models/routes";
 
 import { useAppShellChromeData } from "./useAppShellChromeData";
 import {
   AppShell,
   AuthNotice,
   ContentContainer,
+  MOBILE_NAV_ITEMS,
   MobileTabBar,
   ShellHeaderBand,
   SideNav,
@@ -157,6 +162,20 @@ describe("shell primitives", () => {
     mobileLinks.forEach((link, index) => {
       expect(link).toHaveTextContent(expectedTabs[index].label);
     });
+  });
+
+  it("keeps exported mobile nav item metadata aligned with route model definitions", () => {
+    const expectedMobileNavItems = mobileNavigationDefinitions.map(({ routeKey, label }) => ({
+      href: routeViewModels[routeKey].path,
+      label,
+    }));
+
+    expect(MOBILE_NAV_ITEMS.map(({ href, label }) => ({ href, label }))).toEqual(
+      expectedMobileNavItems,
+    );
+    expect(MOBILE_NAV_ITEMS.map((item) => item.href)).toEqual(
+      mobileNavigationRouteKeys.map((routeKey) => routeViewModels[routeKey].path),
+    );
   });
 
   it("keeps integrations as the only active item on integrations routes", () => {
