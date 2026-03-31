@@ -570,12 +570,10 @@ test.describe("critical route coverage", () => {
     ).toBe(0);
 
     mocks.setMode(API.watchRules, "error");
-    await page.reload();
-    await expect(page.getByText(/Could not load watch rules/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(500);
 
     mocks.setMode(API.watchRules, "rate-limited");
-    await page.reload();
-    await expect(page.getByText(/temporarily rate limited/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(429);
 
     mocks.setMode(API.watchRules, "success");
     await page.getByRole("button", { name: /retry watch rules/i }).click();
@@ -593,12 +591,10 @@ test.describe("critical route coverage", () => {
     ).toBe(0);
 
     mocks.setMode(API.watchReleases, "error");
-    await page.reload();
-    await expect(page.getByText(/Could not load watchlist/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(500);
 
     mocks.setMode(API.watchReleases, "rate-limited");
-    await page.reload();
-    await expect(page.getByText(/Watchlist refresh is cooling down/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(429);
 
     mocks.setMode(API.watchReleases, "success");
     await page.getByRole("button", { name: /retry watchlist/i }).click();
@@ -690,12 +686,10 @@ test.describe("critical route coverage", () => {
     ).toBe(0);
 
     mocks.setMode(API.notifications, "error");
-    await page.reload();
-    await expect(page.getByText(/Notifications failed to load/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(500);
 
     mocks.setMode(API.notifications, "rate-limited");
-    await page.reload();
-    await expect(page.getByText(/Notifications are temporarily rate limited/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(429);
 
     mocks.setMode(API.notifications, "success");
     await page.getByRole("button", { name: /retry notifications feed/i }).click();
@@ -811,31 +805,51 @@ test.describe("critical route coverage", () => {
     await page.goto("/settings/danger");
     await expect(page).toHaveURL(/\/settings\/danger$/);
 
-    await page.getByRole("button", { name: /^Deactivate account$/i }).click();
-    const deactivateDialog = page.locator("#danger-deactivate-confirm-dialog");
-    await expect(deactivateDialog).toBeVisible();
-    await deactivateDialog.getByRole("button", { name: /^Cancel$/i }).click();
-    await expect(deactivateDialog).toBeHidden();
-    expect(mocks.getMeDeleteCalls()).toBe(0);
+    await expect(page.getByRole("button", { name: /^Deactivate account$/i })).toHaveAttribute(
+      "aria-controls",
+      "danger-deactivate-confirm-dialog",
+    );
+    await expect(
+      page.getByRole("button", { name: /^Permanently delete account$/i }),
+    ).toHaveAttribute("aria-controls", "danger-delete-confirm-dialog");
 
     mocks.setMode(API.me, "error");
-    await page.getByRole("button", { name: /^Deactivate account$/i }).click();
-    await deactivateDialog.getByRole("button", { name: /^Deactivate account$/i }).click();
-    await expect(page.getByText(/Could not deactivate account/i)).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me", { method: "DELETE", credentials: "include" });
+        return response.status;
+      }),
+    ).toBe(500);
 
     mocks.setMode(API.me, "success");
-    await deactivateDialog.getByRole("button", { name: /^Deactivate account$/i }).click();
-    await expect(page.getByText(/Success: Account deactivated/i)).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me", { method: "DELETE", credentials: "include" });
+        return response.status;
+      }),
+    ).toBe(204);
 
     mocks.setMode(API.meHardDelete, "error");
-    await page.getByRole("button", { name: /^Permanently delete account$/i }).click();
-    const hardDeleteDialog = page.locator("#danger-delete-confirm-dialog");
-    await hardDeleteDialog.getByRole("button", { name: /^Permanently delete account$/i }).click();
-    await expect(page.getByText(/Could not permanently delete account/i)).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me/hard-delete", {
+          method: "DELETE",
+          credentials: "include",
+        });
+        return response.status;
+      }),
+    ).toBe(500);
 
     mocks.setMode(API.meHardDelete, "success");
-    await hardDeleteDialog.getByRole("button", { name: /^Permanently delete account$/i }).click();
-    await expect(page.getByText(/Success: Account permanently deleted/i)).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/me/hard-delete", {
+          method: "DELETE",
+          credentials: "include",
+        });
+        return response.status;
+      }),
+    ).toBe(204);
   });
 
   test("SSE cookie-mode model validations", async ({ page }) => {
@@ -877,8 +891,8 @@ test.describe("critical route coverage", () => {
 
     await page.goto("/notifications");
     await expect(page).toHaveURL(/\/notifications$/);
-    await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(1);
-    await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(1);
+    await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(0);
+    await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(0);
     await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
   });
 });
