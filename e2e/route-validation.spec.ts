@@ -1541,6 +1541,8 @@ test.describe("critical route coverage", () => {
         credentials: "include",
         headers: { Accept: "text/event-stream" },
       });
+      await fetch("/api/notifications/unread-count", { credentials: "include" });
+      await fetch("/api/notifications", { credentials: "include" });
     });
     await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
     await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(0);
