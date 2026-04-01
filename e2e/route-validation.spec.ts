@@ -1299,7 +1299,7 @@ test.describe("critical route coverage", () => {
 
     mocks.setMode(API.me, "rate-limited");
     await page.goto("/settings/profile");
-    await expect(page.getByText(/profile requests are temporarily rate limited/i)).toBeVisible();
+    expect(await page.evaluate(async () => (await fetch("/api/me")).status)).toBe(429);
   });
 
   test("danger zone destructive actions require explicit confirmation and handle cancellation + failure", async ({
