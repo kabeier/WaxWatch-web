@@ -294,6 +294,8 @@ export const routeViewModels = {
   },
 } satisfies Record<string, RouteViewModel>;
 
+export type RouteKey = keyof typeof routeViewModels;
+
 export const primaryNavigationRouteKeys = [
   "dashboard",
   "search",
@@ -313,7 +315,7 @@ export const mobileNavigationRouteKeys = [
   "watchlist",
   "notifications",
   "settings",
-] as const;
+] as const satisfies readonly RouteKey[];
 
 export type MobileNavigationRouteKey = (typeof mobileNavigationRouteKeys)[number];
 
@@ -336,5 +338,3 @@ export const settingsNavigationRouteKeys = [
   "settingsAlerts",
   "settingsDanger",
 ] as const;
-
-export type RouteKey = keyof typeof routeViewModels;
