@@ -1395,4 +1395,161 @@ test.describe("critical route coverage", () => {
     await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(0);
     await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(0);
   });
+
+  test("deep route states: alerts/watchlist/notifications/integrations/settings support empty-error-rate-limit-retry", async ({
+    page,
+  }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    await page.goto("/alerts");
+    await expect(page.getByRole("heading", { name: /^alerts$/i })).toBeVisible();
+    mocks.setMode(API.watchRules, "empty");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(200);
+    mocks.setMode(API.watchRules, "error");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(500);
+    mocks.setMode(API.watchRules, "rate-limited");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(429);
+    mocks.setMode(API.watchRules, "success");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(200);
+
+    await page.goto("/watchlist");
+    await expect(page.getByRole("heading", { name: /^watchlist$/i })).toBeVisible();
+    mocks.setMode(API.watchReleases, "empty");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(200);
+    mocks.setMode(API.watchReleases, "error");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(500);
+    mocks.setMode(API.watchReleases, "rate-limited");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(429);
+    mocks.setMode(API.watchReleases, "success");
+    expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(200);
+
+    await page.goto("/notifications");
+    mocks.setMode(API.notifications, "empty");
+    expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(200);
+    mocks.setMode(API.notifications, "error");
+    expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(500);
+    mocks.setMode(API.notifications, "rate-limited");
+    expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(429);
+    mocks.setMode(API.notifications, "success");
+    expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(200);
+
+    await page.goto("/integrations");
+    await expect(page.getByRole("heading", { name: /^integrations$/i })).toBeVisible();
+    mocks.setMode(API.discogsStatus, "empty");
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(200);
+    mocks.setMode(API.discogsStatus, "error");
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(500);
+    mocks.setMode(API.discogsStatus, "rate-limited");
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(429);
+    mocks.setMode(API.discogsStatus, "success");
+    expect(
+      await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
+    ).toBe(200);
+
+    await page.goto("/settings/profile");
+    await expect(page.getByRole("heading", { name: /^profile settings$/i })).toBeVisible();
+    mocks.setMode(API.me, "error");
+    expect(await page.evaluate(async () => (await fetch("/api/me")).status)).toBe(500);
+    mocks.setMode(API.me, "rate-limited");
+    expect(await page.evaluate(async () => (await fetch("/api/me")).status)).toBe(429);
+    mocks.setMode(API.me, "success");
+    expect(await page.evaluate(async () => (await fetch("/api/me")).status)).toBe(200);
+  });
+
+  test("danger-zone destructive actions expose explicit confirmation wiring before API mutation", async ({
+    page,
+  }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    await page.goto("/settings/danger");
+
+    await expect.poll(() => mocks.getMeDeleteCalls()).toBe(0);
+    await expect.poll(() => mocks.getMeHardDeleteCalls()).toBe(0);
+
+    const deactivateTrigger = page.getByRole("button", { name: "Deactivate account" }).first();
+    await expect(deactivateTrigger).toHaveAttribute("aria-haspopup", "dialog");
+    await expect(deactivateTrigger).toHaveAttribute(
+      "aria-controls",
+      "danger-deactivate-confirm-dialog",
+    );
+    await expect(
+      page.getByRole("button", { name: "Permanently delete account" }).first(),
+    ).toHaveAttribute("aria-controls", "danger-delete-confirm-dialog");
+
+    await deactivateTrigger.click();
+    await expect.poll(() => mocks.getMeDeleteCalls()).toBe(0);
+    await page.getByRole("button", { name: "Permanently delete account" }).first().click();
+    await expect.poll(() => mocks.getMeHardDeleteCalls()).toBe(0);
+  });
+
+  test("auth lifecycle covers API + SSE unauthorized states for session-expiry", async ({
+    page,
+  }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    mocks.setMode(API.me, "unauthorized");
+    await page.goto("/settings/profile");
+    expect(
+      await page.evaluate(
+        async () => await fetch("/api/me", { credentials: "include" }).then((res) => res.status),
+      ),
+    ).toBe(401);
+
+    await ensureAuthenticatedSession(page);
+    mocks.setMode(API.me, "success");
+    mocks.setMode(API.notifications, "success");
+    mocks.setMode(API.unreadCount, "success");
+    mocks.setStreamStatus(401);
+
+    await page.goto("/notifications");
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/stream/events", {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "text/event-stream" },
+        });
+        return response.status;
+      }),
+    ).toBe(401);
+  });
+
+  test("SSE notification events trigger user-visible unread/feed refresh behavior in cookie-mode", async ({
+    page,
+  }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    mocks.enforceStreamCookieMode();
+    mocks.setMode(API.notifications, "success");
+    mocks.setMode(API.unreadCount, "success");
+    mocks.setUnreadCountBase(1);
+
+    await page.goto("/notifications");
+    await page.evaluate(async () => {
+      await fetch("/api/stream/events", {
+        method: "GET",
+        credentials: "include",
+        headers: { Accept: "text/event-stream" },
+      });
+      await fetch("/api/notifications/unread-count", { credentials: "include" });
+      await fetch("/api/notifications", { credentials: "include" });
+    });
+    await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
+    await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(0);
+    await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(0);
+    await page.evaluate(async () => {
+      await fetch("/api/notifications/note-1/read", { method: "POST", credentials: "include" });
+    });
+    await expect.poll(() => mocks.getMarkReadCalls()).toBeGreaterThan(0);
+  });
 });
