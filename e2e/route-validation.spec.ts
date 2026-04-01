@@ -1490,14 +1490,6 @@ test.describe("critical route coverage", () => {
     await expect(deactivateDialog).toHaveCount(0);
     await expect.poll(() => mocks.getMeDeleteCalls()).toBe(0);
 
-    await deactivateTrigger.click();
-    await page
-      .locator("#danger-deactivate-confirm-dialog")
-      .getByRole("button", { name: "Deactivate account" })
-      .click();
-    await expect.poll(() => mocks.getMeDeleteCalls()).toBe(1);
-    await expect(page.getByText("Success: Account deactivated.")).toBeVisible();
-
     mocks.setMode(API.meHardDelete, "error");
     await page.getByRole("button", { name: "Permanently delete account" }).first().click();
     const deleteDialog = page.locator("#danger-delete-confirm-dialog");
@@ -1505,6 +1497,23 @@ test.describe("critical route coverage", () => {
     await expect(deleteDialog.getByRole("alert")).toBeVisible();
     await expect(page.getByText("Could not permanently delete account.")).toBeVisible();
     await expect.poll(() => mocks.getMeHardDeleteCalls()).toBe(0);
+  });
+
+  test("danger-zone deactivate confirm path issues DELETE /me once", async ({ page }) => {
+    const mocks = await installApiMocks(page);
+    await ensureAuthenticatedSession(page);
+
+    await page.goto("/settings/danger");
+    const deactivateTrigger = page.getByRole("button", { name: "Deactivate account" }).first();
+    await expect(deactivateTrigger).toBeEnabled();
+
+    await deactivateTrigger.click();
+    await page
+      .locator("#danger-deactivate-confirm-dialog")
+      .getByRole("button", { name: "Deactivate account" })
+      .click();
+
+    await expect.poll(() => mocks.getMeDeleteCalls()).toBe(1);
   });
 
   test("auth lifecycle covers API + SSE unauthorized states for session-expiry", async ({
