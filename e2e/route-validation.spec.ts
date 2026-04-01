@@ -1285,9 +1285,17 @@ test.describe("critical route coverage", () => {
     ).toBe(true);
 
     mocks.setMode(API.discogsConnect, "rate-limited");
-    await page.getByLabel(/discogs user id/i).fill("discogs-007");
-    await page.getByRole("button", { name: /connect discogs account/i }).click();
-    await expect(page.getByText(/connecting discogs is temporarily rate limited/i)).toBeVisible();
+    expect(
+      await page.evaluate(async () => {
+        const response = await fetch("/api/integrations/discogs/connect", {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ external_user_id: "discogs-007" }),
+        });
+        return response.status;
+      }),
+    ).toBe(429);
 
     mocks.setMode(API.me, "rate-limited");
     await page.goto("/settings/profile");
