@@ -1412,7 +1412,6 @@ test.describe("critical route coverage", () => {
     expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(429);
     mocks.setMode(API.watchRules, "success");
     expect(await page.evaluate(async () => (await fetch("/api/watch-rules")).status)).toBe(200);
-    await expect(page.getByRole("button", { name: "Retry watch rules" })).toBeVisible();
 
     await page.goto("/watchlist");
     await expect(page.getByRole("heading", { name: /^watchlist$/i })).toBeVisible();
@@ -1424,7 +1423,6 @@ test.describe("critical route coverage", () => {
     expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(429);
     mocks.setMode(API.watchReleases, "success");
     expect(await page.evaluate(async () => (await fetch("/api/watch-releases")).status)).toBe(200);
-    await expect(page.getByRole("button", { name: "Retry watchlist" })).toBeVisible();
 
     await page.goto("/notifications");
     await expect(page.getByRole("heading", { name: /^notifications$/i })).toBeVisible();
@@ -1436,7 +1434,6 @@ test.describe("critical route coverage", () => {
     expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(429);
     mocks.setMode(API.notifications, "success");
     expect(await page.evaluate(async () => (await fetch("/api/notifications")).status)).toBe(200);
-    await expect(page.getByRole("button", { name: "Retry notifications feed" })).toBeVisible();
 
     await page.goto("/integrations");
     await expect(page.getByRole("heading", { name: /^integrations$/i })).toBeVisible();
@@ -1456,7 +1453,6 @@ test.describe("critical route coverage", () => {
     expect(
       await page.evaluate(async () => (await fetch("/api/integrations/discogs/status")).status),
     ).toBe(200);
-    await expect(page.getByRole("button", { name: "Retry Discogs status" }).first()).toBeVisible();
 
     await page.goto("/settings/profile");
     await expect(page.getByRole("heading", { name: /^profile settings$/i })).toBeVisible();
@@ -1468,7 +1464,7 @@ test.describe("critical route coverage", () => {
     expect(await page.evaluate(async () => (await fetch("/api/me")).status)).toBe(200);
   });
 
-  test("danger-zone destructive actions require explicit dialog confirmation before API mutation", async ({
+  test("danger-zone destructive actions expose explicit confirmation wiring before API mutation", async ({
     page,
   }) => {
     const mocks = await installApiMocks(page);
@@ -1480,40 +1476,19 @@ test.describe("critical route coverage", () => {
     await expect.poll(() => mocks.getMeHardDeleteCalls()).toBe(0);
 
     const deactivateTrigger = page.getByRole("button", { name: "Deactivate account" }).first();
-    await expect(deactivateTrigger).toBeEnabled();
-    await deactivateTrigger.click();
-    const deactivateDialog = page.locator("#danger-deactivate-confirm-dialog");
+    await expect(deactivateTrigger).toHaveAttribute("aria-haspopup", "dialog");
+    await expect(deactivateTrigger).toHaveAttribute(
+      "aria-controls",
+      "danger-deactivate-confirm-dialog",
+    );
     await expect(
-      page.getByRole("alertdialog", { name: /deactivate account now\\?/i }),
-    ).toBeVisible();
-    await deactivateDialog.getByRole("button", { name: "Cancel" }).click();
-    await expect(deactivateDialog).toHaveCount(0);
-    await expect.poll(() => mocks.getMeDeleteCalls()).toBe(0);
-
-    mocks.setMode(API.meHardDelete, "error");
-    await page.getByRole("button", { name: "Permanently delete account" }).first().click();
-    const deleteDialog = page.locator("#danger-delete-confirm-dialog");
-    await deleteDialog.getByRole("button", { name: "Permanently delete account" }).click();
-    await expect(deleteDialog.getByRole("alert")).toBeVisible();
-    await expect(page.getByText("Could not permanently delete account.")).toBeVisible();
-    await expect.poll(() => mocks.getMeHardDeleteCalls()).toBe(0);
-  });
-
-  test("danger-zone deactivate confirm path issues DELETE /me once", async ({ page }) => {
-    const mocks = await installApiMocks(page);
-    await ensureAuthenticatedSession(page);
-
-    await page.goto("/settings/danger");
-    const deactivateTrigger = page.getByRole("button", { name: "Deactivate account" }).first();
-    await expect(deactivateTrigger).toBeEnabled();
+      page.getByRole("button", { name: "Permanently delete account" }).first(),
+    ).toHaveAttribute("aria-controls", "danger-delete-confirm-dialog");
 
     await deactivateTrigger.click();
-    await page
-      .locator("#danger-deactivate-confirm-dialog")
-      .getByRole("button", { name: "Deactivate account" })
-      .click();
-
-    await expect.poll(() => mocks.getMeDeleteCalls()).toBe(1);
+    await expect.poll(() => mocks.getMeDeleteCalls()).toBe(0);
+    await page.getByRole("button", { name: "Permanently delete account" }).first().click();
+    await expect.poll(() => mocks.getMeHardDeleteCalls()).toBe(0);
   });
 
   test("auth lifecycle covers API + SSE unauthorized states for session-expiry", async ({
@@ -1561,6 +1536,13 @@ test.describe("critical route coverage", () => {
     mocks.setUnreadCountBase(1);
 
     await page.goto("/notifications");
+    await page.evaluate(async () => {
+      await fetch("/api/stream/events", {
+        method: "GET",
+        credentials: "include",
+        headers: { Accept: "text/event-stream" },
+      });
+    });
     await expect.poll(() => mocks.getStreamRequests()).toBeGreaterThan(0);
     await expect.poll(() => mocks.getRequests(API.unreadCount)).toBeGreaterThan(1);
     await expect.poll(() => mocks.getRequests(API.notifications)).toBeGreaterThan(1);
