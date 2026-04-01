@@ -166,6 +166,26 @@ describe("shell primitives", () => {
     });
   });
 
+  it("fails parity when rendered MobileTabBar output diverges from exported MOBILE_NAV_ITEMS metadata", () => {
+    __setPathname("/dashboard");
+    render(<MobileTabBar />);
+
+    const mobileNav = screen.getByRole("navigation", { name: "Mobile primary" });
+    const renderedTabs = within(mobileNav)
+      .getAllByRole("link")
+      .map((link) => ({
+        href: link.getAttribute("href"),
+        label: link.querySelector(".shell-nav-link__label")?.textContent?.trim(),
+      }));
+
+    expect(renderedTabs).toEqual(
+      MOBILE_NAV_ITEMS.map((item) => ({
+        href: item.href,
+        label: item.label,
+      })),
+    );
+  });
+
   it("keeps exported mobile nav item metadata aligned with route model definitions", () => {
     const expectedMobileNavItems = mobileNavigationDefinitions.map(({ routeKey, label }) => ({
       href: routeViewModels[routeKey].path,
