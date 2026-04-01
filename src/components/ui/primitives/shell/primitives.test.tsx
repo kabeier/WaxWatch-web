@@ -225,7 +225,7 @@ describe("shell primitives", () => {
   it("keeps MOBILE_NAV_ITEMS in parity with docs/ROUTES.md mobile bottom-tab sequence", () => {
     const routesDoc = readFileSync(resolve(process.cwd(), "docs/ROUTES.md"), "utf8");
     const mobileBottomTabSection = routesDoc.match(
-      /### Mobile primary nav \(bottom-tab route set\)\s+([\s\S]*?)\n`\/search` and `\/integrations`/,
+      /### Mobile (?:primary nav \(bottom-tab route set\)|tab behavior \(actual\))\s+([\s\S]*?)\n`\/search` and `\/integrations`/,
     )?.[1];
 
     expect(mobileBottomTabSection).toBeDefined();
