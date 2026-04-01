@@ -133,13 +133,17 @@ Canonical auth lifecycle (web + mobile; API-client/adapter driven, never feature
 
 Canonical login submit flow (`/login`):
 
+`LoginPageClient` follows this sequence:
+
 1. Resolve and validate handoff state before submit when `handoff` is present (`state`/`nonce`/`expires_at` required; expiry enforced).
-2. Submit `POST ${resolveApiBaseUrl()}/auth/login` (default `/api/auth/login`) with `credentials: "include"` and JSON body containing `email`, `password`, plus optional `return_to`, `handoff`, `state`, `nonce`, `expires_at`.
-3. Handle failures consistently:
+2. `POST ${resolveApiBaseUrl()}/auth/login` (default `/api/auth/login`) with:
+   - `credentials: "include"` (cookie-session transport),
+   - JSON body: `email`, `password`, plus optional `return_to`, `handoff`, `state`, `nonce`, `expires_at`.
+3. Handle response states:
    - `401/403` (or `invalid_credentials` discriminator) → `"Invalid email or password."`
    - Rate-limited envelope → route to `StateRateLimited`
    - Validation envelope → show backend validation message
-4. On success:
+4. On success, resolve destination:
    - Valid handoff: redirect to handoff URL with `state`, `nonce`, `expires_at`, `status=success`, and optional `return_to`.
    - Otherwise: redirect to `return_to` or `/`.
 
