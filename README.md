@@ -1,5 +1,7 @@
 # WaxWatch Web
 
+> **This repository has moved.** Development continues in the [WaxWatchFS monorepo](https://github.com/kabeier/WaxWatchFS), under [`frontend/`](https://github.com/kabeier/WaxWatchFS/tree/main/frontend). Its full history is preserved there. This repo is archived (read-only).
+
 WaxWatch helps record collectors discover good listings faster.
 
 Instead of manually checking marketplaces over and over, users can search for records, save alert rules, track a watchlist, and get notified when new listings match what they care about.
